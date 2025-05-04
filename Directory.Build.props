@@ -1,0 +1,26 @@
+<Project>
+	<PropertyGroup>
+		<OutputType>Library</OutputType>
+		<TargetFramework>net9.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<!-- 启用 AOT 源生成器 -->
+		<EnableAotCompilation>true</EnableAotCompilation>
+		<!-- 自动生成所有类型的序列化元数据 -->
+		<GenerateSerializationMetadata>true</GenerateSerializationMetadata>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Compile Include="../Ngaq.Core/TypeAlias.cs" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="../Ngaq.Core/Ngaq.Core.csproj" />
+	</ItemGroup>
+
+</Project>
