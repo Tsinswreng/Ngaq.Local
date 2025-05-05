@@ -1,1 +1,0 @@
-dotnet sln add proj/**/*.csproj
