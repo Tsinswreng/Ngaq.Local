@@ -32,16 +32,17 @@ public class RepoEf
 	where T_Id : IEquatable<T_Id>
 {
 
-	static void Test(){
-		new RepoEf<Po_Kv, Id_Kv>();
+	// static void Test(){
+	// 	//new RepoEf<Po_Kv, Id_Kv>();
+	// }
+
+	public RepoEf(DbCtx dbCtx){
+		this.DbCtx = dbCtx;
 	}
 
 	public DbCtx DbCtx{get;set;}
 
 	public async Task<I_Answer<nil>> AddManyAsy(IEnumerable<T_Entity> Entitys){
-		IEnumerator<int> i = null;
-
-
 		I_Answer<nil> ans = new Answer<nil>();
 		IDbContextTransaction tx = null!;
 		try{
@@ -158,6 +159,4 @@ public class RepoEf
 		}
 		return ans;
 	}
-
-
 }
