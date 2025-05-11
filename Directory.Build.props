@@ -6,6 +6,7 @@
 		<Nullable>enable</Nullable>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+		<PublishAot>true</PublishAot>
 	</PropertyGroup>
 
 	<PropertyGroup>
