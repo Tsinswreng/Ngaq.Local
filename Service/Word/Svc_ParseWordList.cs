@@ -1,52 +1,62 @@
 using System.Text;
+using Ngaq.Core.Infra.Errors;
 using Ngaq.Core.Model.Bo;
 using Ngaq.Core.Service.Parser;
 using Ngaq.Core.Service.Word;
 using Ngaq.Core.Stream;
-using Ngaq.Core.Util.Io;
+using Ngaq.Core.Tools.Io;
 
 namespace Ngaq.Local.Service.Word;
 
 public class Svc_ParseWordList
 	: I_Svc_ParseWordList
 {
-	public async Task<I_Answer<nil>> AddWordsFromUrlAsy(str Path) {
-		var ans = new Answer<nil>();
-		ans.AddErrStr("Not implemented yet");
-		return ans;
+	public async Task<nil> AddWordsFromUrlAsy(
+		str Path
+		,CancellationToken ct = default
+	) {
+		throw new NotImplementedException();
 	}
 
-	public async Task<I_Answer<IList<Bo_Word>>> ParseWordsByIterEtEncodingAsy(
+	public async Task<IEnumerable<Bo_Word>> ParseWordsByIterEtEncodingAsy(
 		I_Iter<u8> Iter
 		,Encoding Encoding
+		,CancellationToken ct = default
 	){
-		I_Answer<IList<Bo_Word>> ans = new Answer<IList<Bo_Word>>();
+		//I_Answer<IEnumerable<Bo_Word>> ans = new Answer<IEnumerable<Bo_Word>>();
 		var Parser = new WordListParser(Iter);
 		Parser.Encoding = Encoding;
 		var DateBlocks = Parser.Parse();
 		var metadata = Parser.Status.Metadata;
 		if (metadata == null) {
-			ans.AddErrStr("Metadata is null");
-			return ans;
+			throw new Err_Base("Metadata is null");
 		}
 		var Bo_Words = ParseResultMapper.Inst.Map(metadata, DateBlocks);
-		ans.Data = Bo_Words.Data;
-		ans.Ok = true;
-		return ans;
+		return Bo_Words;
 	}
 
 
-	public async Task<I_Answer<IList<Bo_Word>>> ParseWordsFromFilePathAsy(Path_Encode Path_Encode) {
+	public async Task<IEnumerable<Bo_Word>> ParseWordsFromFilePathAsy(
+		Path_Encode Path_Encode
+		,CancellationToken ct = default
+	) {
 		I_Iter<u8> ByteReader = new ByteReader(Path_Encode.Path);
 		return await ParseWordsByIterEtEncodingAsy(ByteReader, Path_Encode.Encoding);
 	}
 
-	public async Task<I_Answer<IList<Bo_Word>>> ParseWordsFromUrlAsy(string Path) {
+	public async Task<IEnumerable<Bo_Word>> ParseWordsFromUrlAsy(
+		string Path
+		,CancellationToken ct = default
+	) {
 		throw new NotImplementedException();
 	}
 
-	public async Task<I_Answer<IList<Bo_Word>>> ParseWordsFromTextAsy(string Text) {
+	public async Task<IEnumerable<Bo_Word>> ParseWordsFromTextAsy(
+		string Text
+		,CancellationToken ct = default
+	) {
 		var ByteReader = new StrByteReader(Text);
 		return await ParseWordsByIterEtEncodingAsy(ByteReader, Encoding.UTF8);
 	}
+
 }

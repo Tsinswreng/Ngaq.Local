@@ -7,6 +7,7 @@
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
 		<PublishAot>true</PublishAot>
+		<NoWarn>CS1998</NoWarn>
 	</PropertyGroup>
 
 	<PropertyGroup>
@@ -15,6 +16,13 @@
 		<!-- 自动生成所有类型的序列化元数据 -->
 		<GenerateSerializationMetadata>true</GenerateSerializationMetadata>
 	</PropertyGroup>
+
+
+	<PropertyGroup>
+		<InterceptorsNamespaces>$(InterceptorsPreviewNamespaces);Microsoft.EntityFrameworkCore.GeneratedInterceptors</InterceptorsNamespaces>
+	</PropertyGroup>
+
+
 
 	<ItemGroup>
 		<Compile Include="../Ngaq.Core/TypeAlias.cs" />

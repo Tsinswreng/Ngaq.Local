@@ -32,9 +32,7 @@ public class RepoEf
 	where T_Id : IEquatable<T_Id>
 {
 
-	// static void Test(){
-	// 	//new RepoEf<Po_Kv, Id_Kv>();
-	// }
+
 
 	public RepoEf(DbCtx dbCtx){
 		this.DbCtx = dbCtx;
