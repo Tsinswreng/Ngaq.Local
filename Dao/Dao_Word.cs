@@ -15,6 +15,8 @@ namespace Ngaq.Local.Dao;
 public class Dao_Word(
 	DbCtx DbCtx
 ){
+
+
 	public async Task<Func<
 		I_UserCtx
 		,str
@@ -22,7 +24,9 @@ public class Dao_Word(
 		,CancellationToken
 		,Task<Id_Word?>
 	>>
-	Fn_SelectIdByFormIdEtLangAsy(){
+	Fn_SelectIdByFormIdEtLangAsy(
+		CancellationToken ct
+	){
 		return async (
 			I_UserCtx OperatorCtx
 			,str FormId
@@ -46,7 +50,9 @@ public class Dao_Word(
 		Id_Word
 		,CancellationToken
 		,Task<Bo_Word>
-	>> Fn_SelectBoWordByIdAsy(){
+	>> Fn_SelectBoWordByIdAsy(
+		CancellationToken ct
+	){
 		var Fn = async(
 			Id_Word Id
 			,CancellationToken ct
@@ -77,7 +83,9 @@ public class Dao_Word(
 		IEnumerable<Bo_Word>
 		,CancellationToken
 		,Task<nil>
-	>> Fn_InsertBoWordsAsy() {
+	>> Fn_InsertBoWordsAsy(
+		CancellationToken ct
+	) {
 		var Fn = async(
 			IEnumerable<Bo_Word> Bo_Words
 			,CancellationToken ct
@@ -122,7 +130,9 @@ public class Dao_Word(
 		IEnumerable<Po_Kv>
 		,CancellationToken
 		,Task<nil>
-	>> Fn_InsertPoKvsAsy(){
+	>> Fn_InsertPoKvsAsy(
+		CancellationToken ct
+	){
 		var Fn = async(
 			IEnumerable<Po_Kv> Po_Kvs
 			,CancellationToken ct
@@ -138,7 +148,9 @@ public class Dao_Word(
 		,i64
 		,CancellationToken
 		,Task<nil>
-	>> Fn_BatchSetUpdateAtAsy<T_Id>(){
+	>> Fn_BatchSetUpdateAtAsy<T_Id>(
+		CancellationToken ct
+	){
 		var Fn = async(
 			IEnumerable<I_PoBase> Pos
 			,i64 Time

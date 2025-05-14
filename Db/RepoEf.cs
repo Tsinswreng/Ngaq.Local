@@ -6,6 +6,7 @@ using Dapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Ngaq.Core.Infra;
+using Ngaq.Core.Infra.Db;
 using Ngaq.Core.Model;
 using Ngaq.Core.Model.Bo;
 using Ngaq.Core.Model.Po;
@@ -27,8 +28,10 @@ public class RepoEf
 	T_Entity
 	,T_Id
 >
+	:I_TxnAsyFnRunner
 	where T_Entity: class, I_Id<T_Id>
 	where T_Id : IEquatable<T_Id>
+
 {
 
 	public RepoEf(DbCtx dbCtx){
@@ -154,4 +157,23 @@ public class RepoEf
 		};
 		return Fn;
 	}
+
+
+	public async Task<T_Ret> TxnAsy<T_Ret>(
+		Func<CancellationToken, Task<T_Ret>> FnAsy
+		,CancellationToken ct
+	){
+		using var Tx = await DbCtx.Database.BeginTransactionAsync(ct);
+		try{
+			var ans = await FnAsy(ct);
+			await Tx.CommitAsync(ct);
+			return ans;
+		}
+		catch (System.Exception){
+			await Tx.RollbackAsync(ct);
+			throw;
+		}
+	}
+
+
 }
