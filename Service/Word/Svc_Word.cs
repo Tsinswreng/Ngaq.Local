@@ -16,12 +16,10 @@ using Ngaq.Local.Db;
 
 namespace Ngaq.Local.Service.Word;
 
+//不在Svc中依賴DbCtx
 public class Svc_Word(
-	// RepoFsql<Po_Word, Id_Word> Repo_Word
-	// ,RepoFsql<Po_Kv, Id_Kv> Repo_Kv
 	I_Svc_ParseWordList Svc_ParseWordList
 	,Dao_Word Dao_Word
-	//,DbCtx DbCtx
 )
 	//: I_Svc_AddWord
 {
