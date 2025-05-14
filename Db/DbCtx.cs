@@ -74,8 +74,12 @@ public class DbCtx : DbContext{
 				id=>id.Value.ToByteArr()
 				,val => new Id_Word(IdTool.ByteArrToUInt128(val))
 			).HasColumnType("BLOB");
+			e.Property(p=>p.Owner).HasConversion(
+				id=>id.Value.ToByteArr()
+				,val => new Id_User(IdTool.ByteArrToUInt128(val))
+			).HasColumnType("BLOB");
 			e.HasIndex(p=>p.WordFormId);
-			e.HasIndex(p => new {p.WordFormId, p.Lang}).IsUnique();
+			e.HasIndex(p => new {p.WordFormId, p.Lang, p.Owner}).IsUnique();
 			//Unique(WordFormId, Lang):
 		});
 
