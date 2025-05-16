@@ -23,9 +23,8 @@
 	</PropertyGroup>
 
 
-
 	<ItemGroup>
-		<Compile Include="../Ngaq.Core/TypeAlias.cs" />
+		<Compile Include="../Tsinswreng.CsTypeAlias/TypeAlias.cs" />
 	</ItemGroup>
 
 	<ItemGroup>

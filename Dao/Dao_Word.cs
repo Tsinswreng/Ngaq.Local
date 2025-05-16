@@ -1,12 +1,12 @@
 using System.Collections;
 using Microsoft.EntityFrameworkCore;
-using Ngaq.Core.Model;
 using Ngaq.Core.Model.Bo;
 using Ngaq.Core.Model.Po;
 using Ngaq.Core.Model.Po.Kv;
 using Ngaq.Core.Model.Po.Learn;
 using Ngaq.Core.Model.Po.User;
 using Ngaq.Core.Model.Po.Word;
+using Ngaq.Core.Model.UserCtx;
 using Ngaq.Core.Stream;
 using Ngaq.Local.Db;
 

@@ -85,7 +85,7 @@ public class DbCtx : DbContext{
 
 		_CfgPoBase<Po_Kv>(mb);
 		mb.Entity<Po_Kv>(e=>{
-			e.ToTable("Kv");
+			e.ToTable("Kv").UseTpcMappingStrategy();
 			e.HasKey(p=>p.Id);
 			e.Property(p=>p.Id).HasConversion(
 				id=>id.Value.ToByteArr()
@@ -102,7 +102,20 @@ public class DbCtx : DbContext{
 		});
 
 		mb.Entity<Po_Learn>(e=>{
+			e.ToTable("Learn").UseTpcMappingStrategy();
+			//e.HasKey(p=>p.Id);
+			e.Property(p=>p.Id).HasConversion(
+				id=>id.Value.ToByteArr()
+				,val => new Id_Kv(IdTool.ByteArrToUInt128(val))
+			).HasColumnType("BLOB");
 
+			e.HasIndex(p=>p.FKey_UInt128);
+			e.Property(p=>p.FKey_UInt128).HasConversion(
+				id=>id==null?null:id.Value.ToByteArr()
+				,val => val==null?null:IdTool.ByteArrToUInt128(val)
+			).HasColumnType("BLOB");
+			e.HasIndex(p=>p.KStr);
+			e.HasIndex(p=>p.KI64);
 		});
 	}
 }

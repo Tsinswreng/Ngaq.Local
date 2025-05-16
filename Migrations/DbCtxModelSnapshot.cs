@@ -24,8 +24,17 @@ namespace Ngaq.Local.Migrations
                     b.Property<long>("CreatedAt")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("CreatedBy")
+                    b.Property<byte[]>("CreatedBy")
+                        .HasColumnType("BLOB");
+
+                    b.Property<long>("FKeyType")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("FKey_Str")
                         .HasColumnType("TEXT");
+
+                    b.Property<byte[]>("FKey_UInt128")
+                        .HasColumnType("BLOB");
 
                     b.Property<string>("KDescr")
                         .HasColumnType("TEXT");
@@ -39,20 +48,11 @@ namespace Ngaq.Local.Migrations
                     b.Property<long>("KType")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("LastUpdatedBy")
-                        .HasColumnType("TEXT");
+                    b.Property<byte[]>("LastUpdatedBy")
+                        .HasColumnType("BLOB");
 
                     b.Property<long>("Status")
                         .HasColumnType("INTEGER");
-
-                    b.Property<long>("SubjectIdType")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("SubjectId_Str")
-                        .HasColumnType("TEXT");
-
-                    b.Property<byte[]>("SubjectId_UInt128")
-                        .HasColumnType("BLOB");
 
                     b.Property<long?>("UpdatedAt")
                         .HasColumnType("INTEGER");
@@ -74,13 +74,17 @@ namespace Ngaq.Local.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CreatedBy");
+
+                    b.HasIndex("FKey_UInt128");
+
                     b.HasIndex("KI64");
 
                     b.HasIndex("KStr");
 
-                    b.HasIndex("SubjectId_UInt128");
-
                     b.ToTable("Kv", (string)null);
+
+                    b.UseTpcMappingStrategy();
                 });
 
             modelBuilder.Entity("Ngaq.Core.Model.Po.Word.Po_Word", b =>
@@ -91,15 +95,19 @@ namespace Ngaq.Local.Migrations
                     b.Property<long>("CreatedAt")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("TEXT");
+                    b.Property<byte[]>("CreatedBy")
+                        .HasColumnType("BLOB");
 
                     b.Property<string>("Lang")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("LastUpdatedBy")
-                        .HasColumnType("TEXT");
+                    b.Property<byte[]>("LastUpdatedBy")
+                        .HasColumnType("BLOB");
+
+                    b.Property<byte[]>("Owner")
+                        .IsRequired()
+                        .HasColumnType("BLOB");
 
                     b.Property<long>("Status")
                         .HasColumnType("INTEGER");
@@ -113,12 +121,21 @@ namespace Ngaq.Local.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CreatedBy");
+
                     b.HasIndex("WordFormId");
 
-                    b.HasIndex("WordFormId", "Lang")
+                    b.HasIndex("WordFormId", "Lang", "Owner")
                         .IsUnique();
 
                     b.ToTable("Word", (string)null);
+                });
+
+            modelBuilder.Entity("Ngaq.Core.Model.Po.Learn.Po_Learn", b =>
+                {
+                    b.HasBaseType("Ngaq.Core.Model.Po.Kv.Po_Kv");
+
+                    b.ToTable("Learn", (string)null);
                 });
 #pragma warning restore 612, 618
         }
