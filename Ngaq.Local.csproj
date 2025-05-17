@@ -37,14 +37,14 @@
 </ItemGroup> -->
 
 
-	<ItemGroup>
+	<!-- <ItemGroup>
 		<PackageReference
 			Include="Microsoft.EntityFrameworkCore.Tasks"
 			Version="9.0.0"
 			PrivateAssets="all"
 			IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive"
 		/>
-	</ItemGroup>
+	</ItemGroup> -->
 
 
 

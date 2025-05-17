@@ -14,8 +14,8 @@ using Ngaq.Core.Tools;
 dotnet ef migrations add Init --project ./Ngaq.Local
 dotnet ef database update --project ./Ngaq.Local
 
-
-dotnet ef dbcontext optimize --output-dir GeneratedInterceptors # --namespace YourProject.GeneratedInterceptors
+#dotnet ef dbcontext optimize --output-dir GeneratedInterceptors # --namespace YourProject.GeneratedInterceptors
+dotnet ef dbcontext optimize --output-dir GeneratedInterceptors --precompile-queries --nativeaot
 
  */
 

@@ -34,6 +34,7 @@ public class Dao_Word(
 			,CancellationToken ct
 		)=>{
 			var UserId = OperatorCtx.UserId;
+//Query wasn't precompiled and dynamic code isn't supported (NativeAOT))
 			return await DbCtx.Po_Word.Where(w =>
 				w.WordFormId == FormId
 				&& w.Lang == Lang
