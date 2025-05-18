@@ -39,7 +39,10 @@ public class TestTblInfo{
 	}
 
 	public static void Init(){
-		I_TableMgr Mgr = TableMgr.Inst;
+		I_TableMgr Mgr = AppTableMgr.Inst;
+		Mgr.DbType = "Sqlite";
+
+
 		var Tbl_Word = Table.Mk("Word", Po_Word.Example);
 		Mgr.AddTable<Po_Word>(Tbl_Word);
 		{

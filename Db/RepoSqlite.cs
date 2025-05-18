@@ -33,7 +33,8 @@ public class RepoSqlite
 
 	public I_TableMgr TblMgr{get;set;}
 
-	public SqliteConnection Connection{get;set;}
+	//public SqliteConnection Connection{get;set;}
+	public I_SqlCmdMkr SqlCmdMkr{get;set;}
 
 
 	public async Task<Func<
@@ -41,24 +42,19 @@ public class RepoSqlite
 		,CancellationToken
 		,Task<nil>
 	>> Fn_InsertManyAsy(CancellationToken ct){
-		var Tbl = TblMgr.GetTable<T_Entity>();
-		var Cmd = Connection.CreateCommand();
-		var F = SqliteFormatter.Inst;
-		var Clause = F.InsertClause(Tbl.Columns.Keys);
+		var T = TblMgr.GetTable<T_Entity>();
+		var Clause = T.InsertClause(T.Columns.Keys);
 		var Sql =
-$"INSERT INTO {Tbl.Name} {Clause}";
-		Cmd.CommandText = Sql;
-		Cmd.Prepare();
-		var SqliteCmd = new SqliteCmd(Cmd);
-
+$"INSERT INTO {T.Name} {Clause}";
+		var Cmd = await SqlCmdMkr.PrepareAsy(Sql, ct);
 		var Fn = async(
 			IEnumerable<T_Entity> Entitys
 			,CancellationToken ct
 		)=>{
 			foreach(var entity in Entitys){
 				var CodeDict = DictCtx.ToDict(entity);
-				var DbDict = Tbl.ToDbDict(CodeDict);
-				await SqliteCmd.SetParams(DbDict).RunAsy(ct).FirstAsync(ct);
+				var DbDict = T.ToDbDict(CodeDict);
+				await Cmd.SetParams(DbDict).RunAsy(ct).FirstAsync(ct);
 			}
 			return Nil;
 		};
@@ -72,11 +68,7 @@ $"INSERT INTO {Tbl.Name} {Clause}";
 	>> Fn_SeekByIdAsy<T_Id2>(CancellationToken ct){
 		var Tbl = TblMgr.GetTable<T_Entity>();
 		var Sql = $"SELECT * FROM {Tbl.Name} WHERE ${nameof(I_HasId<nil>.Id)} = ?";
-		var RawCmd = Connection.CreateCommand();
-		RawCmd.CommandText = Sql;
-		RawCmd.Prepare();
-		var SqliteCmd = new SqliteCmd(RawCmd);
-
+		var Cmd = await SqlCmdMkr.PrepareAsy(Sql, ct);
 		var Fn = async(
 			T_Id2 Id
 			,CancellationToken ct
@@ -86,7 +78,7 @@ $"INSERT INTO {Tbl.Name} {Clause}";
 			}
 			var IdCol = Tbl.Columns[nameof(I_HasId<nil>.Id)];
 			var ConvertedId = IdCol.ToDbType(Id);
-			var RawDict = await SqliteCmd
+			var RawDict = await Cmd
 				.SetParams([ConvertedId])
 				.RunAsy(ct).FirstAsync(ct)
 			;
@@ -94,19 +86,6 @@ $"INSERT INTO {Tbl.Name} {Clause}";
 			var Ans = new T_Entity();
 			DictCtx.Assign(Ans, CodeDict);
 			return Ans;
-
-			// RawCmd.Parameters.AddWithValue("", ConvertedId);
-
-			// using var Reader = await RawCmd.ExecuteReaderAsync(ct);
-			// while(await Reader.ReadAsync(ct)){ //只執行一次?
-			// 	var RawDict = new Dictionary<str, object>();
-			// 	for(var i = 0; i < Reader.FieldCount; i++){
-			// 		RawDict[Reader.GetName(i)] = Reader.GetValue(i);
-			// 	}
-			// 	var CodeDict = Tbl.ToCodeDict(RawDict);
-			// 	DictCtx.Assign(Out, CodeDict);
-			// }
-			// return Out;
 		};
 		return Fn;
 	}
@@ -120,17 +99,15 @@ $"INSERT INTO {Tbl.Name} {Clause}";
 		,CancellationToken ct
 	){
 
-		var Tbl = TblMgr.GetTable<T_Entity>();
-		Tbl.ToCodeDict(ModelDict);
-		var F = SqliteFormatter.Inst;
-		var Clause = F.UpdateClause(ModelDict.Keys);
+		var T = TblMgr.GetTable<T_Entity>();
+		T.ToCodeDict(ModelDict);
+		//var F = SqliteSqlMkr.Inst;
+		var Clause = T.UpdateClause(ModelDict.Keys);
 		var IdStr = nameof(I_HasId<nil>.Id);
 		var Sql =
-$"UPDATE {Tbl.Name} SET ${Clause} WHERE {IdStr} = @{IdStr}";
-		var Cmd = Connection.CreateCommand();
-		Cmd.CommandText = Sql;
-		Cmd.Prepare();
-		var SqliteCmd = new SqliteCmd(Cmd);
+$"UPDATE {T.Name} SET ${Clause} WHERE {IdStr} = @{IdStr}";
+
+		var Cmd = await SqlCmdMkr.PrepareAsy(Sql, ct);
 
 		var Fn = async(
 			IEnumerable<Id_Dict<T_Id2>> Id_Dicts
@@ -139,8 +116,8 @@ $"UPDATE {Tbl.Name} SET ${Clause} WHERE {IdStr} = @{IdStr}";
 			foreach(var id_dict in Id_Dicts){
 				var CodeId = id_dict.Id;
 				var CodeDict = id_dict.Dict;
-				var DbDict = Tbl.ToDbDict(CodeDict);
-				await SqliteCmd.SetParams(DbDict).RunAsy(ct).FirstAsync(ct);
+				var DbDict = T.ToDbDict(CodeDict);
+				await Cmd.SetParams(DbDict).RunAsy(ct).FirstAsync(ct);
 			}//~for
 			return Nil;
 		};
@@ -183,13 +160,13 @@ $"UPDATE {Tbl.Name} SET ${Clause} WHERE {IdStr} = @{IdStr}";
 		T_Id2
 		,CancellationToken
 		,Task<nil>
-	>> Fn_DeleteOneByIdAsy<T_Id2>(){
+	>> Fn_DeleteOneByIdAsy<T_Id2>(
+		CancellationToken ct
+	){
 		var Tbl = TblMgr.GetTable<T_Entity>();
-		var Cmd = Connection.CreateCommand();
 var Sql = $"DELETE FROM {Tbl.Name} WHERE {nameof(I_HasId<nil>.Id)} = ?";
-		Cmd.CommandText = Sql;
-		Cmd.Prepare();
-		var SqliteCmd = new SqliteCmd(Cmd);
+
+		var Cmd = await SqlCmdMkr.PrepareAsy(Sql, ct);
 		async Task<nil> Fn(
 			T_Id2 Id
 			, CancellationToken ct
@@ -199,7 +176,7 @@ var Sql = $"DELETE FROM {Tbl.Name} WHERE {nameof(I_HasId<nil>.Id)} = ?";
 			}
 			var IdCol = Tbl.Columns[nameof(I_HasId<nil>.Id)];
 			var ConvertedId = IdCol.ToDbType(Id);
-			await SqliteCmd.SetParams([ConvertedId]).RunAsy(ct).FirstAsync(ct);
+			await Cmd.SetParams([ConvertedId]).RunAsy(ct).FirstAsync(ct);
 			return Nil;
 		}
 		return Fn;

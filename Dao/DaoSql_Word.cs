@@ -26,10 +26,10 @@ public class DaoSql_Word{
 var Tbl = TblMgr.GetTable<Po_Word>();
 var IdStr = Tbl.Columns[nameof(I_HasId<nil>.Id)].NameInDb;
 
-var F = SqliteFormatter.Inst;
+var F = TblMgr.SqlMkr;
 var Sql =
 $"""
-SELECT {F.Field(IdStr)} FROM {F.Field(TblMgr.GetTable<Po_Word>().Name)}
+SELECT {F.Field(IdStr)} FROM {F.Field(Tbl.Name)}
 WHERE {F.Field(nameof(Po_Word.Owner))} = {F.Param(nameof(Po_Word.Owner))}
 AND {F.Field(nameof(Po_Word.WordFormId))} = {F.Param(nameof(Po_Word.WordFormId))}
 AND {F.Field(nameof(Po_Word.Lang))} = {F.Param(nameof(Po_Word.Lang))}
