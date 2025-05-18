@@ -27,10 +27,11 @@ public class DbCtx : DbContext{
 
 	protected override void OnConfiguring(DbContextOptionsBuilder opt) {
 		base.OnConfiguring(opt);
-		var dbPath = Path.Combine(
-			Directory.GetCurrentDirectory(),
-			"..", "Ngaq.sqlite"
-		);
+		// var dbPath = Path.Combine(
+		// 	Directory.GetCurrentDirectory(),
+		// 	"..", "Ngaq.sqlite"
+		// );
+		var dbPath = "E:/_code/CsNgaq/Ngaq.Sqlite";//TODO
 		opt.UseSqlite($"Data Source={dbPath}");
 	}
 

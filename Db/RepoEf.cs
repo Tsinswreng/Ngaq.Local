@@ -30,7 +30,7 @@ public class RepoEf
 	,T_Id
 >
 	:I_TxnAsyFnRunner
-	where T_Entity: class, I_Id<T_Id>
+	where T_Entity: class, I_HasId<T_Id>
 	where T_Id : IEquatable<T_Id>
 
 {
@@ -69,7 +69,7 @@ public class RepoEf
 			if(Id is not T_Id id){
 				throw new FatalLogicErr("Id is not T_Id id");
 			}
-			var entity = await DbCtx.Set<T_Entity>().Select(x=>x)
+			var entity = await DbCtx.Set<T_Entity>().AsNoTracking().Select(x=>x)
 				//.Where(x=>x.Id==id) // 运算符“==”无法应用于“T_Id”和“T_Id”类型的操作数CS0019
 				.Where(x=>x.Id.Equals(id))
 				.FirstOrDefaultAsync(ct)

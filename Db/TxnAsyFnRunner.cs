@@ -13,6 +13,7 @@ public class TxnAsyFnRunner(
 		using var Tx = await DbCtx.Database.BeginTransactionAsync(ct);
 		try{
 			var ans = await FnAsy(ct);
+			await DbCtx.SaveChangesAsync(ct);
 			await Tx.CommitAsync(ct);
 			return ans;
 		}

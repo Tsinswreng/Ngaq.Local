@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Net.Http.Headers;
 using Microsoft.EntityFrameworkCore;
 using Ngaq.Core.Model.Bo;
 using Ngaq.Core.Model.Po;
@@ -8,6 +9,7 @@ using Ngaq.Core.Model.Po.User;
 using Ngaq.Core.Model.Po.Word;
 using Ngaq.Core.Model.UserCtx;
 using Ngaq.Core.Stream;
+using Ngaq.Core.Tools;
 using Ngaq.Local.Db;
 
 namespace Ngaq.Local.Dao;
@@ -35,14 +37,18 @@ public class Dao_Word(
 		)=>{
 			var UserId = OperatorCtx.UserId;
 //Query wasn't precompiled and dynamic code isn't supported (NativeAOT))
-			return await DbCtx.Po_Word.Where(w =>
-				w.WordFormId == FormId
-				&& w.Lang == Lang
-				&& w.CreatedBy == UserId
-			)
-				.Select(w => w.Id)
-				.FirstAsync(ct)
+			var ans = await DbCtx.Po_Word.AsNoTracking()
+				.Where(w =>
+					w.WordFormId == FormId
+					&& w.Lang == Lang
+					&& w.CreatedBy == UserId
+				)
+				.Select(w =>(Id_Word?)w.Id)
+				//.DefaultIfEmpty(null)
+				.FirstOrDefaultAsync(ct) //結構體之default非null
 			;
+			return ans;
+
 		};
 	}
 
@@ -50,7 +56,7 @@ public class Dao_Word(
 	public async Task<Func<
 		Id_Word
 		,CancellationToken
-		,Task<Bo_Word>
+		,Task<Bo_Word?>
 	>> Fn_SelectBoWordByIdAsy(
 		CancellationToken ct
 	){
@@ -58,7 +64,10 @@ public class Dao_Word(
 			Id_Word Id
 			,CancellationToken ct
 		)=>{
-			var Po_Word = await DbCtx.Po_Word.Where(w => w.Id == Id).FirstAsync(ct);
+			var Po_Word = await DbCtx.Po_Word.AsNoTracking().Where(w => w.Id == Id).FirstOrDefaultAsync(ct);
+			if(Po_Word == null){
+				return null;
+			}
 			var Props = await DbCtx.Po_Kv.Where(
 				w=>Id.Equals(w.FKey_UInt128)
 			).ToListAsync(ct);
@@ -92,36 +101,50 @@ public class Dao_Word(
 			,CancellationToken ct
 		)=>{
 			u64 BatchSize = 0xfff;
-			List<Po_Word> Po_Words = [];
-			List<Po_Kv> Po_Kvs = [];
-			List<Po_Learn> Po_Learns = [];
+			// List<Po_Word> Po_Words = [];
+			// List<Po_Kv> Po_Kvs = [];
+			// List<Po_Learn> Po_Learns = [];
+			using var Po_Words = new BatchListAsy<Po_Word, nil>(async(list, ct)=>{
+				await DbCtx.Po_Word.AddRangeAsync(list, ct);
+				return Nil;
+			}, BatchSize);
+
+
+			using var Po_Kvs = new BatchListAsy<Po_Kv, nil>(async(e, ct)=>{
+				await DbCtx.Po_Kv.AddRangeAsync(e, ct);
+				return Nil;
+			}, BatchSize);
+
+
+			using var Po_Learns = new BatchListAsy<Po_Learn, nil>(async(e, ct)=>{
+				await DbCtx.Po_Learn.AddRangeAsync(e, ct);
+				return Nil;
+			}, BatchSize);
+
 			u64 i = 0;
-			var FnAddAsy = async()=>{
-				await DbCtx.Po_Word.AddRangeAsync(Po_Words, ct);
-				await DbCtx.Po_Kv.AddRangeAsync(Po_Kvs, ct);
-				await DbCtx.Po_Learn.AddRangeAsync(Po_Learns, ct);
-				//await DbCtx.SaveChangesAsync(ct);?
-				Po_Words.Clear();
-				Po_Kvs.Clear();
-				Po_Learns.Clear();
-			};
+			// var FnAddAsy = async()=>{
+			// 	await DbCtx.Po_Word.AddRangeAsync(Po_Words, ct);
+			// 	await DbCtx.Po_Kv.AddRangeAsync(Po_Kvs, ct);
+			// 	await DbCtx.Po_Learn.AddRangeAsync(Po_Learns, ct);
+			// 	//await DbCtx.SaveChangesAsync(ct);?
+			// 	Po_Words.Clear();
+			// 	Po_Kvs.Clear();
+			// 	Po_Learns.Clear();
+			// };
 
 			foreach (var Bo_Word in Bo_Words) {
-				Po_Words.Add(Bo_Word.Po_Word);
+				await Po_Words.AddAsy(Bo_Word.Po_Word, ct);
 				foreach (var Prop in Bo_Word.Props) {
-					Po_Kvs.Add(Prop);
+					await Po_Kvs.AddAsy(Prop, ct);
 				}
 				foreach (var Learn in Bo_Word.Learns) {
-					Po_Learns.Add(Learn);
-				}
-				if(i >= BatchSize){
-					await FnAddAsy();
+					await Po_Learns.AddAsy(Learn, ct);
 				}
 				i++;
 			}
-			if(Po_Words.Count > 0){//最後一批
-				await FnAddAsy();
-			}
+			await Po_Words.EndAsy(ct);
+			await Po_Kvs.EndAsy(ct);
+			await Po_Learns.EndAsy(ct);
 			return Nil;
 		};
 		return Fn;
@@ -145,24 +168,28 @@ public class Dao_Word(
 	}
 
 	public async Task<Func<
-		IEnumerable<I_PoBase>
+		IEnumerable<T_Entity>
 		,i64
 		,CancellationToken
 		,Task<nil>
-	>> Fn_BatchSetUpdateAtAsy<T_Id>(
+	>> Fn_BatchSetUpdateAtAsy<
+		T_Entity
+		,T_Id
+	>(
 		CancellationToken ct
-	){
+	)where T_Entity : class, I_PoBase, I_HasId<T_Id>
+	{
 		var Fn = async(
-			IEnumerable<I_PoBase> Pos
+			IEnumerable<T_Entity> Pos
 			,i64 Time
 			,CancellationToken ct
 		)=>{
 			foreach(var po in Pos){
-				if(po is not I_Id<T_Id> IdPo){
+				if(po is not I_HasId<T_Id> IdPo){
 					continue;
 				}
-				await DbCtx.Set<I_PoBase>().Where(
-					w=>((I_Id<T_Id>)w).Id!.Equals(IdPo.Id)
+				await DbCtx.Set<T_Entity>().Where(
+					w=>((I_HasId<T_Id>)w).Id!.Equals(IdPo.Id)
 				).ExecuteUpdateAsync(s=>
 					s.SetProperty(e=>e.UpdatedAt, Time), ct
 				);
@@ -198,7 +225,7 @@ public class Dao_Word(
 	// 		,CancellationToken ct
 	// 	){
 	// 		var DbCtx = z.DbCtx;
-	// 		var Po_Word = await DbCtx.Po_Word.Where(w => w.Id == Id).FirstAsync(ct);
+	// 		var Po_Word = await DbCtx.Po_Word.Where(w => w.Id == Id).FirstOrDefaultAsync(ct);
 	// 		var Props = await DbCtx.Po_Kv.Where(
 	// 			w=>Id.Equals(w.FKey_UInt128)
 	// 		).ToListAsync(ct);

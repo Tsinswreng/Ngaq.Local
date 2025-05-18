@@ -1,6 +1,7 @@
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Ngaq.Core.Infra;
+using Ngaq.Core.Infra.Core;
 using Ngaq.Core.Infra.Db;
 using Ngaq.Core.Model.Bo;
 using Ngaq.Core.Model.Po.Kv;
@@ -48,7 +49,7 @@ public class Svc_Word(
 		var InsertBoWords = await Dao_Word.Fn_InsertBoWordsAsy(ct);
 		var InsertPoKvs = await Dao_Word.Fn_InsertPoKvsAsy(ct);
 		var SelectBoWordById = await Dao_Word.Fn_SelectBoWordByIdAsy(ct);
-		var BatchSetUpdateAt = await Dao_Word.Fn_BatchSetUpdateAtAsy<Id_Word>(ct);
+		var BatchSetUpdateAt = await Dao_Word.Fn_BatchSetUpdateAtAsy<Po_Word, Id_Word>(ct);
 		//var SeekIdByFormEtLang = await new SelectIdByFormIdEtLangAsy(this).InitAsy();
 		//var InsertBoWords = await new InsertBoWordsAsy(this).InitAsy();
 		var Fn = async(
@@ -67,7 +68,7 @@ public class Svc_Word(
 				await BatchSetUpdateAt(e, DateTimeOffset.Now.ToUnixTimeMilliseconds() ,ct);return Nil;
 			}, BatchSize);
 
-			foreach (var Bo_Word in Bo_Words) {
+			foreach (var Bo_Word in Bo_Words) {//TODO 先去褈合併
 				SetPoWordOwner(OperatorCtx, Bo_Word.Po_Word);
 				var ExistingId = await SeekIdByFormEtLang(
 					OperatorCtx
@@ -82,6 +83,9 @@ public class Svc_Word(
 				}else{//老詞
 					Bo_Word.Id = ExistingId.Value;
 					var OldBo_Word = await SelectBoWordById(ExistingId.Value, ct);
+					if(OldBo_Word == null){
+						throw new FatalLogicErr("failed to get old word");
+					}
 					var NewProps = Bo_Word.DiffProps(Bo_Word.Props, OldBo_Word.Props);
 					if(NewProps.Count == 0){
 						hasChanged = false;
@@ -96,7 +100,7 @@ public class Svc_Word(
 					var Po_Learn = new Po_Learn{
 						FKey_UInt128 = Bo_Word.Id.Value
 						//,KStr = Const_PropKey.
-						,VDescr = Const_Learn.add
+						,VStr = Const_Learn.add
 					};
 					Bo_Word.Learns.Add(Po_Learn);
 					Bo_Word.Po_Word.UpdatedAt = DateTimeOffset.Now.ToUnixTimeMilliseconds();
