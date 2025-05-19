@@ -7,42 +7,47 @@ using Ngaq.Core.Infra;
 using Ngaq.Core.Tools;
 using Ngaq.Core.Model.Po.User;
 using Ngaq.Core.Model.Po;
+using System.Data;
+using Microsoft.Data.Sqlite;
 
-public class TestTblInfo{
-	static TestTblInfo(){
-		Init();
+public class AppTblInfo{
+
+	protected static AppTblInfo? _Inst = null;
+	public static AppTblInfo Inst => _Inst??= new AppTblInfo();
+
+	public str DbPath{get;} = "E:/_code/CsNgaq/Ngaq.Sqlite";
+	public IDbConnection DbConnection{get;set;}
+	public AppTblInfo(){
+		DbConnection = new SqliteConnection($"Data Source={DbPath}");
+		DbConnection.Open();
 	}
 
-	// static nil CfgId<T_Id>(
-	// 	I_Table Tbl
-	// 	,str IdColName = "Id"
-	// ){
-	// 	var o = Tbl;
-	// 	o.SetCol(IdColName).HasConversion(
-	// 		(id)=>{return ((T_Id)id).Value.ToByteArr();},
-	// 		(val)=>{return new T_Id(IdTool.ByteArrToUInt128((u8[])val));}
-	// 	);
-	// 	return Nil;
-	// }
+	static AppTblInfo(){
+		Inst.Init();
+	}
 
-	static nil CfgPoBase<T_Po>(I_Table Tbl){
+
+	nil CfgPoBase<T_Po>(I_Table Tbl){
 		var o = Tbl;
 		o.SetCol(nameof(I_PoBase.CreatedBy)).HasConversion(
-			(id)=>{return ((Id_User)id).Value.ToByteArr();},
-			(val)=>{return new Id_User(IdTool.ByteArrToUInt128((u8[])val));}
+			(id)=>{return id==null?null:((Id_User)id).Value.ToByteArr();},
+			(val)=>{return val==null?null:new Id_User(IdTool.ByteArrToUInt128((u8[])val));}
 		);
 		o.SetCol(nameof(I_PoBase.LastUpdatedBy)).HasConversion(
-			(id)=>{return ((Id_User)id).Value.ToByteArr();},
-			(val)=>{return new Id_User(IdTool.ByteArrToUInt128((u8[])val));}
+			(id)=>{return id==null?null:id==null?null:((Id_User)id).Value.ToByteArr();},
+			(val)=>{return val==null?null:val==null?null:new Id_User(IdTool.ByteArrToUInt128((u8[])val));}
 		);
 		return Nil;
 	}
 
-	public static void Init(){
+	public void Init(){
 		I_TableMgr Mgr = AppTableMgr.Inst;
 		Mgr.DbType = "Sqlite";
 
-
+// var d = DictCtx.ToDict(Po_Word.Example);//t
+// System.Console.WriteLine(
+// 	str.Join("\n", d.Keys)
+// );
 		var Tbl_Word = Table.Mk("Word", Po_Word.Example);
 		Mgr.AddTable<Po_Word>(Tbl_Word);
 		{
@@ -50,12 +55,12 @@ public class TestTblInfo{
 			CfgPoBase<Po_Word>(o);
 			o.CodeIdName = nameof(Po_Word.Id);
 			o.SetCol(nameof(Po_Word.Id)).HasConversion(
-				(id)=>{return ((Id_Word)id).Value.ToByteArr();},
-				(val)=>{return new Id_Word(IdTool.ByteArrToUInt128((u8[])val));}
+				(id)=>{return id==null?null:((Id_Word)id).Value.ToByteArr();},
+				(val)=>{return val==null?null:new Id_Word(IdTool.ByteArrToUInt128((u8[])val));}
 			);
 			o.SetCol(nameof(Po_Word.Owner)).HasConversion(
-				(id)=>{return ((Id_User)id).Value.ToByteArr();},
-				(val)=>{return new Id_User(IdTool.ByteArrToUInt128((u8[])val));}
+				(id)=>{return id==null?null:((Id_User)id).Value.ToByteArr();},
+				(val)=>{return val==null?null:new Id_User(IdTool.ByteArrToUInt128((u8[])val));}
 			);
 		}
 
@@ -66,8 +71,12 @@ public class TestTblInfo{
 			CfgPoBase<Po_Kv>(o);
 			o.CodeIdName = nameof(Po_Kv.Id);
 			o.SetCol(nameof(Po_Kv.Id)).HasConversion(
-				(id)=>{return ((Id_Kv)id).Value.ToByteArr();},
-				(val)=>{return new Id_Kv(IdTool.ByteArrToUInt128((u8[])val));}
+				(id)=>{return id==null?null:((Id_Kv)id).Value.ToByteArr();},
+				(val)=>{return val==null?null:new Id_Kv(IdTool.ByteArrToUInt128((u8[])val));}
+			);
+			o.SetCol(nameof(Po_Kv.FKey_UInt128)).HasConversion(
+				(id)=>{return id==null?null:((UInt128)id).ToByteArr();},
+				(val)=>{return val==null?null:IdTool.ByteArrToUInt128((u8[])val);}
 			);
 		}
 
@@ -78,8 +87,12 @@ public class TestTblInfo{
 			CfgPoBase<Po_Learn>(o);
 			o.CodeIdName = nameof(Po_Learn.Id);
 			o.SetCol(nameof(Po_Learn.Id)).HasConversion(
-				(id)=>{return ((Id_Kv)id).Value.ToByteArr();},
-				(val)=>{return new Id_Kv(IdTool.ByteArrToUInt128((u8[])val));}
+				(id)=>{return id==null?null:((Id_Kv)id).Value.ToByteArr();},
+				(val)=>{return val==null?null:new Id_Kv(IdTool.ByteArrToUInt128((u8[])val));}
+			);
+			o.SetCol(nameof(Po_Learn.FKey_UInt128)).HasConversion(
+				(id)=>{return id==null?null:((UInt128)id).ToByteArr();},
+				(val)=>{return val==null?null:IdTool.ByteArrToUInt128((u8[])val);}
 			);
 		}
 
@@ -108,4 +121,11 @@ System.Console.WriteLine(
 	TestTblInfo.GenSql<Po_Word>()
 );
 throw new Exception("AOT");
+#endif
+
+
+#if false
+Po_Word	Id_Word
+Po_Kv	Id_Kv
+Po_Learn	Id_Kv
 #endif

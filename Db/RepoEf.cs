@@ -29,7 +29,7 @@ public class RepoEf
 	T_Entity
 	,T_Id
 >
-	:I_TxnAsyFnRunner
+	:I_RunInTxn
 	where T_Entity: class, I_HasId<T_Id>
 	where T_Id : IEquatable<T_Id>
 
@@ -98,7 +98,7 @@ public class RepoEf
 				if(Old == null){
 					continue;
 				}
-				DictCtx.Assign(Old, dict);//源生成器實現、無反射
+				DictCtx.AssignT(Old, dict);//源生成器實現、無反射
 				if(Old is I_PoBase po){
 					po.UpdatedAt = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 				}
@@ -160,7 +160,7 @@ public class RepoEf
 	}
 
 
-	public async Task<T_Ret> TxnAsy<T_Ret>(
+	public async Task<T_Ret> RunInTxnAsy<T_Ret>(
 		Func<CancellationToken, Task<T_Ret>> FnAsy
 		,CancellationToken ct
 	){

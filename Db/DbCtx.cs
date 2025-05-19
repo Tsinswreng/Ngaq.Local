@@ -86,7 +86,7 @@ public class DbCtx : DbContext{
 
 		_CfgPoBase<Po_Kv>(mb);
 		mb.Entity<Po_Kv>(e=>{
-			e.ToTable("Kv").UseTpcMappingStrategy();
+			e.ToTable("Prop").UseTpcMappingStrategy();
 			e.HasKey(p=>p.Id);
 			e.Property(p=>p.Id).HasConversion(
 				id=>id.Value.ToByteArr()

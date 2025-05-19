@@ -1,3 +1,4 @@
+#if false
 using System.Threading.Tasks;
 using Ngaq.Core.Infra;
 using Ngaq.Core.Model;
@@ -32,3 +33,5 @@ public class TestFreeSql{
 		await repo.UpdateManyAsy([id_dict]);
 	}
 }
+
+#endif

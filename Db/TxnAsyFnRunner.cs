@@ -2,11 +2,11 @@ using Ngaq.Core.Infra.Db;
 using Ngaq.Local.Db;
 
 namespace Ngaq.Db;
-public class TxnAsyFnRunner(
+public class EfTxnRunner(
 	DbCtx DbCtx
-) : I_TxnAsyFnRunner{
+) : I_RunInTxn{
 
-	public async Task<T_Ret> TxnAsy<T_Ret>(
+	public async Task<T_Ret> RunInTxnAsy<T_Ret>(
 		Func<CancellationToken, Task<T_Ret>> FnAsy
 		,CancellationToken ct
 	){
