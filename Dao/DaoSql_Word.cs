@@ -14,28 +14,19 @@ using Tsinswreng.SqlHelper.Cmd;
 namespace Ngaq.Local.Dao;
 
 
-public class DaoSql_Word{
-	public DaoSql_Word(
-		I_SqlCmdMkr SqlCmdMkr
-		,I_TableMgr TblMgr
+public class DaoSql_Word(
+		ISqlCmdMkr SqlCmdMkr
+		,ITableMgr TblMgr
 		,RepoSql<Po_Word, IdWord> RepoWord
-		,RepoSql<Po_Kv, IdKv> RepoKv
-		,RepoSql<Po_Learn, IdKv> RepoLearn
+		,RepoSql<Po_Kv, Core.Model.Po.Kv.IdKv> RepoKv
+		,RepoSql<Po_Learn, IdLearn> RepoLearn
+){
+	// public RepoSql<Po_Word, IdWord> RepoWord{get;set;}
+	// public RepoSql<Po_Kv, IdKv> RepoKv{get;set;}
+	// public RepoSql<Po_Learn, IdKv> RepoLearn{get;set;}
 
-	){
-		this.SqlCmdMkr = SqlCmdMkr;
-		this.TblMgr = TblMgr;
-		this.RepoWord = RepoWord;
-		this.RepoKv = RepoKv;
-		this.RepoLearn = RepoLearn;
-	}
-
-	public RepoSql<Po_Word, IdWord> RepoWord{get;set;}
-	public RepoSql<Po_Kv, IdKv> RepoKv{get;set;}
-	public RepoSql<Po_Learn, IdKv> RepoLearn{get;set;}
-
-	public I_SqlCmdMkr SqlCmdMkr{get;set;}
-	public I_TableMgr TblMgr{get;set;}
+	// public ISqlCmdMkr SqlCmdMkr{get;set;}
+	// public ITableMgr TblMgr{get;set;}
 
 	public async Task<Func<
 		I_UserCtx
@@ -83,7 +74,7 @@ AND Lang = @Lang
 				return null;
 			}
 			var ans = GotDict[T.ToDbName(nameof(IHasId<nil>.Id))];
-			return new Id_Word(ToolId.ByteArrToUInt128((u8[])ans));
+			return new IdWord(ToolId.ByteArrToUInt128((u8[])ans));
 		};
 	}
 

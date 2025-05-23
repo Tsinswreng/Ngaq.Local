@@ -18,42 +18,42 @@ using Tsinswreng.SqlHelper.Cmd;
 //using T = Bo_Word;
 public class RepoSql
 <
-	T_Entity
-	,T_Id
+	TEntity
+	,TId
 >
-	where T_Entity: class, IHasId<T_Id>, new()
-	where T_Id : IEquatable<T_Id>
+	where TEntity: class, IHasId<TId>, new()
+	where TId : IEquatable<TId>
 
 {
 
 	public RepoSql(
-		I_TableMgr TblMgr
-		,I_SqlCmdMkr SqlCmdMkr
+		ITableMgr TblMgr
+		,ISqlCmdMkr SqlCmdMkr
 	){
 		this.TblMgr = TblMgr;
 		this.SqlCmdMkr = SqlCmdMkr;
 	}
 
-	public I_TableMgr TblMgr{get;set;}
+	public ITableMgr TblMgr{get;set;}
 
-	public I_SqlCmdMkr SqlCmdMkr{get;set;}
+	public ISqlCmdMkr SqlCmdMkr{get;set;}
 
 
 	public async Task<Func<
-		IEnumerable<T_Entity>
+		IEnumerable<TEntity>
 		,CancellationToken
 		,Task<nil>
 	>> Fn_InsertManyAsy(
 		I_DbFnCtx? Ctx
 		,CancellationToken ct
 	){
-		var T = TblMgr.GetTable<T_Entity>();
+		var T = TblMgr.GetTable<TEntity>();
 		var Clause = T.InsertClause(T.Columns.Keys);
 		var Sql =
 $"INSERT INTO {T.Quote(T.Name)} {Clause}";
 		var Cmd = await SqlCmdMkr.PrepareAsy(Ctx, Sql, ct);
 		var Fn = async(
-			IEnumerable<T_Entity> Entitys
+			IEnumerable<TEntity> Entitys
 			,CancellationToken ct
 		)=>{
 			var i = 0;
@@ -80,12 +80,12 @@ $"INSERT INTO {T.Quote(T.Name)} {Clause}";
 	public async Task<Func<
 		T_Id2
 		,CancellationToken
-		,Task<T_Entity?>
+		,Task<TEntity?>
 	>> Fn_SeekByIdAsy<T_Id2>(
 		I_DbFnCtx? Ctx
 		,CancellationToken ct
 	){
-		var T = TblMgr.GetTable<T_Entity>();
+		var T = TblMgr.GetTable<TEntity>();
 		var Sql = $"SELECT * FROM {T.Quote(T.Name)} WHERE {T.Field(nameof(IHasId<nil>.Id))} = @1" ;
 		var Cmd = await SqlCmdMkr.PrepareAsy(Ctx, Sql, ct);
 
@@ -93,7 +93,7 @@ $"INSERT INTO {T.Quote(T.Name)} {Clause}";
 			T_Id2 Id
 			,CancellationToken ct
 		)=>{
-			if(Id is not T_Id id){
+			if(Id is not TId id){
 				throw new Exception("Id is not T_Id id");
 			}
 			var IdCol = T.Columns[nameof(IHasId<nil>.Id)];
@@ -106,7 +106,7 @@ $"INSERT INTO {T.Quote(T.Name)} {Clause}";
 				return null;
 			}
 			var CodeDict = T.ToCodeDict(RawDict);
-			var Ans = new T_Entity();
+			var Ans = new TEntity();
 			DictCtx.AssignT(Ans, CodeDict);
 			return Ans;
 		};
@@ -123,7 +123,7 @@ $"INSERT INTO {T.Quote(T.Name)} {Clause}";
 		,CancellationToken ct
 	){
 
-		var T = TblMgr.GetTable<T_Entity>();
+		var T = TblMgr.GetTable<TEntity>();
 		T.ToCodeDict(ModelDict);
 		//var F = SqliteSqlMkr.Inst;
 		var Clause = T.UpdateClause(ModelDict.Keys);
@@ -187,7 +187,7 @@ $"UPDATE {T.Quote(T.Name)} SET ${Clause} WHERE {T.Field(N_Id)} = {T.Param(N_Id)}
 		I_DbFnCtx? Ctx
 		,CancellationToken ct
 	){
-		var Tbl = TblMgr.GetTable<T_Entity>();
+		var Tbl = TblMgr.GetTable<TEntity>();
 var Sql = $"DELETE FROM {Tbl.Name} WHERE {nameof(IHasId<nil>.Id)} = ?";
 
 		var Cmd = await SqlCmdMkr.PrepareAsy(Ctx, Sql, ct);
@@ -195,7 +195,7 @@ var Sql = $"DELETE FROM {Tbl.Name} WHERE {nameof(IHasId<nil>.Id)} = ?";
 			T_Id2 Id
 			, CancellationToken ct
 		) {
-			if (Id is not T_Id id) {
+			if (Id is not TId id) {
 				throw new Exception("Id is not T_Id id");
 			}
 			var IdCol = Tbl.Columns[nameof(IHasId<nil>.Id)];

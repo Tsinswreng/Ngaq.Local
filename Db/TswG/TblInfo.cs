@@ -44,15 +44,17 @@ public class AppTblInfo{
 		return Nil;
 	}
 
+	protected I_Table Mk<T>(str Name, T Example){
+		var ExDict = DictCtx.ToDictT(Example);
+		return Table.Mk(Name, ExDict);
+	}
+
 	public void Init(){
-		I_TableMgr Mgr = AppTableMgr.Inst;
+		ITableMgr Mgr = AppTableMgr.Inst;
 		Mgr.DbType = "Sqlite";
 
-// var d = DictCtx.ToDict(Po_Word.Example);//t
-// System.Console.WriteLine(
-// 	str.Join("\n", d.Keys)
-// );
-		var Tbl_Word = Table.Mk("Word", Po_Word.Example);
+
+		var Tbl_Word = Mk("Word", Po_Word.Example);
 		Mgr.AddTable<Po_Word>(Tbl_Word);
 		{
 			var o = Tbl_Word;
@@ -68,7 +70,7 @@ public class AppTblInfo{
 			);
 		}
 
-		var Tbl_Prop = Table.Mk("Prop", Po_Kv.Example);
+		var Tbl_Prop = Mk("Prop", Po_Kv.Example);
 		Mgr.AddTable<Po_Kv>(Tbl_Prop);
 		{
 			var o = Tbl_Prop;
@@ -84,7 +86,7 @@ public class AppTblInfo{
 			);
 		}
 
-		var Tbl_Learn = Table.Mk("Learn", Po_Learn.Example);
+		var Tbl_Learn = Mk("Learn", Po_Learn.Example);
 		Mgr.AddTable<Po_Learn>(Tbl_Learn);
 		{
 			var o = Tbl_Learn;

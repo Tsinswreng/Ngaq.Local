@@ -2,13 +2,13 @@ namespace Ngaq.Local.Db;
 
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
 using Ngaq.Core.Model.Po;
 using Ngaq.Core.Model.Po.Kv;
 using Ngaq.Core.Model.Po.Learn;
-using Ngaq.Core.Model.Po.User;
 using Ngaq.Core.Model.Po.Word;
+using Ngaq.Core.Model.Sys.Po.User;
 using Ngaq.Core.Tools;
+
 
 /*
 dotnet ef migrations add Init --project ./Ngaq.Local
@@ -36,6 +36,7 @@ public class DbCtx : DbContext{
 	}
 
 
+
 	protected nil _CfgPoBase<
 		[DynamicallyAccessedMembers(
 			DynamicallyAccessedMemberTypes.PublicConstructors |
@@ -51,13 +52,13 @@ public class DbCtx : DbContext{
 		mb.Entity<T>(e=>{
 			e.Property(p=>p.CreatedBy).HasConversion(
 				id=>id==null?null:id.Value.Value.ToByteArr()
-				,val => val==null?null:new Id_User(ToolId.ByteArrToUInt128(val))
+				,val => val==null?null:new IdUser(ToolId.ByteArrToUInt128(val))
 			);
 			e.HasIndex(p=>p.CreatedBy);
 
 			e.Property(p=>p.LastUpdatedBy).HasConversion(
 				id=>id==null?null:id.Value.Value.ToByteArr()
-				,val => val==null?null:new Id_User(ToolId.ByteArrToUInt128(val))
+				,val => val==null?null:new IdUser(ToolId.ByteArrToUInt128(val))
 			);
 			e.HasIndex(p=>p.CreatedBy);
 
@@ -73,11 +74,11 @@ public class DbCtx : DbContext{
 			e.HasKey(p=>p.Id);
 			e.Property(p=>p.Id).HasConversion(
 				id=>id.Value.ToByteArr()
-				,val => new Id_Word(ToolId.ByteArrToUInt128(val))
+				,val => new IdWord(ToolId.ByteArrToUInt128(val))
 			).HasColumnType("BLOB");
 			e.Property(p=>p.Owner).HasConversion(
 				id=>id.Value.ToByteArr()
-				,val => new Id_User(ToolId.ByteArrToUInt128(val))
+				,val => new IdUser(ToolId.ByteArrToUInt128(val))
 			).HasColumnType("BLOB");
 			e.HasIndex(p=>p.WordFormId);
 			e.HasIndex(p => new {p.WordFormId, p.Lang, p.Owner}).IsUnique();
@@ -90,7 +91,7 @@ public class DbCtx : DbContext{
 			e.HasKey(p=>p.Id);
 			e.Property(p=>p.Id).HasConversion(
 				id=>id.Value.ToByteArr()
-				,val => new Id_Kv(ToolId.ByteArrToUInt128(val))
+				,val => new IdKv(ToolId.ByteArrToUInt128(val))
 			).HasColumnType("BLOB");
 
 			e.HasIndex(p=>p.FKey_UInt128);
@@ -107,7 +108,7 @@ public class DbCtx : DbContext{
 			//e.HasKey(p=>p.Id);
 			e.Property(p=>p.Id).HasConversion(
 				id=>id.Value.ToByteArr()
-				,val => new Id_Kv(ToolId.ByteArrToUInt128(val))
+				,val => new IdLearn(ToolId.ByteArrToUInt128(val))
 			).HasColumnType("BLOB");
 
 			e.HasIndex(p=>p.FKey_UInt128);
@@ -120,3 +121,4 @@ public class DbCtx : DbContext{
 		});
 	}
 }
+

@@ -1,6 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<ItemGroup>
+		<ProjectReference Include="../Tsinswreng.SqlHelper/Tsinswreng.SqlHelper.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageReference Include="Dapper" Version="2.1.66" />
 		<PackageReference Include="FreeSql" Version="3.5.205" />
 		<PackageReference Include="FreeSql.Extensions.EFModel" Version="3.5.205" />
