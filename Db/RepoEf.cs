@@ -30,7 +30,7 @@ public class RepoEf
 	,T_Id
 >
 	:I_RunInTxn
-	where T_Entity: class, I_HasId<T_Id>
+	where T_Entity: class, IHasId<T_Id>
 	where T_Id : IEquatable<T_Id>
 
 {
@@ -99,7 +99,7 @@ public class RepoEf
 					continue;
 				}
 				DictCtx.AssignT(Old, dict);//源生成器實現、無反射
-				if(Old is I_PoBase po){
+				if(Old is IPoBase po){
 					po.UpdatedAt = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 				}
 			}//~for

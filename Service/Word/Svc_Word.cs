@@ -1,6 +1,4 @@
 using System.Text;
-using Microsoft.EntityFrameworkCore;
-using Ngaq.Core.Infra;
 using Ngaq.Core.Infra.Core;
 using Ngaq.Core.Infra.Db;
 using Ngaq.Core.Model.Bo;
@@ -56,7 +54,7 @@ public class Svc_Word(
 		//TODO update `UpdateAt`
 		//var BatchSetUpdateAt = await Dao_Word.Fn_BatchSetUpdateAtAsy<Po_Word, Id_Word>(ct);
 		var Fn = async(
-			I_UserCtx OperatorCtx
+			I_UserCtx UserCtx
 			,IEnumerable<Bo_Word> Bo_Words
 			,CancellationToken ct
 		)=>{
@@ -71,9 +69,9 @@ public class Svc_Word(
 			}, BatchSize);
 
 			foreach (var Bo_Word in Bo_Words) {//TODO 先去褈合併
-				SetPoWordOwner(OperatorCtx, Bo_Word.Po_Word);
+				SetPoWordOwner(UserCtx, Bo_Word.Po_Word);
 				var ExistingId = await SeekIdByFormEtLang(
-					OperatorCtx
+					UserCtx
 					,Bo_Word.Po_Word.WordFormId
 					,Bo_Word.Po_Word.Lang
 					,ct

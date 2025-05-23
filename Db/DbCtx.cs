@@ -47,17 +47,17 @@ public class DbCtx : DbContext{
 			DynamicallyAccessedMemberTypes.Interfaces
 		)]
 		T
-	>(ModelBuilder mb) where T:class, I_PoBase{
+	>(ModelBuilder mb) where T:class, IPoBase{
 		mb.Entity<T>(e=>{
 			e.Property(p=>p.CreatedBy).HasConversion(
 				id=>id==null?null:id.Value.Value.ToByteArr()
-				,val => val==null?null:new Id_User(IdTool.ByteArrToUInt128(val))
+				,val => val==null?null:new Id_User(ToolId.ByteArrToUInt128(val))
 			);
 			e.HasIndex(p=>p.CreatedBy);
 
 			e.Property(p=>p.LastUpdatedBy).HasConversion(
 				id=>id==null?null:id.Value.Value.ToByteArr()
-				,val => val==null?null:new Id_User(IdTool.ByteArrToUInt128(val))
+				,val => val==null?null:new Id_User(ToolId.ByteArrToUInt128(val))
 			);
 			e.HasIndex(p=>p.CreatedBy);
 
@@ -73,11 +73,11 @@ public class DbCtx : DbContext{
 			e.HasKey(p=>p.Id);
 			e.Property(p=>p.Id).HasConversion(
 				id=>id.Value.ToByteArr()
-				,val => new Id_Word(IdTool.ByteArrToUInt128(val))
+				,val => new Id_Word(ToolId.ByteArrToUInt128(val))
 			).HasColumnType("BLOB");
 			e.Property(p=>p.Owner).HasConversion(
 				id=>id.Value.ToByteArr()
-				,val => new Id_User(IdTool.ByteArrToUInt128(val))
+				,val => new Id_User(ToolId.ByteArrToUInt128(val))
 			).HasColumnType("BLOB");
 			e.HasIndex(p=>p.WordFormId);
 			e.HasIndex(p => new {p.WordFormId, p.Lang, p.Owner}).IsUnique();
@@ -90,13 +90,13 @@ public class DbCtx : DbContext{
 			e.HasKey(p=>p.Id);
 			e.Property(p=>p.Id).HasConversion(
 				id=>id.Value.ToByteArr()
-				,val => new Id_Kv(IdTool.ByteArrToUInt128(val))
+				,val => new Id_Kv(ToolId.ByteArrToUInt128(val))
 			).HasColumnType("BLOB");
 
 			e.HasIndex(p=>p.FKey_UInt128);
 			e.Property(p=>p.FKey_UInt128).HasConversion(
 				id=>id==null?null:id.Value.ToByteArr()
-				,val => val==null?null:IdTool.ByteArrToUInt128(val)
+				,val => val==null?null:ToolId.ByteArrToUInt128(val)
 			).HasColumnType("BLOB");
 			e.HasIndex(p=>p.KStr);
 			e.HasIndex(p=>p.KI64);
@@ -107,13 +107,13 @@ public class DbCtx : DbContext{
 			//e.HasKey(p=>p.Id);
 			e.Property(p=>p.Id).HasConversion(
 				id=>id.Value.ToByteArr()
-				,val => new Id_Kv(IdTool.ByteArrToUInt128(val))
+				,val => new Id_Kv(ToolId.ByteArrToUInt128(val))
 			).HasColumnType("BLOB");
 
 			e.HasIndex(p=>p.FKey_UInt128);
 			e.Property(p=>p.FKey_UInt128).HasConversion(
 				id=>id==null?null:id.Value.ToByteArr()
-				,val => val==null?null:IdTool.ByteArrToUInt128(val)
+				,val => val==null?null:ToolId.ByteArrToUInt128(val)
 			).HasColumnType("BLOB");
 			e.HasIndex(p=>p.KStr);
 			e.HasIndex(p=>p.KI64);

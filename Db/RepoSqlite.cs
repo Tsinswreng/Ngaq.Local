@@ -12,7 +12,7 @@ using Tsinswreng.SqlHelper;
 using Ngaq.Core.Model;
 using System.Collections;
 using Tsinswreng.SqlHelper.Cmd;
-using TeQuaero.Shared.Util;
+
 
 
 //using T = Bo_Word;
@@ -21,7 +21,7 @@ public class RepoSql
 	T_Entity
 	,T_Id
 >
-	where T_Entity: class, I_HasId<T_Id>, new()
+	where T_Entity: class, IHasId<T_Id>, new()
 	where T_Id : IEquatable<T_Id>
 
 {
@@ -86,7 +86,7 @@ $"INSERT INTO {T.Quote(T.Name)} {Clause}";
 		,CancellationToken ct
 	){
 		var T = TblMgr.GetTable<T_Entity>();
-		var Sql = $"SELECT * FROM {T.Quote(T.Name)} WHERE {T.Field(nameof(I_HasId<nil>.Id))} = @1" ;
+		var Sql = $"SELECT * FROM {T.Quote(T.Name)} WHERE {T.Field(nameof(IHasId<nil>.Id))} = @1" ;
 		var Cmd = await SqlCmdMkr.PrepareAsy(Ctx, Sql, ct);
 
 		var Fn = async(
@@ -96,7 +96,7 @@ $"INSERT INTO {T.Quote(T.Name)} {Clause}";
 			if(Id is not T_Id id){
 				throw new Exception("Id is not T_Id id");
 			}
-			var IdCol = T.Columns[nameof(I_HasId<nil>.Id)];
+			var IdCol = T.Columns[nameof(IHasId<nil>.Id)];
 			var ConvertedId = IdCol.ToDbType(Id);
 			var RawDict = await Cmd
 				.Args([ConvertedId])
@@ -127,7 +127,7 @@ $"INSERT INTO {T.Quote(T.Name)} {Clause}";
 		T.ToCodeDict(ModelDict);
 		//var F = SqliteSqlMkr.Inst;
 		var Clause = T.UpdateClause(ModelDict.Keys);
-		var N_Id = nameof(I_HasId<nil>.Id);
+		var N_Id = nameof(IHasId<nil>.Id);
 		var Sql =
 $"UPDATE {T.Quote(T.Name)} SET ${Clause} WHERE {T.Field(N_Id)} = {T.Param(N_Id)}";
 
@@ -188,7 +188,7 @@ $"UPDATE {T.Quote(T.Name)} SET ${Clause} WHERE {T.Field(N_Id)} = {T.Param(N_Id)}
 		,CancellationToken ct
 	){
 		var Tbl = TblMgr.GetTable<T_Entity>();
-var Sql = $"DELETE FROM {Tbl.Name} WHERE {nameof(I_HasId<nil>.Id)} = ?";
+var Sql = $"DELETE FROM {Tbl.Name} WHERE {nameof(IHasId<nil>.Id)} = ?";
 
 		var Cmd = await SqlCmdMkr.PrepareAsy(Ctx, Sql, ct);
 		async Task<nil> Fn(
@@ -198,7 +198,7 @@ var Sql = $"DELETE FROM {Tbl.Name} WHERE {nameof(I_HasId<nil>.Id)} = ?";
 			if (Id is not T_Id id) {
 				throw new Exception("Id is not T_Id id");
 			}
-			var IdCol = Tbl.Columns[nameof(I_HasId<nil>.Id)];
+			var IdCol = Tbl.Columns[nameof(IHasId<nil>.Id)];
 			var ConvertedId = IdCol.ToDbType(Id);
 			await Cmd.Args([ConvertedId]).RunAsy(ct).FirstOrDefaultAsync(ct);
 			return Nil;

@@ -24,7 +24,7 @@ public class Dao_Word(
 		,str
 		,str
 		,CancellationToken
-		,Task<Id_Word?>
+		,Task<IdWord?>
 	>>
 	Fn_SelectIdByFormIdEtLangAsy(
 		CancellationToken ct
@@ -43,7 +43,7 @@ public class Dao_Word(
 					&& w.Lang == Lang
 					&& w.CreatedBy == UserId
 				)
-				.Select(w =>(Id_Word?)w.Id)
+				.Select(w =>(IdWord?)w.Id)
 				//.DefaultIfEmpty(null)
 				.FirstOrDefaultAsync(ct) //結構體之default非null
 			;
@@ -54,14 +54,14 @@ public class Dao_Word(
 
 
 	public async Task<Func<
-		Id_Word
+		IdWord
 		,CancellationToken
 		,Task<Bo_Word?>
 	>> Fn_SelectBoWordByIdAsy(
 		CancellationToken ct
 	){
 		var Fn = async(
-			Id_Word Id
+			IdWord Id
 			,CancellationToken ct
 		)=>{
 			var Po_Word = await DbCtx.Po_Word.AsNoTracking().Where(w => w.Id == Id).FirstOrDefaultAsync(ct);
@@ -177,7 +177,7 @@ public class Dao_Word(
 		,T_Id
 	>(
 		CancellationToken ct
-	)where T_Entity : class, I_PoBase, I_HasId<T_Id>
+	)where T_Entity : class, IPoBase, IHasId<T_Id>
 	{
 		var Fn = async(
 			IEnumerable<T_Entity> Pos
@@ -185,11 +185,11 @@ public class Dao_Word(
 			,CancellationToken ct
 		)=>{
 			foreach(var po in Pos){
-				if(po is not I_HasId<T_Id> IdPo){
+				if(po is not IHasId<T_Id> IdPo){
 					continue;
 				}
 				await DbCtx.Set<T_Entity>().Where(
-					w=>((I_HasId<T_Id>)w).Id!.Equals(IdPo.Id)
+					w=>((IHasId<T_Id>)w).Id!.Equals(IdPo.Id)
 				).ExecuteUpdateAsync(s=>
 					s.SetProperty(e=>e.UpdatedAt, Time), ct
 				);

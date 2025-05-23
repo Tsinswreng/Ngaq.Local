@@ -18,9 +18,9 @@ public class DaoSql_Word{
 	public DaoSql_Word(
 		I_SqlCmdMkr SqlCmdMkr
 		,I_TableMgr TblMgr
-		,RepoSql<Po_Word, Id_Word> RepoWord
-		,RepoSql<Po_Kv, Id_Kv> RepoKv
-		,RepoSql<Po_Learn, Id_Kv> RepoLearn
+		,RepoSql<Po_Word, IdWord> RepoWord
+		,RepoSql<Po_Kv, IdKv> RepoKv
+		,RepoSql<Po_Learn, IdKv> RepoLearn
 
 	){
 		this.SqlCmdMkr = SqlCmdMkr;
@@ -30,9 +30,9 @@ public class DaoSql_Word{
 		this.RepoLearn = RepoLearn;
 	}
 
-	public RepoSql<Po_Word, Id_Word> RepoWord{get;set;}
-	public RepoSql<Po_Kv, Id_Kv> RepoKv{get;set;}
-	public RepoSql<Po_Learn, Id_Kv> RepoLearn{get;set;}
+	public RepoSql<Po_Word, IdWord> RepoWord{get;set;}
+	public RepoSql<Po_Kv, IdKv> RepoKv{get;set;}
+	public RepoSql<Po_Learn, IdKv> RepoLearn{get;set;}
 
 	public I_SqlCmdMkr SqlCmdMkr{get;set;}
 	public I_TableMgr TblMgr{get;set;}
@@ -42,7 +42,7 @@ public class DaoSql_Word{
 		,str
 		,str
 		,CancellationToken
-		,Task<Id_Word?>
+		,Task<IdWord?>
 	>>
 	Fn_SelectIdByFormIdEtLangAsy(
 		I_DbFnCtx Ctx
@@ -52,7 +52,7 @@ public class DaoSql_Word{
 		var F = TblMgr.SqlMkr;
 		var Sql =
 $"""
-SELECT {T.Field(nameof(I_HasId<nil>.Id))} FROM {T.Quote(T.Name)}
+SELECT {T.Field(nameof(IHasId<nil>.Id))} FROM {T.Quote(T.Name)}
 WHERE {T.Field(nameof(Po_Word.Owner))} = {F.Param(nameof(Po_Word.Owner))}
 AND {T.Field(nameof(Po_Word.WordFormId))} = {F.Param(nameof(Po_Word.WordFormId))}
 AND {T.Field(nameof(Po_Word.Lang))} = {F.Param(nameof(Po_Word.Lang))}
@@ -82,8 +82,8 @@ AND Lang = @Lang
 			if(GotDict == null){
 				return null;
 			}
-			var ans = GotDict[T.ToDbName(nameof(I_HasId<nil>.Id))];
-			return new Id_Word(IdTool.ByteArrToUInt128((u8[])ans));
+			var ans = GotDict[T.ToDbName(nameof(IHasId<nil>.Id))];
+			return new Id_Word(ToolId.ByteArrToUInt128((u8[])ans));
 		};
 	}
 
@@ -94,7 +94,7 @@ AND Lang = @Lang
 /// <param name="ct"></param>
 /// <returns></returns>
 	public async Task<Func<
-		Id_Word
+		IdWord
 		,CancellationToken
 		,Task<Bo_Word?>
 	>> Fn_SelectBoWordByIdAsy(
@@ -112,12 +112,12 @@ WHERE {TK.Field(nameof(Po_Kv.FKey_UInt128))} = {TW.Param(nameof(Po_Kv.FKey_UInt1
 """;
 			return Sql;
 		};
-		var GetPoWordById = await RepoWord.Fn_SeekByIdAsy<Id_Word>(Ctx, ct);
+		var GetPoWordById = await RepoWord.Fn_SeekByIdAsy<IdWord>(Ctx, ct);
 		var Cmd_SeekKv = await SqlCmdMkr.PrepareAsy(Ctx, Sql_SeekByFKey(TK.Quote(TK.Name)), ct);
 		var Cmd_SeekLearn = await SqlCmdMkr.PrepareAsy(Ctx, Sql_SeekByFKey(TL.Quote(TL.Name)), ct);
 
 		var Fn = async(
-			Id_Word Id
+			IdWord Id
 			,CancellationToken ct
 		)=>{
 			var Po_Word = await GetPoWordById(Id, ct);
