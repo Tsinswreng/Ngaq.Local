@@ -44,7 +44,7 @@ public class RepoSql
 		,CancellationToken
 		,Task<nil>
 	>> Fn_InsertManyAsy(
-		I_DbFnCtx? Ctx
+		IDbFnCtx? Ctx
 		,CancellationToken ct
 	){
 		var T = TblMgr.GetTable<TEntity>();
@@ -82,7 +82,7 @@ $"INSERT INTO {T.Quote(T.Name)} {Clause}";
 		,CancellationToken
 		,Task<TEntity?>
 	>> Fn_SeekByIdAsy<T_Id2>(
-		I_DbFnCtx? Ctx
+		IDbFnCtx? Ctx
 		,CancellationToken ct
 	){
 		var T = TblMgr.GetTable<TEntity>();
@@ -118,7 +118,7 @@ $"INSERT INTO {T.Quote(T.Name)} {Clause}";
 		,CancellationToken
 		,Task<nil>
 	>> Fn_UpdateManyAsy<T_Id2>(
-		I_DbFnCtx? Ctx
+		IDbFnCtx? Ctx
 		,IDictionary<str, object> ModelDict
 		,CancellationToken ct
 	){
@@ -184,7 +184,7 @@ $"UPDATE {T.Quote(T.Name)} SET ${Clause} WHERE {T.Field(N_Id)} = {T.Param(N_Id)}
 		,CancellationToken
 		,Task<nil>
 	>> Fn_DeleteOneByIdAsy<T_Id2>(
-		I_DbFnCtx? Ctx
+		IDbFnCtx? Ctx
 		,CancellationToken ct
 	){
 		var Tbl = TblMgr.GetTable<TEntity>();

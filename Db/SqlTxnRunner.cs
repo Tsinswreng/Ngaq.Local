@@ -8,8 +8,8 @@ namespace Ngaq.Db;
 public class SqlTxnRunner(
 	IDbConnection DbConnection
 )
-	:I_RunInTxn
-	,I_TxnRunner
+	:IRunInTxn
+	,ITxnRunner
 {
 
 	public async Task<T_Ret> RunInTxnAsy<T_Ret>(
@@ -32,7 +32,7 @@ public class SqlTxnRunner(
 	}
 
 	public async Task<T_Ret> RunTxnAsy<T_Ret>(
-		I_TxnAsy Txn
+		ITxnAsy Txn
 		,Func<
 			CancellationToken, Task<T_Ret>
 		> FnAsy

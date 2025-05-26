@@ -8,7 +8,7 @@ using Ngaq.Local.Db;
 
 namespace Ngaq.Local.Migrations
 {
-    [DbContext(typeof(DbCtx))]
+    [DbContext(typeof(LocalDbCtx))]
     partial class DbCtxModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)

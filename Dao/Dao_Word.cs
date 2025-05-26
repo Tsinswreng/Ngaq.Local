@@ -12,13 +12,13 @@ using Ngaq.Local.Db;
 
 namespace Ngaq.Local.Dao;
 
-public class Dao_Word(
-	DbCtx DbCtx
+public class DaoWord(
+	LocalDbCtx DbCtx
 ){
 
 
 	public async Task<Func<
-		I_UserCtx
+		IUserCtx
 		,str
 		,str
 		,CancellationToken
@@ -28,7 +28,7 @@ public class Dao_Word(
 		CancellationToken ct
 	){
 		return async (
-			I_UserCtx OperatorCtx
+			IUserCtx OperatorCtx
 			,str FormId
 			,str Lang
 			,CancellationToken ct
@@ -54,7 +54,7 @@ public class Dao_Word(
 	public async Task<Func<
 		IdWord
 		,CancellationToken
-		,Task<Bo_Word?>
+		,Task<BoWord?>
 	>> Fn_SelectBoWordByIdAsy(
 		CancellationToken ct
 	){
@@ -72,7 +72,7 @@ public class Dao_Word(
 			var Learns = await DbCtx.Po_Learn.Where(
 				w=>Id.Equals(w.FKey_UInt128)
 			).ToListAsync(ct);
-			var ans = new Bo_Word{
+			var ans = new BoWord{
 				Po_Word = Po_Word
 				,Props = Props
 				,Learns = Learns
@@ -88,33 +88,33 @@ public class Dao_Word(
 /// </summary>
 /// <returns></returns>
 	public async Task<Func<
-		IEnumerable<Bo_Word>
+		IEnumerable<BoWord>
 		,CancellationToken
 		,Task<nil>
 	>> Fn_InsertBoWordsAsy(
 		CancellationToken ct
 	) {
 		var Fn = async(
-			IEnumerable<Bo_Word> Bo_Words
+			IEnumerable<BoWord> Bo_Words
 			,CancellationToken ct
 		)=>{
 			u64 BatchSize = 0xfff;
 			// List<Po_Word> Po_Words = [];
 			// List<Po_Kv> Po_Kvs = [];
 			// List<Po_Learn> Po_Learns = [];
-			using var Po_Words = new BatchListAsy<Po_Word, nil>(async(list, ct)=>{
+			using var Po_Words = new BatchListAsy<PoWord, nil>(async(list, ct)=>{
 				await DbCtx.Po_Word.AddRangeAsync(list, ct);
 				return Nil;
 			}, BatchSize);
 
 
-			using var Po_Kvs = new BatchListAsy<Po_Kv, nil>(async(e, ct)=>{
+			using var Po_Kvs = new BatchListAsy<PoKv, nil>(async(e, ct)=>{
 				await DbCtx.Po_Kv.AddRangeAsync(e, ct);
 				return Nil;
 			}, BatchSize);
 
 
-			using var Po_Learns = new BatchListAsy<Po_Learn, nil>(async(e, ct)=>{
+			using var Po_Learns = new BatchListAsy<PoLearn, nil>(async(e, ct)=>{
 				await DbCtx.Po_Learn.AddRangeAsync(e, ct);
 				return Nil;
 			}, BatchSize);
@@ -149,14 +149,14 @@ public class Dao_Word(
 	}
 
 	public async Task<Func<
-		IEnumerable<Po_Kv>
+		IEnumerable<PoKv>
 		,CancellationToken
 		,Task<nil>
 	>> Fn_InsertPoKvsAsy(
 		CancellationToken ct
 	){
 		var Fn = async(
-			IEnumerable<Po_Kv> Po_Kvs
+			IEnumerable<PoKv> Po_Kvs
 			,CancellationToken ct
 		)=>{
 			await DbCtx.Po_Kv.AddRangeAsync(Po_Kvs, ct);

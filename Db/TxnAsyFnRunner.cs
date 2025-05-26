@@ -3,8 +3,8 @@ using Ngaq.Local.Db;
 
 namespace Ngaq.Db;
 public class EfTxnRunner(
-	DbCtx DbCtx
-) : I_RunInTxn{
+	LocalDbCtx DbCtx
+) : IRunInTxn{
 
 	public async Task<T_Ret> RunInTxnAsy<T_Ret>(
 		Func<CancellationToken, Task<T_Ret>> FnAsy

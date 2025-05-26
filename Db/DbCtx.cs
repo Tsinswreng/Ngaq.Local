@@ -19,11 +19,11 @@ dotnet ef dbcontext optimize --output-dir GeneratedInterceptors --precompile-que
 
  */
 
-public class DbCtx : DbContext{
+public class LocalDbCtx : DbContext{
 
-	public DbSet<Po_Word> Po_Word{get;set;}
-	public DbSet<Po_Kv> Po_Kv{get;set;}
-	public DbSet<Po_Learn> Po_Learn{get;set;}
+	public DbSet<PoWord> Po_Word{get;set;}
+	public DbSet<PoKv> Po_Kv{get;set;}
+	public DbSet<PoLearn> Po_Learn{get;set;}
 
 	protected override void OnConfiguring(DbContextOptionsBuilder opt) {
 		base.OnConfiguring(opt);
@@ -68,8 +68,8 @@ public class DbCtx : DbContext{
 
 	protected override void OnModelCreating(ModelBuilder mb) {
 		base.OnModelCreating(mb);
-		_CfgPoBase<Po_Word>(mb);
-		mb.Entity<Po_Word>(e=>{
+		_CfgPoBase<PoWord>(mb);
+		mb.Entity<PoWord>(e=>{
 			e.ToTable("Word");
 			e.HasKey(p=>p.Id);
 			e.Property(p=>p.Id).HasConversion(
@@ -85,8 +85,8 @@ public class DbCtx : DbContext{
 			//Unique(WordFormId, Lang):
 		});
 
-		_CfgPoBase<Po_Kv>(mb);
-		mb.Entity<Po_Kv>(e=>{
+		_CfgPoBase<PoKv>(mb);
+		mb.Entity<PoKv>(e=>{
 			e.ToTable("Prop").UseTpcMappingStrategy();
 			e.HasKey(p=>p.Id);
 			e.Property(p=>p.Id).HasConversion(
@@ -103,7 +103,7 @@ public class DbCtx : DbContext{
 			e.HasIndex(p=>p.KI64);
 		});
 
-		mb.Entity<Po_Learn>(e=>{
+		mb.Entity<PoLearn>(e=>{
 			e.ToTable("Learn").UseTpcMappingStrategy();
 			//e.HasKey(p=>p.Id);
 			e.Property(p=>p.Id).HasConversion(

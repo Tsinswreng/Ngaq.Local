@@ -1,20 +1,20 @@
 using System.Data;
 using System.Diagnostics.CodeAnalysis;
-using System.Text.Json;
-using System.Text.Json.Serialization.Metadata;
-using Dapper;
+
+
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Ngaq.Core.Infra;
 using Ngaq.Core.Infra.Core;
 using Ngaq.Core.Infra.Db;
 using Ngaq.Core.Model;
-using Ngaq.Core.Model.Bo;
 using Ngaq.Core.Model.Po;
-using Ngaq.Core.Model.Po.Kv;
 
 namespace Ngaq.Local.Db;
 //using T = Bo_Word;
+
+using DbCtx = DbContext;
+
 public class RepoEf
 <
 [DynamicallyAccessedMembers(
@@ -26,13 +26,11 @@ public class RepoEf
 	DynamicallyAccessedMemberTypes.NonPublicProperties |
 	DynamicallyAccessedMemberTypes.Interfaces
 )]
-	T_Entity
-	,T_Id
+	TEntity
+	,TId
 >
-	:I_RunInTxn
-	where T_Entity: class, IHasId<T_Id>
-	where T_Id : IEquatable<T_Id>
-
+	where TEntity: class, IHasId<TId>
+	where TId : IEquatable<TId>
 {
 
 	public RepoEf(DbCtx dbCtx){
@@ -42,34 +40,40 @@ public class RepoEf
 	public DbCtx DbCtx{get;set;}
 
 	public async Task<Func<
-		IEnumerable<T_Entity>
+		IEnumerable<TEntity>
 		,CancellationToken
 		,Task<nil>
-	>> Fn_InsertManyAsy(CancellationToken ct){
+	>> FnInsertManyAsy(
+		IDbFnCtx DbFnCtx
+		,CancellationToken ct
+	){
 		var Fn = async(
-			IEnumerable<T_Entity> Entitys
+			IEnumerable<TEntity> Entitys
 			,CancellationToken ct
 		)=>{
-			await DbCtx.Set<T_Entity>().AddRangeAsync(Entitys, ct);
-			//TODO saveChange?
+			await DbCtx.Set<TEntity>().AddRangeAsync(Entitys, ct);
+			await DbCtx.SaveChangesAsync(ct);
 			return Nil;
 		};
 		return Fn;
 	}
 
 	public async Task<Func<
-		T_Id2
+		TId
 		,CancellationToken
-		,Task<T_Entity?>
-	>> Fn_SeekByIdAsy<T_Id2>(CancellationToken ct){
+		,Task<TEntity?>
+	>> FnSelectByIdAsy(
+		IDbFnCtx DbFnCtx
+		,CancellationToken ct
+	){
 		var Fn = async(
-			T_Id2 Id
+			TId Id
 			,CancellationToken ct
 		)=>{
-			if(Id is not T_Id id){
+			if(Id is not TId id){
 				throw new FatalLogicErr("Id is not T_Id id");
 			}
-			var entity = await DbCtx.Set<T_Entity>().AsNoTracking().Select(x=>x)
+			var entity = await DbCtx.Set<TEntity>().AsNoTracking().Select(x=>x)
 				//.Where(x=>x.Id==id) // 运算符“==”无法应用于“T_Id”和“T_Id”类型的操作数CS0019
 				.Where(x=>x.Id.Equals(id))
 				.FirstOrDefaultAsync(ct)
@@ -83,14 +87,15 @@ public class RepoEf
 		IEnumerable<Id_Dict<T_Id2>>
 		,CancellationToken
 		,Task<nil>
-	>> Fn_UpdateManyAsy<T_Id2>(
-		CancellationToken ct
+	>> FnUpdateManyAsy<T_Id2>(
+		IDbFnCtx DbFnCtx
+		,CancellationToken ct
 	){
 		var Fn = async(
 			IEnumerable<Id_Dict<T_Id2>> Id_Dicts
 			,CancellationToken ct
 		)=>{
-			var DbSet = DbCtx.Set<T_Entity>();
+			var DbSet = DbCtx.Set<TEntity>();
 			foreach(var id_dict in Id_Dicts){
 				var id = id_dict.Id;
 				var dict = id_dict.Dict;
@@ -103,7 +108,7 @@ public class RepoEf
 					po.UpdatedAt = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 				}
 			}//~for
-			await DbCtx.SaveChangesAsync(); //TODO ?
+			await DbCtx.SaveChangesAsync();
 			return Nil;
 		};
 		return Fn;
@@ -145,12 +150,15 @@ public class RepoEf
 		IEnumerable<object>
 		,CancellationToken
 		,Task<nil>
-	>> Fn_DeleteManyByIdAsy(){
+	>> FnDeleteManyByIdAsy(
+		IDbFnCtx DbFnCtx
+		,CancellationToken ct
+	){
 		var Fn = async(
 			IEnumerable<object> IdList
 			,CancellationToken ct
 		)=>{
-			await DbCtx.Set<T_Entity>()
+			await DbCtx.Set<TEntity>()
 				.Where(e=>IdList.Contains(e.Id))
 				.ExecuteDeleteAsync(ct)
 			;//仅生成一条 DELETE FROM ... WHERE Id IN (1, 2, 3) SQL 语句、Contains(e.Id)並非在內存中查找
@@ -175,6 +183,5 @@ public class RepoEf
 			throw;
 		}
 	}
-
 
 }

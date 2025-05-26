@@ -17,7 +17,7 @@ public class FreeSqlCfg {
 			.UseMonitorCommand(cmd => Console.Write(cmd.CommandText))
 			.Build(); //请务必定义成 Singleton 单例模式
 
-		var Type_Ctx = typeof(DbCtx);
+		var Type_Ctx = typeof(LocalDbCtx);
 		System.Console.WriteLine(Type_Ctx);//->Ngaq.Local.Db.DbCtx
 		System.Console.WriteLine(Type_Ctx == null);//False
 		Fsql.CodeFirst.ApplyConfigurationFromEFCore(

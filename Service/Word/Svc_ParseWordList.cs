@@ -8,8 +8,8 @@ using Ngaq.Core.Tools.Io;
 
 namespace Ngaq.Local.Service.Word;
 
-public class Svc_ParseWordList
-	: I_Svc_ParseWordList
+public class SvcParseWordList
+	: ISvcParseWordList
 {
 	public async Task<nil> AddWordsFromUrlAsy(
 		str Path
@@ -18,7 +18,7 @@ public class Svc_ParseWordList
 		throw new NotImplementedException();
 	}
 
-	public async Task<IEnumerable<Bo_Word>> ParseWordsByIterEtEncodingAsy(
+	public async Task<IEnumerable<BoWord>> ParseWordsByIterEtEncodingAsy(
 		I_Iter<u8> Iter
 		,Encoding Encoding
 		,CancellationToken ct = default
@@ -29,14 +29,14 @@ public class Svc_ParseWordList
 		var DateBlocks = Parser.Parse();
 		var metadata = Parser.Status.Metadata;
 		if (metadata == null) {
-			throw new Err_Base("Metadata is null");
+			throw new ErrBase("Metadata is null");
 		}
 		var Bo_Words = ParseResultMapper.Inst.Map(metadata, DateBlocks);
 		return Bo_Words;
 	}
 
 
-	public async Task<IEnumerable<Bo_Word>> ParseWordsFromFilePathAsy(
+	public async Task<IEnumerable<BoWord>> ParseWordsFromFilePathAsy(
 		Path_Encode Path_Encode
 		,CancellationToken ct = default
 	) {
@@ -44,14 +44,14 @@ public class Svc_ParseWordList
 		return await ParseWordsByIterEtEncodingAsy(ByteReader, Path_Encode.Encoding);
 	}
 
-	public async Task<IEnumerable<Bo_Word>> ParseWordsFromUrlAsy(
+	public async Task<IEnumerable<BoWord>> ParseWordsFromUrlAsy(
 		string Path
 		,CancellationToken ct = default
 	) {
 		throw new NotImplementedException();
 	}
 
-	public async Task<IEnumerable<Bo_Word>> ParseWordsFromTextAsy(
+	public async Task<IEnumerable<BoWord>> ParseWordsFromTextAsy(
 		string Text
 		,CancellationToken ct = default
 	) {

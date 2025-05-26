@@ -9,7 +9,7 @@ using Ngaq.Local.Db;
 
 namespace Ngaq.Local.Migrations
 {
-    [DbContext(typeof(DbCtx))]
+    [DbContext(typeof(LocalDbCtx))]
     [Migration("20250516070447_Init")]
     partial class Init
     {
