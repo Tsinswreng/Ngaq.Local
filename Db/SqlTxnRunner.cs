@@ -12,7 +12,7 @@ public class SqlTxnRunner(
 	,ITxnRunner
 {
 
-	public async Task<T_Ret> RunInTxnAsy<T_Ret>(
+	public async Task<T_Ret> RunInTxn<T_Ret>(
 		Func<
 			CancellationToken, Task<T_Ret>
 		> FnAsy
@@ -31,21 +31,21 @@ public class SqlTxnRunner(
 		}
 	}
 
-	public async Task<T_Ret> RunTxnAsy<T_Ret>(
-		ITxnAsy Txn
+	public async Task<T_Ret> RunTxn<T_Ret>(
+		ITxn Txn
 		,Func<
 			CancellationToken, Task<T_Ret>
 		> FnAsy
 		,CancellationToken ct
 	){
 		try{
-			await Txn.BeginAsy(ct);
+			await Txn.Begin(ct);
 			T_Ret ans = await FnAsy(ct);
-			await Txn.CommitAsy(ct);
+			await Txn.Commit(ct);
 			return ans;
 		}
 		catch (System.Exception){
-			await Txn.RollbackAsy(ct);
+			await Txn.Rollback(ct);
 			throw;
 		}
 

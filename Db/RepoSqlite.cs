@@ -43,7 +43,7 @@ public class RepoSql
 		IEnumerable<TEntity>
 		,CancellationToken
 		,Task<nil>
-	>> Fn_InsertManyAsy(
+	>> FnInsertMany(
 		IDbFnCtx? Ctx
 		,CancellationToken ct
 	){
@@ -51,7 +51,7 @@ public class RepoSql
 		var Clause = T.InsertClause(T.Columns.Keys);
 		var Sql =
 $"INSERT INTO {T.Quote(T.Name)} {Clause}";
-		var Cmd = await SqlCmdMkr.PrepareAsy(Ctx, Sql, ct);
+		var Cmd = await SqlCmdMkr.Prepare(Ctx, Sql, ct);
 		var Fn = async(
 			IEnumerable<TEntity> Entitys
 			,CancellationToken ct
@@ -60,7 +60,7 @@ $"INSERT INTO {T.Quote(T.Name)} {Clause}";
 			foreach(var entity in Entitys){
 				var CodeDict = DictCtx.ToDictT(entity);
 				var DbDict = T.ToDbDict(CodeDict);
-				await Cmd.Args(DbDict).RunAsy(ct).FirstOrDefaultAsync(ct);
+				await Cmd.Args(DbDict).Run(ct).FirstOrDefaultAsync(ct);
 				// try{
 
 				// }
@@ -81,13 +81,13 @@ $"INSERT INTO {T.Quote(T.Name)} {Clause}";
 		T_Id2
 		,CancellationToken
 		,Task<TEntity?>
-	>> Fn_SeekByIdAsy<T_Id2>(
+	>> FnSeekById<T_Id2>(
 		IDbFnCtx? Ctx
 		,CancellationToken ct
 	){
 		var T = TblMgr.GetTable<TEntity>();
 		var Sql = $"SELECT * FROM {T.Quote(T.Name)} WHERE {T.Field(nameof(IHasId<nil>.Id))} = @1" ;
-		var Cmd = await SqlCmdMkr.PrepareAsy(Ctx, Sql, ct);
+		var Cmd = await SqlCmdMkr.Prepare(Ctx, Sql, ct);
 
 		var Fn = async(
 			T_Id2 Id
@@ -100,7 +100,7 @@ $"INSERT INTO {T.Quote(T.Name)} {Clause}";
 			var ConvertedId = IdCol.ToDbType(Id);
 			var RawDict = await Cmd
 				.Args([ConvertedId])
-				.RunAsy(ct).FirstOrDefaultAsync(ct)
+				.Run(ct).FirstOrDefaultAsync(ct)
 			;
 			if(RawDict == null){
 				return null;
@@ -117,9 +117,9 @@ $"INSERT INTO {T.Quote(T.Name)} {Clause}";
 		IEnumerable<Id_Dict<T_Id2>>
 		,CancellationToken
 		,Task<nil>
-	>> Fn_UpdateManyAsy<T_Id2>(
+	>> FnUpdateMany<T_Id2>(
 		IDbFnCtx? Ctx
-		,IDictionary<str, object> ModelDict
+		,IDictionary<str, object?> ModelDict
 		,CancellationToken ct
 	){
 
@@ -131,7 +131,7 @@ $"INSERT INTO {T.Quote(T.Name)} {Clause}";
 		var Sql =
 $"UPDATE {T.Quote(T.Name)} SET ${Clause} WHERE {T.Field(N_Id)} = {T.Param(N_Id)}";
 
-		var Cmd = await SqlCmdMkr.PrepareAsy(Ctx, Sql, ct);
+		var Cmd = await SqlCmdMkr.Prepare(Ctx, Sql, ct);
 		var Fn = async(
 			IEnumerable<Id_Dict<T_Id2>> Id_Dicts
 			,CancellationToken ct
@@ -140,7 +140,7 @@ $"UPDATE {T.Quote(T.Name)} SET ${Clause} WHERE {T.Field(N_Id)} = {T.Param(N_Id)}
 				var CodeId = id_dict.Id;
 				var CodeDict = id_dict.Dict;
 				var DbDict = T.ToDbDict(CodeDict);
-				await Cmd.Args(DbDict).RunAsy(ct).FirstOrDefaultAsync(ct);
+				await Cmd.Args(DbDict).Run(ct).FirstOrDefaultAsync(ct);
 			}//~for
 			return Nil;
 		};
@@ -183,14 +183,14 @@ $"UPDATE {T.Quote(T.Name)} SET ${Clause} WHERE {T.Field(N_Id)} = {T.Param(N_Id)}
 		T_Id2
 		,CancellationToken
 		,Task<nil>
-	>> Fn_DeleteOneByIdAsy<T_Id2>(
+	>> FnDeleteOneById<T_Id2>(
 		IDbFnCtx? Ctx
 		,CancellationToken ct
 	){
 		var Tbl = TblMgr.GetTable<TEntity>();
 var Sql = $"DELETE FROM {Tbl.Name} WHERE {nameof(IHasId<nil>.Id)} = ?";
 
-		var Cmd = await SqlCmdMkr.PrepareAsy(Ctx, Sql, ct);
+		var Cmd = await SqlCmdMkr.Prepare(Ctx, Sql, ct);
 		async Task<nil> Fn(
 			T_Id2 Id
 			, CancellationToken ct
@@ -200,7 +200,7 @@ var Sql = $"DELETE FROM {Tbl.Name} WHERE {nameof(IHasId<nil>.Id)} = ?";
 			}
 			var IdCol = Tbl.Columns[nameof(IHasId<nil>.Id)];
 			var ConvertedId = IdCol.ToDbType(Id);
-			await Cmd.Args([ConvertedId]).RunAsy(ct).FirstOrDefaultAsync(ct);
+			await Cmd.Args([ConvertedId]).Run(ct).FirstOrDefaultAsync(ct);
 			return Nil;
 		}
 		return Fn;

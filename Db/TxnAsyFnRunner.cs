@@ -6,7 +6,7 @@ public class EfTxnRunner(
 	LocalDbCtx DbCtx
 ) : IRunInTxn{
 
-	public async Task<T_Ret> RunInTxnAsy<T_Ret>(
+	public async Task<T_Ret> RunInTxn<T_Ret>(
 		Func<CancellationToken, Task<T_Ret>> FnAsy
 		,CancellationToken ct
 	){

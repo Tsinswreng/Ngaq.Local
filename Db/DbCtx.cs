@@ -94,8 +94,8 @@ public class LocalDbCtx : DbContext{
 				,val => new IdKv(ToolId.ByteArrToUInt128(val))
 			).HasColumnType("BLOB");
 
-			e.HasIndex(p=>p.FKey_UInt128);
-			e.Property(p=>p.FKey_UInt128).HasConversion(
+			e.HasIndex(p=>p.FKeyUInt128);
+			e.Property(p=>p.FKeyUInt128).HasConversion(
 				id=>id==null?null:id.Value.ToByteArr()
 				,val => val==null?null:ToolId.ByteArrToUInt128(val)
 			).HasColumnType("BLOB");
@@ -111,8 +111,8 @@ public class LocalDbCtx : DbContext{
 				,val => new IdLearn(ToolId.ByteArrToUInt128(val))
 			).HasColumnType("BLOB");
 
-			e.HasIndex(p=>p.FKey_UInt128);
-			e.Property(p=>p.FKey_UInt128).HasConversion(
+			e.HasIndex(p=>p.FKeyUInt128);
+			e.Property(p=>p.FKeyUInt128).HasConversion(
 				id=>id==null?null:id.Value.ToByteArr()
 				,val => val==null?null:ToolId.ByteArrToUInt128(val)
 			).HasColumnType("BLOB");

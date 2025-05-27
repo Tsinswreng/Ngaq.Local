@@ -80,7 +80,7 @@ public class AppTblInfo{
 				(id)=>{return id==null?null:((IdKv)id).Value.ToByteArr();},
 				(val)=>{return val==null?null:new IdKv(ToolId.ByteArrToUInt128((u8[])val));}
 			);
-			o.SetCol(nameof(PoKv.FKey_UInt128)).HasConversion(
+			o.SetCol(nameof(PoKv.FKeyUInt128)).HasConversion(
 				(id)=>{return id==null?null:((UInt128)id).ToByteArr();},
 				(val)=>{return val==null?null:ToolId.ByteArrToUInt128((u8[])val);}
 			);
@@ -96,7 +96,7 @@ public class AppTblInfo{
 				(id)=>{return id==null?null:((IdKv)id).Value.ToByteArr();},
 				(val)=>{return val==null?null:new IdLearn(ToolId.ByteArrToUInt128((u8[])val));}
 			);
-			o.SetCol(nameof(PoLearn.FKey_UInt128)).HasConversion(
+			o.SetCol(nameof(PoLearn.FKeyUInt128)).HasConversion(
 				(id)=>{return id==null?null:((UInt128)id).ToByteArr();},
 				(val)=>{return val==null?null:ToolId.ByteArrToUInt128((u8[])val);}
 			);

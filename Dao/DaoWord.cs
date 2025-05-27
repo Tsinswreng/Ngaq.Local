@@ -24,7 +24,7 @@ public class DaoWord(
 		,CancellationToken
 		,Task<IdWord?>
 	>>
-	Fn_SelectIdByFormIdEtLangAsy(
+	FnSelectIdByFormIdEtLang(
 		CancellationToken ct
 	){
 		return async (
@@ -55,7 +55,7 @@ public class DaoWord(
 		IdWord
 		,CancellationToken
 		,Task<BoWord?>
-	>> Fn_SelectBoWordByIdAsy(
+	>> FnSelectBoWordById(
 		CancellationToken ct
 	){
 		var Fn = async(
@@ -67,13 +67,13 @@ public class DaoWord(
 				return null;
 			}
 			var Props = await DbCtx.Po_Kv.Where(
-				w=>Id.Equals(w.FKey_UInt128)
+				w=>Id.Equals(w.FKeyUInt128)
 			).ToListAsync(ct);
 			var Learns = await DbCtx.Po_Learn.Where(
-				w=>Id.Equals(w.FKey_UInt128)
+				w=>Id.Equals(w.FKeyUInt128)
 			).ToListAsync(ct);
 			var ans = new BoWord{
-				Po_Word = Po_Word
+				PoWord = Po_Word
 				,Props = Props
 				,Learns = Learns
 			};
@@ -91,7 +91,7 @@ public class DaoWord(
 		IEnumerable<BoWord>
 		,CancellationToken
 		,Task<nil>
-	>> Fn_InsertBoWordsAsy(
+	>> FnInsertBoWords(
 		CancellationToken ct
 	) {
 		var Fn = async(
@@ -131,7 +131,7 @@ public class DaoWord(
 			// };
 
 			foreach (var Bo_Word in Bo_Words) {
-				await Po_Words.AddAsy(Bo_Word.Po_Word, ct);
+				await Po_Words.AddAsy(Bo_Word.PoWord, ct);
 				foreach (var Prop in Bo_Word.Props) {
 					await Po_Kvs.AddAsy(Prop, ct);
 				}
@@ -152,7 +152,7 @@ public class DaoWord(
 		IEnumerable<PoKv>
 		,CancellationToken
 		,Task<nil>
-	>> Fn_InsertPoKvsAsy(
+	>> FnInsertPoKvs(
 		CancellationToken ct
 	){
 		var Fn = async(
@@ -170,7 +170,7 @@ public class DaoWord(
 		,i64
 		,CancellationToken
 		,Task<nil>
-	>> Fn_BatchSetUpdateAtAsy<
+	>> FnBatchSetUpdateAt<
 		T_Entity
 		,T_Id
 	>(

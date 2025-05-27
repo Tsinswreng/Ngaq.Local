@@ -1,4 +1,3 @@
-using System.Text;
 using Ngaq.Core.Infra.Core;
 using Ngaq.Core.Infra.Db;
 using Ngaq.Core.Model.Bo;
@@ -6,36 +5,41 @@ using Ngaq.Core.Model.Po.Kv;
 using Ngaq.Core.Model.Po.Learn;
 using Ngaq.Core.Model.Po.Word;
 using Ngaq.Core.Model.UserCtx;
-using Ngaq.Core.Service.Parser;
 using Ngaq.Core.Service.Word;
-using Ngaq.Core.Stream;
 using Ngaq.Core.Tools;
 using Ngaq.Core.Tools.Io;
 using Ngaq.Local.Dao;
 using Ngaq.Local.Db;
-using Tsinswreng.SqlHelper;
 using Tsinswreng.SqlHelper.Cmd;
 
 namespace Ngaq.Local.Service.Word;
 
 //不在Svc中依賴DbCtx
 public class SvcWord(
-	ISvcParseWordList Svc_ParseWordList
+	ISvcParseWordList SvcParseWordList
 	,ITxnRunner TxnRunner
 	,DaoSqlWord DaoWord
-	,IGetTxnAsy GetTxnAsy
+	,IGetTxn GetTxnAsy
 )
 	: ISvcWord
 {
 	//public DbCtx DbCtx { get; set; } = DbCtx;
 
 	public static PoWord SetPoWordOwner(
-		IUserCtx OperatorCtx
-		,PoWord Po_Word
+		IUserCtx UserCtx
+		,PoWord PoWord
 	){
-		Po_Word.Owner = OperatorCtx.UserId;
-		return Po_Word;
+		PoWord.Owner = UserCtx.UserId;
+		return PoWord;
 	}
+
+	// public async Task<Func<
+	// 	IUserCtx
+	// 	,IEnumerable<BoWord>
+	// 	,CancellationToken
+	// 	,Task<ExistGroup<IdWord>>
+	// >> {}
+
 
 	//TODO 返 初添ʹ詞ʹ 及 更新ʹ詞ʹID
 	public async Task<Func<
@@ -47,10 +51,10 @@ public class SvcWord(
 		IDbFnCtx Ctx
 		,CancellationToken ct
 	){
-		var SeekIdByFormEtLang = await DaoWord.Fn_SelectIdByFormIdEtLangAsy(Ctx, ct);
+		var SeekIdByFormEtLang = await DaoWord.FnSelectIdByFormIdEtLang(Ctx, ct);
 		var InsertBoWords = await DaoWord.FnInsertBoWordsAsy(Ctx, ct);
 		var InsertPoKvs = await DaoWord.FnInsertPoKvsAsy(Ctx, ct);
-		var SelectBoWordById = await DaoWord.FnSelectBoWordByIdAsy(Ctx, ct);
+		var SelectBoWordById = await DaoWord.FnSelectBoWordById(Ctx, ct);
 		//TODO update `UpdateAt`
 		//var BatchSetUpdateAt = await Dao_Word.Fn_BatchSetUpdateAtAsy<Po_Word, Id_Word>(ct);
 		var Fn = async(
@@ -68,43 +72,43 @@ public class SvcWord(
 				return Nil;
 			}, BatchSize);
 
-			foreach (var Bo_Word in BoWords) {//TODO 先去褈合併
-				SetPoWordOwner(UserCtx, Bo_Word.Po_Word);
+			foreach (var BoWord in BoWords) {//TODO 先去褈合併
+				SetPoWordOwner(UserCtx, BoWord.PoWord);
 				var ExistingId = await SeekIdByFormEtLang(
 					UserCtx
-					,Bo_Word.Po_Word.WordFormId
-					,Bo_Word.Po_Word.Lang
+					,BoWord.PoWord.WordFormId
+					,BoWord.PoWord.Lang
 					,ct
 				);
 				var hasChanged = false;
 				if(ExistingId == null){//新詞
-					await NeoWords.AddAsy(Bo_Word,ct);
+					await NeoWords.AddAsy(BoWord,ct);
 					hasChanged = true;
 				}else{//老詞
-					Bo_Word.Id = ExistingId.Value;
+					BoWord.Id = ExistingId.Value;
 					var OldBo_Word = await SelectBoWordById(ExistingId.Value, ct);
 					if(OldBo_Word == null){
 						throw new FatalLogicErr("failed to get old word");
 					}
-					var NewProps = BoWord.DiffProps(Bo_Word.Props, OldBo_Word.Props);
+					var NewProps = BoWord.DiffProps(BoWord.Props, OldBo_Word.Props);
 					if(NewProps.Count == 0){
 						hasChanged = false;
 					}else{
 						foreach(var Po_Kv in NewProps){
-							Po_Kv.FKey_UInt128 = Bo_Word.Id.Value;
+							Po_Kv.FKeyUInt128 = BoWord.Id.Value;
 							await NeoProps.AddAsy(Po_Kv, ct);
 						}
 					}
 				}
 				if(hasChanged){
 					var Po_Learn = new PoLearn{
-						FKey_UInt128 = Bo_Word.Id.Value
+						FKeyUInt128 = BoWord.Id.Value
 						//,KStr = Const_PropKey.
 						,VStr = ConstLearn.add
 					};
-					Bo_Word.Learns.Add(Po_Learn);
-					Bo_Word.Po_Word.UpdatedAt = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-					await ChangedPoWords.AddAsy(Bo_Word.Po_Word, ct);
+					BoWord.Learns.Add(Po_Learn);
+					BoWord.PoWord.UpdatedAt = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+					await ChangedPoWords.AddAsy(BoWord.PoWord, ct);
 				}//~if(hasChanged)
 			}//~for
 			await NeoWords.EndAsy(ct);
@@ -115,15 +119,16 @@ public class SvcWord(
 		return Fn;
 	}
 
+
 	public async Task<nil> AddWordsFromFilePathAsy(
 		IUserCtx UserCtx
 		,Path_Encode Path_Encode
 		,CancellationToken ct
 	) {
-		var Ctx = new DbFnCtx{Txn = await GetTxnAsy.GetTxnAsy()};
+		var Ctx = new DbFnCtx{Txn = await GetTxnAsy.GetTxn()};
 		var AddOrUpdateWords = await FnAddOrUpdateWordsAsy(Ctx, ct);
-		await TxnRunner.RunTxnAsy(Ctx.Txn, async(ct)=>{
-			var BoWords = await Svc_ParseWordList.ParseWordsFromFilePathAsy(Path_Encode);
+		await TxnRunner.RunTxn(Ctx.Txn, async(ct)=>{
+			var BoWords = await SvcParseWordList.ParseWordsFromFilePathAsy(Path_Encode);
 			await AddOrUpdateWords(UserCtx,BoWords,ct);
 			return Nil;
 		}, ct);
@@ -140,10 +145,10 @@ public class SvcWord(
 		,string Text
 		,CancellationToken ct
 	) {
-		var Ctx = new DbFnCtx{Txn = await GetTxnAsy.GetTxnAsy()};
+		var Ctx = new DbFnCtx{Txn = await GetTxnAsy.GetTxn()};
 		var AddOrUpdateWords = await FnAddOrUpdateWordsAsy(Ctx, ct);
-		await TxnRunner.RunTxnAsy(Ctx.Txn, async(ct)=>{
-			var BoWords = await Svc_ParseWordList.ParseWordsFromTextAsy(Text,ct);
+		await TxnRunner.RunTxn(Ctx.Txn, async(ct)=>{
+			var BoWords = await SvcParseWordList.ParseWordsFromTextAsy(Text,ct);
 			await AddOrUpdateWords(UserCtx,BoWords,ct);
 			return Nil;
 		},ct);
