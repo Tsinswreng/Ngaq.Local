@@ -16,11 +16,11 @@ using Tsinswreng.SqlHelper.Cmd;
 
 
 //using T = Bo_Word;
-public class RepoSql
-<
+public class RepoSql<
 	TEntity
 	,TId
 >
+
 	where TEntity: class, IHasId<TId>, new()
 	where TId : IEquatable<TId>
 

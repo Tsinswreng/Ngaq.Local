@@ -37,7 +37,7 @@ public class DaoWord(
 //Query wasn't precompiled and dynamic code isn't supported (NativeAOT))
 			var ans = await DbCtx.Po_Word.AsNoTracking()
 				.Where(w =>
-					w.WordFormId == FormId
+					w.Head == FormId
 					&& w.Lang == Lang
 					&& w.CreatedBy == UserId
 				)
@@ -131,18 +131,18 @@ public class DaoWord(
 			// };
 
 			foreach (var Bo_Word in Bo_Words) {
-				await Po_Words.AddAsy(Bo_Word.PoWord, ct);
+				await Po_Words.Add(Bo_Word.PoWord, ct);
 				foreach (var Prop in Bo_Word.Props) {
-					await Po_Kvs.AddAsy(Prop, ct);
+					await Po_Kvs.Add(Prop, ct);
 				}
 				foreach (var Learn in Bo_Word.Learns) {
-					await Po_Learns.AddAsy(Learn, ct);
+					await Po_Learns.Add(Learn, ct);
 				}
 				i++;
 			}
-			await Po_Words.EndAsy(ct);
-			await Po_Kvs.EndAsy(ct);
-			await Po_Learns.EndAsy(ct);
+			await Po_Words.End(ct);
+			await Po_Kvs.End(ct);
+			await Po_Learns.End(ct);
 			return Nil;
 		};
 		return Fn;

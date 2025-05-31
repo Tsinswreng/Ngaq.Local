@@ -36,7 +36,7 @@ public class SvcParseWordList
 	}
 
 
-	public async Task<IEnumerable<BoWord>> ParseWordsFromFilePathAsy(
+	public async Task<IEnumerable<BoWord>> ParseWordsFromFilePath(
 		Path_Encode Path_Encode
 		,CancellationToken ct = default
 	) {
@@ -51,7 +51,7 @@ public class SvcParseWordList
 		throw new NotImplementedException();
 	}
 
-	public async Task<IEnumerable<BoWord>> ParseWordsFromTextAsy(
+	public async Task<IEnumerable<BoWord>> ParseWordsFromText(
 		string Text
 		,CancellationToken ct = default
 	) {

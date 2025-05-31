@@ -80,8 +80,8 @@ public class LocalDbCtx : DbContext{
 				id=>id.Value.ToByteArr()
 				,val => new IdUser(ToolId.ByteArrToUInt128(val))
 			).HasColumnType("BLOB");
-			e.HasIndex(p=>p.WordFormId);
-			e.HasIndex(p => new {p.WordFormId, p.Lang, p.Owner}).IsUnique();
+			e.HasIndex(p=>p.Head);
+			e.HasIndex(p => new {p.Head, p.Lang, p.Owner}).IsUnique();
 			//Unique(WordFormId, Lang):
 		});
 

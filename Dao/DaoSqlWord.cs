@@ -28,6 +28,7 @@ public class DaoSqlWord(
 	// public ISqlCmdMkr SqlCmdMkr{get;set;}
 	// public ITableMgr TblMgr{get;set;}
 
+
 	public async Task<Func<
 		IUserCtx
 		,str
@@ -35,7 +36,7 @@ public class DaoSqlWord(
 		,CancellationToken
 		,Task<IdWord?>
 	>>
-	FnSelectIdByFormIdEtLang(
+	FnSelectIdByHeadEtLang(
 		IDbFnCtx Ctx
 		,CancellationToken ct
 	){
@@ -45,7 +46,7 @@ public class DaoSqlWord(
 $"""
 SELECT {T.Field(nameof(IHasId<nil>.Id))} FROM {T.Quote(T.Name)}
 WHERE {T.Field(nameof(PoWord.Owner))} = {F.Param(nameof(PoWord.Owner))}
-AND {T.Field(nameof(PoWord.WordFormId))} = {F.Param(nameof(PoWord.WordFormId))}
+AND {T.Field(nameof(PoWord.Head))} = {F.Param(nameof(PoWord.Head))}
 AND {T.Field(nameof(PoWord.Lang))} = {F.Param(nameof(PoWord.Lang))}
 """;
 		var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, ct);
@@ -58,14 +59,14 @@ AND Lang = @Lang
  */
 		return async (
 			IUserCtx OperatorCtx
-			,str FormId
+			,str Head
 			,str Lang
 			,CancellationToken ct
 		)=>{
 			var UserId = OperatorCtx.UserId;
 			var Params = new Dictionary<str, object?>{
 				[nameof(PoWord.Owner)] = UserId
-				,[nameof(PoWord.WordFormId)] = FormId
+				,[nameof(PoWord.Head)] = Head
 				,[nameof(PoWord.Lang)] = Lang
 			};
 //TODO 檢查有無漏T.ToDbDict(Params)者;  多表聯合查詢旹 以此構建參數dict不好用
@@ -115,7 +116,7 @@ WHERE {TK.Field(nameof(PoKv.FKeyUInt128))} = {TW.Param(nameof(PoKv.FKeyUInt128))
 			if(Po_Word == null){
 				return null;
 			}
-			var Arg = new Dictionary<str, object>{
+			var Arg = new Dictionary<str, object?>{
 				[nameof(PoKv.FKeyUInt128)] = Id.Value
 			};
 			var RawPropDicts = await Cmd_SeekKv.Args(TK.ToDbDict(Arg)).Run(ct)
@@ -142,7 +143,7 @@ WHERE {TK.Field(nameof(PoKv.FKeyUInt128))} = {TW.Param(nameof(PoKv.FKeyUInt128))
 		IEnumerable<BoWord>
 		,CancellationToken
 		,Task<nil>
-	>> FnInsertBoWordsAsy(
+	>> FnInsertBoWords(
 		IDbFnCtx? Ctx
 		,CancellationToken ct
 	) {
@@ -169,18 +170,18 @@ WHERE {TK.Field(nameof(PoKv.FKeyUInt128))} = {TW.Param(nameof(PoKv.FKeyUInt128))
 			}, BatchSize);
 			u64 i = 0;
 			foreach (var Bo_Word in Bo_Words) {
-				await Po_Words.AddAsy(Bo_Word.PoWord, ct);
+				await Po_Words.Add(Bo_Word.PoWord, ct);
 				foreach (var Prop in Bo_Word.Props) {
-					await Po_Kvs.AddAsy(Prop, ct);
+					await Po_Kvs.Add(Prop, ct);
 				}
 				foreach (var Learn in Bo_Word.Learns) {
-					await Po_Learns.AddAsy(Learn, ct);
+					await Po_Learns.Add(Learn, ct);
 				}
 				i++;
 			}
-			await Po_Words.EndAsy(ct);
-			await Po_Kvs.EndAsy(ct);
-			await Po_Learns.EndAsy(ct);
+			await Po_Words.End(ct);
+			await Po_Kvs.End(ct);
+			await Po_Learns.End(ct);
 			return Nil;
 		};
 		return Fn;
@@ -193,7 +194,7 @@ WHERE {TK.Field(nameof(PoKv.FKeyUInt128))} = {TW.Param(nameof(PoKv.FKeyUInt128))
 		IEnumerable<PoKv>
 		,CancellationToken
 		,Task<nil>
-	>> FnInsertPoKvsAsy(
+	>> FnInsertPoKvs(
 		IDbFnCtx? Ctx
 		,CancellationToken ct
 	){
@@ -203,6 +204,25 @@ WHERE {TK.Field(nameof(PoKv.FKeyUInt128))} = {TW.Param(nameof(PoKv.FKeyUInt128))
 			,CancellationToken ct
 		)=>{
 			await InsertMany(Po_Kvs, ct);
+			return Nil;
+		};
+		return Fn;
+	}
+
+	public async Task<Func<
+		IEnumerable<PoLearn>
+		,CancellationToken
+		,Task<nil>
+	>> FnInsertPoLearns(
+		IDbFnCtx? Ctx
+		,CancellationToken ct
+	){
+		var InsertMany = await RepoLearn.FnInsertMany(Ctx, ct);
+		var Fn = async(
+			IEnumerable<PoLearn> PoLearns
+			,CancellationToken ct
+		)=>{
+			await InsertMany(PoLearns, ct);
 			return Nil;
 		};
 		return Fn;
