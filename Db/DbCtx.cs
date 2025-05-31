@@ -35,8 +35,6 @@ public class LocalDbCtx : DbContext{
 		opt.UseSqlite($"Data Source={dbPath}");
 	}
 
-
-
 	protected nil _CfgPoBase<
 		[DynamicallyAccessedMembers(
 			DynamicallyAccessedMemberTypes.PublicConstructors |
@@ -60,7 +58,7 @@ public class LocalDbCtx : DbContext{
 				id=>id==null?null:id.Value.Value.ToByteArr()
 				,val => val==null?null:new IdUser(ToolId.ByteArrToUInt128(val))
 			);
-			e.HasIndex(p=>p.CreatedBy);
+			e.HasIndex(p=>p.LastUpdatedBy);
 
 		});
 		return Nil;
@@ -103,6 +101,7 @@ public class LocalDbCtx : DbContext{
 			e.HasIndex(p=>p.KI64);
 		});
 
+		_CfgPoBase<PoLearn>(mb);
 		mb.Entity<PoLearn>(e=>{
 			e.ToTable("Learn").UseTpcMappingStrategy();
 			//e.HasKey(p=>p.Id);

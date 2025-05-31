@@ -46,7 +46,11 @@ public class AppTblInfo{
 
 	protected ITable Mk<T>(str Name, T Example){
 		var ExDict = DictCtx.ToDictT(Example);
-		return Table.Mk(Name, ExDict);
+		return Table.Mk(
+			DictCtx.DictMapper
+			,Name
+			,ExDict
+		);
 	}
 
 	public void Init(){
@@ -93,7 +97,7 @@ public class AppTblInfo{
 			CfgPoBase<PoLearn>(o);
 			o.CodeIdName = nameof(PoLearn.Id);
 			o.SetCol(nameof(PoLearn.Id)).HasConversion(
-				(id)=>{return id==null?null:((IdKv)id).Value.ToByteArr();},
+				(id)=>{return id==null?null:((IdLearn)id).Value.ToByteArr();},
 				(val)=>{return val==null?null:new IdLearn(ToolId.ByteArrToUInt128((u8[])val));}
 			);
 			o.SetCol(nameof(PoLearn.FKeyUInt128)).HasConversion(

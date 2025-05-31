@@ -273,84 +273,106 @@ public class SvcWord(
 	}
 
 
-
-	[Obsolete("")]
 	public async Task<Func<
 		IUserCtx
 		,IEnumerable<BoWord>
 		,CancellationToken
-		,Task<nil>
+		,Task<DtoAddWords>
 	>> FnAddOrUpdateWords(
 		IDbFnCtx Ctx
-		,CancellationToken ct
+		,CancellationToken Ct
 	){
-		var SeekIdByFormEtLang = await DaoWord.FnSelectIdByHeadEtLang(Ctx, ct);
-		var InsertBoWords = await DaoWord.FnInsertBoWords(Ctx, ct);
-		var InsertPoKvs = await DaoWord.FnInsertPoKvs(Ctx, ct);
-		var SelectBoWordById = await DaoWord.FnSelectBoWordById(Ctx, ct);
-		//TODO update `UpdateAt`
-		//var BatchSetUpdateAt = await Dao_Word.Fn_BatchSetUpdateAtAsy<Po_Word, Id_Word>(ct);
+		var ClassifyWordsToAdd = await FnClassifyWordsToAdd(Ctx, Ct);
+		var AddOrUpdateWordsByDto = await FnAddOrUpdateWordsByDto(Ctx,Ct);
 		var Fn = async(
 			IUserCtx UserCtx
 			,IEnumerable<BoWord> BoWords
-			,CancellationToken ct
+			,CancellationToken Ct
 		)=>{
-			u64 BatchSize = 0xfff;
-			using var NeoWords = new BatchListAsy<BoWord, nil>(InsertBoWords, BatchSize);
-			using var NeoProps = new BatchListAsy<PoKv, nil>(InsertPoKvs, BatchSize);
-
-			//TODO
-			using var ChangedPoWords = new BatchListAsy<PoWord, nil>(async (e,ct)=>{
-				//await BatchSetUpdateAt(e, DateTimeOffset.Now.ToUnixTimeMilliseconds() ,ct);
-				return Nil;
-			}, BatchSize);
-
-			foreach (var BoWord in BoWords) {//TODO 先去褈合併
-				SetPoWordOwner(UserCtx, BoWord.PoWord);
-				var ExistingId = await SeekIdByFormEtLang(
-					UserCtx
-					,BoWord.PoWord.Head
-					,BoWord.PoWord.Lang
-					,ct
-				);
-				var hasChanged = false;
-				if(ExistingId == null){//新詞
-					await NeoWords.Add(BoWord,ct);
-					hasChanged = true;
-				}else{//老詞
-					BoWord.Id = ExistingId.Value;
-					var OldBo_Word = await SelectBoWordById(ExistingId.Value, ct);
-					if(OldBo_Word == null){
-						throw new FatalLogicErr("failed to get old word");
-					}
-					var NewProps = BoWord.DiffProps(BoWord.Props, OldBo_Word.Props);
-					if(NewProps.Count == 0){
-						hasChanged = false;
-					}else{
-						foreach(var Po_Kv in NewProps){
-							Po_Kv.FKeyUInt128 = BoWord.Id.Value;
-							await NeoProps.Add(Po_Kv, ct);
-						}
-					}
-				}
-				if(hasChanged){
-					var Po_Learn = new PoLearn{
-						FKeyUInt128 = BoWord.Id.Value
-						//,KStr = Const_PropKey.
-						,VStr = Const_Learn.add
-					};
-					BoWord.Learns.Add(Po_Learn);
-					BoWord.PoWord.UpdatedAt = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-					await ChangedPoWords.Add(BoWord.PoWord, ct);
-				}//~if(hasChanged)
-			}//~for
-			await NeoWords.End(ct);
-			await NeoProps.End(ct);
-			await ChangedPoWords.End(ct);
-			return Nil;
+			var DtoAddWords = await ClassifyWordsToAdd(UserCtx, BoWords, Ct);
+			await AddOrUpdateWordsByDto(UserCtx, DtoAddWords, Ct);
+			return DtoAddWords;
 		};
 		return Fn;
 	}
+
+	// [Obsolete("")]
+	// public async Task<Func<
+	// 	IUserCtx
+	// 	,IEnumerable<BoWord>
+	// 	,CancellationToken
+	// 	,Task<nil>
+	// >> FnAddOrUpdateWords(
+	// 	IDbFnCtx Ctx
+	// 	,CancellationToken ct
+	// ){
+	// 	var SeekIdByFormEtLang = await DaoWord.FnSelectIdByHeadEtLang(Ctx, ct);
+	// 	var InsertBoWords = await DaoWord.FnInsertBoWords(Ctx, ct);
+	// 	var InsertPoKvs = await DaoWord.FnInsertPoKvs(Ctx, ct);
+	// 	var SelectBoWordById = await DaoWord.FnSelectBoWordById(Ctx, ct);
+	// 	//TODO update `UpdateAt`
+	// 	//var BatchSetUpdateAt = await Dao_Word.Fn_BatchSetUpdateAtAsy<Po_Word, Id_Word>(ct);
+	// 	var Fn = async(
+	// 		IUserCtx UserCtx
+	// 		,IEnumerable<BoWord> BoWords
+	// 		,CancellationToken ct
+	// 	)=>{
+	// 		u64 BatchSize = 0xfff;
+	// 		using var NeoWords = new BatchListAsy<BoWord, nil>(InsertBoWords, BatchSize);
+	// 		using var NeoProps = new BatchListAsy<PoKv, nil>(InsertPoKvs, BatchSize);
+
+	// 		//TODO
+	// 		using var ChangedPoWords = new BatchListAsy<PoWord, nil>(async (e,ct)=>{
+	// 			//await BatchSetUpdateAt(e, DateTimeOffset.Now.ToUnixTimeMilliseconds() ,ct);
+	// 			return Nil;
+	// 		}, BatchSize);
+
+	// 		foreach (var BoWord in BoWords) {//TODO 先去褈合併
+	// 			SetPoWordOwner(UserCtx, BoWord.PoWord);
+	// 			var ExistingId = await SeekIdByFormEtLang(
+	// 				UserCtx
+	// 				,BoWord.PoWord.Head
+	// 				,BoWord.PoWord.Lang
+	// 				,ct
+	// 			);
+	// 			var hasChanged = false;
+	// 			if(ExistingId == null){//新詞
+	// 				await NeoWords.Add(BoWord,ct);
+	// 				hasChanged = true;
+	// 			}else{//老詞
+	// 				BoWord.Id = ExistingId.Value;
+	// 				var OldBo_Word = await SelectBoWordById(ExistingId.Value, ct);
+	// 				if(OldBo_Word == null){
+	// 					throw new FatalLogicErr("failed to get old word");
+	// 				}
+	// 				var NewProps = BoWord.DiffProps(BoWord.Props, OldBo_Word.Props);
+	// 				if(NewProps.Count == 0){
+	// 					hasChanged = false;
+	// 				}else{
+	// 					foreach(var Po_Kv in NewProps){
+	// 						Po_Kv.FKeyUInt128 = BoWord.Id.Value;
+	// 						await NeoProps.Add(Po_Kv, ct);
+	// 					}
+	// 				}
+	// 			}
+	// 			if(hasChanged){
+	// 				var Po_Learn = new PoLearn{
+	// 					FKeyUInt128 = BoWord.Id.Value
+	// 					//,KStr = Const_PropKey.
+	// 					,VStr = Const_Learn.add
+	// 				};
+	// 				BoWord.Learns.Add(Po_Learn);
+	// 				BoWord.PoWord.UpdatedAt = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+	// 				await ChangedPoWords.Add(BoWord.PoWord, ct);
+	// 			}//~if(hasChanged)
+	// 		}//~for
+	// 		await NeoWords.End(ct);
+	// 		await NeoProps.End(ct);
+	// 		await ChangedPoWords.End(ct);
+	// 		return Nil;
+	// 	};
+	// 	return Fn;
+	// }
 
 
 	public async Task<nil> AddWordsFromFilePath(

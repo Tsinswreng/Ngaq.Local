@@ -4,4 +4,4 @@ obj/
 *.sqlite
 *-wal
 *-shm
-
+Migrations/
