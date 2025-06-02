@@ -22,6 +22,9 @@ public class SvcWord(
 	,ITxnRunner TxnRunner
 	,DaoSqlWord DaoWord
 	,IGetTxn GetTxnAsy
+	,RepoSql<PoWord, IdWord> RepoPoWord
+	,RepoSql<PoKv, IdKv> RepoKv
+	,RepoSql<PoLearn, IdLearn> RepoLearn
 )
 	: ISvcWord
 {
@@ -295,6 +298,21 @@ public class SvcWord(
 		};
 		return Fn;
 	}
+
+	// public async Task<Func<
+	// 	IUserCtx
+	// 	,CancellationToken
+	// 	,Task<IEnumerable<BoWord>>
+	// >> FnSelectAllWords(
+	// 	IDbFnCtx Ctx
+	// 	,CancellationToken Ct
+	// ){
+
+
+
+	// }
+
+
 
 	// [Obsolete("")]
 	// public async Task<Func<

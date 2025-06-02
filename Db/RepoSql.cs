@@ -40,6 +40,36 @@ public class RepoSql<
 
 
 	public async Task<Func<
+		CancellationToken
+		,Task<u64>
+	>> FnCount(
+		IDbFnCtx? Ctx
+		,CancellationToken Ct
+	){
+		var T = TblMgr.GetTable<TEntity>();
+		var NCnt = "Cnt";
+		var Sql =
+$"SELECT COUNT(*) AS {T.Quote(NCnt)} FROM {T.Quote(T.Name)}";
+		var Cmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
+		var Fn = async(
+			CancellationToken Ct
+		)=>{
+			var CountDict = await Cmd.Run(Ct).FirstOrDefaultAsync(Ct);
+			u64 R = 0;
+			if (CountDict != null){
+				if(CountDict.TryGetValue(NCnt, out var Cnt)){
+					if(Cnt is u64 cnt){
+						R = cnt;
+					}
+				}
+			}
+			return R;
+		};
+		return Fn;
+	}
+
+
+	public async Task<Func<
 		IEnumerable<TEntity>
 		,CancellationToken
 		,Task<nil>
@@ -81,7 +111,7 @@ $"INSERT INTO {T.Quote(T.Name)} {Clause}";
 		T_Id2
 		,CancellationToken
 		,Task<TEntity?>
-	>> FnSeekById<T_Id2>(
+	>> FnSelectById<T_Id2>(
 		IDbFnCtx? Ctx
 		,CancellationToken ct
 	){
@@ -205,6 +235,8 @@ var Sql = $"DELETE FROM {Tbl.Name} WHERE {nameof(IHasId<nil>.Id)} = ?";
 		}
 		return Fn;
 	}
+
+
 
 
 	// public async Task<Func<

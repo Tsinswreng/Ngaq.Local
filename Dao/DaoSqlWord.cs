@@ -10,16 +10,20 @@ using Ngaq.Core.Tools;
 using Ngaq.Local.Db;
 using Tsinswreng.SqlHelper;
 using Tsinswreng.SqlHelper.Cmd;
-
+using Tsinswreng.CsCore.Tools;
+using Str_Any = System.Collections.Generic.Dictionary<string, object?>;
+using IStr_Any = System.Collections.Generic.IDictionary<string, object?>;
+using Tsinswreng.SqlHelper.Models;
+using System.Threading.Tasks;
 namespace Ngaq.Local.Dao;
 
 
 public class DaoSqlWord(
-		ISqlCmdMkr SqlCmdMkr
-		,ITableMgr TblMgr
-		,RepoSql<PoWord, IdWord> RepoWord
-		,RepoSql<PoKv, Core.Model.Po.Kv.IdKv> RepoKv
-		,RepoSql<PoLearn, IdLearn> RepoLearn
+	ISqlCmdMkr SqlCmdMkr
+	,ITableMgr TblMgr
+	,RepoSql<PoWord, IdWord> RepoWord
+	,RepoSql<PoKv, IdKv> RepoKv
+	,RepoSql<PoLearn, IdLearn> RepoLearn
 ){
 	// public RepoSql<Po_Word, IdWord> RepoWord{get;set;}
 	// public RepoSql<Po_Kv, IdKv> RepoKv{get;set;}
@@ -27,6 +31,25 @@ public class DaoSqlWord(
 
 	// public ISqlCmdMkr SqlCmdMkr{get;set;}
 	// public ITableMgr TblMgr{get;set;}
+
+
+	// public async Task<Func<
+	// 	IUserCtx
+	// 	,CancellationToken
+	// 	,Task<IEnumerable<BoWord>>
+	// >> FnSelectAllWords(
+	// 	IDbFnCtx Ctx
+	// 	,CancellationToken Ct
+	// ){
+
+	// 	var Fn = async(
+	// 		IUserCtx UserCtx
+	// 		,CancellationToken Ct
+	// 	)=>{
+
+	// 	};
+	// 	return Fn;
+	// }
 
 
 	public async Task<Func<
@@ -57,6 +80,7 @@ WHERE Owner = @Owner
 AND WordFormId = @WordFormId
 AND Lang = @Lang
  */
+
 		return async (
 			IUserCtx OperatorCtx
 			,str Head
@@ -64,7 +88,7 @@ AND Lang = @Lang
 			,CancellationToken ct
 		)=>{
 			var UserId = OperatorCtx.UserId;
-			var Params = new Dictionary<str, object?>{
+			var Params = new Str_Any {
 				[nameof(PoWord.Owner)] = UserId
 				,[nameof(PoWord.Head)] = Head
 				,[nameof(PoWord.Lang)] = Lang
@@ -104,7 +128,7 @@ WHERE {TK.Field(nameof(PoKv.FKeyUInt128))} = {TW.Param(nameof(PoKv.FKeyUInt128))
 """;
 			return Sql;
 		};
-		var GetPoWordById = await RepoWord.FnSeekById<IdWord>(Ctx, ct);
+		var GetPoWordById = await RepoWord.FnSelectById<IdWord>(Ctx, ct);
 		var Cmd_SeekKv = await SqlCmdMkr.Prepare(Ctx, Sql_SeekByFKey(TK.Quote(TK.Name)), ct);
 		var Cmd_SeekLearn = await SqlCmdMkr.Prepare(Ctx, Sql_SeekByFKey(TL.Quote(TL.Name)), ct);
 
@@ -116,7 +140,7 @@ WHERE {TK.Field(nameof(PoKv.FKeyUInt128))} = {TW.Param(nameof(PoKv.FKeyUInt128))
 			if(Po_Word == null){
 				return null;
 			}
-			var Arg = new Dictionary<str, object?>{
+			var Arg = new Str_Any{
 				[nameof(PoKv.FKeyUInt128)] = Id.Value
 			};
 			var RawPropDicts = await Cmd_SeekKv.Args(TK.ToDbDict(Arg)).Run(ct)
@@ -228,6 +252,147 @@ WHERE {TK.Field(nameof(PoKv.FKeyUInt128))} = {TW.Param(nameof(PoKv.FKeyUInt128))
 		return Fn;
 	}
 
+	public async Task<Func<
+		IdWord
+		,IPageQuery
+		,CancellationToken
+		,Task<IPageAsy<IStr_Any>>
+	>> FnPageByFKey(
+		IDbFnCtx Ctx
+		,ITable Tbl
+		,CancellationToken Ct
+	){
+		var TW = TblMgr.GetTable<PoWord>();
+		var NFKey = nameof(IPoKv.FKeyUInt128);
+		str NLmt = "Lmt", NOfst = "Ofst";
+		var Sql =
+$"""
+SELECT * FROM {Tbl.Quote(Tbl.Name)}
+WHERE {Tbl.Field(NFKey)} = {Tbl.Param(NFKey)}
+{Tbl.SqlMkr.LimitOffset(NLmt, NOfst)}
+""";
+		var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
+		var FnCnt = await RepoWord.FnCount(Ctx, Ct);
+		var Fn = async(
+			IdWord IdWord
+			,IPageQuery PageQry
+			,CancellationToken Ct
+		)=>{
+			var Arg = new Str_Any{
+				[NFKey] = TW.ToDbType(nameof(PoWord.Id), IdWord)
+				,[NLmt] = PageQry.PageSize
+				,[NOfst] = PageQry.Offset()
+			};
+			var DbDict = SqlCmd.Args(Arg).Run(Ct);
+			u64 Cnt = 0;
+			if(PageQry.HasTotalCount){Cnt = await FnCnt(Ct);}
+			var R = PageAsy<IStr_Any>.Mk(
+				PageQry, Cnt, DbDict
+			);
+			return R;
+
+		};
+		return Fn;
+
+	}
+
+	public async Task<Func<
+		IUserCtx
+		,IPageQuery
+		,CancellationToken
+		,Task<IPageAsy<PoWord>>
+	>> FnPagePoWords(
+		IDbFnCtx Ctx
+		,CancellationToken Ct
+	){
+		var TW = TblMgr.GetTable<PoWord>();
+		var NOwner = nameof(PoWord.Owner);
+		str NLmt = "Lmt", NOfst = "Ofst";
+		var Sql =
+$"""
+SELECT * FROM {TW.Quote(TW.Name)}
+WHERE {TW.Field(NOwner)} = {TW.Param(NOwner)}
+ORDER BY {TW.Field(nameof(IPoBase.CreatedAt))} DESC
+{TW.SqlMkr.LimitOffset(NLmt, NOfst)}
+""";
+		var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
+		var FnCnt = await RepoWord.FnCount(Ctx, Ct);
+		var Fn = async(
+			IUserCtx UserCtx
+			,IPageQuery PageQry
+			,CancellationToken Ct
+		)=>{
+			var Arg = new Str_Any(){
+				[NOwner] = TW.ToDbType(NOwner, UserCtx.UserId)
+				,[NLmt] = PageQry.PageSize
+				,[NOfst] = PageQry.Offset()
+			};
+
+			var RawDbDicts = SqlCmd.Args(Arg).Run(Ct);
+			var PoWords = RawDbDicts.Convert(
+				(Raw)=>TW.DbDictToPo<PoWord>(Raw)
+			);
+			var Cnt = PageQry.HasTotalCount?  await FnCnt(Ct)  :  0;
+			var R = PageAsy<PoWord>.Mk(
+				PageQry, Cnt, PoWords
+			);
+			return R;
+		};
+		return Fn;
+	}
+
+	public async Task<Func<
+		IUserCtx
+		,IPageQuery
+		,CancellationToken
+		,Task<IPageAsy<BoWord>?>
+	>> FnPageBoWords(
+		IDbFnCtx Ctx
+		,CancellationToken Ct
+	){
+		var TK = TblMgr.GetTable<PoKv>();
+		var TL = TblMgr.GetTable<PoLearn>();
+		var PagePoWords = await FnPagePoWords(Ctx, Ct);
+		var PageKvByFKey = await FnPageByFKey(Ctx, TK, Ct);
+		var PageLearnByFKey = await FnPageByFKey(Ctx, TL, Ct);
+
+		var Fn = async(
+			IUserCtx UserCtx
+			,IPageQuery PageInfo
+			,CancellationToken Ct
+		)=>{
+			var PoWordsPage = await PagePoWords(UserCtx, PageInfo, Ct);
+			var R = PageAsy<BoWord>.Mk(PageInfo, PoWordsPage.TotalCount, null);
+			if(PoWordsPage.DataAsy == null){
+				return R;
+			}
+
+			var BoWords = PoWordsPage.DataAsy.Convert(async (PoWord)=>{
+				var KvPage = await PageKvByFKey(PoWord.Id, PageQuery.SelectAll(), Ct);
+				var Kvs = await _PageAsyToList<PoKv>(KvPage, TK);
+
+				var LearnPage = await PageLearnByFKey(PoWord.Id, PageQuery.SelectAll(), Ct);
+				var Learns = await _PageAsyToList<PoLearn>(LearnPage, TL);
+
+				var R = new BoWord(PoWord, Kvs, Learns);
+				return R;
+			}).FlattenAsync();
+			R.DataAsy = BoWords;
+			return R;
+		};
+		return Fn;
+	}
+
+	async Task<IList<TPo>> _PageAsyToList<TPo>(
+		IPageAsy<IStr_Any> PageAsy
+		,ITable Tbl
+	)where TPo:new()
+	{
+		if(PageAsy.DataAsy == null){
+			return new List<TPo>();
+		}
+		return await PageAsy.DataAsy.Convert(D=>Tbl.AssignCodePo(D, new TPo())).ToListAsync();
+	}
 }
 
 
