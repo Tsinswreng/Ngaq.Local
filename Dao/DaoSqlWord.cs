@@ -13,7 +13,7 @@ using Tsinswreng.SqlHelper.Cmd;
 using Tsinswreng.CsCore.Tools;
 using Str_Any = System.Collections.Generic.Dictionary<string, object?>;
 using IStr_Any = System.Collections.Generic.IDictionary<string, object?>;
-using Tsinswreng.SqlHelper.Models;
+using Ngaq.Core.Infra.Page;
 using System.Threading.Tasks;
 namespace Ngaq.Local.Dao;
 
@@ -176,7 +176,7 @@ WHERE {TK.Field(nameof(PoKv.FKeyUInt128))} = {TW.Param(nameof(PoKv.FKeyUInt128))
 		var InsertPoLearns = await RepoLearn.FnInsertMany(Ctx, ct);
 
 		var Fn = async(
-			IEnumerable<BoWord> Bo_Words
+			IEnumerable<BoWord> BoWords
 			,CancellationToken ct
 		)=>{
 			u64 BatchSize = 0xfff;
@@ -193,12 +193,13 @@ WHERE {TK.Field(nameof(PoKv.FKeyUInt128))} = {TW.Param(nameof(PoKv.FKeyUInt128))
 				return Nil;
 			}, BatchSize);
 			u64 i = 0;
-			foreach (var Bo_Word in Bo_Words) {
-				await Po_Words.Add(Bo_Word.PoWord, ct);
-				foreach (var Prop in Bo_Word.Props) {
+			foreach (var BoWord in BoWords) {
+				BoWord.AssignId();
+				await Po_Words.Add(BoWord.PoWord, ct);
+				foreach (var Prop in BoWord.Props) {
 					await Po_Kvs.Add(Prop, ct);
 				}
-				foreach (var Learn in Bo_Word.Learns) {
+				foreach (var Learn in BoWord.Learns) {
 					await Po_Learns.Add(Learn, ct);
 				}
 				i++;
@@ -262,6 +263,7 @@ WHERE {TK.Field(nameof(PoKv.FKeyUInt128))} = {TW.Param(nameof(PoKv.FKeyUInt128))
 		,ITable Tbl
 		,CancellationToken Ct
 	){
+		var T = Tbl;
 		var TW = TblMgr.GetTable<PoWord>();
 		var NFKey = nameof(IPoKv.FKeyUInt128);
 		str NLmt = "Lmt", NOfst = "Ofst";
@@ -272,7 +274,7 @@ WHERE {Tbl.Field(NFKey)} = {Tbl.Param(NFKey)}
 {Tbl.SqlMkr.LimitOffset(NLmt, NOfst)}
 """;
 		var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
-		var FnCnt = await RepoWord.FnCount(Ctx, Ct);
+		//var FnCnt = await RepoWord.FnCount(Ctx, Ct);
 		var Fn = async(
 			IdWord IdWord
 			,IPageQuery PageQry
@@ -285,12 +287,11 @@ WHERE {Tbl.Field(NFKey)} = {Tbl.Param(NFKey)}
 			};
 			var DbDict = SqlCmd.Args(Arg).Run(Ct);
 			u64 Cnt = 0;
-			if(PageQry.HasTotalCount){Cnt = await FnCnt(Ct);}
+			//if(PageQry.HasTotalCount){Cnt = await FnCnt(Ct);}
 			var R = PageAsy<IStr_Any>.Mk(
 				PageQry, Cnt, DbDict
 			);
 			return R;
-
 		};
 		return Fn;
 
@@ -345,7 +346,7 @@ ORDER BY {TW.Field(nameof(IPoBase.CreatedAt))} DESC
 		IUserCtx
 		,IPageQuery
 		,CancellationToken
-		,Task<IPageAsy<BoWord>?>
+		,Task<IPageAsy<BoWord>>
 	>> FnPageBoWords(
 		IDbFnCtx Ctx
 		,CancellationToken Ct
@@ -358,11 +359,11 @@ ORDER BY {TW.Field(nameof(IPoBase.CreatedAt))} DESC
 
 		var Fn = async(
 			IUserCtx UserCtx
-			,IPageQuery PageInfo
+			,IPageQuery PageQry
 			,CancellationToken Ct
 		)=>{
-			var PoWordsPage = await PagePoWords(UserCtx, PageInfo, Ct);
-			var R = PageAsy<BoWord>.Mk(PageInfo, PoWordsPage.TotalCount, null);
+			var PoWordsPage = await PagePoWords(UserCtx, PageQry, Ct);
+			var R = PageAsy<BoWord>.Mk(PageQry, PoWordsPage.TotalCount, null);
 			if(PoWordsPage.DataAsy == null){
 				return R;
 			}

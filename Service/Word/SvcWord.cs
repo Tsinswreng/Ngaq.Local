@@ -13,6 +13,7 @@ using Ngaq.Core.Tools.Io;
 using Ngaq.Local.Dao;
 using Ngaq.Local.Db;
 using Tsinswreng.SqlHelper.Cmd;
+using Ngaq.Core.Infra.Page;
 
 namespace Ngaq.Local.Service.Word;
 
@@ -299,20 +300,18 @@ public class SvcWord(
 		return Fn;
 	}
 
-	// public async Task<Func<
-	// 	IUserCtx
-	// 	,CancellationToken
-	// 	,Task<IEnumerable<BoWord>>
-	// >> FnSelectAllWords(
-	// 	IDbFnCtx Ctx
-	// 	,CancellationToken Ct
-	// ){
 
-
-
-	// }
-
-
+	public async Task<Func<
+		IUserCtx
+		,IPageQuery
+		,CancellationToken
+		,Task<IPageAsy<BoWord>>
+	>> FnPageBoWords(
+		IDbFnCtx Ctx
+		,CancellationToken Ct
+	){
+		return await DaoWord.FnPageBoWords(Ctx,Ct);
+	}
 
 	// [Obsolete("")]
 	// public async Task<Func<
@@ -392,7 +391,6 @@ public class SvcWord(
 	// 	return Fn;
 	// }
 
-
 	public async Task<nil> AddWordsFromFilePath(
 		IUserCtx UserCtx
 		,Path_Encode Path_Encode
@@ -436,5 +434,21 @@ public class SvcWord(
 		// 	return await AddOrUpdateWords(UserCtx,BoWords,ct);
 		// }, ct);
 		//return Nil;
+	}
+
+	public async Task<IPageAsy<BoWord>> PageBoWord(
+		IUserCtx UserCtx
+		,IPageQuery PageQry
+		,CancellationToken Ct
+	){
+
+		//var Ctx = new DbFnCtx{Txn = await GetTxnAsy.GetTxn()};
+		var Ctx = new DbFnCtx();
+		var Fn = await FnPageBoWords(Ctx, Ct);
+		return await Fn(UserCtx, PageQry, Ct);
+		// var R = await TxnRunner.RunTxn(Ctx.Txn, async(Ct)=>{
+		// 	return await Fn(UserCtx, PageQry, Ct);
+		// },Ct);
+		// return R;
 	}
 }

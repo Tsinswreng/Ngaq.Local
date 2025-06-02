@@ -58,8 +58,8 @@ $"SELECT COUNT(*) AS {T.Quote(NCnt)} FROM {T.Quote(T.Name)}";
 			u64 R = 0;
 			if (CountDict != null){
 				if(CountDict.TryGetValue(NCnt, out var Cnt)){
-					if(Cnt is u64 cnt){
-						R = cnt;
+					if(Cnt is u64 || Cnt is i64 || Cnt is u32 || Cnt is i32){
+						R = Convert.ToUInt64(Cnt);
 					}
 				}
 			}
