@@ -21,7 +21,7 @@ public class RepoSql<
 	,TId
 >
 
-	where TEntity: class, IHasId<TId>, new()
+	where TEntity: class, I_Id<TId>, new()
 	where TId : IEquatable<TId>
 
 {
@@ -116,7 +116,7 @@ $"INSERT INTO {T.Quote(T.Name)} {Clause}";
 		,CancellationToken ct
 	){
 		var T = TblMgr.GetTable<TEntity>();
-		var Sql = $"SELECT * FROM {T.Quote(T.Name)} WHERE {T.Field(nameof(IHasId<nil>.Id))} = @1" ;
+		var Sql = $"SELECT * FROM {T.Quote(T.Name)} WHERE {T.Field(nameof(I_Id<nil>.Id))} = @1" ;
 		var Cmd = await SqlCmdMkr.Prepare(Ctx, Sql, ct);
 
 		var Fn = async(
@@ -126,7 +126,7 @@ $"INSERT INTO {T.Quote(T.Name)} {Clause}";
 			if(Id is not TId id){
 				throw new Exception("Id is not T_Id id");
 			}
-			var IdCol = T.Columns[nameof(IHasId<nil>.Id)];
+			var IdCol = T.Columns[nameof(I_Id<nil>.Id)];
 			var ConvertedId = IdCol.ToDbType(Id);
 			var RawDict = await Cmd
 				.Args([ConvertedId])
@@ -144,26 +144,26 @@ $"INSERT INTO {T.Quote(T.Name)} {Clause}";
 	}
 
 	public async Task<Func<
-		IEnumerable<Id_Dict<T_Id2>>
+		IEnumerable<Id_Dict<TId2>>
 		,CancellationToken
 		,Task<nil>
-	>> FnUpdateMany<T_Id2>(
+	>> FnUpdateManyById<TId2>(
 		IDbFnCtx? Ctx
-		,IDictionary<str, object?> ModelDict
+		,IDictionary<str, object?> ModelDict //不當有Id
 		,CancellationToken ct
 	){
-
 		var T = TblMgr.GetTable<TEntity>();
-		T.ToCodeDict(ModelDict);
-		//var F = SqliteSqlMkr.Inst;
+		ModelDict = new Dictionary<str, object?>(ModelDict);
+		var NId = T.CodeIdName;
+		ModelDict.Remove(NId);
 		var Clause = T.UpdateClause(ModelDict.Keys);
-		var N_Id = nameof(IHasId<nil>.Id);
+
 		var Sql =
-$"UPDATE {T.Quote(T.Name)} SET ${Clause} WHERE {T.Field(N_Id)} = {T.Param(N_Id)}";
+$"UPDATE {T.Quote(T.Name)} SET ${Clause} WHERE {T.Field(NId)} = {T.Param(NId)}";
 
 		var Cmd = await SqlCmdMkr.Prepare(Ctx, Sql, ct);
 		var Fn = async(
-			IEnumerable<Id_Dict<T_Id2>> Id_Dicts
+			IEnumerable<Id_Dict<TId2>> Id_Dicts
 			,CancellationToken ct
 		)=>{
 			foreach(var id_dict in Id_Dicts){
@@ -218,7 +218,7 @@ $"UPDATE {T.Quote(T.Name)} SET ${Clause} WHERE {T.Field(N_Id)} = {T.Param(N_Id)}
 		,CancellationToken ct
 	){
 		var Tbl = TblMgr.GetTable<TEntity>();
-var Sql = $"DELETE FROM {Tbl.Name} WHERE {nameof(IHasId<nil>.Id)} = ?";
+var Sql = $"DELETE FROM {Tbl.Name} WHERE {nameof(I_Id<nil>.Id)} = ?";
 
 		var Cmd = await SqlCmdMkr.Prepare(Ctx, Sql, ct);
 		async Task<nil> Fn(
@@ -228,7 +228,7 @@ var Sql = $"DELETE FROM {Tbl.Name} WHERE {nameof(IHasId<nil>.Id)} = ?";
 			if (Id is not TId id) {
 				throw new Exception("Id is not T_Id id");
 			}
-			var IdCol = Tbl.Columns[nameof(IHasId<nil>.Id)];
+			var IdCol = Tbl.Columns[nameof(I_Id<nil>.Id)];
 			var ConvertedId = IdCol.ToDbType(Id);
 			await Cmd.Args([ConvertedId]).Run(ct).FirstOrDefaultAsync(ct);
 			return Nil;

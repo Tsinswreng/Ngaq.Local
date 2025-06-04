@@ -18,7 +18,7 @@ public class SvcParseWordList
 		throw new NotImplementedException();
 	}
 
-	public async Task<IEnumerable<BoWord>> ParseWordsByIterEtEncodingAsy(
+	public async Task<IEnumerable<JnWord>> ParseWordsByIterEtEncodingAsy(
 		I_Iter<u8> Iter
 		,Encoding Encoding
 		,CancellationToken ct = default
@@ -36,7 +36,7 @@ public class SvcParseWordList
 	}
 
 
-	public async Task<IEnumerable<BoWord>> ParseWordsFromFilePath(
+	public async Task<IEnumerable<JnWord>> ParseWordsFromFilePath(
 		Path_Encode Path_Encode
 		,CancellationToken ct = default
 	) {
@@ -44,14 +44,14 @@ public class SvcParseWordList
 		return await ParseWordsByIterEtEncodingAsy(ByteReader, Path_Encode.Encoding);
 	}
 
-	public async Task<IEnumerable<BoWord>> ParseWordsFromUrlAsy(
+	public async Task<IEnumerable<JnWord>> ParseWordsFromUrlAsy(
 		string Path
 		,CancellationToken ct = default
 	) {
 		throw new NotImplementedException();
 	}
 
-	public async Task<IEnumerable<BoWord>> ParseWordsFromText(
+	public async Task<IEnumerable<JnWord>> ParseWordsFromText(
 		string Text
 		,CancellationToken ct = default
 	) {

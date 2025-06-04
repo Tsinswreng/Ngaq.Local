@@ -12,7 +12,7 @@ public class RepoFsql
 	, T_Id
 >
 	//: I_Crud<T_Entity>
-	where T_Entity: class, IHasId<T_Id>
+	where T_Entity: class, I_Id<T_Id>
 	where T_Id : IEquatable<T_Id>
 {
 

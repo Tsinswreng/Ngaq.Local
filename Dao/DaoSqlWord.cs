@@ -67,7 +67,7 @@ public class DaoSqlWord(
 		var F = TblMgr.SqlMkr;
 		var Sql =
 $"""
-SELECT {T.Field(nameof(IHasId<nil>.Id))} FROM {T.Quote(T.Name)}
+SELECT {T.Field(nameof(I_Id<nil>.Id))} FROM {T.Quote(T.Name)}
 WHERE {T.Field(nameof(PoWord.Owner))} = {F.Param(nameof(PoWord.Owner))}
 AND {T.Field(nameof(PoWord.Head))} = {F.Param(nameof(PoWord.Head))}
 AND {T.Field(nameof(PoWord.Lang))} = {F.Param(nameof(PoWord.Lang))}
@@ -98,7 +98,7 @@ AND Lang = @Lang
 			if(GotDict == null){
 				return null;
 			}
-			var ans = GotDict[T.ToDbName(nameof(IHasId<nil>.Id))];
+			var ans = GotDict[T.ToDbName(nameof(I_Id<nil>.Id))];
 			return new IdWord(ToolId.ByteArrToUInt128((u8[])ans));
 		};
 	}
@@ -112,8 +112,8 @@ AND Lang = @Lang
 	public async Task<Func<
 		IdWord
 		,CancellationToken
-		,Task<BoWord?>
-	>> FnSelectBoWordById(
+		,Task<JnWord?>
+	>> FnSelectJnWordById(
 		IDbFnCtx? Ctx
 		,CancellationToken ct
 	){
@@ -151,7 +151,7 @@ WHERE {TK.Field(nameof(PoKv.FKeyUInt128))} = {TW.Param(nameof(PoKv.FKeyUInt128))
 				.Select(dbDict=>TL.DbDictToPo<PoLearn>(dbDict))
 				.ToListAsync(ct)
 			;
-			var ans = new BoWord{
+			var ans = new JnWord{
 				PoWord = Po_Word
 				,Props = RawPropDicts
 				,Learns = RawLearnDicts
@@ -164,7 +164,7 @@ WHERE {TK.Field(nameof(PoKv.FKeyUInt128))} = {TW.Param(nameof(PoKv.FKeyUInt128))
 
 
 	public async Task<Func<
-		IEnumerable<BoWord>
+		IEnumerable<JnWord>
 		,CancellationToken
 		,Task<nil>
 	>> FnInsertBoWords(
@@ -176,7 +176,7 @@ WHERE {TK.Field(nameof(PoKv.FKeyUInt128))} = {TW.Param(nameof(PoKv.FKeyUInt128))
 		var InsertPoLearns = await RepoLearn.FnInsertMany(Ctx, ct);
 
 		var Fn = async(
-			IEnumerable<BoWord> BoWords
+			IEnumerable<JnWord> BoWords
 			,CancellationToken ct
 		)=>{
 			u64 BatchSize = 0xfff;
@@ -346,7 +346,7 @@ ORDER BY {TW.Field(nameof(IPoBase.CreatedAt))} DESC
 		IUserCtx
 		,IPageQuery
 		,CancellationToken
-		,Task<IPageAsy<BoWord>>
+		,Task<IPageAsy<JnWord>>
 	>> FnPageBoWords(
 		IDbFnCtx Ctx
 		,CancellationToken Ct
@@ -363,7 +363,7 @@ ORDER BY {TW.Field(nameof(IPoBase.CreatedAt))} DESC
 			,CancellationToken Ct
 		)=>{
 			var PoWordsPage = await PagePoWords(UserCtx, PageQry, Ct);
-			var R = PageAsy<BoWord>.Mk(PageQry, PoWordsPage.TotalCount, null);
+			var R = PageAsy<JnWord>.Mk(PageQry, PoWordsPage.TotalCount, null);
 			if(PoWordsPage.DataAsy == null){
 				return R;
 			}
@@ -375,7 +375,7 @@ ORDER BY {TW.Field(nameof(IPoBase.CreatedAt))} DESC
 				var LearnPage = await PageLearnByFKey(PoWord.Id, PageQuery.SelectAll(), Ct);
 				var Learns = await _PageAsyToList<PoLearn>(LearnPage, TL);
 
-				var R = new BoWord(PoWord, Kvs, Learns);
+				var R = new JnWord(PoWord, Kvs, Learns);
 				return R;
 			}).FlattenAsync();
 			R.DataAsy = BoWords;

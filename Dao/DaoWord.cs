@@ -54,7 +54,7 @@ public class DaoWord(
 	public async Task<Func<
 		IdWord
 		,CancellationToken
-		,Task<BoWord?>
+		,Task<JnWord?>
 	>> FnSelectBoWordById(
 		CancellationToken ct
 	){
@@ -72,7 +72,7 @@ public class DaoWord(
 			var Learns = await DbCtx.Po_Learn.Where(
 				w=>Id.Equals(w.FKeyUInt128)
 			).ToListAsync(ct);
-			var ans = new BoWord{
+			var ans = new JnWord{
 				PoWord = Po_Word
 				,Props = Props
 				,Learns = Learns
@@ -88,14 +88,14 @@ public class DaoWord(
 /// </summary>
 /// <returns></returns>
 	public async Task<Func<
-		IEnumerable<BoWord>
+		IEnumerable<JnWord>
 		,CancellationToken
 		,Task<nil>
 	>> FnInsertBoWords(
 		CancellationToken ct
 	) {
 		var Fn = async(
-			IEnumerable<BoWord> Bo_Words
+			IEnumerable<JnWord> Bo_Words
 			,CancellationToken ct
 		)=>{
 			u64 BatchSize = 0xfff;
@@ -175,7 +175,7 @@ public class DaoWord(
 		,T_Id
 	>(
 		CancellationToken ct
-	)where T_Entity : class, IPoBase, IHasId<T_Id>
+	)where T_Entity : class, IPoBase, I_Id<T_Id>
 	{
 		var Fn = async(
 			IEnumerable<T_Entity> Pos
@@ -183,11 +183,11 @@ public class DaoWord(
 			,CancellationToken ct
 		)=>{
 			foreach(var po in Pos){
-				if(po is not IHasId<T_Id> IdPo){
+				if(po is not I_Id<T_Id> IdPo){
 					continue;
 				}
 				await DbCtx.Set<T_Entity>().Where(
-					w=>((IHasId<T_Id>)w).Id!.Equals(IdPo.Id)
+					w=>((I_Id<T_Id>)w).Id!.Equals(IdPo.Id)
 				).ExecuteUpdateAsync(s=>
 					s.SetProperty(e=>e.UpdatedAt, Time), ct
 				);

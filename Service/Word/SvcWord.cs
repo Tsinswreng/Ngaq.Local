@@ -14,6 +14,11 @@ using Ngaq.Local.Dao;
 using Ngaq.Local.Db;
 using Tsinswreng.SqlHelper.Cmd;
 using Ngaq.Core.Infra.Page;
+using System.Collections;
+using Ngaq.Core.Infra.Errors;
+using Tsinswreng.CsCore.Tools;
+using Ngaq.Core.Service.Word.Learn_.Models;
+using Ngaq.Core.Model.Word.Req;
 
 namespace Ngaq.Local.Service.Word;
 
@@ -31,6 +36,12 @@ public class SvcWord(
 {
 	//public DbCtx DbCtx { get; set; } = DbCtx;
 
+	public class EErr_:EnumErr{
+		public IAppErr WordOwnerNotMatch() => Mk(nameof(WordOwnerNotMatch));
+	}
+	public EErr_ EErr = new EErr_();
+
+
 	public static PoWord SetPoWordOwner(
 		IUserCtx UserCtx
 		,PoWord PoWord
@@ -42,27 +53,23 @@ public class SvcWord(
 
 	public async Task<Func<
 		IUserCtx
-		,IEnumerable<BoWord>
-		,CancellationToken
-		,Task<DuplicationGroup<BoWord>>
+		,IEnumerable<JnWord>
+		,CT
+		,Task<DuplicationGroup<JnWord>>
 	>> FnGroupByExising(
 		IDbFnCtx Ctx
-		,CancellationToken ct
+		,CT ct
 	){
 
 		var SeekIdByFormEtLang = await DaoWord.FnSelectIdByHeadEtLang(Ctx, ct);
-		var SeekBoWordById = await DaoWord.FnSelectBoWordById(Ctx, ct);
+		var SeekBoWordById = await DaoWord.FnSelectJnWordById(Ctx, ct);
 		var Fn = async(
 			IUserCtx UserCtx
-			,IEnumerable<BoWord> BoWords
-			,CancellationToken ct
+			,IEnumerable<JnWord> BoWords
+			,CT ct
 		)=>{
-
-
-			var NonExistingList = new List<BoWord>();
-			// var ExistingList = new List<BoWord>();
-			// var DuplicatesList = new List<BoWord>();
-			var ExiDupliPairs = new List<Existing_Duplication<BoWord>>();
+			var NonExistingList = new List<JnWord>();
+			var ExiDupliPairs = new List<Existing_Duplication<JnWord>>();
 			foreach(var BoWord in BoWords){
 				var IdInDb = await SeekIdByFormEtLang(
 					UserCtx
@@ -77,16 +84,14 @@ public class SvcWord(
 					if(BoWordInDb == null){
 						throw new FatalLogicErr("BoWordInDb == null");
 					}
-					var ExiDupliPair = new Existing_Duplication<BoWord>(
+					var ExiDupliPair = new Existing_Duplication<JnWord>(
 						Existing: BoWordInDb
 						,Duplication: BoWord
 					);
 					ExiDupliPairs.Add(ExiDupliPair);
-					// BoWord.Id = ua.Value;
-					// ExistingList.Add(BoWord);
 				}
 			}
-			var R = new DuplicationGroup<BoWord>();
+			var R = new DuplicationGroup<JnWord>();
 			R.Existing_Duplications = ExiDupliPairs;
 			R.NonExistings = NonExistingList;
 			return R;
@@ -97,11 +102,11 @@ public class SvcWord(
 	public async Task<Func<
 		IUserCtx
 		,DtoAddWords
-		,CancellationToken
+		,CT
 		,Task<nil>
 	>> FnAddOrUpdateWordsByDto(
 		IDbFnCtx Ctx
-		,CancellationToken Ct
+		,CT Ct
 	){
 		var InsertBoWords = await DaoWord.FnInsertBoWords(Ctx, Ct);
 		var InsertPoKvs = await DaoWord.FnInsertPoKvs(Ctx, Ct);
@@ -110,9 +115,9 @@ public class SvcWord(
 		var Fn = async(
 			IUserCtx UserCtx
 			,DtoAddWords DtoAddWords
-			,CancellationToken Ct
+			,CT Ct
 		)=>{
-			using var NeoWords = new BatchListAsy<BoWord, nil>(InsertBoWords);
+			using var NeoWords = new BatchListAsy<JnWord, nil>(InsertBoWords);
 			using var NeoProps = new BatchListAsy<PoKv, nil>(InsertPoKvs);
 			using var NeoLearns = new BatchListAsy<PoLearn, nil>(InsertPoLearns);
 
@@ -151,19 +156,19 @@ public class SvcWord(
 /// <returns></returns>
 	public async Task<Func<
 		IUserCtx
-		,IEnumerable<BoWord>
-		,CancellationToken
+		,IEnumerable<JnWord>
+		,CT
 		,Task<DtoAddWords>
 	>> FnClassifyWordsToAdd(
 		IDbFnCtx Ctx
-		,CancellationToken ct
+		,CT ct
 	){
 		var GroupByExisting = await FnGroupByExising(Ctx, ct);
 
 		var Fn = async(
 			IUserCtx UserCtx
-			,IEnumerable<BoWord> BoWords
-			,CancellationToken ct
+			,IEnumerable<JnWord> BoWords
+			,CT ct
 		)=>{
 			var R = new DtoAddWords();
 
@@ -171,8 +176,8 @@ public class SvcWord(
 			var LangHead_Words = BoWords.GroupByLangHead();
 
 			//合併後ʹ諸詞。斯列表中 同語言同詞頭之詞當只出現一次
-			IList<BoWord> Mergeds = new List<BoWord>();
-			foreach( var (LangHead, Words) in LangHead_Words ){
+			IList<JnWord> Mergeds = new List<JnWord>();
+			foreach( var (HeadLang, Words) in LangHead_Words ){
 				var OneMerged = Words.MergeSameWords();
 				if(OneMerged != null){
 					Mergeds.Add(OneMerged);
@@ -184,12 +189,12 @@ public class SvcWord(
 			R.NeoWords = ExistGroup.NonExistings??[];
 
 			// 有變動之諸新詞。
-			var ChangedNewWords = new List<BoWord>();
+			var ChangedNewWords = new List<JnWord>();
 			foreach(var Exi_Dupli in ExistGroup.Existing_Duplications??[]){
 				var OldWord = Exi_Dupli.Existing;//庫中已有ʹ舊詞
 				var NewWord = Exi_Dupli.Duplication;//待加ʹ新詞
 				//待加ʹ新資產
-				var NewProps = BoWord.DiffProps(NewWord.Props, OldWord.Props);
+				var NewProps = JnWord.DiffProps(NewWord.Props, OldWord.Props);
 				var DtoUpdatedWord = new DtoUpdatedWord(
 					WordInDb: OldWord
 					,WordToAdd: NewWord
@@ -202,73 +207,6 @@ public class SvcWord(
 		return Fn;
 	}
 
-	// public async Task<Func<
-	// 	IUserCtx
-	// 	,IEnumerable<BoWord>
-	// 	,CancellationToken
-	// 	,Task<nil>
-	// >> FnAddOrUpdateWords2(
-	// 	IDbFnCtx Ctx
-	// 	,CancellationToken ct
-	// ){
-	// 	var GroupByExisting = await FnGroupByExising(Ctx, ct);
-	// 	var InsertBoWords = await DaoWord.FnInsertBoWords(Ctx, ct);
-	// 	var InsertPoKvs = await DaoWord.FnInsertPoKvs(Ctx, ct);
-	// 	var InsertPoLearns = await DaoWord.FnInsertPoLearns(Ctx, ct);
-
-	// 	var Fn = async(
-	// 		IUserCtx UserCtx
-	// 		,IEnumerable<BoWord> BoWords
-	// 		,CancellationToken ct
-	// 	)=>{
-
-	// 		//var R = new DuplicationGroup<>
-
-	// 		using var NeoProps = new BatchListAsy<PoKv, nil>(InsertPoKvs);
-	// 		using var NeoLearns = new BatchListAsy<PoLearn, nil>(InsertPoLearns);
-
-	// 		//按語言與詞頭分類
-	// 		var LangHead_Words = BoWords.GroupByLangHead();
-
-	// 		//合併後ʹ諸詞。斯列表中 同語言同詞頭之詞當只出現一次
-	// 		IList<BoWord> Mergeds = new List<BoWord>();
-	// 		foreach( var (LangHead, Words) in LangHead_Words ){
-	// 			var OneMerged = Words.MergeSameWords();
-	// 			if(OneMerged != null){
-	// 				Mergeds.Add(OneMerged);
-	// 			}
-	// 		}
-
-	// 		//查庫 篩出庫中既有ʹ舊詞 與 未加過之詞
-	// 		var ExistGroup = await GroupByExisting(UserCtx, Mergeds, ct);
-	// 		//未加過之諸詞 加'add'ˉ學習記錄後直加入庫中則可
-	// 		foreach(var OneNonExisting in ExistGroup.NonExistings??[]){
-	// 			var Learn_Add = _MkLearn_Add();
-	// 			OneNonExisting.AddLearn(Learn_Add);
-	// 		}
-	// 		await InsertBoWords(ExistGroup.NonExistings??[], ct);
-
-	// 		// 有變動之諸新詞。
-	// 		var ChangedNewWords = new List<BoWord>();
-	// 		foreach(var Exi_Dupli in ExistGroup.Existing_Duplications??[]){
-	// 			var OldWord = Exi_Dupli.Existing;//庫中已有ʹ舊詞
-	// 			var NewWord = Exi_Dupli.Duplication;//待加ʹ新詞
-	// 			//待加ʹ新資產
-	// 			var NewProps = BoWord.DiffProps(NewWord.Props, OldWord.Props);
-	// 			//若NewProps則有變動、學習記錄添'add'
-	// 			if(NewProps.Count > 0){
-	// 				var Learn_Add = OldWord.AddLearn(_MkLearn_Add());
-	// 				await NeoLearns.Add(Learn_Add,ct);
-	// 				foreach(var NewProp in NewProps){
-	// 					NewProp.FKeyUInt128 = OldWord.Id;
-	// 					await NeoProps.Add(NewProp, ct);
-	// 				}
-	// 			}
-	// 		}
-	// 		return Nil;
-	// 	};
-	// 	return Fn;
-	// }
 
 	PoLearn _MkLearn_Add(){
 		var R = new PoLearn();
@@ -277,21 +215,22 @@ public class SvcWord(
 	}
 
 
+//TODO 更新UpdateAt
 	public async Task<Func<
 		IUserCtx
-		,IEnumerable<BoWord>
-		,CancellationToken
+		,IEnumerable<JnWord>
+		,CT
 		,Task<DtoAddWords>
 	>> FnAddOrUpdateWords(
 		IDbFnCtx Ctx
-		,CancellationToken Ct
+		,CT Ct
 	){
 		var ClassifyWordsToAdd = await FnClassifyWordsToAdd(Ctx, Ct);
 		var AddOrUpdateWordsByDto = await FnAddOrUpdateWordsByDto(Ctx,Ct);
 		var Fn = async(
 			IUserCtx UserCtx
-			,IEnumerable<BoWord> BoWords
-			,CancellationToken Ct
+			,IEnumerable<JnWord> BoWords
+			,CT Ct
 		)=>{
 			var DtoAddWords = await ClassifyWordsToAdd(UserCtx, BoWords, Ct);
 			await AddOrUpdateWordsByDto(UserCtx, DtoAddWords, Ct);
@@ -304,97 +243,77 @@ public class SvcWord(
 	public async Task<Func<
 		IUserCtx
 		,IPageQuery
-		,CancellationToken
-		,Task<IPageAsy<BoWord>>
+		,CT
+		,Task<IPageAsy<JnWord>>
 	>> FnPageBoWords(
 		IDbFnCtx Ctx
-		,CancellationToken Ct
+		,CT Ct
 	){
 		return await DaoWord.FnPageBoWords(Ctx,Ct);
 	}
 
-	// [Obsolete("")]
-	// public async Task<Func<
-	// 	IUserCtx
-	// 	,IEnumerable<BoWord>
-	// 	,CancellationToken
-	// 	,Task<nil>
-	// >> FnAddOrUpdateWords(
-	// 	IDbFnCtx Ctx
-	// 	,CancellationToken ct
-	// ){
-	// 	var SeekIdByFormEtLang = await DaoWord.FnSelectIdByHeadEtLang(Ctx, ct);
-	// 	var InsertBoWords = await DaoWord.FnInsertBoWords(Ctx, ct);
-	// 	var InsertPoKvs = await DaoWord.FnInsertPoKvs(Ctx, ct);
-	// 	var SelectBoWordById = await DaoWord.FnSelectBoWordById(Ctx, ct);
-	// 	//TODO update `UpdateAt`
-	// 	//var BatchSetUpdateAt = await Dao_Word.Fn_BatchSetUpdateAtAsy<Po_Word, Id_Word>(ct);
-	// 	var Fn = async(
-	// 		IUserCtx UserCtx
-	// 		,IEnumerable<BoWord> BoWords
-	// 		,CancellationToken ct
-	// 	)=>{
-	// 		u64 BatchSize = 0xfff;
-	// 		using var NeoWords = new BatchListAsy<BoWord, nil>(InsertBoWords, BatchSize);
-	// 		using var NeoProps = new BatchListAsy<PoKv, nil>(InsertPoKvs, BatchSize);
+	public async Task<Func<
+		IUserCtx
+		,IdWord
+		,CT
+		,Task<JnWord?>
+	>> FnCheckWordOwnerOrThrow(
+		IDbFnCtx Ctx
+		,CT Ct
+	){
+		var SelectJnWordById = await DaoWord.FnSelectJnWordById(Ctx, Ct);
+		var Fn = async(
+			IUserCtx UserCtx
+			,IdWord IdWord
+			,CT Ct
+		)=>{
+			var JWord = await SelectJnWordById(IdWord, Ct);
+			if(JWord == null){
+				return JWord;
+			}
 
-	// 		//TODO
-	// 		using var ChangedPoWords = new BatchListAsy<PoWord, nil>(async (e,ct)=>{
-	// 			//await BatchSetUpdateAt(e, DateTimeOffset.Now.ToUnixTimeMilliseconds() ,ct);
-	// 			return Nil;
-	// 		}, BatchSize);
+			if(JWord.Owner != UserCtx.UserId){
+				throw EErr.WordOwnerNotMatch().ToErrBase();
+			}
+			return JWord;
+		};
+		return Fn;
+	}
 
-	// 		foreach (var BoWord in BoWords) {//TODO 先去褈合併
-	// 			SetPoWordOwner(UserCtx, BoWord.PoWord);
-	// 			var ExistingId = await SeekIdByFormEtLang(
-	// 				UserCtx
-	// 				,BoWord.PoWord.Head
-	// 				,BoWord.PoWord.Lang
-	// 				,ct
-	// 			);
-	// 			var hasChanged = false;
-	// 			if(ExistingId == null){//新詞
-	// 				await NeoWords.Add(BoWord,ct);
-	// 				hasChanged = true;
-	// 			}else{//老詞
-	// 				BoWord.Id = ExistingId.Value;
-	// 				var OldBo_Word = await SelectBoWordById(ExistingId.Value, ct);
-	// 				if(OldBo_Word == null){
-	// 					throw new FatalLogicErr("failed to get old word");
-	// 				}
-	// 				var NewProps = BoWord.DiffProps(BoWord.Props, OldBo_Word.Props);
-	// 				if(NewProps.Count == 0){
-	// 					hasChanged = false;
-	// 				}else{
-	// 					foreach(var Po_Kv in NewProps){
-	// 						Po_Kv.FKeyUInt128 = BoWord.Id.Value;
-	// 						await NeoProps.Add(Po_Kv, ct);
-	// 					}
-	// 				}
-	// 			}
-	// 			if(hasChanged){
-	// 				var Po_Learn = new PoLearn{
-	// 					FKeyUInt128 = BoWord.Id.Value
-	// 					//,KStr = Const_PropKey.
-	// 					,VStr = Const_Learn.add
-	// 				};
-	// 				BoWord.Learns.Add(Po_Learn);
-	// 				BoWord.PoWord.UpdatedAt = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-	// 				await ChangedPoWords.Add(BoWord.PoWord, ct);
-	// 			}//~if(hasChanged)
-	// 		}//~for
-	// 		await NeoWords.End(ct);
-	// 		await NeoProps.End(ct);
-	// 		await ChangedPoWords.End(ct);
-	// 		return Nil;
-	// 	};
-	// 	return Fn;
-	// }
+	public async Task<Func<
+		IUserCtx
+		,IEnumerable<WordId_PoLearns>
+		,CT
+		,Task<nil>
+	>> FnAddWordId_PoLearnss(
+		IDbFnCtx Ctx
+		,CT Ct
+	){
+		var CheckWordOwner = await FnCheckWordOwnerOrThrow(Ctx, Ct);
+		var InsertPoLearns = await DaoWord.FnInsertPoLearns(Ctx, Ct);
+		var Fn = async(
+			IUserCtx UserCtx
+			,IEnumerable<WordId_PoLearns> ListOfWordId_PoLearns
+			,CT Ct
+		)=>{
+			foreach(var WordId_PoLearns in ListOfWordId_PoLearns){
+				var IdWord = WordId_PoLearns.WordId;
+				await CheckWordOwner(UserCtx, IdWord, Ct);
+				var PoLearns = WordId_PoLearns.PoLearns.Select(x=>{
+					x.FKeyUInt128 = IdWord;
+					return x;
+				});
+				await InsertPoLearns(PoLearns, Ct);
+			}
+			return Nil;
+		};
+		return Fn;
+	}
 
 	public async Task<nil> AddWordsFromFilePath(
 		IUserCtx UserCtx
 		,Path_Encode Path_Encode
-		,CancellationToken ct
+		,CT ct
 	) {
 		var Ctx = new DbFnCtx{Txn = await GetTxnAsy.GetTxn()};
 		var AddOrUpdateWords = await FnAddOrUpdateWords(Ctx, ct);
@@ -410,7 +329,7 @@ public class SvcWord(
 	public async Task<nil> AddWordsFromText(
 		IUserCtx UserCtx
 		,string Text
-		,CancellationToken ct
+		,CT ct
 	) {
 		var Ctx = new DbFnCtx{Txn = await GetTxnAsy.GetTxn()};
 		var AddOrUpdateWords = await FnAddOrUpdateWords(Ctx, ct);
@@ -425,30 +344,52 @@ public class SvcWord(
 	public async Task<nil> AddWordsFromUrl(
 		IUserCtx UserCtx
 		,string Path
-		,CancellationToken ct
+		,CT ct
 	) {
 		throw new NotImplementedException();
-		// var AddOrUpdateWords = await Fn_AddOrUpdateWordsAsy(ct);
-		// var BoWords = await Svc_ParseWordList.ParseWordsFromFilePathAsy(Path_Encode);
-		// return await TxnAsyFnRunner.TxnAsy(async(ct)=>{
-		// 	return await AddOrUpdateWords(UserCtx,BoWords,ct);
-		// }, ct);
-		//return Nil;
 	}
 
-	public async Task<IPageAsy<BoWord>> PageBoWord(
+	public async Task<nil> AddWordId_PoLearnss(
+		IUserCtx UserCtx
+		,IEnumerable<WordId_PoLearns> WordId_PoLearnss
+		,CT Ct
+	){
+		var Ctx = new DbFnCtx{Txn = await GetTxnAsy.GetTxn()};
+		var AddLearnRecords = await FnAddWordId_PoLearnss(Ctx, Ct);
+		return await TxnRunner.RunTxn(Ctx.Txn, async(Ct)=>{
+			return await AddLearnRecords(UserCtx, WordId_PoLearnss, Ct);
+		},Ct);
+	}
+
+	public async Task<nil> AddWordId_LearnRecordss(
+		IUserCtx UserCtx
+		,IEnumerable<WordId_LearnRecords> WordId_LearnRecordss
+		,CT Ct
+	){
+		var Ctx = new DbFnCtx{Txn = await GetTxnAsy.GetTxn()};
+		var AddWordId_PoLearnss = await FnAddWordId_PoLearnss(Ctx, Ct);
+		return await TxnRunner.RunTxn(Ctx.Txn, async(Ct)=>{
+			var WordId_PoLearns = WordId_LearnRecordss.Select(WordId_LearnRecords=>{
+				var R = new WordId_PoLearns();
+				R.PoLearns = WordId_LearnRecords.LearnRecords.Select(y=>y.ToPoLearn());
+				R.WordId = WordId_LearnRecords.WordId;
+				return R;
+			});
+			return await AddWordId_PoLearnss(UserCtx, WordId_PoLearns, Ct);
+		},Ct);
+	}
+
+
+
+	public async Task<IPageAsy<JnWord>> PageBoWord(
 		IUserCtx UserCtx
 		,IPageQuery PageQry
-		,CancellationToken Ct
+		,CT Ct
 	){
 
 		//var Ctx = new DbFnCtx{Txn = await GetTxnAsy.GetTxn()};
 		var Ctx = new DbFnCtx();
 		var Fn = await FnPageBoWords(Ctx, Ct);
 		return await Fn(UserCtx, PageQry, Ct);
-		// var R = await TxnRunner.RunTxn(Ctx.Txn, async(Ct)=>{
-		// 	return await Fn(UserCtx, PageQry, Ct);
-		// },Ct);
-		// return R;
 	}
 }

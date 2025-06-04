@@ -29,7 +29,7 @@ public class RepoEf
 	TEntity
 	,TId
 >
-	where TEntity: class, IHasId<TId>
+	where TEntity: class, I_Id<TId>
 	where TId : IEquatable<TId>
 {
 
