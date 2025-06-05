@@ -17,8 +17,8 @@ using Ngaq.Core.Infra.Page;
 using System.Collections;
 using Ngaq.Core.Infra.Errors;
 using Tsinswreng.CsCore.Tools;
-using Ngaq.Core.Service.Word.Learn_.Models;
 using Ngaq.Core.Model.Word.Req;
+using Ngaq.Core.Word.Models.Learn_;
 
 namespace Ngaq.Local.Service.Word;
 
