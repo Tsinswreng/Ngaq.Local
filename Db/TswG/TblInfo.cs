@@ -1,7 +1,7 @@
 namespace Ngaq.Db;
 using Tsinswreng.SqlHelper;
 using Ngaq.Core.Model.Po.Kv;
-using Ngaq.Core.Model.Po.Learn;
+using Ngaq.Core.Model.Po.Learn_;
 using Ngaq.Core.Model.Po.Word;
 using Ngaq.Core.Infra;
 using Ngaq.Core.Tools;
@@ -31,18 +31,20 @@ public class AppTblInfo{
 	}
 
 
-	nil CfgPoBase<T_Po>(ITable Tbl){
+	nil CfgPoBase<TPo>(ITable Tbl){
 		var o = Tbl;
-		o.SetCol(nameof(IPoBase.CreatedBy)).HasConversion(
-			(id)=>{return id==null?null:((IdUser)id).Value.ToByteArr();},
-			(val)=>{return val==null?null:new IdUser(ToolId.ByteArrToUInt128((u8[])val));}
+		o.SetCol(nameof(IPoBase.CreatedBy)).HasConversion<IdUser?, u8[]?>(
+			(id)=>(id)?.Value.ToByteArr(),
+			(val)=>val==null?null:IdUser.FromByteArr(val)
 		);
-		o.SetCol(nameof(IPoBase.LastUpdatedBy)).HasConversion(
-			(id)=>{return id==null?null:id==null?null:((IdUser)id).Value.ToByteArr();},
-			(val)=>{return val==null?null:val==null?null:new IdUser(ToolId.ByteArrToUInt128((u8[])val));}
+		o.SetCol(nameof(IPoBase.LastUpdatedBy)).HasConversion<IdUser?, u8[]?>(
+			(id)=>(id)?.Value.ToByteArr(),
+			(val)=>val==null?null:IdUser.FromByteArr(val)
 		);
 		return Nil;
 	}
+
+
 
 	protected ITable Mk<T>(str Name, T Example){
 		var ExDict = DictCtx.ToDictT(Example);
@@ -64,13 +66,13 @@ public class AppTblInfo{
 			var o = Tbl_Word;
 			CfgPoBase<PoWord>(o);
 			o.CodeIdName = nameof(PoWord.Id);
-			o.SetCol(nameof(PoWord.Id)).HasConversion(
-				(id)=>{return id==null?null:((IdWord)id).Value.ToByteArr();},
-				(val)=>{return val==null?null:new IdWord(ToolId.ByteArrToUInt128((u8[])val));}
+			o.SetCol(nameof(PoWord.Id)).HasConversion<IdWord, u8[]>(
+				(id)=>(id).Value.ToByteArr(),
+				(val)=>IdWord.FromByteArr(val)
 			);
-			o.SetCol(nameof(PoWord.Owner)).HasConversion(
-				(id)=>{return id==null?null:((IdUser)id).Value.ToByteArr();},
-				(val)=>{return val==null?null:new IdUser(ToolId.ByteArrToUInt128((u8[])val));}
+			o.SetCol(nameof(PoWord.Owner)).HasConversion<IdUser, u8[]>(
+				(id)=>(id).Value.ToByteArr(),
+				(val)=>IdUser.FromByteArr(val)
 			);
 		}
 
@@ -80,14 +82,22 @@ public class AppTblInfo{
 			var o = Tbl_Prop;
 			CfgPoBase<PoKv>(o);
 			o.CodeIdName = nameof(PoKv.Id);
-			o.SetCol(nameof(PoKv.Id)).HasConversion(
-				(id)=>{return id==null?null:((IdKv)id).Value.ToByteArr();},
-				(val)=>{return val==null?null:new IdKv(ToolId.ByteArrToUInt128((u8[])val));}
+			o.SetCol(nameof(PoKv.Id)).HasConversion<IdKv, u8[]>(
+				(id)=>(id).Value.ToByteArr(),
+				(val)=>IdKv.FromByteArr(val)
 			);
-			o.SetCol(nameof(PoKv.FKeyUInt128)).HasConversion(
-				(id)=>{return id==null?null:((UInt128)id).ToByteArr();},
-				(val)=>{return val==null?null:ToolId.ByteArrToUInt128((u8[])val);}
+
+			o.SetCol(nameof(PoKv.WordId)).HasConversion<IdWord, u8[]>(
+				(id)=>(id).Value.ToByteArr(),
+				(val)=>IdWord.FromByteArr(val)
 			);
+
+//TODO配置忽略之字段
+			// o.SetCol(nameof(PoKv.FKeyUInt128)).HasConversion<UInt128, u8[]>(
+			// 	(id)=>(id).ToByteArr(),
+			// 	(val)=>ToolId.ByteArrToUInt128(val)
+			// );
+
 		}
 
 		var Tbl_Learn = Mk("Learn", PoLearn.Example);
@@ -96,13 +106,13 @@ public class AppTblInfo{
 			var o = Tbl_Learn;
 			CfgPoBase<PoLearn>(o);
 			o.CodeIdName = nameof(PoLearn.Id);
-			o.SetCol(nameof(PoLearn.Id)).HasConversion(
-				(id)=>{return id==null?null:((IdLearn)id).Value.ToByteArr();},
-				(val)=>{return val==null?null:new IdLearn(ToolId.ByteArrToUInt128((u8[])val));}
+			o.SetCol(nameof(PoLearn.Id)).HasConversion<IdLearn, u8[]>(
+				(id)=>(id).Value.ToByteArr(),
+				(val)=>IdLearn.FromByteArr(val)
 			);
-			o.SetCol(nameof(PoLearn.FKeyUInt128)).HasConversion(
-				(id)=>{return id==null?null:((UInt128)id).ToByteArr();},
-				(val)=>{return val==null?null:ToolId.ByteArrToUInt128((u8[])val);}
+			o.SetCol(nameof(PoLearn.WordId)).HasConversion<IdWord, u8[]>(
+				(id)=>(id).Value.ToByteArr(),
+				(val)=>IdWord.FromByteArr(val)
 			);
 		}
 

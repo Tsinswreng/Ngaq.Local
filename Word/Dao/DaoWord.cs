@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Ngaq.Core.Model.Bo;
 using Ngaq.Core.Model.Po;
 using Ngaq.Core.Model.Po.Kv;
-using Ngaq.Core.Model.Po.Learn;
+using Ngaq.Core.Model.Po.Learn_;
 using Ngaq.Core.Model.Po.Word;
 using Ngaq.Core.Model.UserCtx;
 using Ngaq.Core.Tools;
@@ -12,6 +12,7 @@ using Ngaq.Local.Db;
 
 namespace Ngaq.Local.Dao;
 
+[Obsolete]
 public class DaoWord(
 	LocalDbCtx DbCtx
 ){
@@ -67,10 +68,10 @@ public class DaoWord(
 				return null;
 			}
 			var Props = await DbCtx.Po_Kv.Where(
-				w=>Id.Equals(w.FKeyUInt128)
+				w=>Id.Equals(w.WordId)
 			).ToListAsync(ct);
 			var Learns = await DbCtx.Po_Learn.Where(
-				w=>Id.Equals(w.FKeyUInt128)
+				w=>Id.Equals(w.WordId)
 			).ToListAsync(ct);
 			var ans = new JnWord{
 				PoWord = Po_Word

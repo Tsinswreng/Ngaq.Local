@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using Ngaq.Core.Model.Po;
 using Ngaq.Core.Model.Po.Kv;
-using Ngaq.Core.Model.Po.Learn;
+using Ngaq.Core.Model.Po.Learn_;
 using Ngaq.Core.Model.Po.Word;
 using Ngaq.Core.Model.Sys.Po.User;
 using Ngaq.Core.Tools;
@@ -64,6 +64,28 @@ public class LocalDbCtx : DbContext{
 		return Nil;
 	}
 
+	protected nil _CfgI_WordId<
+		[DynamicallyAccessedMembers(
+			DynamicallyAccessedMemberTypes.PublicConstructors |
+			DynamicallyAccessedMemberTypes.NonPublicConstructors |
+			DynamicallyAccessedMemberTypes.PublicFields |
+			DynamicallyAccessedMemberTypes.NonPublicFields |
+			DynamicallyAccessedMemberTypes.PublicProperties |
+			DynamicallyAccessedMemberTypes.NonPublicProperties |
+			DynamicallyAccessedMemberTypes.Interfaces
+		)]
+		T
+	>(ModelBuilder mb) where T:class, I_WordId{
+		mb.Entity<T>(e=>{
+			e.HasIndex(p=> p.WordId);
+			e.Property(p => p.WordId).HasConversion(
+				id=> id.Value.ToByteArr()
+				,val => IdWord.FromByteArr(val)
+			).HasColumnType("BLOB");
+		});
+		return Nil;
+	}
+
 	protected override void OnModelCreating(ModelBuilder mb) {
 		base.OnModelCreating(mb);
 		_CfgPoBase<PoWord>(mb);
@@ -84,6 +106,7 @@ public class LocalDbCtx : DbContext{
 		});
 
 		_CfgPoBase<PoKv>(mb);
+		_CfgI_WordId<PoKv>(mb);
 		mb.Entity<PoKv>(e=>{
 			e.ToTable("Prop").UseTpcMappingStrategy();
 			e.HasKey(p=>p.Id);
@@ -91,33 +114,29 @@ public class LocalDbCtx : DbContext{
 				id=>id.Value.ToByteArr()
 				,val => new IdKv(ToolId.ByteArrToUInt128(val))
 			).HasColumnType("BLOB");
+			//e.Ignore(p=>p.FKeyUInt128);
 
-			e.HasIndex(p=>p.FKeyUInt128);
-			e.Property(p=>p.FKeyUInt128).HasConversion(
-				id=>id==null?null:id.Value.ToByteArr()
-				,val => val==null?null:ToolId.ByteArrToUInt128(val)
-			).HasColumnType("BLOB");
+			// e.HasIndex(p=>p.FKeyUInt128);
+			// e.Property(p=>p.FKeyUInt128).HasConversion(
+			// 	id=>id==null?null:id.Value.ToByteArr()
+			// 	,val => val==null?null:ToolId.ByteArrToUInt128(val)
+			// ).HasColumnType("BLOB");
 			e.HasIndex(p=>p.KStr);
 			e.HasIndex(p=>p.KI64);
 		});
 
 		_CfgPoBase<PoLearn>(mb);
-		mb.Entity<PoLearn>(e=>{
+		_CfgI_WordId<PoLearn>(mb);
+		mb.Entity<PoLearn>((e=>{
 			e.ToTable("Learn").UseTpcMappingStrategy();
 			//e.HasKey(p=>p.Id);
-			e.Property(p=>p.Id).HasConversion(
-				id=>id.Value.ToByteArr()
-				,val => new IdLearn(ToolId.ByteArrToUInt128(val))
+			e.Property(p => p.Id).HasConversion(
+				id=> id.Value.ToByteArr()
+				,val => IdLearn.FromByteArr(val)
 			).HasColumnType("BLOB");
 
-			e.HasIndex(p=>p.FKeyUInt128);
-			e.Property(p=>p.FKeyUInt128).HasConversion(
-				id=>id==null?null:id.Value.ToByteArr()
-				,val => val==null?null:ToolId.ByteArrToUInt128(val)
-			).HasColumnType("BLOB");
-			e.HasIndex(p=>p.KStr);
-			e.HasIndex(p=>p.KI64);
-		});
+			e.HasIndex((p=> p.CreatedAt));
+		}));
 	}
 }
 

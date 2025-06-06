@@ -3,7 +3,7 @@ using Ngaq.Core.Infra;
 using Ngaq.Core.Model.Bo;
 using Ngaq.Core.Model.Po;
 using Ngaq.Core.Model.Po.Kv;
-using Ngaq.Core.Model.Po.Learn;
+using Ngaq.Core.Model.Po.Learn_;
 using Ngaq.Core.Model.Po.Word;
 using Ngaq.Core.Model.UserCtx;
 using Ngaq.Core.Tools;
@@ -15,6 +15,7 @@ using Str_Any = System.Collections.Generic.Dictionary<string, object?>;
 using IStr_Any = System.Collections.Generic.IDictionary<string, object?>;
 using Ngaq.Core.Infra.Page;
 using System.Threading.Tasks;
+using Ngaq.Core.Infra.Errors;
 namespace Ngaq.Local.Dao;
 
 
@@ -120,11 +121,12 @@ AND Lang = @Lang
 		var TW = TblMgr.GetTable<PoWord>();
 		var TK = TblMgr.GetTable<PoKv>();
 		var TL = TblMgr.GetTable<PoLearn>();
+		var NWordId = nameof(PoKv.WordId);
 		var Sql_SeekByFKey = (str QuotedTblName)=>{
 			var Sql =
 $"""
 SELECT * FROM {QuotedTblName}
-WHERE {TK.Field(nameof(PoKv.FKeyUInt128))} = {TW.Param(nameof(PoKv.FKeyUInt128))}
+WHERE {TK.Field(NWordId)} = {TW.Param(NWordId)}
 """;
 			return Sql;
 		};
@@ -141,7 +143,7 @@ WHERE {TK.Field(nameof(PoKv.FKeyUInt128))} = {TW.Param(nameof(PoKv.FKeyUInt128))
 				return null;
 			}
 			var Arg = new Str_Any{
-				[nameof(PoKv.FKeyUInt128)] = Id.Value
+				[nameof(PoKv.WordId)] = Id
 			};
 			var RawPropDicts = await Cmd_SeekKv.Args(TK.ToDbDict(Arg)).Run(ct)
 				.Select(dbDict=>TK.DbDictToPo<PoKv>(dbDict))
@@ -228,6 +230,12 @@ WHERE {TK.Field(nameof(PoKv.FKeyUInt128))} = {TW.Param(nameof(PoKv.FKeyUInt128))
 			IEnumerable<PoKv> Po_Kvs
 			,CancellationToken ct
 		)=>{
+			Po_Kvs = Po_Kvs.Select(x=>{
+				if(x.CreatedAt == null){
+					throw new ErrBase("PoKv.CreatedAt should not be null. Please explicit set value");
+				}
+				return x;
+			});
 			await InsertMany(Po_Kvs, ct);
 			return Nil;
 		};
@@ -265,12 +273,12 @@ WHERE {TK.Field(nameof(PoKv.FKeyUInt128))} = {TW.Param(nameof(PoKv.FKeyUInt128))
 	){
 		var T = Tbl;
 		var TW = TblMgr.GetTable<PoWord>();
-		var NFKey = nameof(IPoKv.FKeyUInt128);
+		var NWordId = nameof(I_WordId.WordId);
 		str NLmt = "Lmt", NOfst = "Ofst";
 		var Sql =
 $"""
 SELECT * FROM {Tbl.Quote(Tbl.Name)}
-WHERE {Tbl.Field(NFKey)} = {Tbl.Param(NFKey)}
+WHERE {Tbl.Field(NWordId)} = {Tbl.Param(NWordId)}
 {Tbl.SqlMkr.LimitOffset(NLmt, NOfst)}
 """;
 		var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
@@ -281,7 +289,7 @@ WHERE {Tbl.Field(NFKey)} = {Tbl.Param(NFKey)}
 			,CancellationToken Ct
 		)=>{
 			var Arg = new Str_Any{
-				[NFKey] = TW.ToDbType(nameof(PoWord.Id), IdWord)
+				[NWordId] = TW.ToDbType(nameof(PoWord.Id), IdWord)
 				,[NLmt] = PageQry.PageSize
 				,[NOfst] = PageQry.Offset()
 			};
@@ -313,7 +321,7 @@ WHERE {Tbl.Field(NFKey)} = {Tbl.Param(NFKey)}
 $"""
 SELECT * FROM {TW.Quote(TW.Name)}
 WHERE {TW.Field(NOwner)} = {TW.Param(NOwner)}
-ORDER BY {TW.Field(nameof(IPoBase.CreatedAt))} DESC
+ORDER BY {TW.Field(nameof(IPoBase.InsertedAt))} DESC
 {TW.SqlMkr.LimitOffset(NLmt, NOfst)}
 """;
 		var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);

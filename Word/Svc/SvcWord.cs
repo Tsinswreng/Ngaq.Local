@@ -3,7 +3,7 @@ using Ngaq.Core.Infra.Db;
 using Ngaq.Core.Model;
 using Ngaq.Core.Model.Bo;
 using Ngaq.Core.Model.Po.Kv;
-using Ngaq.Core.Model.Po.Learn;
+using Ngaq.Core.Model.Po.Learn_;
 using Ngaq.Core.Model.Po.Word;
 using Ngaq.Core.Model.UserCtx;
 using Ngaq.Core.Model.Word.Dto;
@@ -122,20 +122,19 @@ public class SvcWord(
 			using var NeoLearns = new BatchListAsy<PoLearn, nil>(InsertPoLearns);
 
 			//未加過之諸詞 加'add'ˉ學習記錄後直加入庫中則可
+			Dictionary<str ,nil> debug = new Dictionary<str, nil>();//t
 			foreach(var OneNonExisting in DtoAddWords.NeoWords){
-				var Learn_Add = _MkLearn_Add();
-				Learn_Add.FKeyUInt128 = OneNonExisting.Id;
+				var NeoPoLearns = MkPoLearns(OneNonExisting.Props, OneNonExisting.Id);
 				await NeoWords.Add(OneNonExisting, Ct);
-				await NeoLearns.Add(Learn_Add, Ct);
+				await NeoLearns.AddMany(NeoPoLearns, null, Ct);
 			}
 
 			// 有變動之諸新詞
 			foreach(var UpdatedWord in DtoAddWords.UpdatedWords){
 				if(UpdatedWord.DiffedProps.Count > 0){ //若NewProps則有變動、學習記錄添'add'
-					var Learn_Add = _MkLearn_Add();
-					Learn_Add.FKeyUInt128 = UpdatedWord.WordToAdd.Id;
-					await NeoLearns.Add(Learn_Add, Ct);
-					await NeoProps.AddRangeAsy(UpdatedWord.DiffedProps, Ct).FirstOrDefaultAsync();
+					var NeoPoLearns = MkPoLearns(UpdatedWord.DiffedProps, UpdatedWord.WordInDb.Id);
+					await NeoLearns.AddMany(NeoPoLearns, null, Ct);
+					await NeoProps.AddMany(UpdatedWord.DiffedProps, null, Ct);
 				}
 			}
 
@@ -208,10 +207,26 @@ public class SvcWord(
 	}
 
 
-	PoLearn _MkLearn_Add(){
-		var R = new PoLearn();
-		R.SetStrToken(null, KeysProp.Inst.learn, ConstLearn.Inst.add);
-		return R;
+// [Obsolete]
+// 	PoLearn _MkLearn_Add(){
+// 		var R = new PoLearn();
+// 		R.SetStrToken(null, KeysProp.Inst.learn, ConstLearn.Inst.add);
+// 		return R;
+// 	}
+
+	protected IEnumerable<PoLearn> MkPoLearns(IEnumerable<PoKv> NeoProps, IdWord WordId){
+		foreach(var Prop in NeoProps){
+			if(Prop.KStr == KeysProp.Inst.description){
+				var U = new PoLearn();
+				if(Prop.CreatedAt == null){
+					throw new ErrArg("Prop.CreatedAt should not be null.");
+				}
+				U.CreatedAt = Prop.CreatedAt.Value;
+				U.LearnResult = ELearn.Inst.Add;
+				U.WordId = WordId;
+				yield return U;
+			}
+		}
 	}
 
 
@@ -300,7 +315,7 @@ public class SvcWord(
 				var IdWord = WordId_PoLearns.WordId;
 				await CheckWordOwner(UserCtx, IdWord, Ct);
 				var PoLearns = WordId_PoLearns.PoLearns.Select(x=>{
-					x.FKeyUInt128 = IdWord;
+					x.WordId = IdWord;
 					return x;
 				});
 				await InsertPoLearns(PoLearns, Ct);
