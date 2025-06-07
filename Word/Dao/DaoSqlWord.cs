@@ -234,6 +234,9 @@ WHERE {TK.Field(NWordId)} = {TW.Param(NWordId)}
 				if(x.CreatedAt == null){
 					throw new ErrBase("PoKv.CreatedAt should not be null. Please explicit set value");
 				}
+				if(x.WordId == null || x.WordId.Value == 0){
+					throw new ErrArg("PoKv.WordId should not be null or 0.");
+				}
 				return x;
 			});
 			await InsertMany(Po_Kvs, ct);
@@ -355,7 +358,7 @@ ORDER BY {TW.Field(nameof(IPoBase.InsertedAt))} DESC
 		,IPageQuery
 		,CancellationToken
 		,Task<IPageAsy<JnWord>>
-	>> FnPageBoWords(
+	>> FnPageJnWords(
 		IDbFnCtx Ctx
 		,CancellationToken Ct
 	){

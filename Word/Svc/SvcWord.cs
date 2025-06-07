@@ -65,20 +65,20 @@ public class SvcWord(
 		var SeekBoWordById = await DaoWord.FnSelectJnWordById(Ctx, ct);
 		var Fn = async(
 			IUserCtx UserCtx
-			,IEnumerable<JnWord> BoWords
+			,IEnumerable<JnWord> JnWords
 			,CT ct
 		)=>{
 			var NonExistingList = new List<JnWord>();
 			var ExiDupliPairs = new List<Existing_Duplication<JnWord>>();
-			foreach(var BoWord in BoWords){
+			foreach(var JnWord in JnWords){
 				var IdInDb = await SeekIdByFormEtLang(
 					UserCtx
-					,BoWord.PoWord.Head
-					,BoWord.PoWord.Lang
+					,JnWord.PoWord.Head
+					,JnWord.PoWord.Lang
 					,ct
 				);
 				if(IdInDb == null){
-					NonExistingList.Add(BoWord);
+					NonExistingList.Add(JnWord);
 				}else{
 					var BoWordInDb = await SeekBoWordById(IdInDb.Value, ct);
 					if(BoWordInDb == null){
@@ -86,7 +86,7 @@ public class SvcWord(
 					}
 					var ExiDupliPair = new Existing_Duplication<JnWord>(
 						Existing: BoWordInDb
-						,Duplication: BoWord
+						,Duplication: JnWord
 					);
 					ExiDupliPairs.Add(ExiDupliPair);
 				}
@@ -134,6 +134,10 @@ public class SvcWord(
 				if(UpdatedWord.DiffedProps.Count > 0){ //若NewProps則有變動、學習記錄添'add'
 					var NeoPoLearns = MkPoLearns(UpdatedWord.DiffedProps, UpdatedWord.WordInDb.Id);
 					await NeoLearns.AddMany(NeoPoLearns, null, Ct);
+					UpdatedWord.DiffedProps = UpdatedWord.DiffedProps.Select(x=>{
+						x.WordId = UpdatedWord.WordInDb.Id;
+						return x;
+					}).ToList();
 					await NeoProps.AddMany(UpdatedWord.DiffedProps, null, Ct);
 				}
 			}
@@ -172,11 +176,11 @@ public class SvcWord(
 			var R = new DtoAddWords();
 
 			//按語言與詞頭分類
-			var LangHead_Words = BoWords.GroupByLangHead();
+			var HeadLang_Words = BoWords.GroupByLangHead();
 
 			//合併後ʹ諸詞。斯列表中 同語言同詞頭之詞當只出現一次
 			IList<JnWord> Mergeds = new List<JnWord>();
-			foreach( var (HeadLang, Words) in LangHead_Words ){
+			foreach( var (HeadLang, Words) in HeadLang_Words ){
 				var OneMerged = Words.MergeSameWords();
 				if(OneMerged != null){
 					Mergeds.Add(OneMerged);
@@ -260,11 +264,11 @@ public class SvcWord(
 		,IPageQuery
 		,CT
 		,Task<IPageAsy<JnWord>>
-	>> FnPageBoWords(
+	>> FnPageJnWords(
 		IDbFnCtx Ctx
 		,CT Ct
 	){
-		return await DaoWord.FnPageBoWords(Ctx,Ct);
+		return await DaoWord.FnPageJnWords(Ctx,Ct);
 	}
 
 	public async Task<Func<
@@ -404,7 +408,7 @@ public class SvcWord(
 
 		//var Ctx = new DbFnCtx{Txn = await GetTxnAsy.GetTxn()};
 		var Ctx = new DbFnCtx();
-		var Fn = await FnPageBoWords(Ctx, Ct);
+		var Fn = await FnPageJnWords(Ctx, Ct);
 		return await Fn(UserCtx, PageQry, Ct);
 	}
 }
