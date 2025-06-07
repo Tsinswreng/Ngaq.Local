@@ -12,7 +12,7 @@ using Ngaq.Core.Tools;
 using Ngaq.Core.Tools.Io;
 using Ngaq.Local.Dao;
 using Ngaq.Local.Db;
-using Tsinswreng.SqlHelper.Cmd;
+using Tsinswreng.CsSqlHelper.Cmd;
 using Ngaq.Core.Infra.Page;
 using System.Collections;
 using Ngaq.Core.Infra.Errors;

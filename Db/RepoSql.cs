@@ -8,10 +8,10 @@ using Ngaq.Core.Infra.Db;
 using Ngaq.Core.Model.Po;
 using Microsoft.Data.Sqlite;
 using Ngaq.Core.Infra;
-using Tsinswreng.SqlHelper;
+using Tsinswreng.CsSqlHelper;
 using Ngaq.Core.Model;
 using System.Collections;
-using Tsinswreng.SqlHelper.Cmd;
+using Tsinswreng.CsSqlHelper.Cmd;
 
 
 
@@ -40,11 +40,11 @@ public class RepoSql<
 
 
 	public async Task<Func<
-		CancellationToken
+		CT
 		,Task<u64>
 	>> FnCount(
 		IDbFnCtx? Ctx
-		,CancellationToken Ct
+		,CT Ct
 	){
 		var T = TblMgr.GetTable<TEntity>();
 		var NCnt = "Cnt";
@@ -52,7 +52,7 @@ public class RepoSql<
 $"SELECT COUNT(*) AS {T.Quote(NCnt)} FROM {T.Quote(T.Name)}";
 		var Cmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
 		var Fn = async(
-			CancellationToken Ct
+			CT Ct
 		)=>{
 			var CountDict = await Cmd.Run(Ct).FirstOrDefaultAsync(Ct);
 			u64 R = 0;
@@ -71,11 +71,11 @@ $"SELECT COUNT(*) AS {T.Quote(NCnt)} FROM {T.Quote(T.Name)}";
 
 	public async Task<Func<
 		IEnumerable<TEntity>
-		,CancellationToken
+		,CT
 		,Task<nil>
 	>> FnInsertMany(
 		IDbFnCtx? Ctx
-		,CancellationToken ct
+		,CT ct
 	){
 		var T = TblMgr.GetTable<TEntity>();
 		var Clause = T.InsertClause(T.Columns.Keys);
@@ -84,22 +84,13 @@ $"INSERT INTO {T.Quote(T.Name)} {Clause}";
 		var Cmd = await SqlCmdMkr.Prepare(Ctx, Sql, ct);
 		var Fn = async(
 			IEnumerable<TEntity> Entitys
-			,CancellationToken ct
+			,CT ct
 		)=>{
 			var i = 0;
 			foreach(var entity in Entitys){
 				var CodeDict = DictCtx.ToDictT(entity);
 				var DbDict = T.ToDbDict(CodeDict);
 				await Cmd.Args(DbDict).Run(ct).FirstOrDefaultAsync(ct);
-				// try{
-
-				// }
-				// catch (System.Exception e){
-				// 	if(Cmd is SqliteCmd sCmd){
-				// 		//sCmd.DbCmd.Parameters
-				// 	}
-				// 	throw;
-				// }
 				i++;
 			}
 			return Nil;
@@ -109,11 +100,11 @@ $"INSERT INTO {T.Quote(T.Name)} {Clause}";
 
 	public async Task<Func<
 		T_Id2
-		,CancellationToken
+		,CT
 		,Task<TEntity?>
 	>> FnSelectById<T_Id2>(
 		IDbFnCtx? Ctx
-		,CancellationToken ct
+		,CT ct
 	){
 		var T = TblMgr.GetTable<TEntity>();
 		var Sql = $"SELECT * FROM {T.Quote(T.Name)} WHERE {T.Field(nameof(I_Id<nil>.Id))} = @1" ;
@@ -121,7 +112,7 @@ $"INSERT INTO {T.Quote(T.Name)} {Clause}";
 
 		var Fn = async(
 			T_Id2 Id
-			,CancellationToken ct
+			,CT ct
 		)=>{
 			if(Id is not TId id){
 				throw new Exception("Id is not T_Id id");
@@ -145,12 +136,12 @@ $"INSERT INTO {T.Quote(T.Name)} {Clause}";
 
 	public async Task<Func<
 		IEnumerable<Id_Dict<TId2>>
-		,CancellationToken
+		,CT
 		,Task<nil>
 	>> FnUpdateManyById<TId2>(
 		IDbFnCtx? Ctx
 		,IDictionary<str, object?> ModelDict //不當有Id
-		,CancellationToken ct
+		,CT ct
 	){
 		var T = TblMgr.GetTable<TEntity>();
 		ModelDict = new Dictionary<str, object?>(ModelDict);
@@ -164,7 +155,7 @@ $"UPDATE {T.Quote(T.Name)} SET ${Clause} WHERE {T.Field(NId)} = {T.Param(NId)}";
 		var Cmd = await SqlCmdMkr.Prepare(Ctx, Sql, ct);
 		var Fn = async(
 			IEnumerable<Id_Dict<TId2>> Id_Dicts
-			,CancellationToken ct
+			,CT ct
 		)=>{
 			foreach(var id_dict in Id_Dicts){
 				var CodeId = id_dict.Id;
@@ -211,11 +202,11 @@ $"UPDATE {T.Quote(T.Name)} SET ${Clause} WHERE {T.Field(NId)} = {T.Param(NId)}";
 
 	public async Task<Func<
 		T_Id2
-		,CancellationToken
+		,CT
 		,Task<nil>
 	>> FnDeleteOneById<T_Id2>(
 		IDbFnCtx? Ctx
-		,CancellationToken ct
+		,CT ct
 	){
 		var Tbl = TblMgr.GetTable<TEntity>();
 var Sql = $"DELETE FROM {Tbl.Name} WHERE {nameof(I_Id<nil>.Id)} = ?";
@@ -223,7 +214,7 @@ var Sql = $"DELETE FROM {Tbl.Name} WHERE {nameof(I_Id<nil>.Id)} = ?";
 		var Cmd = await SqlCmdMkr.Prepare(Ctx, Sql, ct);
 		async Task<nil> Fn(
 			T_Id2 Id
-			, CancellationToken ct
+			, CT ct
 		) {
 			if (Id is not TId id) {
 				throw new Exception("Id is not T_Id id");
@@ -242,15 +233,15 @@ var Sql = $"DELETE FROM {Tbl.Name} WHERE {nameof(I_Id<nil>.Id)} = ?";
 	// public async Task<Func<
 	// 	IEnumerable<T_Entity>
 	// 	,i64
-	// 	,CancellationToken
+	// 	,CT
 	// 	,Task<nil>
 	// >> Fn_BatchSetUpdateAtAsy(
-	// 	CancellationToken ct
+	// 	CT ct
 	// ){
 	// 	var Fn = async(
 	// 		IEnumerable<T_Entity> Pos
 	// 		,i64 Time
-	// 		,CancellationToken ct
+	// 		,CT ct
 	// 	)=>{
 	// 		foreach(var po in Pos){
 	// 			if(po is not I_HasId<T_Id> IdPo){
@@ -266,7 +257,7 @@ var Sql = $"DELETE FROM {Tbl.Name} WHERE {nameof(I_Id<nil>.Id)} = ?";
 
 // 	public async Task<Func<
 // 		IEnumerable<T_Id2>
-// 		,CancellationToken
+// 		,CT
 // 		,Task<nil>
 // 	>> Fn_DeleteManyByIdAsy<T_Id2>(){
 // 		var Tbl = TblMgr.GetTable<T_Entity>();
@@ -275,7 +266,7 @@ var Sql = $"DELETE FROM {Tbl.Name} WHERE {nameof(I_Id<nil>.Id)} = ?";
 // $"DELETE FROM {Tbl.Name} WHERE ${nameof(I_Id<nil>.Id)} IN ?";
 // 		var Fn = async(
 // 			IEnumerable<T_Id2> Ids
-// 			,CancellationToken ct
+// 			,CT ct
 // 		)=>{
 // 			// if(Id is not T_Id id){
 // 			// 	throw new Exception("Id is not T_Id id");
@@ -292,8 +283,8 @@ var Sql = $"DELETE FROM {Tbl.Name} WHERE {nameof(I_Id<nil>.Id)} = ?";
 
 
 	// public async Task<T_Ret> TxnAsy<T_Ret>(
-	// 	Func<CancellationToken, Task<T_Ret>> FnAsy
-	// 	,CancellationToken ct
+	// 	Func<CT, Task<T_Ret>> FnAsy
+	// 	,CT ct
 	// ){
 	// 	using var Tx = await DbCtx.Database.BeginTransactionAsync(ct);
 	// 	try{

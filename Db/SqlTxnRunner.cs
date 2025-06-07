@@ -1,8 +1,8 @@
 using System.Data;
 using Ngaq.Core.Infra.Db;
 using Ngaq.Local.Db;
-using Tsinswreng.SqlHelper;
-using Tsinswreng.SqlHelper.Cmd;
+using Tsinswreng.CsSqlHelper;
+using Tsinswreng.CsSqlHelper.Cmd;
 
 namespace Ngaq.Db;
 public class SqlTxnRunner(

@@ -1,11 +1,11 @@
 namespace Ngaq.Local.Db;
 
 public interface IDbFnCtx
-	:Tsinswreng.SqlHelper.IBaseDbFnCtx
+	:Tsinswreng.CsSqlHelper.IBaseDbFnCtx
 {
 
 }
 
-public class DbFnCtx : Tsinswreng.SqlHelper.BaseDbFnCtx, IDbFnCtx{
+public class DbFnCtx : Tsinswreng.CsSqlHelper.BaseDbFnCtx, IDbFnCtx{
 
 }
