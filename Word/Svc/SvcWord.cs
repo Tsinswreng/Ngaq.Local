@@ -146,7 +146,7 @@ public class SvcWord(
 			await NeoProps.End(Ct);
 			await NeoLearns.End(Ct);
 
-			return Nil;
+			return NIL;
 		};
 		return Fn;
 	}
@@ -324,7 +324,7 @@ public class SvcWord(
 				});
 				await InsertPoLearns(PoLearns, Ct);
 			}
-			return Nil;
+			return NIL;
 		};
 		return Fn;
 	}
@@ -339,10 +339,10 @@ public class SvcWord(
 		await TxnRunner.RunTxn(Ctx.Txn, async(ct)=>{
 			var BoWords = await SvcParseWordList.ParseWordsFromFilePath(Path_Encode);
 			await AddOrUpdateWords(UserCtx,BoWords,ct);
-			return Nil;
+			return NIL;
 		}, ct);
 
-		return Nil;
+		return NIL;
 	}
 
 	public async Task<nil> AddWordsFromText(
@@ -355,9 +355,9 @@ public class SvcWord(
 		await TxnRunner.RunTxn(Ctx.Txn, async(ct)=>{
 			var BoWords = await SvcParseWordList.ParseWordsFromText(Text,ct);
 			await AddOrUpdateWords(UserCtx,BoWords,ct);
-			return Nil;
+			return NIL;
 		},ct);
-		return Nil;
+		return NIL;
 	}
 
 	public async Task<nil> AddWordsFromUrl(

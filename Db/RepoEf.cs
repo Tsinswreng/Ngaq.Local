@@ -53,7 +53,7 @@ public class RepoEf
 		)=>{
 			await DbCtx.Set<TEntity>().AddRangeAsync(Entitys, ct);
 			await DbCtx.SaveChangesAsync(ct);
-			return Nil;
+			return NIL;
 		};
 		return Fn;
 	}
@@ -109,7 +109,7 @@ public class RepoEf
 				}
 			}//~for
 			await DbCtx.SaveChangesAsync();
-			return Nil;
+			return NIL;
 		};
 		return Fn;
 	}
@@ -162,7 +162,7 @@ public class RepoEf
 				.Where(e=>IdList.Contains(e.Id))
 				.ExecuteDeleteAsync(ct)
 			;//仅生成一条 DELETE FROM ... WHERE Id IN (1, 2, 3) SQL 语句、Contains(e.Id)並非在內存中查找
-			return Nil;
+			return NIL;
 		};
 		return Fn;
 	}

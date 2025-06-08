@@ -2,11 +2,13 @@ namespace Ngaq.Local.Db;
 
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
+using Ngaq.Core.Infra;
 using Ngaq.Core.Model.Po;
 using Ngaq.Core.Model.Po.Kv;
 using Ngaq.Core.Model.Po.Learn_;
 using Ngaq.Core.Model.Po.Word;
 using Ngaq.Core.Model.Sys.Po.User;
+using Ngaq.Core.Models.Po;
 using Ngaq.Core.Tools;
 
 
@@ -21,9 +23,10 @@ dotnet ef dbcontext optimize --output-dir GeneratedInterceptors --precompile-que
 
 public class LocalDbCtx : DbContext{
 
-	public DbSet<PoWord> Po_Word{get;set;}
-	public DbSet<PoKv> Po_Kv{get;set;}
-	public DbSet<PoLearn> Po_Learn{get;set;}
+	public DbSet<PoWord> PoWord{get;set;}
+	public DbSet<PoKv> PoKv{get;set;}
+	public DbSet<PoLearn> PoLearn{get;set;}
+	public str DbPath{get;set;} = AppCfg.Inst.SqlitePath;
 
 	protected override void OnConfiguring(DbContextOptionsBuilder opt) {
 		base.OnConfiguring(opt);
@@ -31,7 +34,8 @@ public class LocalDbCtx : DbContext{
 		// 	Directory.GetCurrentDirectory(),
 		// 	"..", "Ngaq.sqlite"
 		// );
-		var dbPath = "E:/_code/CsNgaq/Ngaq.Sqlite";//TODO
+		//var dbPath = DbPath;
+		var dbPath = "E:/_code/CsNgaq/Ngaq.Sqlite";
 		opt.UseSqlite($"Data Source={dbPath}");
 	}
 
@@ -48,6 +52,32 @@ public class LocalDbCtx : DbContext{
 		T
 	>(ModelBuilder mb) where T:class, IPoBase{
 		mb.Entity<T>(e=>{
+
+			e.Property(p=>p.CreatedAt).HasConversion(
+				tempus=>tempus.Value,
+				val => new Tempus(val)
+			);
+			e.Property(p=>p.DbCreatedAt).HasConversion(
+				tempus=>tempus.Value,
+				val => new Tempus(val)
+			);
+
+			e.Property(p=>p.UpdatedAt).HasConversion<long?>(
+				tempus=>tempus==null?null:tempus.Value.Value,
+				val => val==null?null:new Tempus(val.Value)
+			);
+
+			e.Property(p=>p.DbUpdatedAt).HasConversion<long?>(
+				tempus=>tempus==null?null:tempus.Value.Value,
+				val => val==null?null:new Tempus(val.Value)
+			);
+
+			e.Property(p=>p.Status).HasConversion(
+				status=>status.Value,
+				val => new PoStatus(val)
+			);
+
+
 			e.Property(p=>p.CreatedBy).HasConversion(
 				id=>id==null?null:id.Value.Value.ToByteArr()
 				,val => val==null?null:new IdUser(ToolId.ByteArrToUInt128(val))
@@ -61,7 +91,7 @@ public class LocalDbCtx : DbContext{
 			e.HasIndex(p=>p.LastUpdatedBy);
 
 		});
-		return Nil;
+		return NIL;
 	}
 
 	protected nil _CfgI_WordId<
@@ -83,7 +113,7 @@ public class LocalDbCtx : DbContext{
 				,val => IdWord.FromByteArr(val)
 			).HasColumnType("BLOB");
 		});
-		return Nil;
+		return NIL;
 	}
 
 	protected override void OnModelCreating(ModelBuilder mb) {

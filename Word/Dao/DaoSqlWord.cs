@@ -184,15 +184,15 @@ WHERE {TK.Field(NWordId)} = {TW.Param(NWordId)}
 			u64 BatchSize = 0xfff;
 			using var Po_Words = new BatchListAsy<PoWord, nil>(async(list, ct)=>{
 				await InsertPoWords(list,ct);
-				return Nil;
+				return NIL;
 			}, BatchSize);
 			using var Po_Kvs = new BatchListAsy<PoKv, nil>(async(e, ct)=>{
 				await InsertPoKvs(e, ct);
-				return Nil;
+				return NIL;
 			}, BatchSize);
 			using var Po_Learns = new BatchListAsy<PoLearn, nil>(async(e, ct)=>{
 				await InsertPoLearns(e, ct);
-				return Nil;
+				return NIL;
 			}, BatchSize);
 			u64 i = 0;
 			foreach (var BoWord in BoWords) {
@@ -209,7 +209,7 @@ WHERE {TK.Field(NWordId)} = {TW.Param(NWordId)}
 			await Po_Words.End(ct);
 			await Po_Kvs.End(ct);
 			await Po_Learns.End(ct);
-			return Nil;
+			return NIL;
 		};
 		return Fn;
 	}
@@ -240,7 +240,7 @@ WHERE {TK.Field(NWordId)} = {TW.Param(NWordId)}
 				return x;
 			});
 			await InsertMany(Po_Kvs, ct);
-			return Nil;
+			return NIL;
 		};
 		return Fn;
 	}
@@ -259,7 +259,7 @@ WHERE {TK.Field(NWordId)} = {TW.Param(NWordId)}
 			,CancellationToken ct
 		)=>{
 			await InsertMany(PoLearns, ct);
-			return Nil;
+			return NIL;
 		};
 		return Fn;
 	}
@@ -324,7 +324,7 @@ WHERE {Tbl.Field(NWordId)} = {Tbl.Param(NWordId)}
 $"""
 SELECT * FROM {TW.Quote(TW.Name)}
 WHERE {TW.Field(NOwner)} = {TW.Param(NOwner)}
-ORDER BY {TW.Field(nameof(IPoBase.InsertedAt))} DESC
+ORDER BY {TW.Field(nameof(IPoBase.DbCreatedAt))} DESC
 {TW.SqlMkr.LimitOffset(NLmt, NOfst)}
 """;
 		var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);

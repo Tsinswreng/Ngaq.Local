@@ -36,7 +36,7 @@ public class DaoWord(
 		)=>{
 			var UserId = OperatorCtx.UserId;
 //Query wasn't precompiled and dynamic code isn't supported (NativeAOT))
-			var ans = await DbCtx.Po_Word.AsNoTracking()
+			var ans = await DbCtx.PoWord.AsNoTracking()
 				.Where(w =>
 					w.Head == FormId
 					&& w.Lang == Lang
@@ -63,14 +63,14 @@ public class DaoWord(
 			IdWord Id
 			,CancellationToken ct
 		)=>{
-			var Po_Word = await DbCtx.Po_Word.AsNoTracking().Where(w => w.Id == Id).FirstOrDefaultAsync(ct);
+			var Po_Word = await DbCtx.PoWord.AsNoTracking().Where(w => w.Id == Id).FirstOrDefaultAsync(ct);
 			if(Po_Word == null){
 				return null;
 			}
-			var Props = await DbCtx.Po_Kv.Where(
+			var Props = await DbCtx.PoKv.Where(
 				w=>Id.Equals(w.WordId)
 			).ToListAsync(ct);
-			var Learns = await DbCtx.Po_Learn.Where(
+			var Learns = await DbCtx.PoLearn.Where(
 				w=>Id.Equals(w.WordId)
 			).ToListAsync(ct);
 			var ans = new JnWord{
@@ -104,20 +104,20 @@ public class DaoWord(
 			// List<Po_Kv> Po_Kvs = [];
 			// List<Po_Learn> Po_Learns = [];
 			using var Po_Words = new BatchListAsy<PoWord, nil>(async(list, ct)=>{
-				await DbCtx.Po_Word.AddRangeAsync(list, ct);
-				return Nil;
+				await DbCtx.PoWord.AddRangeAsync(list, ct);
+				return NIL;
 			}, BatchSize);
 
 
 			using var Po_Kvs = new BatchListAsy<PoKv, nil>(async(e, ct)=>{
-				await DbCtx.Po_Kv.AddRangeAsync(e, ct);
-				return Nil;
+				await DbCtx.PoKv.AddRangeAsync(e, ct);
+				return NIL;
 			}, BatchSize);
 
 
 			using var Po_Learns = new BatchListAsy<PoLearn, nil>(async(e, ct)=>{
-				await DbCtx.Po_Learn.AddRangeAsync(e, ct);
-				return Nil;
+				await DbCtx.PoLearn.AddRangeAsync(e, ct);
+				return NIL;
 			}, BatchSize);
 
 			u64 i = 0;
@@ -144,7 +144,7 @@ public class DaoWord(
 			await Po_Words.End(ct);
 			await Po_Kvs.End(ct);
 			await Po_Learns.End(ct);
-			return Nil;
+			return NIL;
 		};
 		return Fn;
 	}
@@ -160,8 +160,8 @@ public class DaoWord(
 			IEnumerable<PoKv> Po_Kvs
 			,CancellationToken ct
 		)=>{
-			await DbCtx.Po_Kv.AddRangeAsync(Po_Kvs, ct);
-			return Nil;
+			await DbCtx.PoKv.AddRangeAsync(Po_Kvs, ct);
+			return NIL;
 		};
 		return Fn;
 	}
@@ -193,7 +193,7 @@ public class DaoWord(
 					s.SetProperty(e=>e.UpdatedAt, Time), ct
 				);
 			}
-			return Nil;
+			return NIL;
 		};
 		return Fn;
 	}

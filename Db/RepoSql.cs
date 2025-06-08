@@ -93,7 +93,7 @@ $"INSERT INTO {T.Quote(T.Name)} {Clause}";
 				await Cmd.Args(DbDict).Run(ct).FirstOrDefaultAsync(ct);
 				i++;
 			}
-			return Nil;
+			return NIL;
 		};
 		return Fn;
 	}
@@ -163,7 +163,7 @@ $"UPDATE {T.Quote(T.Name)} SET ${Clause} WHERE {T.Field(NId)} = {T.Param(NId)}";
 				var DbDict = T.ToDbDict(CodeDict);
 				await Cmd.Args(DbDict).Run(ct).FirstOrDefaultAsync(ct);
 			}//~for
-			return Nil;
+			return NIL;
 		};
 		return Fn;
 	}
@@ -222,7 +222,7 @@ var Sql = $"DELETE FROM {Tbl.Name} WHERE {nameof(I_Id<nil>.Id)} = ?";
 			var IdCol = Tbl.Columns[nameof(I_Id<nil>.Id)];
 			var ConvertedId = IdCol.ToDbType(Id);
 			await Cmd.Args([ConvertedId]).Run(ct).FirstOrDefaultAsync(ct);
-			return Nil;
+			return NIL;
 		}
 		return Fn;
 	}

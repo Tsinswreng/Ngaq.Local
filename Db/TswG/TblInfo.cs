@@ -9,6 +9,7 @@ using Ngaq.Core.Model.Po;
 using System.Data;
 using Microsoft.Data.Sqlite;
 using Ngaq.Core.Model.Sys.Po.User;
+using Ngaq.Core.Models.Po;
 
 //using Id_User = Ngaq.Core.Model.Po.User.IdUser;
 //using Id_Word = Ngaq.Core.Model.Po.Word.IdWord;
@@ -33,6 +34,28 @@ public class AppTblInfo{
 
 	nil CfgPoBase<TPo>(ITable Tbl){
 		var o = Tbl;
+		o.SetCol(nameof(IPoBase.CreatedAt)).HasConversion<Tempus, i64>(
+			tempus=>tempus.Value,
+			val=>new Tempus(val)
+		);
+		o.SetCol(nameof(IPoBase.DbCreatedAt)).HasConversion<Tempus, i64>(
+			tempus=>tempus.Value,
+			val=>new Tempus(val)
+		);
+		o.SetCol(nameof(IPoBase.UpdatedAt)).HasConversion<Tempus?, i64?>(
+			tempus=>tempus?.Value,
+			val=>val==null?null:new Tempus(val.Value)
+		);
+		o.SetCol(nameof(IPoBase.UpdatedAt)).HasConversion<Tempus?, i64?>(
+			tempus=>tempus?.Value,
+			val=>val==null?null:new Tempus(val.Value)
+		);
+
+		o.SetCol(nameof(IPoBase.Status)).HasConversion<PoStatus, i64>(
+			s=>s.Value,
+			val=>new PoStatus(val)
+		);
+
 		o.SetCol(nameof(IPoBase.CreatedBy)).HasConversion<IdUser?, u8[]?>(
 			(id)=>(id)?.Value.ToByteArr(),
 			(val)=>val==null?null:IdUser.FromByteArr(val)
@@ -41,7 +64,7 @@ public class AppTblInfo{
 			(id)=>(id)?.Value.ToByteArr(),
 			(val)=>val==null?null:IdUser.FromByteArr(val)
 		);
-		return Nil;
+		return NIL;
 	}
 
 

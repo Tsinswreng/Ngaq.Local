@@ -26,7 +26,7 @@ public class RepoFsql
 		,CancellationToken ct = default
 	) {
 		await Fsql.Insert(EntityList).ExecuteAffrowsAsync(ct); // 批量插入并返回影响行数
-		return Nil;
+		return NIL;
 	}
 
 
@@ -49,7 +49,7 @@ public class RepoFsql
 				.ExecuteAffrowsAsync(ct)
 			;
 		}
-		return Nil;
+		return NIL;
 	}
 
 	public async Task<nil> DeleteManyByIdAsy(
@@ -57,7 +57,7 @@ public class RepoFsql
 		,CancellationToken ct = default
 	) {
 		await Fsql.Delete<T_Entity>().WhereDynamic(IdList).ExecuteAffrowsAsync(ct);
-		return Nil;
+		return NIL;
 	}
 
 }
