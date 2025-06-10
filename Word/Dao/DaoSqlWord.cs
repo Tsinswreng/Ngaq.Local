@@ -231,9 +231,9 @@ WHERE {TK.Field(NWordId)} = {TW.Param(NWordId)}
 			,CancellationToken ct
 		)=>{
 			Po_Kvs = Po_Kvs.Select(x=>{
-				if(x.CreatedAt == null){
-					throw new ErrBase("PoKv.CreatedAt should not be null. Please explicit set value");
-				}
+				// if(x.CreatedAt == null){
+				// 	throw new ErrBase("PoKv.CreatedAt should not be null. Please explicit set value");
+				// }
 				if(x.WordId == null || x.WordId.Value == 0){
 					throw new ErrArg("PoKv.WordId should not be null or 0.");
 				}
@@ -341,7 +341,7 @@ ORDER BY {TW.Field(nameof(IPoBase.DbCreatedAt))} DESC
 			};
 
 			var RawDbDicts = SqlCmd.Args(Arg).Run(Ct);
-			var PoWords = RawDbDicts.Convert(
+			var PoWords = RawDbDicts.Select(
 				(Raw)=>TW.DbDictToPo<PoWord>(Raw)
 			);
 			var Cnt = PageQry.HasTotalCount?  await FnCnt(Ct)  :  0;
@@ -379,7 +379,7 @@ ORDER BY {TW.Field(nameof(IPoBase.DbCreatedAt))} DESC
 				return R;
 			}
 
-			var BoWords = PoWordsPage.DataAsy.Convert(async (PoWord)=>{
+			var BoWords = PoWordsPage.DataAsy.Select(async (PoWord)=>{
 				var KvPage = await PageKvByFKey(PoWord.Id, PageQuery.SelectAll(), Ct);
 				var Kvs = await _PageAsyToList<PoKv>(KvPage, TK);
 
@@ -403,7 +403,7 @@ ORDER BY {TW.Field(nameof(IPoBase.DbCreatedAt))} DESC
 		if(PageAsy.DataAsy == null){
 			return new List<TPo>();
 		}
-		return await PageAsy.DataAsy.Convert(D=>Tbl.AssignCodePo(D, new TPo())).ToListAsync();
+		return await PageAsy.DataAsy.Select(D=>Tbl.AssignCodePo(D, new TPo())).ToListAsync();
 	}
 }
 

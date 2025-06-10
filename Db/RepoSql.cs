@@ -12,6 +12,7 @@ using Tsinswreng.CsSqlHelper;
 using Ngaq.Core.Model;
 using System.Collections;
 using Tsinswreng.CsSqlHelper.Cmd;
+using Ngaq.Core.Tools;
 
 
 
@@ -99,23 +100,24 @@ $"INSERT INTO {T.Quote(T.Name)} {Clause}";
 	}
 
 	public async Task<Func<
-		T_Id2
+		TId2
 		,CT
 		,Task<TEntity?>
-	>> FnSelectById<T_Id2>(
+	>> FnSelectById<TId2>(
 		IDbFnCtx? Ctx
 		,CT ct
 	){
 		var T = TblMgr.GetTable<TEntity>();
-		var Sql = $"SELECT * FROM {T.Quote(T.Name)} WHERE {T.Field(nameof(I_Id<nil>.Id))} = @1" ;
+		var Params = T.MkUnnamedParam(1);
+		var Sql = $"SELECT * FROM {T.Quote(T.Name)} WHERE {T.Field(nameof(I_Id<nil>.Id))} = {Params[0]}" ;
 		var Cmd = await SqlCmdMkr.Prepare(Ctx, Sql, ct);
 
 		var Fn = async(
-			T_Id2 Id
+			TId2 Id
 			,CT ct
 		)=>{
 			if(Id is not TId id){
-				throw new Exception("Id is not T_Id id");
+				throw new Exception("Id is not TId id");
 			}
 			var IdCol = T.Columns[nameof(I_Id<nil>.Id)];
 			var ConvertedId = IdCol.ToDbType(Id);
@@ -200,11 +202,17 @@ $"UPDATE {T.Quote(T.Name)} SET ${Clause} WHERE {T.Field(NId)} = {T.Param(NId)}";
 	// 	return ans;
 	// }
 
+
+
+
+
+
+/// TODO 用Where Id IN (@0, @1, @2...) 㕥減次芝往返
 	public async Task<Func<
-		T_Id2
+		TId2
 		,CT
 		,Task<nil>
-	>> FnDeleteOneById<T_Id2>(
+	>> FnDeleteOneById<TId2>(
 		IDbFnCtx? Ctx
 		,CT ct
 	){
@@ -213,7 +221,7 @@ var Sql = $"DELETE FROM {Tbl.Name} WHERE {nameof(I_Id<nil>.Id)} = ?";
 
 		var Cmd = await SqlCmdMkr.Prepare(Ctx, Sql, ct);
 		async Task<nil> Fn(
-			T_Id2 Id
+			TId2 Id
 			, CT ct
 		) {
 			if (Id is not TId id) {
@@ -224,6 +232,73 @@ var Sql = $"DELETE FROM {Tbl.Name} WHERE {nameof(I_Id<nil>.Id)} = ?";
 			await Cmd.Args([ConvertedId]).Run(ct).FirstOrDefaultAsync(ct);
 			return NIL;
 		}
+		return Fn;
+	}
+
+
+//TODO TEST
+	public async Task<Func<
+		IEnumerable<object?>
+		,CT
+		,Task<nil>
+	>> FnDeleteManyByKeys(
+		IDbFnCtx? Ctx
+		,str KeyNameInCode
+		,u64 ParamNum
+		,CT Ct
+	){
+		var T = TblMgr.GetTable<TEntity>();
+		var Clause = T.NumParamClause(ParamNum);
+		var Sql =
+$"""
+DELETE FROM {T.Quote(T.Name)} WHERE {T.Quote(KeyNameInCode)} IN ${Clause}
+AND {T.Quote(KeyNameInCode)} IS NOT NULL;
+""";
+		var Cmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
+		var Fn = async(
+			IEnumerable<object?> Keys
+			,CT Ct
+		)=>{
+
+			IList<object?> Args = new List<object?>();
+			u64 i = 0, j=0;
+			foreach(var key in Keys){
+				Args.Add(key);
+				if(j == ParamNum - 1){
+					await Cmd.Args(Args).Run(Ct).FirstOrDefaultAsync(Ct);
+					Args.Clear();
+					j = 0;
+				}
+			i++;j++;}
+			if(j > 0){
+				await Cmd.Args(Args).Run(Ct).FirstOrDefaultAsync(Ct);
+			}
+			return NIL;
+		};
+		return Fn;
+	}
+
+
+	public async Task<Func<
+		IEnumerable<TId2>
+		,CT
+		,Task<nil>
+	>> FnDeleteManyByKeys<TId2>(
+		IDbFnCtx? Ctx
+		,str KeyNameInCode
+		,u64 ParamNum
+		,CT Ct
+	){
+		var T = TblMgr.GetTable<TEntity>();
+		var NonGeneric = await FnDeleteManyByKeys(Ctx, KeyNameInCode, ParamNum, Ct);
+		var Fn = async(
+			IEnumerable<TId2> Ids
+			,CT Ct
+		)=>{
+			var Args = Ids.Select(Id => T.ToDbType(KeyNameInCode, Id));
+			await NonGeneric(Args, Ct);
+			return NIL;
+		};
 		return Fn;
 	}
 
