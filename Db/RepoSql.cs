@@ -13,6 +13,7 @@ using Ngaq.Core.Model;
 using System.Collections;
 using Tsinswreng.CsSqlHelper.Cmd;
 using Ngaq.Core.Tools;
+using Tsinswreng.CsCore.Tools;
 
 
 
@@ -108,7 +109,7 @@ $"INSERT INTO {T.Quote(T.Name)} {Clause}";
 		,CT ct
 	){
 		var T = TblMgr.GetTable<TEntity>();
-		var Params = T.MkUnnamedParam(1);
+		var Params = T.MkUnnamedParam(0,0);
 		var Sql = $"SELECT * FROM {T.Quote(T.Name)} WHERE {T.Field(nameof(I_Id<nil>.Id))} = {Params[0]}" ;
 		var Cmd = await SqlCmdMkr.Prepare(Ctx, Sql, ct);
 
@@ -147,7 +148,7 @@ $"INSERT INTO {T.Quote(T.Name)} {Clause}";
 	){
 		var T = TblMgr.GetTable<TEntity>();
 		ModelDict = new Dictionary<str, object?>(ModelDict);
-		var NId = T.CodeIdName;
+		var NId = T.CodeColId;
 		ModelDict.Remove(NId);
 		var Clause = T.UpdateClause(ModelDict.Keys);
 
@@ -203,9 +204,75 @@ $"UPDATE {T.Quote(T.Name)} SET ${Clause} WHERE {T.Field(NId)} = {T.Param(NId)}";
 	// }
 
 
+//TODO TEST
+	public async Task<Func<
+		IEnumerable<object?>
+		,CT
+		,Task<nil>
+	>> FnSoftDeleteManyByKeys(
+		IDbFnCtx? Ctx
+		,str KeyNameInCode
+		,u64 InClauseParamNum
+		,CT Ct
+	){
+		var T = TblMgr.GetTable<TEntity>();
+		if(T.SoftDeleteCol == null){
+			throw new Exception("SoftDeleteCol is null");
+		}
+		var ParamList = T.MkUnnamedParam(1, InClauseParamNum);
+		var Sql =
+$"""
+UPDATE {T.Quote(T.Name)}
+SET {T.Field(T.SoftDeleteCol.CodeColName)} = {T.MkUnnamedParam(0,0)[0]}
+WHERE {T.Field(KeyNameInCode)} IN ({str.Join(",", ParamList)})
+AND {T.Field(KeyNameInCode)} IS NOT NULL
+;
+""";
+		var ValToSet = T.SoftDeleteCol.FnDelete(null);
+		var Cmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
 
+		var Fn = async(
+			IEnumerable<object?> Keys
+			,CT Ct
+		)=>{
+			using BatchListAsy<object?, nil> BatchList = new(async (x, Ct)=>{
+				IList<object?> Args = [ValToSet, ..x];
+				Args = Args.FillUpTo(InClauseParamNum, null);
+				await Cmd.Args(Args).Run(Ct).FirstOrDefaultAsync(Ct);
+				return NIL;
+			});
 
+			foreach(var key in Keys){
+				await BatchList.Add(key, Ct);
+			}
+			await BatchList.End(Ct);
+			return NIL;
+		};
+		return Fn;
+	}
 
+	public async Task<Func<
+		IEnumerable<TKey>
+		,CT
+		,Task<nil>
+	>> FnSoftDelManyByKeys<TKey>(
+		IDbFnCtx? Ctx
+		,str KeyNameInCode
+		,u64 ParamNum
+		,CT Ct
+	){
+		var T = TblMgr.GetTable<TEntity>();
+		var NonGeneric = await FnSoftDeleteManyByKeys(Ctx, KeyNameInCode, ParamNum, Ct);
+		var Fn = async(
+			IEnumerable<TKey> Keys
+			,CT Ct
+		)=>{
+			var Args = Keys.Select(K=>T.ToDbType(KeyNameInCode, K));
+			await NonGeneric(Args, Ct);
+			return NIL;
+		};
+		return Fn;
+	}
 
 /// TODO 用Where Id IN (@0, @1, @2...) 㕥減次芝往返
 	public async Task<Func<
@@ -237,6 +304,7 @@ var Sql = $"DELETE FROM {Tbl.Name} WHERE {nameof(I_Id<nil>.Id)} = ?";
 
 
 //TODO TEST
+[Obsolete("等FnSoftDeleteManyByKeys測試無誤後再照搬")]
 	public async Task<Func<
 		IEnumerable<object?>
 		,CT
@@ -248,10 +316,10 @@ var Sql = $"DELETE FROM {Tbl.Name} WHERE {nameof(I_Id<nil>.Id)} = ?";
 		,CT Ct
 	){
 		var T = TblMgr.GetTable<TEntity>();
-		var Clause = T.NumParamClause(ParamNum);
+		var Clause = T.NumParamClause(ParamNum-1);
 		var Sql =
 $"""
-DELETE FROM {T.Quote(T.Name)} WHERE {T.Quote(KeyNameInCode)} IN ${Clause}
+DELETE FROM {T.Quote(T.Name)} WHERE {T.Field(KeyNameInCode)} IN ${Clause}
 AND {T.Quote(KeyNameInCode)} IS NOT NULL;
 """;
 		var Cmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
@@ -280,10 +348,10 @@ AND {T.Quote(KeyNameInCode)} IS NOT NULL;
 
 
 	public async Task<Func<
-		IEnumerable<TId2>
+		IEnumerable<TKey>
 		,CT
 		,Task<nil>
-	>> FnDeleteManyByKeys<TId2>(
+	>> FnDeleteManyByKeys<TKey>(
 		IDbFnCtx? Ctx
 		,str KeyNameInCode
 		,u64 ParamNum
@@ -292,10 +360,10 @@ AND {T.Quote(KeyNameInCode)} IS NOT NULL;
 		var T = TblMgr.GetTable<TEntity>();
 		var NonGeneric = await FnDeleteManyByKeys(Ctx, KeyNameInCode, ParamNum, Ct);
 		var Fn = async(
-			IEnumerable<TId2> Ids
+			IEnumerable<TKey> Keys
 			,CT Ct
 		)=>{
-			var Args = Ids.Select(Id => T.ToDbType(KeyNameInCode, Id));
+			var Args = Keys.Select(Id => T.ToDbType(KeyNameInCode, Id));
 			await NonGeneric(Args, Ct);
 			return NIL;
 		};

@@ -51,9 +51,9 @@ public class AppTblInfo{
 			val=>val==null?null:new Tempus(val.Value)
 		);
 
-		o.SetCol(nameof(IPoBase.Status)).HasConversion<PoStatus, i64>(
-			s=>s.Value,
-			val=>new PoStatus(val)
+		o.SetCol(nameof(IPoBase.Status)).HasConversion<PoStatus, object?>(
+			s=>Convert.ToInt32(s.Value),
+			val=>new PoStatus(Convert.ToInt32(val))
 		);
 
 		o.SetCol(nameof(IPoBase.CreatedBy)).HasConversion<IdUser?, u8[]?>(
@@ -64,6 +64,16 @@ public class AppTblInfo{
 			(id)=>(id)?.Value.ToByteArr(),
 			(val)=>val==null?null:IdUser.FromByteArr(val)
 		);
+
+		o.SoftDeleteCol = new SoftDeleteCol{
+			CodeColName = nameof(IPoBase.Status)
+			,FnDelete = (statusObj)=>{
+				return PoStatus.Deleted.Value;
+			}
+			,FnRestore = (statusObj)=>{
+				return PoStatus.Normal.Value;
+			}
+		};
 		return NIL;
 	}
 
@@ -88,7 +98,7 @@ public class AppTblInfo{
 		{
 			var o = Tbl_Word;
 			CfgPoBase<PoWord>(o);
-			o.CodeIdName = nameof(PoWord.Id);
+			o.CodeColId = nameof(PoWord.Id);
 			o.SetCol(nameof(PoWord.Id)).HasConversion<IdWord, u8[]>(
 				(id)=>(id).Value.ToByteArr(),
 				(val)=>IdWord.FromByteArr(val)
@@ -104,7 +114,7 @@ public class AppTblInfo{
 		{
 			var o = Tbl_Prop;
 			CfgPoBase<PoKv>(o);
-			o.CodeIdName = nameof(PoKv.Id);
+			o.CodeColId = nameof(PoKv.Id);
 			o.SetCol(nameof(PoKv.Id)).HasConversion<IdKv, u8[]>(
 				(id)=>(id).Value.ToByteArr(),
 				(val)=>IdKv.FromByteArr(val)
@@ -128,7 +138,7 @@ public class AppTblInfo{
 		{
 			var o = Tbl_Learn;
 			CfgPoBase<PoLearn>(o);
-			o.CodeIdName = nameof(PoLearn.Id);
+			o.CodeColId = nameof(PoLearn.Id);
 			o.SetCol(nameof(PoLearn.Id)).HasConversion<IdLearn, u8[]>(
 				(id)=>(id).Value.ToByteArr(),
 				(val)=>IdLearn.FromByteArr(val)

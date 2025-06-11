@@ -16,6 +16,7 @@ using IStr_Any = System.Collections.Generic.IDictionary<string, object?>;
 using Ngaq.Core.Infra.Page;
 using System.Threading.Tasks;
 using Ngaq.Core.Infra.Errors;
+using Ngaq.Core.Models.Po;
 namespace Ngaq.Local.Dao;
 
 
@@ -282,6 +283,7 @@ WHERE {TK.Field(NWordId)} = {TW.Param(NWordId)}
 $"""
 SELECT * FROM {Tbl.Quote(Tbl.Name)}
 WHERE {Tbl.Field(NWordId)} = {Tbl.Param(NWordId)}
+AND {Tbl.Field(nameof(IPoBase.Status))} <> {PoStatus.Deleted.Value}
 {Tbl.SqlMkr.LimitOffset(NLmt, NOfst)}
 """;
 		var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
@@ -324,6 +326,7 @@ WHERE {Tbl.Field(NWordId)} = {Tbl.Param(NWordId)}
 $"""
 SELECT * FROM {TW.Quote(TW.Name)}
 WHERE {TW.Field(NOwner)} = {TW.Param(NOwner)}
+AND {TW.Field(nameof(PoWord.Status))} <> {PoStatus.Deleted.Value}
 ORDER BY {TW.Field(nameof(IPoBase.DbCreatedAt))} DESC
 {TW.SqlMkr.LimitOffset(NLmt, NOfst)}
 """;

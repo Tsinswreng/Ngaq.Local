@@ -326,11 +326,12 @@ public class SvcWord(
 		return Fn;
 	}
 
+	[Obsolete("宜用軟刪")]
 	public async Task<Func<
 		IUserCtx
 		,IEnumerable<IdWord>
 		,CT
-		,nil
+		,Task<nil>
 	>> FnDeleteJnWordsByIds(
 		IDbFnCtx Ctx, CT Ct
 	){
@@ -360,6 +361,36 @@ public class SvcWord(
 			return NIL;
 		};
 		return Fn;
+	}
+
+	public async Task<Func<
+		IUserCtx
+		,IEnumerable<IdWord>
+		,CT
+		,Task<nil>
+	>> FnSoftDelJnWordsByIds(
+		IDbFnCtx Ctx ,CT Ct
+	){
+		var CheckOwner = await FnCheckWordOwnerOrThrow(Ctx, Ct);
+		var SoftDelPoWordById = await RepoPoWord.FnSoftDelManyByKeys<IdWord>(Ctx, nameof(PoWord.Id), 1000, Ct);
+		var DelPoKvByWordIds = await RepoKv.FnSoftDelManyByKeys<IdWord>(Ctx, nameof(PoKv.WordId), 1000, Ct);
+		var DelPoLearnByWordIds = await RepoLearn.FnSoftDelManyByKeys<IdWord>(Ctx, nameof(PoLearn.WordId), 1000, Ct);
+		var Fn = async(
+			IUserCtx UserCtx
+			,IEnumerable<IdWord> Ids
+			,CT Ct
+		)=>{
+			Ids = Ids.Select(Id=>{
+				_ = CheckOwner(UserCtx, Id, Ct).Result;
+				return Id;
+			});
+			await SoftDelPoWordById(Ids, Ct);
+			await DelPoKvByWordIds(Ids, Ct);
+			await DelPoLearnByWordIds(Ids, Ct);
+			return NIL;
+		};
+		return Fn;
+
 	}
 
 	public async Task<nil> AddWordsFromFilePath(
