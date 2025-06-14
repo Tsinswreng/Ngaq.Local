@@ -29,14 +29,14 @@ public class RepoSql<
 {
 
 	public RepoSql(
-		ITableMgr TblMgr
+		ITblMgr TblMgr
 		,ISqlCmdMkr SqlCmdMkr
 	){
 		this.TblMgr = TblMgr;
 		this.SqlCmdMkr = SqlCmdMkr;
 	}
 
-	public ITableMgr TblMgr{get;set;}
+	public ITblMgr TblMgr{get;set;}
 
 	public ISqlCmdMkr SqlCmdMkr{get;set;}
 
@@ -121,7 +121,7 @@ $"INSERT INTO {T.Quote(T.Name)} {Clause}";
 				throw new Exception("Id is not TId id");
 			}
 			var IdCol = T.Columns[nameof(I_Id<nil>.Id)];
-			var ConvertedId = IdCol.ToDbType(Id);
+			var ConvertedId = IdCol.UpperToRaw(Id);
 			var RawDict = await Cmd
 				.Args([ConvertedId])
 				.Run(ct).FirstOrDefaultAsync(ct)
@@ -295,7 +295,7 @@ var Sql = $"DELETE FROM {Tbl.Name} WHERE {nameof(I_Id<nil>.Id)} = ?";
 				throw new Exception("Id is not T_Id id");
 			}
 			var IdCol = Tbl.Columns[nameof(I_Id<nil>.Id)];
-			var ConvertedId = IdCol.ToDbType(Id);
+			var ConvertedId = IdCol.UpperToRaw(Id);
 			await Cmd.Args([ConvertedId]).Run(ct).FirstOrDefaultAsync(ct);
 			return NIL;
 		}

@@ -19,6 +19,7 @@ using Ngaq.Local.Service.Word;
 using Ngaq.Local.Word.Svc;
 using Tsinswreng.CsSqlHelper;
 using Tsinswreng.CsSqlHelper.Cmd;
+using Ngaq.Local.Db.TswG;
 
 
 namespace Ngaq.Local;
@@ -32,19 +33,19 @@ public class DiLocal{
 z.AddDbContext<LocalDbCtx>();
 //svc.AddScoped<DaoWord, DaoWord>();
 z.AddScoped<DaoSqlWord, DaoSqlWord>();
-z.AddScoped<ISqlCmdMkr, SqlCmdMkr>();
+z.AddScoped<ISqlCmdMkr, SqliteCmdMkr>();
 z.AddSingleton<IDbConnection>(AppTblInfo.Inst.DbConnection);
 z.AddTransient<MgrLearn, MgrLearn>();
-z.AddSingleton<ITableMgr>(AppTableMgr.Inst);
+z.AddSingleton<ITblMgr>(AppTableMgr.Inst);
 z.AddScoped<RepoSql<PoWord,	IdWord>>();
-z.AddScoped<RepoSql<PoKv,	IdKv>>();
-z.AddScoped<RepoSql<PoLearn,	IdLearn>>();z.AddScoped<IRunInTxn, SqlTxnRunner>();
+z.AddScoped<RepoSql<PoWordProp,	IdWordProp>>();
+z.AddScoped<RepoSql<PoWordLearn,	IdLearn>>();z.AddScoped<IRunInTxn, SqlTxnRunner>();
 z.AddScoped<ITxnRunner, SqlTxnRunner>();
 z.AddScoped<ISvcParseWordList, SvcParseWordList>();
 z.AddScoped<ISvcWord, SvcWord>();
 z.AddScoped<IWeightCalctr, SvcWeight>();
 z.AddScoped<IUserCtxMgr, UserCtxMgr>();
-z.AddScoped<IGetTxn, SqlCmdMkr>();
+z.AddScoped<IGetTxn, SqliteCmdMkr>();
 return z;
 
 	}

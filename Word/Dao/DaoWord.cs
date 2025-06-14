@@ -109,13 +109,13 @@ public class DaoWord(
 			}, BatchSize);
 
 
-			using var Po_Kvs = new BatchListAsy<PoKv, nil>(async(e, ct)=>{
+			using var Po_Kvs = new BatchListAsy<PoWordProp, nil>(async(e, ct)=>{
 				await DbCtx.PoKv.AddRangeAsync(e, ct);
 				return NIL;
 			}, BatchSize);
 
 
-			using var Po_Learns = new BatchListAsy<PoLearn, nil>(async(e, ct)=>{
+			using var Po_Learns = new BatchListAsy<PoWordLearn, nil>(async(e, ct)=>{
 				await DbCtx.PoLearn.AddRangeAsync(e, ct);
 				return NIL;
 			}, BatchSize);
@@ -150,14 +150,14 @@ public class DaoWord(
 	}
 
 	public async Task<Func<
-		IEnumerable<PoKv>
+		IEnumerable<PoWordProp>
 		,CancellationToken
 		,Task<nil>
 	>> FnInsertPoKvs(
 		CancellationToken ct
 	){
 		var Fn = async(
-			IEnumerable<PoKv> Po_Kvs
+			IEnumerable<PoWordProp> Po_Kvs
 			,CancellationToken ct
 		)=>{
 			await DbCtx.PoKv.AddRangeAsync(Po_Kvs, ct);

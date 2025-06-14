@@ -29,8 +29,8 @@ public class SvcWord(
 	,DaoSqlWord DaoWord
 	,IGetTxn GetTxnAsy
 	,RepoSql<PoWord, IdWord> RepoPoWord
-	,RepoSql<PoKv, IdKv> RepoKv
-	,RepoSql<PoLearn, IdLearn> RepoLearn
+	,RepoSql<PoWordProp, IdWordProp> RepoKv
+	,RepoSql<PoWordLearn, IdLearn> RepoLearn
 )
 	: ISvcWord
 {
@@ -118,8 +118,8 @@ public class SvcWord(
 			,CT Ct
 		)=>{
 			using var NeoWords = new BatchListAsy<JnWord, nil>(InsertBoWords);
-			using var NeoProps = new BatchListAsy<PoKv, nil>(InsertPoKvs);
-			using var NeoLearns = new BatchListAsy<PoLearn, nil>(InsertPoLearns);
+			using var NeoProps = new BatchListAsy<PoWordProp, nil>(InsertPoKvs);
+			using var NeoLearns = new BatchListAsy<PoWordLearn, nil>(InsertPoLearns);
 
 			//未加過之諸詞 加'add'ˉ學習記錄後直加入庫中則可
 			Dictionary<str ,nil> debug = new Dictionary<str, nil>();//t
@@ -218,10 +218,10 @@ public class SvcWord(
 // 		return R;
 // 	}
 
-	protected IEnumerable<PoLearn> MkPoLearns(IEnumerable<PoKv> NeoProps, IdWord WordId){
+	protected IEnumerable<PoWordLearn> MkPoLearns(IEnumerable<PoWordProp> NeoProps, IdWord WordId){
 		foreach(var Prop in NeoProps){
 			if(Prop.KStr == KeysProp.Inst.description){
-				var U = new PoLearn();
+				var U = new PoWordLearn();
 				U.CreatedAt = Prop.CreatedAt;
 				U.LearnResult = ELearn.Inst.Add;
 				U.WordId = WordId;
@@ -341,10 +341,10 @@ public class SvcWord(
 			Ctx, nameof(PoWord.Id), 1000, Ct
 		);
 		var DelPoKvByWordIds = await RepoKv.FnDeleteManyByKeys<IdWord>(
-			Ctx, nameof(PoKv.WordId), 1000, Ct
+			Ctx, nameof(PoWordProp.WordId), 1000, Ct
 		);
 		var DelPoLearnByWordIds = await RepoLearn.FnDeleteManyByKeys<IdWord>(
-			Ctx, nameof(PoLearn.WordId), 1000, Ct
+			Ctx, nameof(PoWordLearn.WordId), 1000, Ct
 		);
 		var Fn = async(
 			IUserCtx UserCtx
@@ -373,8 +373,8 @@ public class SvcWord(
 	){
 		var CheckOwner = await FnCheckWordOwnerOrThrow(Ctx, Ct);
 		var SoftDelPoWordById = await RepoPoWord.FnSoftDelManyByKeys<IdWord>(Ctx, nameof(PoWord.Id), 1000, Ct);
-		var DelPoKvByWordIds = await RepoKv.FnSoftDelManyByKeys<IdWord>(Ctx, nameof(PoKv.WordId), 1000, Ct);
-		var DelPoLearnByWordIds = await RepoLearn.FnSoftDelManyByKeys<IdWord>(Ctx, nameof(PoLearn.WordId), 1000, Ct);
+		var DelPoKvByWordIds = await RepoKv.FnSoftDelManyByKeys<IdWord>(Ctx, nameof(PoWordProp.WordId), 1000, Ct);
+		var DelPoLearnByWordIds = await RepoLearn.FnSoftDelManyByKeys<IdWord>(Ctx, nameof(PoWordLearn.WordId), 1000, Ct);
 		var Fn = async(
 			IUserCtx UserCtx
 			,IEnumerable<IdWord> Ids

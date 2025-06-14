@@ -17,15 +17,18 @@ using Ngaq.Core.Infra.Page;
 using System.Threading.Tasks;
 using Ngaq.Core.Infra.Errors;
 using Ngaq.Core.Models.Po;
+using Tsinswreng.CsUlid;
+using ToolId = Tsinswreng.CsUlid.IdTool;
+
 namespace Ngaq.Local.Dao;
 
 
 public class DaoSqlWord(
 	ISqlCmdMkr SqlCmdMkr
-	,ITableMgr TblMgr
+	,ITblMgr TblMgr
 	,RepoSql<PoWord, IdWord> RepoWord
-	,RepoSql<PoKv, IdKv> RepoKv
-	,RepoSql<PoLearn, IdLearn> RepoLearn
+	,RepoSql<PoWordProp, IdWordProp> RepoKv
+	,RepoSql<PoWordLearn, IdLearn> RepoLearn
 ){
 	// public RepoSql<Po_Word, IdWord> RepoWord{get;set;}
 	// public RepoSql<Po_Kv, IdKv> RepoKv{get;set;}
@@ -101,7 +104,7 @@ AND Lang = @Lang
 				return null;
 			}
 			var ans = GotDict[T.ToDbName(nameof(I_Id<nil>.Id))];
-			return new IdWord(ToolId.ByteArrToUInt128((u8[])ans));
+			return IdWord.FromByteArr((u8[])ans);
 		};
 	}
 
@@ -120,9 +123,9 @@ AND Lang = @Lang
 		,CancellationToken ct
 	){
 		var TW = TblMgr.GetTable<PoWord>();
-		var TK = TblMgr.GetTable<PoKv>();
-		var TL = TblMgr.GetTable<PoLearn>();
-		var NWordId = nameof(PoKv.WordId);
+		var TK = TblMgr.GetTable<PoWordProp>();
+		var TL = TblMgr.GetTable<PoWordLearn>();
+		var NWordId = nameof(PoWordProp.WordId);
 		var Sql_SeekByFKey = (str QuotedTblName)=>{
 			var Sql =
 $"""
@@ -144,14 +147,14 @@ WHERE {TK.Field(NWordId)} = {TW.Param(NWordId)}
 				return null;
 			}
 			var Arg = new Str_Any{
-				[nameof(PoKv.WordId)] = Id
+				[nameof(PoWordProp.WordId)] = Id
 			};
 			var RawPropDicts = await Cmd_SeekKv.Args(TK.ToDbDict(Arg)).Run(ct)
-				.Select(dbDict=>TK.DbDictToPo<PoKv>(dbDict))
+				.Select(dbDict=>TK.DbDictToPo<PoWordProp>(dbDict))
 				.ToListAsync(ct)
 			;
 			var RawLearnDicts = await Cmd_SeekLearn.Args(TL.ToDbDict(Arg)).Run(ct)
-				.Select(dbDict=>TL.DbDictToPo<PoLearn>(dbDict))
+				.Select(dbDict=>TL.DbDictToPo<PoWordLearn>(dbDict))
 				.ToListAsync(ct)
 			;
 			var ans = new JnWord{
@@ -187,11 +190,11 @@ WHERE {TK.Field(NWordId)} = {TW.Param(NWordId)}
 				await InsertPoWords(list,ct);
 				return NIL;
 			}, BatchSize);
-			using var Po_Kvs = new BatchListAsy<PoKv, nil>(async(e, ct)=>{
+			using var Po_Kvs = new BatchListAsy<PoWordProp, nil>(async(e, ct)=>{
 				await InsertPoKvs(e, ct);
 				return NIL;
 			}, BatchSize);
-			using var Po_Learns = new BatchListAsy<PoLearn, nil>(async(e, ct)=>{
+			using var Po_Learns = new BatchListAsy<PoWordLearn, nil>(async(e, ct)=>{
 				await InsertPoLearns(e, ct);
 				return NIL;
 			}, BatchSize);
@@ -219,7 +222,7 @@ WHERE {TK.Field(NWordId)} = {TW.Param(NWordId)}
 
 
 	public async Task<Func<
-		IEnumerable<PoKv>
+		IEnumerable<PoWordProp>
 		,CancellationToken
 		,Task<nil>
 	>> FnInsertPoKvs(
@@ -228,7 +231,7 @@ WHERE {TK.Field(NWordId)} = {TW.Param(NWordId)}
 	){
 		var InsertMany = await RepoKv.FnInsertMany(Ctx, ct);
 		var Fn = async(
-			IEnumerable<PoKv> Po_Kvs
+			IEnumerable<PoWordProp> Po_Kvs
 			,CancellationToken ct
 		)=>{
 			Po_Kvs = Po_Kvs.Select(x=>{
@@ -247,7 +250,7 @@ WHERE {TK.Field(NWordId)} = {TW.Param(NWordId)}
 	}
 
 	public async Task<Func<
-		IEnumerable<PoLearn>
+		IEnumerable<PoWordLearn>
 		,CancellationToken
 		,Task<nil>
 	>> FnInsertPoLearns(
@@ -256,7 +259,7 @@ WHERE {TK.Field(NWordId)} = {TW.Param(NWordId)}
 	){
 		var InsertMany = await RepoLearn.FnInsertMany(Ctx, ct);
 		var Fn = async(
-			IEnumerable<PoLearn> PoLearns
+			IEnumerable<PoWordLearn> PoLearns
 			,CancellationToken ct
 		)=>{
 			await InsertMany(PoLearns, ct);
@@ -365,8 +368,8 @@ ORDER BY {TW.Field(nameof(IPoBase.DbCreatedAt))} DESC
 		IDbFnCtx Ctx
 		,CancellationToken Ct
 	){
-		var TK = TblMgr.GetTable<PoKv>();
-		var TL = TblMgr.GetTable<PoLearn>();
+		var TK = TblMgr.GetTable<PoWordProp>();
+		var TL = TblMgr.GetTable<PoWordLearn>();
 		var PagePoWords = await FnPagePoWords(Ctx, Ct);
 		var PageKvByFKey = await FnPageByFKey(Ctx, TK, Ct);
 		var PageLearnByFKey = await FnPageByFKey(Ctx, TL, Ct);
@@ -384,10 +387,10 @@ ORDER BY {TW.Field(nameof(IPoBase.DbCreatedAt))} DESC
 
 			var BoWords = PoWordsPage.DataAsy.Select(async (PoWord)=>{
 				var KvPage = await PageKvByFKey(PoWord.Id, PageQuery.SelectAll(), Ct);
-				var Kvs = await _PageAsyToList<PoKv>(KvPage, TK);
+				var Kvs = await _PageAsyToList<PoWordProp>(KvPage, TK);
 
 				var LearnPage = await PageLearnByFKey(PoWord.Id, PageQuery.SelectAll(), Ct);
-				var Learns = await _PageAsyToList<PoLearn>(LearnPage, TL);
+				var Learns = await _PageAsyToList<PoWordLearn>(LearnPage, TL);
 
 				var R = new JnWord(PoWord, Kvs, Learns);
 				return R;

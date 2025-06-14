@@ -1,4 +1,4 @@
-namespace Ngaq.Db;
+namespace Ngaq.Local.Db.TswG;
 using Tsinswreng.CsSqlHelper;
 using Ngaq.Core.Model.Po.Kv;
 using Ngaq.Core.Model.Po.Learn_;
@@ -10,6 +10,8 @@ using System.Data;
 using Microsoft.Data.Sqlite;
 using Ngaq.Core.Model.Sys.Po.User;
 using Ngaq.Core.Models.Po;
+using Tsinswreng.CsUlid;
+using ToolId = Tsinswreng.CsUlid.IdTool;
 
 //using Id_User = Ngaq.Core.Model.Po.User.IdUser;
 //using Id_Word = Ngaq.Core.Model.Po.Word.IdWord;
@@ -20,9 +22,12 @@ public class AppTblInfo{
 	protected static AppTblInfo? _Inst = null;
 	public static AppTblInfo Inst => _Inst??= new AppTblInfo();
 
-	public str DbPath{get;} = "E:/_code/CsNgaq/Ngaq.Sqlite";
+	public str DbPath{get;} = AppCfg.Inst.SqlitePath;
 	public IDbConnection DbConnection{get;set;}
 	public AppTblInfo(){
+		Console.WriteLine(DbPath);//t
+		Console.WriteLine(Path.GetFullPath(DbPath));//t
+
 		DbConnection = new SqliteConnection($"Data Source={DbPath}");
 		DbConnection.Open();
 	}
@@ -31,37 +36,40 @@ public class AppTblInfo{
 		Inst.Init();
 	}
 
+	protected bool _Inited{get;set;} = false;
 
 	nil CfgPoBase<TPo>(ITable Tbl){
 		var o = Tbl;
-		o.SetCol(nameof(IPoBase.CreatedAt)).HasConversion<Tempus, i64>(
+
+		o.SetCol(nameof(IPoBase.CreatedAt)).HasConversionEtMapType<i64,Tempus>(
 			tempus=>tempus.Value,
 			val=>new Tempus(val)
 		);
-		o.SetCol(nameof(IPoBase.DbCreatedAt)).HasConversion<Tempus, i64>(
+		o.SetCol(nameof(IPoBase.DbCreatedAt)).HasConversionEtMapType<i64, Tempus>(
 			tempus=>tempus.Value,
 			val=>new Tempus(val)
 		);
-		o.SetCol(nameof(IPoBase.UpdatedAt)).HasConversion<Tempus?, i64?>(
+		o.SetCol(nameof(IPoBase.UpdatedAt)).HasConversionEtMapType<i64?, Tempus?>(
 			tempus=>tempus?.Value,
 			val=>val==null?null:new Tempus(val.Value)
 		);
-		o.SetCol(nameof(IPoBase.UpdatedAt)).HasConversion<Tempus?, i64?>(
+		o.SetCol(nameof(IPoBase.DbUpdatedAt)).HasConversionEtMapType<i64?, Tempus?>(
 			tempus=>tempus?.Value,
 			val=>val==null?null:new Tempus(val.Value)
 		);
 
-		o.SetCol(nameof(IPoBase.Status)).HasConversion<PoStatus, object?>(
+		o.SetCol(nameof(IPoBase.Status)).HasConversionEtMapType<i32?, PoStatus>(
 			s=>Convert.ToInt32(s.Value),
 			val=>new PoStatus(Convert.ToInt32(val))
+			,ObjToRaw: (obj)=>Convert.ToInt32(obj)
 		);
 
-		o.SetCol(nameof(IPoBase.CreatedBy)).HasConversion<IdUser?, u8[]?>(
-			(id)=>(id)?.Value.ToByteArr(),
+		o.SetCol(nameof(IPoBase.CreatedBy)).HasConversionEtMapType<u8[]?, IdUser?>(
+			(id)=>id?.Value.ToByteArr(),
 			(val)=>val==null?null:IdUser.FromByteArr(val)
 		);
-		o.SetCol(nameof(IPoBase.LastUpdatedBy)).HasConversion<IdUser?, u8[]?>(
-			(id)=>(id)?.Value.ToByteArr(),
+		o.SetCol(nameof(IPoBase.LastUpdatedBy)).HasConversionEtMapType<u8[]?, IdUser?>(
+			(id)=>id?.Value.ToByteArr(),
 			(val)=>val==null?null:IdUser.FromByteArr(val)
 		);
 
@@ -77,10 +85,8 @@ public class AppTblInfo{
 		return NIL;
 	}
 
-
-
 	protected ITable Mk<T>(str Name, T Example){
-		var ExDict = DictCtx.ToDictT(Example);
+		var ExDict = DictCtx.GetTypeDictT<T>();
 		return Table.Mk(
 			DictCtx.DictMapper
 			,Name
@@ -88,10 +94,24 @@ public class AppTblInfo{
 		);
 	}
 
-	public void Init(){
-		ITableMgr Mgr = AppTableMgr.Inst;
-		Mgr.DbType = "Sqlite";
 
+	protected ITable CfgI_WordId<TPo>(ITable Tbl){
+		var o = Tbl;
+		o.SetCol(nameof(PoWordProp.WordId)).HasConversionEtMapType<u8[], IdWord>(
+			(id)=>id.Value.ToByteArr(),
+			(val)=>IdWord.FromByteArr(val)
+		);
+		return o;
+	}
+
+	public nil Init(){
+		if(_Inited){
+			return NIL;
+		}
+		ITblMgr Mgr = AppTableMgr.Inst;
+		Mgr.DbSrcType = "Sqlite";
+
+		Mgr.AddTable<SchemaHistory>(new SchemaHistoryTblMkr().MkTbl());
 
 		var Tbl_Word = Mk("Word", PoWord.Example);
 		Mgr.AddTable<PoWord>(Tbl_Word);
@@ -99,55 +119,49 @@ public class AppTblInfo{
 			var o = Tbl_Word;
 			CfgPoBase<PoWord>(o);
 			o.CodeColId = nameof(PoWord.Id);
-			o.SetCol(nameof(PoWord.Id)).HasConversion<IdWord, u8[]>(
-				(id)=>(id).Value.ToByteArr(),
+			o.SetCol(nameof(PoWord.Id)).HasConversionEtMapType<u8[], IdWord>(
+				(id)=>id.Value.ToByteArr(),
 				(val)=>IdWord.FromByteArr(val)
 			);
-			o.SetCol(nameof(PoWord.Owner)).HasConversion<IdUser, u8[]>(
-				(id)=>(id).Value.ToByteArr(),
+			o.SetCol(nameof(PoWord.Owner)).HasConversionEtMapType<u8[], IdUser>(
+				(id)=>id.Value.ToByteArr(),
 				(val)=>IdUser.FromByteArr(val)
 			);
 		}
 
-		var Tbl_Prop = Mk("Prop", PoKv.Example);
-		Mgr.AddTable<PoKv>(Tbl_Prop);
+		var Tbl_Prop = Mk("WordProp", PoWordProp.Example);
+		Mgr.AddTable<PoWordProp>(Tbl_Prop);
 		{
 			var o = Tbl_Prop;
-			CfgPoBase<PoKv>(o);
-			o.CodeColId = nameof(PoKv.Id);
-			o.SetCol(nameof(PoKv.Id)).HasConversion<IdKv, u8[]>(
-				(id)=>(id).Value.ToByteArr(),
-				(val)=>IdKv.FromByteArr(val)
+			CfgPoBase<PoWordProp>(o);
+			CfgI_WordId<PoWordProp>(o);
+			o.CodeColId = nameof(PoWordProp.Id);
+			o.SetCol(nameof(PoWordProp.Id)).HasConversionEtMapType<u8[], IdWordProp>(
+				(id)=>id.Value.ToByteArr(),
+				(val)=>IdWordProp.FromByteArr(val)
 			);
-
-			o.SetCol(nameof(PoKv.WordId)).HasConversion<IdWord, u8[]>(
-				(id)=>(id).Value.ToByteArr(),
-				(val)=>IdWord.FromByteArr(val)
-			);
-
 //TODO配置忽略之字段
-			// o.SetCol(nameof(PoKv.FKeyUInt128)).HasConversion<UInt128, u8[]>(
-			// 	(id)=>(id).ToByteArr(),
-			// 	(val)=>ToolId.ByteArrToUInt128(val)
-			// );
 
 		}
 
-		var Tbl_Learn = Mk("Learn", PoLearn.Example);
-		Mgr.AddTable<PoLearn>(Tbl_Learn);
+		var Tbl_Learn = Mk("WordLearn", PoWordLearn.Example);
+		Mgr.AddTable<PoWordLearn>(Tbl_Learn);
 		{
 			var o = Tbl_Learn;
-			CfgPoBase<PoLearn>(o);
-			o.CodeColId = nameof(PoLearn.Id);
-			o.SetCol(nameof(PoLearn.Id)).HasConversion<IdLearn, u8[]>(
-				(id)=>(id).Value.ToByteArr(),
+			CfgPoBase<PoWordLearn>(o);
+			CfgI_WordId<PoWordLearn>(o);
+			o.CodeColId = nameof(PoWordLearn.Id);
+			o.SetCol(nameof(PoWordLearn.Id)).HasConversionEtMapType<u8[], IdLearn>(
+				(id)=>id.Value.ToByteArr(),
 				(val)=>IdLearn.FromByteArr(val)
 			);
-			o.SetCol(nameof(PoLearn.WordId)).HasConversion<IdWord, u8[]>(
-				(id)=>(id).Value.ToByteArr(),
+			o.SetCol(nameof(PoWordLearn.WordId)).HasConversionEtMapType<u8[], IdWord>(
+				(id)=>id.Value.ToByteArr(),
 				(val)=>IdWord.FromByteArr(val)
 			);
 		}
+		_Inited = true;
+		return NIL;
 
 	}
 

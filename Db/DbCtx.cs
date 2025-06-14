@@ -9,7 +9,8 @@ using Ngaq.Core.Model.Po.Learn_;
 using Ngaq.Core.Model.Po.Word;
 using Ngaq.Core.Model.Sys.Po.User;
 using Ngaq.Core.Models.Po;
-using Ngaq.Core.Tools;
+using Tsinswreng.CsUlid;
+using ToolId = Tsinswreng.CsUlid.IdTool;
 
 
 /*
@@ -24,8 +25,8 @@ dotnet ef dbcontext optimize --output-dir GeneratedInterceptors --precompile-que
 public class LocalDbCtx : DbContext{
 
 	public DbSet<PoWord> PoWord{get;set;}
-	public DbSet<PoKv> PoKv{get;set;}
-	public DbSet<PoLearn> PoLearn{get;set;}
+	public DbSet<PoWordProp> PoKv{get;set;}
+	public DbSet<PoWordLearn> PoLearn{get;set;}
 	public str DbPath{get;set;} = AppCfg.Inst.SqlitePath;
 
 	protected override void OnConfiguring(DbContextOptionsBuilder opt) {
@@ -135,14 +136,14 @@ public class LocalDbCtx : DbContext{
 			//Unique(WordFormId, Lang):
 		});
 
-		_CfgPoBase<PoKv>(mb);
-		_CfgI_WordId<PoKv>(mb);
-		mb.Entity<PoKv>(e=>{
+		_CfgPoBase<PoWordProp>(mb);
+		_CfgI_WordId<PoWordProp>(mb);
+		mb.Entity<PoWordProp>(e=>{
 			e.ToTable("Prop").UseTpcMappingStrategy();
 			e.HasKey(p=>p.Id);
 			e.Property(p=>p.Id).HasConversion(
 				id=>id.Value.ToByteArr()
-				,val => new IdKv(ToolId.ByteArrToUInt128(val))
+				,val => new IdWordProp(ToolId.ByteArrToUInt128(val))
 			).HasColumnType("BLOB");
 			//e.Ignore(p=>p.FKeyUInt128);
 
@@ -155,9 +156,9 @@ public class LocalDbCtx : DbContext{
 			e.HasIndex(p=>p.KI64);
 		});
 
-		_CfgPoBase<PoLearn>(mb);
-		_CfgI_WordId<PoLearn>(mb);
-		mb.Entity<PoLearn>((e=>{
+		_CfgPoBase<PoWordLearn>(mb);
+		_CfgI_WordId<PoWordLearn>(mb);
+		mb.Entity<PoWordLearn>((e=>{
 			e.ToTable("Learn").UseTpcMappingStrategy();
 			//e.HasKey(p=>p.Id);
 			e.Property(p => p.Id).HasConversion(
