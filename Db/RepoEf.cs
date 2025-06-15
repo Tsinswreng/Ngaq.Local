@@ -104,7 +104,7 @@ public class RepoEf
 				if(Old == null){
 					continue;
 				}
-				DictCtx.Inst.AssignT(Old, dict);//源生成器實現、無反射
+				CoreDictMapper.Inst.AssignT(Old, dict);//源生成器實現、無反射
 				if(Old is IPoBase po){
 					po.UpdatedAt = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 				}

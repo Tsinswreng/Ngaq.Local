@@ -26,9 +26,9 @@ namespace Ngaq.Local.Dao;
 public class DaoSqlWord(
 	ISqlCmdMkr SqlCmdMkr
 	,ITblMgr TblMgr
-	, Db.Repo<PoWord, IdWord> RepoWord
-	, Db.Repo<PoWordProp, IdWordProp> RepoKv
-	, Db.Repo<PoWordLearn, IdLearn> RepoLearn
+	,Repo<PoWord, IdWord> RepoWord
+	,Repo<PoWordProp, IdWordProp> RepoKv
+	,Repo<PoWordLearn, IdLearn> RepoLearn
 ){
 	// public RepoSql<Po_Word, IdWord> RepoWord{get;set;}
 	// public RepoSql<Po_Kv, IdKv> RepoKv{get;set;}
@@ -134,7 +134,7 @@ WHERE {TK.Field(NWordId)} = {TW.Param(NWordId)}
 """;
 			return Sql;
 		};
-		var GetPoWordById = await RepoWord.FnSelectById<IdWord>(Ctx, ct);
+		var GetPoWordById = await RepoWord.FnSelectById(Ctx, ct);
 		var Cmd_SeekKv = await SqlCmdMkr.Prepare(Ctx, Sql_SeekByFKey(TK.Quote(TK.Name)), ct);
 		var Cmd_SeekLearn = await SqlCmdMkr.Prepare(Ctx, Sql_SeekByFKey(TL.Quote(TL.Name)), ct);
 

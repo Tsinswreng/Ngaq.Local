@@ -24,6 +24,7 @@ public partial class DbIniter{
 		,Repo<SchemaHistory, i64> RepoSchemaHistory
 	){
 		this.RepoSchemaHistory = RepoSchemaHistory;
+		RepoSchemaHistory.DictMapper = SqlHelperDictMapper.Inst;
 		this.TblMgr = TblMgr;
 		this.TxnRunner = TxnRunner;
 		this.TxnGetter = TxnGetter;
@@ -84,7 +85,7 @@ public partial class DbIniter{
 	public async Task<nil> Init(CT Ct) {
 		var Ctx = new DbFnCtx{Txn = await TxnGetter.GetTxn()};
 		var Init = await FnInit(Ctx, Ct);
-		await Init(Ct);
+		await TxnRunner.RunTxn(Ctx.Txn, Init, Ct);
 		return NIL;
 	}
 }

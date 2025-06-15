@@ -13,9 +13,9 @@ using Ngaq.Core.Model;
 using System.Collections;
 using Tsinswreng.CsSqlHelper.Cmd;
 using Tsinswreng.CsCore.Tools;
-using Tsinswreng.CsSrcGen.Dict;
+using Tsinswreng.CsSrcGen.DictMapper;
 
-public class Repo<
+public class AppRepo<
 	TEntity
 	, TId
 >
@@ -25,6 +25,6 @@ public class Repo<
 // where TId : IEquatable<TId>
 
 {
-	public Repo(ITblMgr TblMgr, ISqlCmdMkr SqlCmdMkr, IDictMapper DictCtx) : base(TblMgr, SqlCmdMkr, DictCtx) {
+	public AppRepo(ITblMgr TblMgr, ISqlCmdMkr SqlCmdMkr, IDictMapper DictMapper) : base(TblMgr, SqlCmdMkr, DictMapper) {
 	}
 }

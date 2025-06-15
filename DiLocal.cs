@@ -21,6 +21,8 @@ using Tsinswreng.CsSqlHelper;
 using Tsinswreng.CsSqlHelper.Cmd;
 using Ngaq.Local.Db.TswG;
 using Ngaq.Local.Sql;
+using Tsinswreng.CsSrcGen.DictMapper;
+using Ngaq.Core.Infra;
 
 
 namespace Ngaq.Local;
@@ -31,18 +33,19 @@ public class DiLocal{
 	public static IServiceCollection SetUpLocal(IServiceCollection z){
 
 
-z.AddDbContext<LocalDbCtx>();
+//z.AddDbContext<LocalDbCtx>();
 //svc.AddScoped<DaoWord, DaoWord>();
+z.AddSingleton<IDictMapper>(CoreDictMapper.Inst);
 z.AddScoped<DaoSqlWord, DaoSqlWord>();
 z.AddScoped<ISqlCmdMkr, SqliteCmdMkr>();
 z.AddSingleton<IDbConnection>(AppTblInfo.Inst.DbConnection);
 z.AddTransient<MgrLearn, MgrLearn>();
 z.AddSingleton<ITblMgr>(AppTableMgr.Inst);
 
-z.AddScoped<Db.Repo<SchemaHistory, i64>>();
-z.AddScoped<Db.Repo<PoWord, IdWord>>();
-z.AddScoped<Db.Repo<PoWordProp, IdWordProp>>();
-z.AddScoped<Db.Repo<PoWordLearn, IdLearn>>();z.AddScoped<IRunInTxn, SqlTxnRunner>();
+z.AddScoped<Repo<SchemaHistory, i64>>();
+z.AddScoped<Repo<PoWord, IdWord>>();
+z.AddScoped<Repo<PoWordProp, IdWordProp>>();
+z.AddScoped<Repo<PoWordLearn, IdLearn>>();z.AddScoped<IRunInTxn, SqlTxnRunner>();
 
 z.AddScoped<ITxnRunner, SqlTxnRunner>();
 z.AddScoped<ISvcParseWordList, SvcParseWordList>();

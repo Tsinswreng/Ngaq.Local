@@ -19,6 +19,7 @@ using Ngaq.Core.Infra.Errors;
 using Tsinswreng.CsCore.Tools;
 using Ngaq.Core.Model.Word.Req;
 using Ngaq.Core.Word.Models.Learn_;
+using Tsinswreng.CsSqlHelper;
 
 namespace Ngaq.Local.Service.Word;
 

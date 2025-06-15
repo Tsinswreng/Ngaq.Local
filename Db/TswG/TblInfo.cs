@@ -89,9 +89,9 @@ public class AppTblInfo{
 	}
 
 	protected ITable Mk<T>(str Name, T Example){
-		var ExDict = DictCtx.Inst.GetTypeDictT<T>();
+		var ExDict = CoreDictMapper.Inst.GetTypeDictT<T>();
 		return Table.Mk(
-			DictCtx.Inst
+			CoreDictMapper.Inst
 			,Name
 			,ExDict
 		);
