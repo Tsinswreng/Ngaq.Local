@@ -1,6 +1,4 @@
-using System.Collections;
-using System.Net.Http.Headers;
-using Microsoft.EntityFrameworkCore;
+#if false
 using Ngaq.Core.Model.Bo;
 using Ngaq.Core.Model.Po;
 using Ngaq.Core.Model.Po.Kv;
@@ -283,3 +281,5 @@ public class DaoWord(
 	// 		return Nil;
 	// 	}
 	// }
+
+#endif

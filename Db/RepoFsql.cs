@@ -1,3 +1,4 @@
+#if false
 using System.CodeDom;
 using Ngaq.Core.Infra;
 using Ngaq.Core.Infra.Db;
@@ -62,3 +63,5 @@ public class RepoFsql
 	}
 
 }
+
+#endif

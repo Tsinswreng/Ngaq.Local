@@ -1,3 +1,4 @@
+#if false
 using Ngaq.Core.Infra.Db;
 using Ngaq.Local.Db;
 
@@ -23,3 +24,5 @@ public class EfTxnRunner(
 		}
 	}
 }
+
+#endif

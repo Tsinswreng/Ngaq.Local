@@ -1,3 +1,4 @@
+#if false
 namespace Ngaq.Local.Db;
 
 public class FreeSqlCfg {
@@ -25,3 +26,5 @@ public class FreeSqlCfg {
 		);
 	}
 }
+
+#endif

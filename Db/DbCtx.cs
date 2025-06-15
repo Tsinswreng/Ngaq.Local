@@ -1,3 +1,4 @@
+#if false
 namespace Ngaq.Local.Db;
 
 using System.Diagnostics.CodeAnalysis;
@@ -14,11 +15,11 @@ using ToolId = Tsinswreng.CsUlid.IdTool;
 
 
 /*
-dotnet ef migrations add Init --project ./Ngaq.Local
-dotnet ef database update --project ./Ngaq.Local
+// dotnet ef migrations add Init --project ./Ngaq.Local
+// dotnet ef database update --project ./Ngaq.Local
 
-#dotnet ef dbcontext optimize --output-dir GeneratedInterceptors # --namespace YourProject.GeneratedInterceptors
-dotnet ef dbcontext optimize --output-dir GeneratedInterceptors --precompile-queries --nativeaot
+// #dotnet ef dbcontext optimize --output-dir GeneratedInterceptors # --namespace YourProject.GeneratedInterceptors
+// dotnet ef dbcontext optimize --output-dir GeneratedInterceptors --precompile-queries --nativeaot
 
  */
 
@@ -171,3 +172,5 @@ public class LocalDbCtx : DbContext{
 	}
 }
 
+
+#endif
