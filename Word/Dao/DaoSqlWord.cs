@@ -26,9 +26,9 @@ namespace Ngaq.Local.Dao;
 public class DaoSqlWord(
 	ISqlCmdMkr SqlCmdMkr
 	,ITblMgr TblMgr
-	,RepoSql<PoWord, IdWord> RepoWord
-	,RepoSql<PoWordProp, IdWordProp> RepoKv
-	,RepoSql<PoWordLearn, IdLearn> RepoLearn
+	, Db.Repo<PoWord, IdWord> RepoWord
+	, Db.Repo<PoWordProp, IdWordProp> RepoKv
+	, Db.Repo<PoWordLearn, IdLearn> RepoLearn
 ){
 	// public RepoSql<Po_Word, IdWord> RepoWord{get;set;}
 	// public RepoSql<Po_Kv, IdKv> RepoKv{get;set;}

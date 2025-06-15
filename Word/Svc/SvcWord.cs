@@ -28,9 +28,9 @@ public class SvcWord(
 	,ITxnRunner TxnRunner
 	,DaoSqlWord DaoWord
 	,IGetTxn TxnGetter
-	,RepoSql<PoWord, IdWord> RepoPoWord
-	,RepoSql<PoWordProp, IdWordProp> RepoKv
-	,RepoSql<PoWordLearn, IdLearn> RepoLearn
+	,Repo<PoWord, IdWord> RepoPoWord
+	,Repo<PoWordProp, IdWordProp> RepoKv
+	,Repo<PoWordLearn, IdLearn> RepoLearn
 )
 	: ISvcWord
 {

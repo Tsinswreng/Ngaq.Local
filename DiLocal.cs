@@ -39,10 +39,10 @@ z.AddSingleton<IDbConnection>(AppTblInfo.Inst.DbConnection);
 z.AddTransient<MgrLearn, MgrLearn>();
 z.AddSingleton<ITblMgr>(AppTableMgr.Inst);
 
-z.AddScoped<RepoSql<SchemaHistory, i64>>();
-z.AddScoped<RepoSql<PoWord,	IdWord>>();
-z.AddScoped<RepoSql<PoWordProp,	IdWordProp>>();
-z.AddScoped<RepoSql<PoWordLearn,	IdLearn>>();z.AddScoped<IRunInTxn, SqlTxnRunner>();
+z.AddScoped<Db.Repo<SchemaHistory, i64>>();
+z.AddScoped<Db.Repo<PoWord, IdWord>>();
+z.AddScoped<Db.Repo<PoWordProp, IdWordProp>>();
+z.AddScoped<Db.Repo<PoWordLearn, IdLearn>>();z.AddScoped<IRunInTxn, SqlTxnRunner>();
 
 z.AddScoped<ITxnRunner, SqlTxnRunner>();
 z.AddScoped<ISvcParseWordList, SvcParseWordList>();
