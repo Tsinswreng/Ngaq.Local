@@ -9,6 +9,7 @@ using Ngaq.Core.Model.Po.Word;
 using Ngaq.Core.Model.UserCtx;
 using Ngaq.Core.Tools;
 using Ngaq.Local.Db;
+using Tsinswreng.CsCore.Tools;
 
 namespace Ngaq.Local.Dao;
 

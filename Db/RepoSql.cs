@@ -12,33 +12,34 @@ using Tsinswreng.CsSqlHelper;
 using Ngaq.Core.Model;
 using System.Collections;
 using Tsinswreng.CsSqlHelper.Cmd;
-using Ngaq.Core.Tools;
 using Tsinswreng.CsCore.Tools;
+using Tsinswreng.CsSrcGen.Dict;
 
-
-
-//using T = Bo_Word;
 public class RepoSql<
 	TEntity
 	,TId
 >
-
-	where TEntity: class, I_Id<TId>, new()
-	where TId : IEquatable<TId>
+	where TEntity: class, new()
+	// where TEntity: class, I_Id<TId>, new()
+	// where TId : IEquatable<TId>
 
 {
+
+public ITblMgr TblMgr{get;set;}
+public ISqlCmdMkr SqlCmdMkr{get;set;}
+public IDictMapper DictMapper{get;set;}
 
 	public RepoSql(
 		ITblMgr TblMgr
 		,ISqlCmdMkr SqlCmdMkr
+		,IDictMapper DictCtx
 	){
+		this.DictMapper = DictCtx;
 		this.TblMgr = TblMgr;
 		this.SqlCmdMkr = SqlCmdMkr;
 	}
 
-	public ITblMgr TblMgr{get;set;}
 
-	public ISqlCmdMkr SqlCmdMkr{get;set;}
 
 
 	public async Task<Func<
@@ -71,26 +72,30 @@ $"SELECT COUNT(*) AS {T.Quote(NCnt)} FROM {T.Quote(T.Name)}";
 	}
 
 
-	public async Task<Func<
+	protected async Task<Func<
 		IEnumerable<TEntity>
 		,CT
 		,Task<nil>
-	>> FnInsertMany(
+	>> _FnInsertMany(
 		IDbFnCtx? Ctx
-		,CT ct
+		,bool Prepare
+		,CT Ct
 	){
 		var T = TblMgr.GetTable<TEntity>();
 		var Clause = T.InsertClause(T.Columns.Keys);
 		var Sql =
 $"INSERT INTO {T.Quote(T.Name)} {Clause}";
-		var Cmd = await SqlCmdMkr.Prepare(Ctx, Sql, ct);
+		var Cmd = await SqlCmdMkr.MkCmd(Ctx, Sql, Ct);
+		if(Prepare){
+			Cmd = await SqlCmdMkr.Prepare(Cmd, Ct);
+		}
 		var Fn = async(
 			IEnumerable<TEntity> Entitys
 			,CT ct
 		)=>{
 			var i = 0;
 			foreach(var entity in Entitys){
-				var CodeDict = DictCtx.ToDictT(entity);
+				var CodeDict = DictMapper.ToDictT(entity);
 				var DbDict = T.ToDbDict(CodeDict);
 				await Cmd.Args(DbDict).Run(ct).FirstOrDefaultAsync(ct);
 				i++;
@@ -99,6 +104,37 @@ $"INSERT INTO {T.Quote(T.Name)} {Clause}";
 		};
 		return Fn;
 	}
+
+	public async Task<Func<
+		IEnumerable<TEntity>
+		,CT
+		,Task<nil>
+	>> FnInsertMany(
+		IDbFnCtx? Ctx
+		,CT ct
+	){
+		return await _FnInsertMany(Ctx, true, ct);
+	}
+
+
+/// <summary>
+/// 不預編譯。適用于況芝 在事務中 初建表後即添數據
+/// </summary>
+/// <param name="Ctx"></param>
+/// <param name="ct"></param>
+/// <returns></returns>
+	public async Task<Func<
+		IEnumerable<TEntity>
+		,CT
+		,Task<nil>
+	>> FnInsertManyNoPrepare(
+		IDbFnCtx? Ctx
+		,CT ct
+	){
+		return await _FnInsertMany(Ctx, false, ct);
+	}
+
+
 
 	public async Task<Func<
 		TId2
@@ -131,7 +167,7 @@ $"INSERT INTO {T.Quote(T.Name)} {Clause}";
 			}
 			var CodeDict = T.ToCodeDict(RawDict);
 			var Ans = new TEntity();
-			DictCtx.AssignT(Ans, CodeDict);
+			DictMapper.AssignT(Ans, CodeDict);
 			return Ans;
 		};
 		return Fn;

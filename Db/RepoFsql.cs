@@ -3,6 +3,7 @@ using Ngaq.Core.Infra;
 using Ngaq.Core.Infra.Db;
 using Ngaq.Core.Model;
 using Ngaq.Core.Model.Po;
+using Tsinswreng.CsSqlHelper;
 
 namespace Ngaq.Local.Db;
 

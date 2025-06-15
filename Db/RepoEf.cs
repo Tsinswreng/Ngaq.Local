@@ -9,6 +9,7 @@ using Ngaq.Core.Infra.Core;
 using Ngaq.Core.Infra.Db;
 using Ngaq.Core.Model;
 using Ngaq.Core.Model.Po;
+using Tsinswreng.CsSqlHelper;
 
 namespace Ngaq.Local.Db;
 //using T = Bo_Word;
@@ -103,7 +104,7 @@ public class RepoEf
 				if(Old == null){
 					continue;
 				}
-				DictCtx.AssignT(Old, dict);//源生成器實現、無反射
+				DictCtx.Inst.AssignT(Old, dict);//源生成器實現、無反射
 				if(Old is IPoBase po){
 					po.UpdatedAt = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 				}

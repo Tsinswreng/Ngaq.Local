@@ -12,6 +12,8 @@ using Ngaq.Core.Model.Sys.Po.User;
 using Ngaq.Core.Models.Po;
 using Tsinswreng.CsUlid;
 using ToolId = Tsinswreng.CsUlid.IdTool;
+using Tsinswreng.CsCore.Tools;
+using Tsinswreng.CsCore.Files;
 
 //using Id_User = Ngaq.Core.Model.Po.User.IdUser;
 //using Id_Word = Ngaq.Core.Model.Po.Word.IdWord;
@@ -25,9 +27,7 @@ public class AppTblInfo{
 	public str DbPath{get;} = AppCfg.Inst.SqlitePath;
 	public IDbConnection DbConnection{get;set;}
 	public AppTblInfo(){
-		Console.WriteLine(DbPath);//t
-		Console.WriteLine(Path.GetFullPath(DbPath));//t
-
+		FileTool.EnsureFile(DbPath);
 		DbConnection = new SqliteConnection($"Data Source={DbPath}");
 		DbConnection.Open();
 	}
@@ -40,6 +40,9 @@ public class AppTblInfo{
 
 	nil CfgPoBase<TPo>(ITable Tbl){
 		var o = Tbl;
+
+		o.CodeColId = nameof(I_Id<nil>.Id);
+		o.SetCol(nameof(I_Id<nil>.Id)).AdditionalSqls(["PRIMARY KEY"]);
 
 		o.SetCol(nameof(IPoBase.CreatedAt)).HasConversionEtMapType<i64,Tempus>(
 			tempus=>tempus.Value,
@@ -86,9 +89,9 @@ public class AppTblInfo{
 	}
 
 	protected ITable Mk<T>(str Name, T Example){
-		var ExDict = DictCtx.GetTypeDictT<T>();
+		var ExDict = DictCtx.Inst.GetTypeDictT<T>();
 		return Table.Mk(
-			DictCtx.DictMapper
+			DictCtx.Inst
 			,Name
 			,ExDict
 		);
@@ -127,6 +130,12 @@ public class AppTblInfo{
 				(id)=>id.Value.ToByteArr(),
 				(val)=>IdUser.FromByteArr(val)
 			);
+			o.InnerAdditionalSqls.AddRange([
+$"UNIQUE({o.Field(nameof(PoWord.Owner))}, {o.Field(nameof(PoWord.Head))}, {o.Field(nameof(PoWord.Lang))})"
+			]);
+			o.OuterAdditionalSqls.AddRange([
+$"CREATE INDEX {o.Quote("IdxWordHeadLang")} ON {o.Quote(o.Name)}({o.Field(nameof(PoWord.Head))}, {o.Field(nameof(PoWord.Lang))})"
+			]);
 		}
 
 		var Tbl_Prop = Mk("WordProp", PoWordProp.Example);
@@ -140,8 +149,10 @@ public class AppTblInfo{
 				(id)=>id.Value.ToByteArr(),
 				(val)=>IdWordProp.FromByteArr(val)
 			);
-//TODO配置忽略之字段
-
+			o.OuterAdditionalSqls.AddRange([
+$"CREATE INDEX {o.Quote("IdxKStr")} ON {o.Quote(o.Name)} ({o.Field(nameof(PoWordProp.KStr))})"
+,$"CREATE INDEX {o.Quote("IdxKI64")} ON {o.Quote(o.Name)} ({o.Field(nameof(PoWordProp.KI64))})"
+			]);
 		}
 
 		var Tbl_Learn = Mk("WordLearn", PoWordLearn.Example);
@@ -180,6 +191,15 @@ public class AppTblInfo{
 	// }
 }
 
+
+//取最新ʹsql腳本芝建架構
+#if false
+AppTblInfo.Inst.Init();
+ITblMgr TblMgr = AppTableMgr.Inst;
+System.Console.WriteLine(
+	TblMgr.SqlMkSchema()
+);
+#endif
 
 
 #if false

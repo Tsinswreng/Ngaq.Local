@@ -27,7 +27,7 @@ public class SvcWord(
 	ISvcParseWordList SvcParseWordList
 	,ITxnRunner TxnRunner
 	,DaoSqlWord DaoWord
-	,IGetTxn GetTxnAsy
+	,IGetTxn TxnGetter
 	,RepoSql<PoWord, IdWord> RepoPoWord
 	,RepoSql<PoWordProp, IdWordProp> RepoKv
 	,RepoSql<PoWordLearn, IdLearn> RepoLearn
@@ -398,7 +398,7 @@ public class SvcWord(
 		,Path_Encode Path_Encode
 		,CT ct
 	) {
-		var Ctx = new DbFnCtx{Txn = await GetTxnAsy.GetTxn()};
+		var Ctx = new DbFnCtx{Txn = await TxnGetter.GetTxn()};
 		var AddOrUpdateWords = await FnAddOrUpdateWords(Ctx, ct);
 		await TxnRunner.RunTxn(Ctx.Txn, async(ct)=>{
 			var BoWords = await SvcParseWordList.ParseWordsFromFilePath(Path_Encode);
@@ -414,7 +414,7 @@ public class SvcWord(
 		,string Text
 		,CT ct
 	) {
-		var Ctx = new DbFnCtx{Txn = await GetTxnAsy.GetTxn()};
+		var Ctx = new DbFnCtx{Txn = await TxnGetter.GetTxn()};
 		var AddOrUpdateWords = await FnAddOrUpdateWords(Ctx, ct);
 		await TxnRunner.RunTxn(Ctx.Txn, async(ct)=>{
 			var BoWords = await SvcParseWordList.ParseWordsFromText(Text,ct);
@@ -437,7 +437,7 @@ public class SvcWord(
 		,IEnumerable<WordId_PoLearns> WordId_PoLearnss
 		,CT Ct
 	){
-		var Ctx = new DbFnCtx{Txn = await GetTxnAsy.GetTxn()};
+		var Ctx = new DbFnCtx{Txn = await TxnGetter.GetTxn()};
 		var AddLearnRecords = await FnAddWordId_PoLearnss(Ctx, Ct);
 		return await TxnRunner.RunTxn(Ctx.Txn, async(Ct)=>{
 			return await AddLearnRecords(UserCtx, WordId_PoLearnss, Ct);
@@ -449,7 +449,7 @@ public class SvcWord(
 		,IEnumerable<WordId_LearnRecords> WordId_LearnRecordss
 		,CT Ct
 	){
-		var Ctx = new DbFnCtx{Txn = await GetTxnAsy.GetTxn()};
+		var Ctx = new DbFnCtx{Txn = await TxnGetter.GetTxn()};
 		var AddWordId_PoLearnss = await FnAddWordId_PoLearnss(Ctx, Ct);
 		return await TxnRunner.RunTxn(Ctx.Txn, async(Ct)=>{
 			var WordId_PoLearns = WordId_LearnRecordss.Select(WordId_LearnRecords=>{
