@@ -23,6 +23,8 @@ using Ngaq.Local.Db.TswG;
 using Ngaq.Local.Sql;
 using Tsinswreng.CsSrcGen.DictMapper;
 using Ngaq.Core.Infra;
+using Ngaq.Core.FrontendIF;
+using Ngaq.Local.ImplFrontend;
 
 
 namespace Ngaq.Local;
@@ -35,7 +37,7 @@ public class DiLocal{
 
 //z.AddDbContext<LocalDbCtx>();
 //svc.AddScoped<DaoWord, DaoWord>();
-z.AddSingleton<IDictMapper>(CoreDictMapper.Inst);
+z.AddSingleton<IDictMapperShallow>(CoreDictMapper.Inst);
 z.AddScoped<DaoSqlWord, DaoSqlWord>();
 z.AddScoped<ISqlCmdMkr, SqliteCmdMkr>();
 z.AddSingleton<IDbConnection>(AppTblInfo.Inst.DbConnection);
@@ -50,9 +52,11 @@ z.AddScoped<Repo<PoWordLearn, IdLearn>>();z.AddScoped<IRunInTxn, SqlTxnRunner>()
 z.AddScoped<ITxnRunner, SqlTxnRunner>();
 z.AddScoped<ISvcParseWordList, SvcParseWordList>();
 z.AddScoped<ISvcWord, SvcWord>();
+z.AddScoped<IImgGetter, SvcImg>();
 z.AddScoped<IWeightCalctr, SvcWeight>();
 z.AddScoped<IUserCtxMgr, UserCtxMgr>();
 z.AddScoped<IGetTxn, SqliteCmdMkr>();
+
 z.AddTransient<DbIniter>();
 return z;
 

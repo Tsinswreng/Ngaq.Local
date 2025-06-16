@@ -25,6 +25,6 @@ public class AppRepo<
 // where TId : IEquatable<TId>
 
 {
-	public AppRepo(ITblMgr TblMgr, ISqlCmdMkr SqlCmdMkr, IDictMapper DictMapper) : base(TblMgr, SqlCmdMkr, DictMapper) {
+	public AppRepo(ITblMgr TblMgr, ISqlCmdMkr SqlCmdMkr, IDictMapperShallow DictMapper) : base(TblMgr, SqlCmdMkr, DictMapper) {
 	}
 }

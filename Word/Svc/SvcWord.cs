@@ -123,7 +123,7 @@ public class SvcWord(
 			using var NeoLearns = new BatchListAsy<PoWordLearn, nil>(InsertPoLearns);
 
 			//未加過之諸詞 加'add'ˉ學習記錄後直加入庫中則可
-			Dictionary<str ,nil> debug = new Dictionary<str, nil>();//t
+			//Dictionary<str ,nil> debug = new Dictionary<str, nil>();//t
 			foreach(var OneNonExisting in DtoAddWords.NeoWords){
 				var NeoPoLearns = MkPoLearns(OneNonExisting.Props, OneNonExisting.Id);
 				await NeoWords.Add(OneNonExisting, Ct);

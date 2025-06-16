@@ -14,6 +14,7 @@ using Tsinswreng.CsUlid;
 using ToolId = Tsinswreng.CsUlid.IdTool;
 using Tsinswreng.CsCore.Tools;
 using Tsinswreng.CsCore.Files;
+using Ngaq.Core.Infra.Cfg;
 
 //using Id_User = Ngaq.Core.Model.Po.User.IdUser;
 //using Id_Word = Ngaq.Core.Model.Po.Word.IdWord;
@@ -24,7 +25,7 @@ public class AppTblInfo{
 	protected static AppTblInfo? _Inst = null;
 	public static AppTblInfo Inst => _Inst??= new AppTblInfo();
 
-	public str DbPath{get;} = AppCfg.Inst.SqlitePath;
+	public str DbPath{get;} = AppCfgItems.Inst.SqlitePath.Get()??throw new Exception();
 	public IDbConnection DbConnection{get;set;}
 	public AppTblInfo(){
 		FileTool.EnsureFile(DbPath);
@@ -89,7 +90,7 @@ public class AppTblInfo{
 	}
 
 	protected ITable Mk<T>(str Name, T Example){
-		var ExDict = CoreDictMapper.Inst.GetTypeDictT<T>();
+		var ExDict = CoreDictMapper.Inst.GetTypeDictShallowT<T>();
 		return Table.Mk(
 			CoreDictMapper.Inst
 			,Name
