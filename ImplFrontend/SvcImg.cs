@@ -11,12 +11,15 @@ public class SvcImg:IImgGetter{
 	public IList<str> FilePaths{get;set;} = new List<str>();
 	public IList<u64> Order = new List<u64>();
 	protected u64 Index{get;set;}=0;
-
+//TODO 若此中拋異常且無catch則初始化DI旹則崩 宜傳異常置前端
 	public SvcImg(){
-		var CfgDir = AppCfgItems.Inst.GalleryDirs.Get()??[];
+try{
+var CfgDir = AppCfgItems.Inst.GalleryDirs.Get()??[];
 		foreach(var Dir in CfgDir){
-			if(Dir is str s){
-				GalleryDirs.Add(s);
+			if(Dir is str s && !str.IsNullOrEmpty(s)){
+				if(Directory.Exists(s)){
+					GalleryDirs.Add(s);
+				}
 			}
 		}
 		foreach(var DirInCfg in GalleryDirs){
@@ -25,6 +28,11 @@ public class SvcImg:IImgGetter{
 			}
 		}
 		Order = ToolRandom.RandomArrU64(0, (u64)FilePaths.Count-1, (u64)FilePaths.Count);
+}
+catch (System.Exception e){
+	System.Console.Error.WriteLine(e);
+	//throw;
+}
 	}
 
 	protected str? NextFilePath(){
