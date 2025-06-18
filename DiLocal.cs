@@ -21,7 +21,7 @@ using Tsinswreng.CsSqlHelper;
 using Tsinswreng.CsSqlHelper.Cmd;
 using Ngaq.Local.Db.TswG;
 using Ngaq.Local.Sql;
-using Tsinswreng.CsSrcGen.DictMapper;
+using Tsinswreng.CsDictMapper.DictMapper;
 using Ngaq.Core.Infra;
 using Ngaq.Core.FrontendIF;
 using Ngaq.Local.ImplFrontend;

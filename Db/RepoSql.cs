@@ -13,7 +13,7 @@ using Ngaq.Core.Model;
 using System.Collections;
 using Tsinswreng.CsSqlHelper.Cmd;
 using Tsinswreng.CsCore.Tools;
-using Tsinswreng.CsSrcGen.DictMapper;
+using Tsinswreng.CsDictMapper.DictMapper;
 
 public class AppRepo<
 	TEntity
