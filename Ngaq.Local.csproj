@@ -2,6 +2,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="../Tsinswreng.CsSqlHelper/proj/Tsinswreng.CsSqlHelper/Tsinswreng.CsSqlHelper.csproj" />
+		<ProjectReference Include="../Tsinswreng.CsSqlHelper/proj/Tsinswreng.CsSqlHelper.Sqlite/Tsinswreng.CsSqlHelper.Sqlite.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

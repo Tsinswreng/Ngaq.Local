@@ -27,4 +27,6 @@ public class AppRepo<
 {
 	public AppRepo(ITblMgr TblMgr, ISqlCmdMkr SqlCmdMkr, IDictMapperShallow DictMapper) : base(TblMgr, SqlCmdMkr, DictMapper) {
 	}
+
+
 }

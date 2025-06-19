@@ -15,31 +15,23 @@ using ToolId = Tsinswreng.CsUlid.IdTool;
 using Tsinswreng.CsCore.Tools;
 using Tsinswreng.CsCore.Files;
 using Ngaq.Core.Infra.Cfg;
+using Tsinswreng.CsSqlHelper.Sqlite;
 
 //using Id_User = Ngaq.Core.Model.Po.User.IdUser;
 //using Id_Word = Ngaq.Core.Model.Po.Word.IdWord;
 //using Id_Kv = Ngaq.Core.Model.Po.Kv.IdKv;
 
-public class AppTblInfo{
 
-	protected static AppTblInfo? _Inst = null;
-	public static AppTblInfo Inst => _Inst??= new AppTblInfo();
 
-	public str DbPath{get;} = AppCfgItems.Inst.SqlitePath.Get()??throw new Exception();
-	public IDbConnection DbConnection{get;set;}
-	public AppTblInfo(){
-		FileTool.EnsureFile(DbPath);
-		DbConnection = new SqliteConnection($"Data Source={DbPath}");
-		DbConnection.Open();
-	}
-
-	static AppTblInfo(){
-		Inst.Init();
+public class TblMgrIniter{
+	protected ITblMgr Mgr;
+	public TblMgrIniter(ITblMgr Mgr){
+		this.Mgr = Mgr;
 	}
 
 	protected bool _Inited{get;set;} = false;
 
-	nil CfgPoBase<TPo>(ITable Tbl){
+	protected nil CfgPoBase<TPo>(ITable Tbl){
 		var o = Tbl;
 
 		o.CodeColId = nameof(I_Id<nil>.Id);
@@ -109,12 +101,6 @@ public class AppTblInfo{
 	}
 
 	public nil Init(){
-		if(_Inited){
-			return NIL;
-		}
-		ITblMgr Mgr = AppTableMgr.Inst;
-		Mgr.DbSrcType = "Sqlite";
-
 		Mgr.AddTable<SchemaHistory>(new SchemaHistoryTblMkr().MkTbl());
 
 		var Tbl_Word = Mk("Word", PoWord.Example);

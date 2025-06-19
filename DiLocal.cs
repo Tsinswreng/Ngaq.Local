@@ -25,6 +25,7 @@ using Tsinswreng.CsDictMapper.DictMapper;
 using Ngaq.Core.Infra;
 using Ngaq.Core.FrontendIF;
 using Ngaq.Local.ImplFrontend;
+using Tsinswreng.CsSqlHelper.Sqlite;
 
 
 namespace Ngaq.Local;
@@ -40,9 +41,9 @@ public class DiLocal{
 z.AddSingleton<IDictMapperShallow>(CoreDictMapper.Inst);
 z.AddScoped<DaoSqlWord, DaoSqlWord>();
 z.AddScoped<ISqlCmdMkr, SqliteCmdMkr>();
-z.AddSingleton<IDbConnection>(AppTblInfo.Inst.DbConnection);
+z.AddSingleton<IDbConnection>(AppDb.Inst.DbConnection);
 z.AddTransient<MgrLearn, MgrLearn>();
-z.AddSingleton<ITblMgr>(AppTableMgr.Inst);
+z.AddSingleton<ITblMgr>(AppTblMgr.Inst);
 
 z.AddScoped<Repo<SchemaHistory, i64>>();
 z.AddScoped<Repo<PoWord, IdWord>>();
