@@ -1,18 +1,6 @@
 namespace Ngaq.Local.Db;
-
-using System.Data;
-using System.Text.Json;
-using System.Text.Json.Serialization.Metadata;
-using Ngaq.Core.Infra.Core;
-using Ngaq.Core.Infra.Db;
-using Ngaq.Core.Model.Po;
-using Microsoft.Data.Sqlite;
-using Ngaq.Core.Infra;
 using Tsinswreng.CsSqlHelper;
-using Ngaq.Core.Model;
-using System.Collections;
 using Tsinswreng.CsSqlHelper.Cmd;
-using Tsinswreng.CsCore.Tools;
 using Tsinswreng.CsDictMapper.DictMapper;
 
 public class AppRepo<

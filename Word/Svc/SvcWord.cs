@@ -1,5 +1,4 @@
 using Ngaq.Core.Infra.Core;
-using Ngaq.Core.Infra.Db;
 using Ngaq.Core.Model;
 using Ngaq.Core.Model.Bo;
 using Ngaq.Core.Model.Po.Kv;
@@ -13,13 +12,16 @@ using Ngaq.Core.Tools.Io;
 using Ngaq.Local.Dao;
 using Ngaq.Local.Db;
 using Tsinswreng.CsSqlHelper.Cmd;
-using Ngaq.Core.Infra.Page;
 using System.Collections;
 using Ngaq.Core.Infra.Errors;
 using Tsinswreng.CsCore.Tools;
 using Ngaq.Core.Model.Word.Req;
 using Ngaq.Core.Word.Models.Learn_;
 using Tsinswreng.CsSqlHelper;
+using Ngaq.Core.Word.Models.Po.Learn;
+using Tsinswreng.CsCore;
+using Ngaq.Core.Word.Svc;
+using Tsinswreng.CsPage;
 
 namespace Ngaq.Local.Service.Word;
 
@@ -118,9 +120,9 @@ public class SvcWord(
 			,DtoAddWords DtoAddWords
 			,CT Ct
 		)=>{
-			using var NeoWords = new BatchListAsy<JnWord, nil>(InsertBoWords);
-			using var NeoProps = new BatchListAsy<PoWordProp, nil>(InsertPoKvs);
-			using var NeoLearns = new BatchListAsy<PoWordLearn, nil>(InsertPoLearns);
+			await using var NeoWords = new BatchListAsy<JnWord, nil>(InsertBoWords);
+			await using var NeoProps = new BatchListAsy<PoWordProp, nil>(InsertPoKvs);
+			await using var NeoLearns = new BatchListAsy<PoWordLearn, nil>(InsertPoLearns);
 
 			//未加過之諸詞 加'add'ˉ學習記錄後直加入庫中則可
 			//Dictionary<str ,nil> debug = new Dictionary<str, nil>();//t
@@ -391,9 +393,31 @@ public class SvcWord(
 			return NIL;
 		};
 		return Fn;
-
 	}
 
+
+	// public async Task<Func<
+	// 	IUserCtx
+	// 	,CT
+	// 	,Task<nil>
+	// >> FnSyncDb(
+
+	// ){
+
+	// 	var Fn = async(
+
+	// 	)=>{
+	// 		return NIL;
+	// 	};
+	// 	return Fn;
+	// }
+
+
+
+
+
+
+	[Impl]
 	public async Task<nil> AddWordsFromFilePath(
 		IUserCtx UserCtx
 		,Path_Encode Path_Encode
@@ -410,6 +434,7 @@ public class SvcWord(
 		return NIL;
 	}
 
+	[Impl]
 	public async Task<nil> AddWordsFromText(
 		IUserCtx UserCtx
 		,string Text
@@ -425,6 +450,7 @@ public class SvcWord(
 		return NIL;
 	}
 
+	[Impl]
 	public async Task<nil> AddWordsFromUrl(
 		IUserCtx UserCtx
 		,string Path
@@ -433,6 +459,7 @@ public class SvcWord(
 		throw new NotImplementedException();
 	}
 
+	[Impl]
 	public async Task<nil> AddWordId_PoLearnss(
 		IUserCtx UserCtx
 		,IEnumerable<WordId_PoLearns> WordId_PoLearnss
@@ -445,6 +472,7 @@ public class SvcWord(
 		},Ct);
 	}
 
+	[Impl]
 	public async Task<nil> AddWordId_LearnRecordss(
 		IUserCtx UserCtx
 		,IEnumerable<WordId_LearnRecords> WordId_LearnRecordss
@@ -463,8 +491,7 @@ public class SvcWord(
 		},Ct);
 	}
 
-
-
+	[Impl]
 	public async Task<IPageAsy<JnWord>> PageBoWord(
 		IUserCtx UserCtx
 		,IPageQuery PageQry
@@ -476,4 +503,6 @@ public class SvcWord(
 		var Fn = await FnPageJnWords(Ctx, Ct);
 		return await Fn(UserCtx, PageQry, Ct);
 	}
+
+
 }

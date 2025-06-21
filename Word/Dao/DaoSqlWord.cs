@@ -13,12 +13,13 @@ using Tsinswreng.CsSqlHelper.Cmd;
 using Tsinswreng.CsCore.Tools;
 using Str_Any = System.Collections.Generic.Dictionary<string, object?>;
 using IStr_Any = System.Collections.Generic.IDictionary<string, object?>;
-using Ngaq.Core.Infra.Page;
 using System.Threading.Tasks;
 using Ngaq.Core.Infra.Errors;
 using Ngaq.Core.Models.Po;
 using Tsinswreng.CsUlid;
 using ToolId = Tsinswreng.CsUlid.IdTool;
+using Ngaq.Core.Word.Models.Po.Learn;
+using Tsinswreng.CsPage;
 
 namespace Ngaq.Local.Dao;
 
@@ -186,15 +187,15 @@ WHERE {TK.Field(NWordId)} = {TW.Param(NWordId)}
 			,CancellationToken ct
 		)=>{
 			u64 BatchSize = 0xfff;
-			using var Po_Words = new BatchListAsy<PoWord, nil>(async(list, ct)=>{
+			await using var Po_Words = new BatchListAsy<PoWord, nil>(async(list, ct)=>{
 				await InsertPoWords(list,ct);
 				return NIL;
 			}, BatchSize);
-			using var Po_Kvs = new BatchListAsy<PoWordProp, nil>(async(e, ct)=>{
+			await using var Po_Kvs = new BatchListAsy<PoWordProp, nil>(async(e, ct)=>{
 				await InsertPoKvs(e, ct);
 				return NIL;
 			}, BatchSize);
-			using var Po_Learns = new BatchListAsy<PoWordLearn, nil>(async(e, ct)=>{
+			await using var Po_Learns = new BatchListAsy<PoWordLearn, nil>(async(e, ct)=>{
 				await InsertPoLearns(e, ct);
 				return NIL;
 			}, BatchSize);

@@ -1,4 +1,3 @@
-using Ngaq.Core.Infra.Db;
 using Ngaq.Local.Db;
 using Tsinswreng.CsCore.Files;
 using Tsinswreng.CsSqlHelper;

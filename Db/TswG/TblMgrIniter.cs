@@ -16,6 +16,7 @@ using Tsinswreng.CsCore.Tools;
 using Tsinswreng.CsCore.Files;
 using Ngaq.Core.Infra.Cfg;
 using Tsinswreng.CsSqlHelper.Sqlite;
+using Ngaq.Core.Word.Models.Po.Learn;
 
 //using Id_User = Ngaq.Core.Model.Po.User.IdUser;
 //using Id_Word = Ngaq.Core.Model.Po.Word.IdWord;
@@ -121,7 +122,9 @@ public class TblMgrIniter{
 $"UNIQUE({o.Field(nameof(PoWord.Owner))}, {o.Field(nameof(PoWord.Head))}, {o.Field(nameof(PoWord.Lang))})"
 			]);
 			o.OuterAdditionalSqls.AddRange([
-$"CREATE INDEX {o.Quote("IdxWordHeadLang")} ON {o.Quote(o.Name)}({o.Field(nameof(PoWord.Head))}, {o.Field(nameof(PoWord.Lang))})"
+$"CREATE INDEX {o.Quote("Idx_Word_Head_Lang")} ON {o.Quote(o.Name)}({o.Field(nameof(PoWord.Head))}, {o.Field(nameof(PoWord.Lang))})"
+,$"CREATE INDEX {o.Quote("Idx_Word_CreatedAt")} ON {o.Quote(o.Name)}({o.Field(nameof(PoWord.CreatedAt))})"
+,$"CREATE INDEX {o.Quote("Idx_Word_UpdatedAt")} ON {o.Quote(o.Name)}({o.Field(nameof(PoWord.UpdatedAt))})"
 			]);
 		}
 
