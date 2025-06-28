@@ -1,6 +1,5 @@
 using System.Linq.Expressions;
 using Ngaq.Core.Infra;
-using Ngaq.Core.Model.Bo;
 using Ngaq.Core.Model.Po;
 using Ngaq.Core.Model.Po.Kv;
 using Ngaq.Core.Model.Po.Learn_;
@@ -9,8 +8,7 @@ using Ngaq.Core.Model.UserCtx;
 using Ngaq.Core.Tools;
 using Ngaq.Local.Db;
 using Tsinswreng.CsSqlHelper;
-using Tsinswreng.CsSqlHelper.Cmd;
-using Tsinswreng.CsCore.Tools;
+using Tsinswreng.CsTools.Tools;
 using Str_Any = System.Collections.Generic.Dictionary<string, object?>;
 using IStr_Any = System.Collections.Generic.IDictionary<string, object?>;
 using System.Threading.Tasks;
@@ -20,6 +18,7 @@ using Tsinswreng.CsUlid;
 using ToolId = Tsinswreng.CsUlid.IdTool;
 using Ngaq.Core.Word.Models.Po.Learn;
 using Tsinswreng.CsPage;
+using Ngaq.Core.Word.Models;
 
 namespace Ngaq.Local.Dao;
 
@@ -66,7 +65,7 @@ public class DaoSqlWord(
 		,Task<IdWord?>
 	>>
 	FnSelectIdByHeadEtLang(
-		IDbFnCtx Ctx
+		Db.IDbFnCtx Ctx
 		,CancellationToken ct
 	){
 		var T = TblMgr.GetTable<PoWord>();
@@ -120,7 +119,7 @@ AND Lang = @Lang
 		,CancellationToken
 		,Task<JnWord?>
 	>> FnSelectJnWordById(
-		IDbFnCtx? Ctx
+		Db.IDbFnCtx? Ctx
 		,CancellationToken ct
 	){
 		var TW = TblMgr.GetTable<PoWord>();
@@ -175,7 +174,7 @@ WHERE {TK.Field(NWordId)} = {TW.Param(NWordId)}
 		,CancellationToken
 		,Task<nil>
 	>> FnInsertBoWords(
-		IDbFnCtx? Ctx
+		Db.IDbFnCtx? Ctx
 		,CancellationToken ct
 	) {
 		var InsertPoWords = await RepoWord.FnInsertMany(Ctx, ct);
@@ -227,7 +226,7 @@ WHERE {TK.Field(NWordId)} = {TW.Param(NWordId)}
 		,CancellationToken
 		,Task<nil>
 	>> FnInsertPoKvs(
-		IDbFnCtx? Ctx
+		Db.IDbFnCtx? Ctx
 		,CancellationToken ct
 	){
 		var InsertMany = await RepoKv.FnInsertMany(Ctx, ct);
@@ -255,7 +254,7 @@ WHERE {TK.Field(NWordId)} = {TW.Param(NWordId)}
 		,CancellationToken
 		,Task<nil>
 	>> FnInsertPoLearns(
-		IDbFnCtx? Ctx
+		Db.IDbFnCtx? Ctx
 		,CancellationToken ct
 	){
 		var InsertMany = await RepoLearn.FnInsertMany(Ctx, ct);
@@ -275,7 +274,7 @@ WHERE {TK.Field(NWordId)} = {TW.Param(NWordId)}
 		,CancellationToken
 		,Task<IPageAsy<IStr_Any>>
 	>> FnPageByFKey(
-		IDbFnCtx Ctx
+		Db.IDbFnCtx Ctx
 		,ITable Tbl
 		,CancellationToken Ct
 	){
@@ -320,7 +319,7 @@ AND {Tbl.Field(nameof(IPoBase.Status))} <> {PoStatus.Deleted.Value}
 		,CancellationToken
 		,Task<IPageAsy<PoWord>>
 	>> FnPagePoWords(
-		IDbFnCtx Ctx
+		Db.IDbFnCtx Ctx
 		,CancellationToken Ct
 	){
 		var TW = TblMgr.GetTable<PoWord>();
@@ -366,7 +365,7 @@ ORDER BY {TW.Field(nameof(IPoBase.DbCreatedAt))} DESC
 		,CancellationToken
 		,Task<IPageAsy<JnWord>>
 	>> FnPageJnWords(
-		IDbFnCtx Ctx
+		Db.IDbFnCtx Ctx
 		,CancellationToken Ct
 	){
 		var TK = TblMgr.GetTable<PoWordProp>();

@@ -12,8 +12,8 @@ using Ngaq.Core.Model.Sys.Po.User;
 using Ngaq.Core.Models.Po;
 using Tsinswreng.CsUlid;
 using ToolId = Tsinswreng.CsUlid.IdTool;
-using Tsinswreng.CsCore.Tools;
-using Tsinswreng.CsCore.Files;
+using Tsinswreng.CsTools.Tools;
+using Tsinswreng.CsTools.Files;
 using Ngaq.Core.Infra.Cfg;
 using Tsinswreng.CsSqlHelper.Sqlite;
 using Ngaq.Core.Word.Models.Po.Learn;
@@ -24,13 +24,22 @@ using Ngaq.Core.Word.Models.Po.Learn;
 
 
 
-public class TblMgrIniter{
+public class LocalTblMgrIniter{
 	protected ITblMgr Mgr;
-	public TblMgrIniter(ITblMgr Mgr){
+	public LocalTblMgrIniter(ITblMgr Mgr){
 		this.Mgr = Mgr;
 	}
 
 	protected bool _Inited{get;set;} = false;
+
+	protected nil CfgBizTimeVer(ITable Tbl){
+		var o = Tbl;
+		o.SetCol(nameof(I_BizTimeVer.BizTimeVer)).HasConversionEtMapType<i64, Tempus>(
+			tempus=>tempus.Value,
+			val=>new Tempus(val)
+		);
+		return NIL;
+	}
 
 	protected nil CfgPoBase<TPo>(ITable Tbl){
 		var o = Tbl;
@@ -109,6 +118,7 @@ public class TblMgrIniter{
 		{
 			var o = Tbl_Word;
 			CfgPoBase<PoWord>(o);
+			CfgBizTimeVer(o);
 			o.CodeColId = nameof(PoWord.Id);
 			o.SetCol(nameof(PoWord.Id)).HasConversionEtMapType<u8[], IdWord>(
 				(id)=>id.Value.ToByteArr(),

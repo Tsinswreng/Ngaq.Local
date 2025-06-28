@@ -1,6 +1,5 @@
 using Ngaq.Core.Infra.Core;
 using Ngaq.Core.Model;
-using Ngaq.Core.Model.Bo;
 using Ngaq.Core.Model.Po.Kv;
 using Ngaq.Core.Model.Po.Learn_;
 using Ngaq.Core.Model.Po.Word;
@@ -11,26 +10,26 @@ using Ngaq.Core.Tools;
 using Ngaq.Core.Tools.Io;
 using Ngaq.Local.Dao;
 using Ngaq.Local.Db;
-using Tsinswreng.CsSqlHelper.Cmd;
 using System.Collections;
 using Ngaq.Core.Infra.Errors;
-using Tsinswreng.CsCore.Tools;
+using Tsinswreng.CsTools.Tools;
 using Ngaq.Core.Model.Word.Req;
 using Ngaq.Core.Word.Models.Learn_;
 using Tsinswreng.CsSqlHelper;
 using Ngaq.Core.Word.Models.Po.Learn;
-using Tsinswreng.CsCore;
 using Ngaq.Core.Word.Svc;
+using Tsinswreng.CsCore;
 using Tsinswreng.CsPage;
+using Ngaq.Core.Word.Models;
 
-namespace Ngaq.Local.Service.Word;
+namespace Ngaq.Local.Word.Svc;
 
 //不在Svc中依賴DbCtx
 public class SvcWord(
 	ISvcParseWordList SvcParseWordList
 	,ITxnRunner TxnRunner
 	,DaoSqlWord DaoWord
-	,IGetTxn TxnGetter
+	,I_GetTxnAsy TxnGetter
 	,Repo<PoWord, IdWord> RepoPoWord
 	,Repo<PoWordProp, IdWordProp> RepoKv
 	,Repo<PoWordLearn, IdLearn> RepoLearn
@@ -414,22 +413,19 @@ public class SvcWord(
 
 
 
-
-
-
 	[Impl]
 	public async Task<nil> AddWordsFromFilePath(
 		IUserCtx UserCtx
 		,Path_Encode Path_Encode
-		,CT ct
+		,CT Ct
 	) {
-		var Ctx = new DbFnCtx{Txn = await TxnGetter.GetTxn()};
-		var AddOrUpdateWords = await FnAddOrUpdateWords(Ctx, ct);
+		var Ctx = new DbFnCtx{Txn = await TxnGetter.GetTxnAsy(Ct)};
+		var AddOrUpdateWords = await FnAddOrUpdateWords(Ctx, Ct);
 		await TxnRunner.RunTxn(Ctx.Txn, async(ct)=>{
 			var BoWords = await SvcParseWordList.ParseWordsFromFilePath(Path_Encode);
 			await AddOrUpdateWords(UserCtx,BoWords,ct);
 			return NIL;
-		}, ct);
+		}, Ct);
 
 		return NIL;
 	}
@@ -438,15 +434,15 @@ public class SvcWord(
 	public async Task<nil> AddWordsFromText(
 		IUserCtx UserCtx
 		,string Text
-		,CT ct
+		,CT Ct
 	) {
-		var Ctx = new DbFnCtx{Txn = await TxnGetter.GetTxn()};
-		var AddOrUpdateWords = await FnAddOrUpdateWords(Ctx, ct);
+		var Ctx = new DbFnCtx{Txn = await TxnGetter.GetTxnAsy(Ct)};
+		var AddOrUpdateWords = await FnAddOrUpdateWords(Ctx, Ct);
 		await TxnRunner.RunTxn(Ctx.Txn, async(ct)=>{
 			var BoWords = await SvcParseWordList.ParseWordsFromText(Text,ct);
 			await AddOrUpdateWords(UserCtx,BoWords,ct);
 			return NIL;
-		},ct);
+		},Ct);
 		return NIL;
 	}
 
@@ -465,11 +461,14 @@ public class SvcWord(
 		,IEnumerable<WordId_PoLearns> WordId_PoLearnss
 		,CT Ct
 	){
-		var Ctx = new DbFnCtx{Txn = await TxnGetter.GetTxn()};
+		var Ctx = new DbFnCtx{Txn = await TxnGetter.GetTxnAsy(Ct)};
 		var AddLearnRecords = await FnAddWordId_PoLearnss(Ctx, Ct);
-		return await TxnRunner.RunTxn(Ctx.Txn, async(Ct)=>{
+		return await Ctx.Txn.RunTxn(async(Ct)=>{
 			return await AddLearnRecords(UserCtx, WordId_PoLearnss, Ct);
-		},Ct);
+		}, Ct);
+		// return await TxnRunner.RunTxn(Ctx.Txn, async(Ct)=>{
+		// 	return await AddLearnRecords(UserCtx, WordId_PoLearnss, Ct);
+		// },Ct);
 	}
 
 	[Impl]
@@ -478,7 +477,7 @@ public class SvcWord(
 		,IEnumerable<WordId_LearnRecords> WordId_LearnRecordss
 		,CT Ct
 	){
-		var Ctx = new DbFnCtx{Txn = await TxnGetter.GetTxn()};
+		var Ctx = new DbFnCtx{Txn = await TxnGetter.GetTxnAsy(Ct)};
 		var AddWordId_PoLearnss = await FnAddWordId_PoLearnss(Ctx, Ct);
 		return await TxnRunner.RunTxn(Ctx.Txn, async(Ct)=>{
 			var WordId_PoLearns = WordId_LearnRecordss.Select(WordId_LearnRecords=>{

@@ -6,7 +6,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="../Ngaq.WeightAlgo/Ngaq.WeightAlgo.csproj" />
+		
 	</ItemGroup>
 <!--  -->
 	<ItemGroup>

@@ -1,11 +1,33 @@
+using Tsinswreng.CsSqlHelper;
+
 namespace Ngaq.Local.Db;
 
 public interface IDbFnCtx
-	:Tsinswreng.CsSqlHelper.IBaseDbFnCtx
+	:IBaseDbFnCtx
 {
 
 }
 
-public class DbFnCtx : Tsinswreng.CsSqlHelper.BaseDbFnCtx, IDbFnCtx{
+public class DbFnCtx : BaseDbFnCtx, IDbFnCtx{
 
 }
+
+
+public interface ITxnDbFnCtxMkr{
+	Task<IDbFnCtx> MkDbFnCtxAsy(CT Ct);
+}
+
+public class TxnDbFnCtxMkr(
+	I_GetTxnAsy GetTxn
+)
+	: ITxnDbFnCtxMkr
+{
+	public async Task<IDbFnCtx> MkDbFnCtxAsy(CT Ct){
+		var Txn = await GetTxn.GetTxnAsy(Ct);
+		var R = new DbFnCtx(){
+			Txn=Txn
+		};
+		return R;
+	}
+}
+
