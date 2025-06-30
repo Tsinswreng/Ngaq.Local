@@ -27,6 +27,7 @@ public partial class DbIniter{
 		this.TxnRunner = TxnRunner;
 		this.TxnGetter = TxnGetter;
 		this.SqlCmdMkr = SqlCmdMkr;
+		this.Sql = TblMgr.SqlMkSchema();
 	}
 
 	public long CreatedAt{get;set;} = 1749888405026;

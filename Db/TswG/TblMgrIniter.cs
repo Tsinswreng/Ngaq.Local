@@ -22,8 +22,6 @@ using Ngaq.Core.Word.Models.Po.Learn;
 //using Id_Word = Ngaq.Core.Model.Po.Word.IdWord;
 //using Id_Kv = Ngaq.Core.Model.Po.Kv.IdKv;
 
-
-
 public class LocalTblMgrIniter{
 	protected ITblMgr Mgr;
 	public LocalTblMgrIniter(ITblMgr Mgr){
