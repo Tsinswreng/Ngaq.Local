@@ -1,6 +1,6 @@
 namespace Ngaq.Local.Db;
 using Tsinswreng.CsSqlHelper;
-using Tsinswreng.CsDictMapper.DictMapper;
+using Tsinswreng.CsDictMapper;
 
 public class AppRepo<
 	TEntity

@@ -11,6 +11,7 @@ public class BaseUrl(
 	[Impl]
 	public str GetBaseUrl(){
 		var V = LocalCfgItems.Inst.ServerBaseUrl.GetFrom(CfgAccessor);
+
 		return V??"";
 	}
 }

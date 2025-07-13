@@ -4,18 +4,12 @@ using Ngaq.Core.Model.Po.Kv;
 using Ngaq.Core.Model.Po.Learn_;
 using Ngaq.Core.Model.Po.Word;
 using Ngaq.Core.Infra;
-using Ngaq.Core.Tools;
 using Ngaq.Core.Model.Po;
 using System.Data;
-using Microsoft.Data.Sqlite;
 using Ngaq.Core.Model.Sys.Po.User;
 using Ngaq.Core.Models.Po;
 using Tsinswreng.CsUlid;
-using ToolId = Tsinswreng.CsUlid.IdTool;
 using Tsinswreng.CsTools.Tools;
-using Tsinswreng.CsTools.Files;
-using Ngaq.Core.Infra.Cfg;
-using Tsinswreng.CsSqlHelper.Sqlite;
 using Ngaq.Core.Word.Models.Po.Learn;
 
 //using Id_User = Ngaq.Core.Model.Po.User.IdUser;

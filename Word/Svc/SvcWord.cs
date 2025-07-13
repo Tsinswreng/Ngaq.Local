@@ -421,9 +421,9 @@ public class SvcWord(
 	) {
 		var Ctx = new DbFnCtx{Txn = await TxnGetter.GetTxnAsy(Ct)};
 		var AddOrUpdateWords = await FnAddOrUpdateWords(Ctx, Ct);
-		await TxnRunner.RunTxn(Ctx.Txn, async(ct)=>{
+		await TxnRunner.RunTxn(Ctx.Txn, async(Ct)=>{
 			var BoWords = await SvcParseWordList.ParseWordsFromFilePath(Path_Encode);
-			await AddOrUpdateWords(UserCtx,BoWords,ct);
+			await AddOrUpdateWords(UserCtx,BoWords,Ct);
 			return NIL;
 		}, Ct);
 

@@ -17,13 +17,13 @@ using Ngaq.Local.Word.Svc;
 using Tsinswreng.CsSqlHelper;
 using Ngaq.Local.Db.TswG;
 using Ngaq.Local.Sql;
-using Tsinswreng.CsDictMapper.DictMapper;
 using Ngaq.Core.Infra;
 using Ngaq.Core.FrontendIF;
 using Ngaq.Local.ImplFrontend;
 using Tsinswreng.CsSqlHelper.Sqlite;
 using Ngaq.Core.Word.Models.Po.Learn;
 using Ngaq.Local.Infra;
+using Tsinswreng.CsDictMapper;
 
 
 namespace Ngaq.Local;
@@ -65,7 +65,8 @@ return z;
 z.AddScoped<Repo<SchemaHistory, i64>>();
 z.AddScoped<Repo<PoWord, IdWord>>();
 z.AddScoped<Repo<PoWordProp, IdWordProp>>();
-z.AddScoped<Repo<PoWordLearn, IdLearn>>();z.AddScoped<IRunInTxn, AdoTxnRunner>();
+z.AddScoped<Repo<PoWordLearn, IdLearn>>();
+//z.AddScoped<IRunInTxn, AdoTxnRunner>();
 return z;
 	}
 
