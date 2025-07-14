@@ -124,9 +124,9 @@ public class LocalTblMgrIniter{
 $"UNIQUE({o.Field(nameof(PoWord.Owner))}, {o.Field(nameof(PoWord.Head))}, {o.Field(nameof(PoWord.Lang))})"
 			]);
 			o.OuterAdditionalSqls.AddRange([
-$"CREATE INDEX {o.Quote("Idx_Word_Head_Lang")} ON {o.Quote(o.Name)}({o.Field(nameof(PoWord.Head))}, {o.Field(nameof(PoWord.Lang))})"
-,$"CREATE INDEX {o.Quote("Idx_Word_CreatedAt")} ON {o.Quote(o.Name)}({o.Field(nameof(PoWord.CreatedAt))})"
-,$"CREATE INDEX {o.Quote("Idx_Word_UpdatedAt")} ON {o.Quote(o.Name)}({o.Field(nameof(PoWord.UpdatedAt))})"
+$"CREATE INDEX {o.Quote("Idx_Word_Head_Lang")} ON {o.Quote(o.DbTblName)}({o.Field(nameof(PoWord.Head))}, {o.Field(nameof(PoWord.Lang))})"
+,$"CREATE INDEX {o.Quote("Idx_Word_CreatedAt")} ON {o.Quote(o.DbTblName)}({o.Field(nameof(PoWord.CreatedAt))})"
+,$"CREATE INDEX {o.Quote("Idx_Word_UpdatedAt")} ON {o.Quote(o.DbTblName)}({o.Field(nameof(PoWord.UpdatedAt))})"
 			]);
 		}
 
@@ -142,8 +142,8 @@ $"CREATE INDEX {o.Quote("Idx_Word_Head_Lang")} ON {o.Quote(o.Name)}({o.Field(nam
 				(val)=>IdWordProp.FromByteArr(val)
 			);
 			o.OuterAdditionalSqls.AddRange([
-$"CREATE INDEX {o.Quote("IdxKStr")} ON {o.Quote(o.Name)} ({o.Field(nameof(PoWordProp.KStr))})"
-,$"CREATE INDEX {o.Quote("IdxKI64")} ON {o.Quote(o.Name)} ({o.Field(nameof(PoWordProp.KI64))})"
+$"CREATE INDEX {o.Quote("IdxKStr")} ON {o.Quote(o.DbTblName)} ({o.Field(nameof(PoWordProp.KStr))})"
+,$"CREATE INDEX {o.Quote("IdxKI64")} ON {o.Quote(o.DbTblName)} ({o.Field(nameof(PoWordProp.KI64))})"
 			]);
 		}
 

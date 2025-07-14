@@ -72,7 +72,7 @@ public class DaoSqlWord(
 		var F = TblMgr.SqlMkr;
 		var Sql =
 $"""
-SELECT {T.Field(nameof(I_Id<nil>.Id))} FROM {T.Quote(T.Name)}
+SELECT {T.Field(nameof(I_Id<nil>.Id))} FROM {T.Quote(T.DbTblName)}
 WHERE {T.Field(nameof(PoWord.Owner))} = {F.Param(nameof(PoWord.Owner))}
 AND {T.Field(nameof(PoWord.Head))} = {F.Param(nameof(PoWord.Head))}
 AND {T.Field(nameof(PoWord.Lang))} = {F.Param(nameof(PoWord.Lang))}
@@ -135,8 +135,8 @@ WHERE {TK.Field(NWordId)} = {TW.Param(NWordId)}
 			return Sql;
 		};
 		var GetPoWordById = await RepoWord.FnSelectById(Ctx, ct);
-		var Cmd_SeekKv = await SqlCmdMkr.Prepare(Ctx, Sql_SeekByFKey(TK.Quote(TK.Name)), ct);
-		var Cmd_SeekLearn = await SqlCmdMkr.Prepare(Ctx, Sql_SeekByFKey(TL.Quote(TL.Name)), ct);
+		var Cmd_SeekKv = await SqlCmdMkr.Prepare(Ctx, Sql_SeekByFKey(TK.Quote(TK.DbTblName)), ct);
+		var Cmd_SeekLearn = await SqlCmdMkr.Prepare(Ctx, Sql_SeekByFKey(TL.Quote(TL.DbTblName)), ct);
 
 		var Fn = async(
 			IdWord Id
@@ -284,7 +284,7 @@ WHERE {TK.Field(NWordId)} = {TW.Param(NWordId)}
 		str NLmt = "Lmt", NOfst = "Ofst";
 		var Sql =
 $"""
-SELECT * FROM {Tbl.Quote(Tbl.Name)}
+SELECT * FROM {Tbl.Quote(Tbl.DbTblName)}
 WHERE {Tbl.Field(NWordId)} = {Tbl.Param(NWordId)}
 AND {Tbl.Field(nameof(IPoBase.Status))} <> {PoStatus.Deleted.Value}
 {Tbl.SqlMkr.LimitOffset(NLmt, NOfst)}
@@ -327,7 +327,7 @@ AND {Tbl.Field(nameof(IPoBase.Status))} <> {PoStatus.Deleted.Value}
 		str NLmt = "Lmt", NOfst = "Ofst";
 		var Sql =
 $"""
-SELECT * FROM {TW.Quote(TW.Name)}
+SELECT * FROM {TW.Quote(TW.DbTblName)}
 WHERE {TW.Field(NOwner)} = {TW.Param(NOwner)}
 AND {TW.Field(nameof(PoWord.Status))} <> {PoStatus.Deleted.Value}
 ORDER BY {TW.Field(nameof(IPoBase.DbCreatedAt))} DESC
