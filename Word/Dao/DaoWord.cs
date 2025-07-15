@@ -409,7 +409,9 @@ ORDER BY {TW.Field(nameof(IPoBase.DbCreatedAt))} DESC
 		if(PageAsy.DataAsy == null){
 			return new List<TPo>();
 		}
-		return await PageAsy.DataAsy.Select(D=>Tbl.AssignCodePo(D, new TPo())).ToListAsync();
+		return await PageAsy.DataAsy.Select(
+			D=>Tbl.AssignCodePo(D, new TPo())
+		).ToListAsync();
 	}
 }
 

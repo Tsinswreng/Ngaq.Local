@@ -26,7 +26,7 @@ using Ngaq.Local.Infra;
 using Tsinswreng.CsDictMapper;
 
 
-namespace Ngaq.Local;
+namespace Ngaq.Local.Di;
 
 
 public static class DiLocal{
@@ -46,7 +46,7 @@ return z;
 //數據庫配置
 	static IServiceCollection SetUpDbCfg(this IServiceCollection z){
 //數據庫連接單例
-z.AddSingleton<IDbConnection>(LocalDb.Inst.DbConnection);
+z.AddSingleton(LocalDb.Inst.DbConnection);
 //數據庫命令ˇ建者
 z.AddScoped<ISqlCmdMkr, SqliteCmdMkr>();
 //數據庫諸表ˇ司者
@@ -55,6 +55,7 @@ z.AddSingleton<ITblMgr>(LocalTblMgr.Inst);
 z.AddScoped<I_GetTxnAsy, SqliteCmdMkr>();
 //事務ˇ珩者
 z.AddScoped<ITxnRunner, AdoTxnRunner>();
+//z.AddScoped<TxnWrapper<DbFnCtx>>();
 //數據庫初始化器
 z.AddTransient<DbIniter>();
 return z;
