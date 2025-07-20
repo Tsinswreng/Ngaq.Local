@@ -33,6 +33,7 @@ public class SvcWord(
 	,Repo<PoWord, IdWord> RepoPoWord
 	,Repo<PoWordProp, IdWordProp> RepoKv
 	,Repo<PoWordLearn, IdLearn> RepoLearn
+	,TxnWrapper<DbFnCtx> TxnWrapper
 )
 	: ISvcWord
 {
@@ -397,6 +398,16 @@ public class SvcWord(
 
 	// public async Task<Func<
 	// 	IUserCtx
+	// 	,IEnumerable<IdWord>
+	// 	,CT
+	// 	,Task<nil>
+	// >> FnSync(){
+
+	// }
+
+
+	// public async Task<Func<
+	// 	IUserCtx
 	// 	,CT
 	// 	,Task<nil>
 	// >> FnSyncDb(
@@ -461,11 +472,12 @@ public class SvcWord(
 		,IEnumerable<WordId_PoLearns> WordId_PoLearnss
 		,CT Ct
 	){
-		var Ctx = new DbFnCtx{Txn = await TxnGetter.GetTxnAsy(Ct)};
-		var AddLearnRecords = await FnAddWordId_PoLearnss(Ctx, Ct);
-		return await Ctx.Txn.RunTxn(async(Ct)=>{
-			return await AddLearnRecords(UserCtx, WordId_PoLearnss, Ct);
-		}, Ct);
+		return await TxnWrapper.Wrap(FnAddWordId_PoLearnss, UserCtx, WordId_PoLearnss, Ct);
+		// var Ctx = new DbFnCtx{Txn = await TxnGetter.GetTxnAsy(Ct)};
+		// var AddLearnRecords = await FnAddWordId_PoLearnss(Ctx, Ct);
+		// return await Ctx.Txn.RunTxn(async(Ct)=>{
+		// 	return await AddLearnRecords(UserCtx, WordId_PoLearnss, Ct);
+		// }, Ct);
 		// return await TxnRunner.RunTxn(Ctx.Txn, async(Ct)=>{
 		// 	return await AddLearnRecords(UserCtx, WordId_PoLearnss, Ct);
 		// },Ct);

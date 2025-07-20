@@ -24,6 +24,7 @@ using Tsinswreng.CsSqlHelper.Sqlite;
 using Ngaq.Core.Word.Models.Po.Learn;
 using Ngaq.Local.Infra;
 using Tsinswreng.CsDictMapper;
+using Ngaq.Local.Db;
 
 
 namespace Ngaq.Local.Di;
@@ -55,7 +56,8 @@ z.AddSingleton<ITblMgr>(LocalTblMgr.Inst);
 z.AddScoped<I_GetTxnAsy, SqliteCmdMkr>();
 //事務ˇ珩者
 z.AddScoped<ITxnRunner, AdoTxnRunner>();
-//z.AddScoped<TxnWrapper<DbFnCtx>>();
+z.AddScoped<IDbFnCtxMkr<DbFnCtx> ,DbFnCtxMkr<DbFnCtx>>();
+z.AddScoped<TxnWrapper<DbFnCtx>>();
 //數據庫初始化器
 z.AddTransient<DbIniter>();
 return z;
@@ -79,6 +81,7 @@ z.AddScoped<ISvcParseWordList, SvcParseWordList>();
 z.AddScoped<ISvcWord, SvcWord>();
 z.AddScoped<IImgGetter, SvcImg>();
 z.AddScoped<IWeightCalctr, SvcWeight>();
+z.AddScoped<TxnWrapper<DbFnCtx>>();
 return z;
 	}
 
