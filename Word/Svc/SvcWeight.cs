@@ -4,7 +4,7 @@ using Ngaq.Core.Word.WeightAlgo;
 namespace Ngaq.Local.Word.Svc;
 
 
-public class SvcWeight
+public  partial class SvcWeight
 	:WeightCalculator
 	,IWeightCalctr
 {

@@ -3,7 +3,6 @@ using Ngaq.Core.Model;
 using Ngaq.Core.Model.Po.Kv;
 using Ngaq.Core.Model.Po.Learn_;
 using Ngaq.Core.Model.Po.Word;
-using Ngaq.Core.Model.UserCtx;
 using Ngaq.Core.Model.Word.Dto;
 using Ngaq.Core.Service.Word;
 using Ngaq.Core.Tools;
@@ -12,7 +11,7 @@ using Ngaq.Local.Dao;
 using Ngaq.Local.Db;
 using System.Collections;
 using Ngaq.Core.Infra.Errors;
-using Tsinswreng.CsTools.Tools;
+using Tsinswreng.CsTools;
 using Ngaq.Core.Model.Word.Req;
 using Ngaq.Core.Word.Models.Learn_;
 using Tsinswreng.CsSqlHelper;
@@ -21,11 +20,13 @@ using Ngaq.Core.Word.Svc;
 using Tsinswreng.CsCore;
 using Tsinswreng.CsPage;
 using Ngaq.Core.Word.Models;
+using Ngaq.Core.Infra;
+using Ngaq.Core.Models.UserCtx;
 
 namespace Ngaq.Local.Word.Svc;
 
 //不在Svc中依賴DbCtx
-public class SvcWord(
+public  partial class SvcWord(
 	ISvcParseWordList SvcParseWordList
 	,ITxnRunner TxnRunner
 	,DaoSqlWord DaoWord
@@ -39,7 +40,7 @@ public class SvcWord(
 {
 	//public DbCtx DbCtx { get; set; } = DbCtx;
 
-	public class EErr_:EnumErr{
+	public  partial class EErr_:EnumErr{
 		public IAppErr WordOwnerNotMatch() => Mk(nameof(WordOwnerNotMatch));
 	}
 	public EErr_ EErr = new EErr_();
@@ -394,6 +395,8 @@ public class SvcWord(
 		};
 		return Fn;
 	}
+
+
 
 
 	// public async Task<Func<

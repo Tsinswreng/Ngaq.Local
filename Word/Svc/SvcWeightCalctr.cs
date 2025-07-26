@@ -9,8 +9,8 @@ namespace Ngaq.Local.Word.Svc;
 
 
 
-public class SvcWeightCalctr {
-	public class EErr_:EnumErr{
+public  partial class SvcWeightCalctr {
+	public  partial class EErr_:EnumErr{
 		public IAppErr WeightCalculatorExeErr() => Mk(nameof(WeightCalculatorExeErr));
 		public IAppErr WordWeightSerializationErr() => Mk(nameof(WordWeightSerializationErr));
 	}

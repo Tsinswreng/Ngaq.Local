@@ -9,14 +9,14 @@ using System.Data;
 using Ngaq.Core.Model.Sys.Po.User;
 using Ngaq.Core.Models.Po;
 using Tsinswreng.CsUlid;
-using Tsinswreng.CsTools.Tools;
 using Ngaq.Core.Word.Models.Po.Learn;
+using Tsinswreng.CsTools;
 
 //using Id_User = Ngaq.Core.Model.Po.User.IdUser;
 //using Id_Word = Ngaq.Core.Model.Po.Word.IdWord;
 //using Id_Kv = Ngaq.Core.Model.Po.Kv.IdKv;
 
-public class LocalTblMgrIniter{
+public  partial class LocalTblMgrIniter{
 	protected ITblMgr Mgr;
 	public LocalTblMgrIniter(ITblMgr Mgr){
 		this.Mgr = Mgr;
@@ -134,12 +134,12 @@ public class LocalTblMgrIniter{
 			o.SetCol(nameof(PoWord.Id)).HasConversionEtMapType(MapIdWord());
 			o.SetCol(nameof(PoWord.Owner)).HasConversionEtMapType(MapIdUser());
 			o.InnerAdditionalSqls.AddRange([
-$"UNIQUE({o.Field(nameof(PoWord.Owner))}, {o.Field(nameof(PoWord.Head))}, {o.Field(nameof(PoWord.Lang))})"
+$"UNIQUE({o.Fld(nameof(PoWord.Owner))}, {o.Fld(nameof(PoWord.Head))}, {o.Fld(nameof(PoWord.Lang))})"
 			]);
 			o.OuterAdditionalSqls.AddRange([
-$"CREATE INDEX {o.Quote("Idx_Word_Head_Lang")} ON {o.Quote(o.DbTblName)}({o.Field(nameof(PoWord.Head))}, {o.Field(nameof(PoWord.Lang))})"
-,$"CREATE INDEX {o.Quote("Idx_Word_CreatedAt")} ON {o.Quote(o.DbTblName)}({o.Field(nameof(PoWord.CreatedAt))})"
-,$"CREATE INDEX {o.Quote("Idx_Word_UpdatedAt")} ON {o.Quote(o.DbTblName)}({o.Field(nameof(PoWord.UpdatedAt))})"
+$"CREATE INDEX {o.Qt("Idx_Word_Head_Lang")} ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoWord.Head))}, {o.Fld(nameof(PoWord.Lang))})"
+,$"CREATE INDEX {o.Qt("Idx_Word_CreatedAt")} ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoWord.CreatedAt))})"
+,$"CREATE INDEX {o.Qt("Idx_Word_UpdatedAt")} ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoWord.UpdatedAt))})"
 			]);
 		}
 
@@ -155,8 +155,8 @@ $"CREATE INDEX {o.Quote("Idx_Word_Head_Lang")} ON {o.Quote(o.DbTblName)}({o.Fiel
 				(val)=>IdWordProp.FromByteArr(val)
 			);
 			o.OuterAdditionalSqls.AddRange([
-$"CREATE INDEX {o.Quote("IdxKStr")} ON {o.Quote(o.DbTblName)} ({o.Field(nameof(PoWordProp.KStr))})"
-,$"CREATE INDEX {o.Quote("IdxKI64")} ON {o.Quote(o.DbTblName)} ({o.Field(nameof(PoWordProp.KI64))})"
+$"CREATE INDEX {o.Qt("IdxKStr")} ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(PoWordProp.KStr))})"
+,$"CREATE INDEX {o.Qt("IdxKI64")} ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(PoWordProp.KI64))})"
 			]);
 		}
 

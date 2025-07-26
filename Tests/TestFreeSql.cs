@@ -8,7 +8,7 @@ using Ngaq.Local.Db;
 
 namespace Ngaq.Local.Tests;
 
-public class TestFreeSql{
+public  partial class TestFreeSql{
 	public async Task TestRepo(){
 		var repo = new RepoFsql<Po_Kv, Id_Kv>();
 		var Id = new Id_Kv(IdTool.NewUlid_UInt128());

@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Text;
 using System.Threading.Tasks;
 namespace Ngaq.Local.Tools.Cmd;
-public class CmdRunner {
+public  partial class CmdRunner {
 	protected static CmdRunner? _Inst = null;
 	public static CmdRunner Inst => _Inst??= new CmdRunner();
 

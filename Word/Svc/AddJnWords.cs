@@ -6,7 +6,7 @@
 
 
 
-// public class AddBoWords{
+// public  partial class AddBoWords{
 
 // 	public async Task<I_Answer<nil>> AddBoWordsAsy(
 // 		IEnumerable<Bo_Word> Bo_Words

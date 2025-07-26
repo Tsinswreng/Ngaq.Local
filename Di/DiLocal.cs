@@ -25,6 +25,7 @@ using Ngaq.Core.Word.Models.Po.Learn;
 using Ngaq.Local.Infra;
 using Tsinswreng.CsDictMapper;
 using Ngaq.Local.Db;
+using Ngaq.Core.Models.UserCtx;
 
 
 namespace Ngaq.Local.Di;
@@ -76,11 +77,9 @@ return z;
 //服務類
 	static IServiceCollection SetUpSvcs(this IServiceCollection z){
 z.AddScoped<DaoSqlWord, DaoSqlWord>();
-z.AddTransient<MgrLearn, MgrLearn>();
 z.AddScoped<ISvcParseWordList, SvcParseWordList>();
 z.AddScoped<ISvcWord, SvcWord>();
 z.AddScoped<IImgGetter, SvcImg>();
-z.AddScoped<IWeightCalctr, SvcWeight>();
 z.AddScoped<TxnWrapper<DbFnCtx>>();
 return z;
 	}

@@ -12,7 +12,7 @@ using Tsinswreng.CsTools.Tools;
 namespace Ngaq.Local.Dao;
 
 [Obsolete]
-public class DaoWord(
+public  partial class DaoWord(
 	LocalDbCtx DbCtx
 ){
 
@@ -201,7 +201,7 @@ public class DaoWord(
 
 
 	//不能在接口中對內部類做約束
-	// public class SelectIdByFormIdEtLangAsy(Svc_Word z){
+	// public  partial class SelectIdByFormIdEtLangAsy(Svc_Word z){
 	// 	public async Task<SelectIdByFormIdEtLangAsy> InitAsy(){return this;}
 	// 	public async Task<Id_Word?> RunAsy(
 	// 		str FormId
@@ -216,7 +216,7 @@ public class DaoWord(
 	// }
 
 
-	// public class SelectBoWordByIdAsy(Z z){
+	// public  partial class SelectBoWordByIdAsy(Z z){
 	// 	public async Task<SelectBoWordByIdAsy> InitAsy(){return this;}
 	// 	public async Task<Bo_Word> RunAsy(
 	// 		Id_Word Id
@@ -241,7 +241,7 @@ public class DaoWord(
 
 
 
-	// public class InsertBoWordsAsy(Z z){
+	// public  partial class InsertBoWordsAsy(Z z){
 	// 	public async Task<InsertBoWordsAsy> InitAsy(){return this;}
 	// 	public async Task<nil> RunAsy(
 	// 		IEnumerable<Bo_Word> Bo_Words

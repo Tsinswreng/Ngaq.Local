@@ -8,7 +8,7 @@ using Ngaq.Core.Word.Models;
 
 namespace Ngaq.Local.Service.Word;
 
-public class SvcParseWordList
+public  partial class SvcParseWordList
 	: ISvcParseWordList
 {
 	public async Task<nil> AddWordsFromUrlAsy(

@@ -2,7 +2,7 @@ namespace Ngaq.Local.Db;
 using Tsinswreng.CsSqlHelper;
 using Tsinswreng.CsDictMapper;
 
-public class AppRepo<
+public  partial class AppRepo<
 	TEntity
 	, TId
 >

@@ -2,11 +2,11 @@ using Ngaq.Core.FrontendIF;
 using Ngaq.Core.Infra.Cfg;
 using Ngaq.Core.Tools;
 using Tsinswreng.CsCfg;
-using Tsinswreng.CsTools.Tools;
+using Tsinswreng.CsTools;
 
 namespace Ngaq.Local.ImplFrontend;
 
-public class SvcImg:IImgGetter{
+public  partial class SvcImg:IImgGetter{
 
 	public IList<str> GalleryDirs{get;set;} = [];
 	public IList<str> FilePaths{get;set;} = new List<str>();
@@ -17,7 +17,7 @@ public class SvcImg:IImgGetter{
 //TODO 若此中拋異常且無catch則初始化DI旹則崩 宜傳異常置前端
 	public SvcImg(){
 try{
-var CfgDir = LocalCfgItems.Inst.GalleryDirs.GetFrom(CfgAccessor)??[];
+var CfgDir = LocalCfgItems.GalleryDirs.GetFrom(CfgAccessor)??[];
 		foreach(var Dir in CfgDir){
 			if(Dir is str s && !str.IsNullOrEmpty(s)){
 				if(Directory.Exists(s)){

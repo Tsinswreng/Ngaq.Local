@@ -1,5 +1,5 @@
 using Ngaq.Local.Db;
-using Tsinswreng.CsTools.Files;
+using Tsinswreng.CsTools;
 using Tsinswreng.CsSqlHelper;
 
 namespace Ngaq.Local.Sql;

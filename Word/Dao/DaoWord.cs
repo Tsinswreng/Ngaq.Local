@@ -4,11 +4,8 @@ using Ngaq.Core.Model.Po;
 using Ngaq.Core.Model.Po.Kv;
 using Ngaq.Core.Model.Po.Learn_;
 using Ngaq.Core.Model.Po.Word;
-using Ngaq.Core.Model.UserCtx;
-using Ngaq.Core.Tools;
 using Ngaq.Local.Db;
 using Tsinswreng.CsSqlHelper;
-using Tsinswreng.CsTools.Tools;
 using Str_Any = System.Collections.Generic.Dictionary<string, object?>;
 using IStr_Any = System.Collections.Generic.IDictionary<string, object?>;
 using System.Threading.Tasks;
@@ -19,11 +16,14 @@ using ToolId = Tsinswreng.CsUlid.IdTool;
 using Ngaq.Core.Word.Models.Po.Learn;
 using Tsinswreng.CsPage;
 using Ngaq.Core.Word.Models;
+using Ngaq.Core.Model.Sys.Po.User;
+using Ngaq.Core.Models.UserCtx;
+using Tsinswreng.CsTools;
 
 namespace Ngaq.Local.Dao;
 
 
-public class DaoSqlWord(
+public  partial class DaoSqlWord(
 	ISqlCmdMkr SqlCmdMkr
 	,ITblMgr TblMgr
 	,Repo<PoWord, IdWord> RepoWord
@@ -40,16 +40,16 @@ public class DaoSqlWord(
 
 	// public async Task<Func<
 	// 	IUserCtx
-	// 	,CancellationToken
+	// 	,CT
 	// 	,Task<IEnumerable<BoWord>>
 	// >> FnSelectAllWords(
 	// 	IDbFnCtx Ctx
-	// 	,CancellationToken Ct
+	// 	,CT Ct
 	// ){
 
 	// 	var Fn = async(
 	// 		IUserCtx UserCtx
-	// 		,CancellationToken Ct
+	// 		,CT Ct
 	// 	)=>{
 
 	// 	};
@@ -61,23 +61,23 @@ public class DaoSqlWord(
 		IUserCtx
 		,str
 		,str
-		,CancellationToken
+		,CT
 		,Task<IdWord?>
 	>>
 	FnSelectIdByHeadEtLang(
 		Db.IDbFnCtx Ctx
-		,CancellationToken ct
+		,CT Ct
 	){
 		var T = TblMgr.GetTable<PoWord>();
 		var F = TblMgr.SqlMkr;
 		var Sql =
 $"""
-SELECT {T.Field(nameof(I_Id<nil>.Id))} FROM {T.Quote(T.DbTblName)}
-WHERE {T.Field(nameof(PoWord.Owner))} = {F.Param(nameof(PoWord.Owner))}
-AND {T.Field(nameof(PoWord.Head))} = {F.Param(nameof(PoWord.Head))}
-AND {T.Field(nameof(PoWord.Lang))} = {F.Param(nameof(PoWord.Lang))}
+SELECT {T.Fld(nameof(I_Id<nil>.Id))} FROM {T.Qt(T.DbTblName)}
+WHERE {T.Fld(nameof(PoWord.Owner))} = {F.Prm(nameof(PoWord.Owner))}
+AND {T.Fld(nameof(PoWord.Head))} = {F.Prm(nameof(PoWord.Head))}
+AND {T.Fld(nameof(PoWord.Lang))} = {F.Prm(nameof(PoWord.Lang))}
 """;
-		var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, ct);
+		var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
 
 /*
 SELECT Id FROM Word
@@ -90,7 +90,7 @@ AND Lang = @Lang
 			IUserCtx OperatorCtx
 			,str Head
 			,str Lang
-			,CancellationToken ct
+			,CT ct
 		)=>{
 			var UserId = OperatorCtx.UserId;
 			var Params = new Str_Any {
@@ -116,11 +116,11 @@ AND Lang = @Lang
 /// <returns></returns>
 	public async Task<Func<
 		IdWord
-		,CancellationToken
+		,CT
 		,Task<JnWord?>
 	>> FnSelectJnWordById(
 		Db.IDbFnCtx? Ctx
-		,CancellationToken ct
+		,CT ct
 	){
 		var TW = TblMgr.GetTable<PoWord>();
 		var TK = TblMgr.GetTable<PoWordProp>();
@@ -130,17 +130,17 @@ AND Lang = @Lang
 			var Sql =
 $"""
 SELECT * FROM {QuotedTblName}
-WHERE {TK.Field(NWordId)} = {TW.Param(NWordId)}
+WHERE {TK.Fld(NWordId)} = {TW.Prm(NWordId)}
 """;
 			return Sql;
 		};
 		var GetPoWordById = await RepoWord.FnSelectById(Ctx, ct);
-		var Cmd_SeekKv = await SqlCmdMkr.Prepare(Ctx, Sql_SeekByFKey(TK.Quote(TK.DbTblName)), ct);
-		var Cmd_SeekLearn = await SqlCmdMkr.Prepare(Ctx, Sql_SeekByFKey(TL.Quote(TL.DbTblName)), ct);
+		var Cmd_SeekKv = await SqlCmdMkr.Prepare(Ctx, Sql_SeekByFKey(TK.Qt(TK.DbTblName)), ct);
+		var Cmd_SeekLearn = await SqlCmdMkr.Prepare(Ctx, Sql_SeekByFKey(TL.Qt(TL.DbTblName)), ct);
 
 		var Fn = async(
 			IdWord Id
-			,CancellationToken ct
+			,CT ct
 		)=>{
 			var Po_Word = await GetPoWordById(Id, ct);
 			if(Po_Word == null){
@@ -171,11 +171,11 @@ WHERE {TK.Field(NWordId)} = {TW.Param(NWordId)}
 
 	public async Task<Func<
 		IEnumerable<JnWord>
-		,CancellationToken
+		,CT
 		,Task<nil>
 	>> FnInsertBoWords(
 		Db.IDbFnCtx? Ctx
-		,CancellationToken ct
+		,CT ct
 	) {
 		var InsertPoWords = await RepoWord.FnInsertMany(Ctx, ct);
 		var InsertPoKvs = await RepoKv.FnInsertMany(Ctx, ct);
@@ -183,7 +183,7 @@ WHERE {TK.Field(NWordId)} = {TW.Param(NWordId)}
 
 		var Fn = async(
 			IEnumerable<JnWord> BoWords
-			,CancellationToken ct
+			,CT ct
 		)=>{
 			u64 BatchSize = 0xfff;
 			await using var Po_Words = new BatchListAsy<PoWord, nil>(async(list, ct)=>{
@@ -223,16 +223,16 @@ WHERE {TK.Field(NWordId)} = {TW.Param(NWordId)}
 
 	public async Task<Func<
 		IEnumerable<PoWordProp>
-		,CancellationToken
+		,CT
 		,Task<nil>
 	>> FnInsertPoKvs(
 		Db.IDbFnCtx? Ctx
-		,CancellationToken ct
+		,CT ct
 	){
 		var InsertMany = await RepoKv.FnInsertMany(Ctx, ct);
 		var Fn = async(
 			IEnumerable<PoWordProp> Po_Kvs
-			,CancellationToken ct
+			,CT ct
 		)=>{
 			Po_Kvs = Po_Kvs.Select(x=>{
 				// if(x.CreatedAt == null){
@@ -251,16 +251,16 @@ WHERE {TK.Field(NWordId)} = {TW.Param(NWordId)}
 
 	public async Task<Func<
 		IEnumerable<PoWordLearn>
-		,CancellationToken
+		,CT
 		,Task<nil>
 	>> FnInsertPoLearns(
 		Db.IDbFnCtx? Ctx
-		,CancellationToken ct
+		,CT ct
 	){
 		var InsertMany = await RepoLearn.FnInsertMany(Ctx, ct);
 		var Fn = async(
 			IEnumerable<PoWordLearn> PoLearns
-			,CancellationToken ct
+			,CT ct
 		)=>{
 			await InsertMany(PoLearns, ct);
 			return NIL;
@@ -271,35 +271,34 @@ WHERE {TK.Field(NWordId)} = {TW.Param(NWordId)}
 	public async Task<Func<
 		IdWord
 		,IPageQuery
-		,CancellationToken
+		,CT
 		,Task<IPageAsy<IStr_Any>>
 	>> FnPageByFKey(
 		Db.IDbFnCtx Ctx
 		,ITable Tbl
-		,CancellationToken Ct
+		,CT Ct
 	){
 		var T = Tbl;
 		var TW = TblMgr.GetTable<PoWord>();
 		var NWordId = nameof(I_WordId.WordId);
-		str NLmt = "Lmt", NOfst = "Ofst";
 		var Sql =
 $"""
-SELECT * FROM {Tbl.Quote(Tbl.DbTblName)}
-WHERE {Tbl.Field(NWordId)} = {Tbl.Param(NWordId)}
-AND {Tbl.Field(nameof(IPoBase.Status))} <> {PoStatus.Deleted.Value}
-{Tbl.SqlMkr.LimitOffset(NLmt, NOfst)}
+SELECT * FROM {Tbl.Qt(Tbl.DbTblName)}
+WHERE {Tbl.Fld(NWordId)} = {Tbl.Prm(NWordId)}
+AND {Tbl.Fld(nameof(IPoBase.Status))} <> {PoStatus.Deleted.Value}
+{Tbl.SqlMkr.PrmLmtOfst(out var NLmt, out var NOfst)}
 """;
 		var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
 		//var FnCnt = await RepoWord.FnCount(Ctx, Ct);
 		var Fn = async(
 			IdWord IdWord
 			,IPageQuery PageQry
-			,CancellationToken Ct
+			,CT Ct
 		)=>{
 			var Arg = new Str_Any{
-				[NWordId] = TW.ToDbType(nameof(PoWord.Id), IdWord)
+				[NWordId] = TW.UpperToRaw(nameof(PoWord.Id), IdWord)
 				,[NLmt] = PageQry.PageSize
-				,[NOfst] = PageQry.Offset()
+				,[NOfst] = PageQry.Offset_()
 			};
 			var DbDict = SqlCmd.Args(Arg).Run(Ct);
 			u64 Cnt = 0;
@@ -316,41 +315,41 @@ AND {Tbl.Field(nameof(IPoBase.Status))} <> {PoStatus.Deleted.Value}
 	public async Task<Func<
 		IUserCtx
 		,IPageQuery
-		,CancellationToken
+		,CT
 		,Task<IPageAsy<PoWord>>
 	>> FnPagePoWords(
 		Db.IDbFnCtx Ctx
-		,CancellationToken Ct
+		,CT Ct
 	){
 		var TW = TblMgr.GetTable<PoWord>();
 		var NOwner = nameof(PoWord.Owner);
 		str NLmt = "Lmt", NOfst = "Ofst";
 		var Sql =
 $"""
-SELECT * FROM {TW.Quote(TW.DbTblName)}
-WHERE {TW.Field(NOwner)} = {TW.Param(NOwner)}
-AND {TW.Field(nameof(PoWord.Status))} <> {PoStatus.Deleted.Value}
-ORDER BY {TW.Field(nameof(IPoBase.DbCreatedAt))} DESC
-{TW.SqlMkr.LimitOffset(NLmt, NOfst)}
+SELECT * FROM {TW.Qt(TW.DbTblName)}
+WHERE {TW.Fld(NOwner)} = {TW.Prm(NOwner)}
+AND {TW.Fld(nameof(PoWord.Status))} <> {PoStatus.Deleted.Value}
+ORDER BY {TW.Fld(nameof(IPoBase.DbCreatedAt))} DESC
+{TW.SqlMkr.PrmLmtOfst(NLmt, NOfst)}
 """;
 		var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
 		var FnCnt = await RepoWord.FnCount(Ctx, Ct);
 		var Fn = async(
 			IUserCtx UserCtx
 			,IPageQuery PageQry
-			,CancellationToken Ct
+			,CT Ct
 		)=>{
 			var Arg = new Str_Any(){
-				[NOwner] = TW.ToDbType(NOwner, UserCtx.UserId)
+				[NOwner] = TW.UpperToRaw(NOwner, UserCtx.UserId)
 				,[NLmt] = PageQry.PageSize
-				,[NOfst] = PageQry.Offset()
+				,[NOfst] = PageQry.Offset_()
 			};
 
 			var RawDbDicts = SqlCmd.Args(Arg).Run(Ct);
 			var PoWords = RawDbDicts.Select(
 				(Raw)=>TW.DbDictToPo<PoWord>(Raw)
 			);
-			var Cnt = PageQry.HasTotalCount?  await FnCnt(Ct)  :  0;
+			var Cnt = PageQry.WantTotalCount?  await FnCnt(Ct)  :  0;
 			var R = PageAsy<PoWord>.Mk(
 				PageQry, Cnt, PoWords
 			);
@@ -362,11 +361,11 @@ ORDER BY {TW.Field(nameof(IPoBase.DbCreatedAt))} DESC
 	public async Task<Func<
 		IUserCtx
 		,IPageQuery
-		,CancellationToken
+		,CT
 		,Task<IPageAsy<JnWord>>
 	>> FnPageJnWords(
 		Db.IDbFnCtx Ctx
-		,CancellationToken Ct
+		,CT Ct
 	){
 		var TK = TblMgr.GetTable<PoWordProp>();
 		var TL = TblMgr.GetTable<PoWordLearn>();
@@ -377,15 +376,15 @@ ORDER BY {TW.Field(nameof(IPoBase.DbCreatedAt))} DESC
 		var Fn = async(
 			IUserCtx UserCtx
 			,IPageQuery PageQry
-			,CancellationToken Ct
+			,CT Ct
 		)=>{
 			var PoWordsPage = await PagePoWords(UserCtx, PageQry, Ct);
-			var R = PageAsy<JnWord>.Mk(PageQry, PoWordsPage.TotalCount, null);
+			var R = PageAsy<JnWord>.Mk(PageQry, null, true, PoWordsPage.TotalCount);
 			if(PoWordsPage.DataAsy == null){
 				return R;
 			}
 
-			var BoWords = PoWordsPage.DataAsy.Select(async (PoWord)=>{
+			var JnWords = PoWordsPage.DataAsy.Select(async (PoWord)=>{
 				var KvPage = await PageKvByFKey(PoWord.Id, PageQuery.SelectAll(), Ct);
 				var Kvs = await _PageAsyToList<PoWordProp>(KvPage, TK);
 
@@ -395,7 +394,7 @@ ORDER BY {TW.Field(nameof(IPoBase.DbCreatedAt))} DESC
 				var R = new JnWord(PoWord, Kvs, Learns);
 				return R;
 			}).FlattenAsync();
-			R.DataAsy = BoWords;
+			R.DataAsy = JnWords;
 			return R;
 		};
 		return Fn;
@@ -413,14 +412,79 @@ ORDER BY {TW.Field(nameof(IPoBase.DbCreatedAt))} DESC
 			D=>Tbl.AssignCodePo(D, new TPo())
 		).ToListAsync();
 	}
+
+/// <summary>
+/// 頁查 某時後 改˪ʹ諸詞之id
+/// </summary>
+/// <param name="Ctx"></param>
+/// <param name="Ct"></param>
+/// <returns></returns>
+	public async Task<Func<
+		IUserCtx
+		,IPageQuery
+		,Tempus
+		,CT
+		,Task<IPageAsy<IdWord>>
+	>> FnPage_ChangedWordIdsAfterTime(IDbFnCtx Ctx, CT Ct){
+var T = TblMgr.GetTable<PoWord>();
+var PTempus = T.Prm("Tempus"); var POwner = T.Prm("Owner");
+str NId = nameof(PoWord.Id), NOwner = nameof(PoWord.Owner), NUpdateAt = nameof(PoWord.UpdatedAt);
+var Sql =
+$"""
+SELECT {T.Fld(NId)} AS {T.Qt(NId)}
+FROM {T.Qt(T.DbTblName)}
+WHERE {T.Fld(NOwner)} = {POwner}
+AND {T.Fld(NUpdateAt)} > {PTempus}
+{T.SqlMkr.PrmLmtOfst(out str Lmt, out str Ofst)}
+""";//TODO 考慮同步後 一方ʃ新增、此旹無UpdatedAt 只有CreatedAt
+var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
+
+		var Fn= async(IUserCtx UserCtx, IPageQuery PageQry, Tempus Tem, CT Ct)=>{
+			// [Param]=T.ToDbType(NUpdateAt, Tem)
+			// [Lmt] = []
+			var RawDictAsy = SqlCmd.WithCtx(Ctx).Args(ArgDict.Mk()
+				.Add(PTempus, T.UpperToRaw(NUpdateAt, Tem))
+				.Add(POwner, T.UpperToRaw(NOwner, UserCtx.UserId))
+				.AddPageQry(PageQry, Lmt, Ofst)
+				.ToDict()
+			).Run(Ct);
+			var WordIds = RawDictAsy.Select(x => T.RawToUpper<IdWord>(NId, x));
+			var R = PageAsy<IdWord>.Mk(PageQry, WordIds);
+			R.HasTotalCount = false;
+			return R;
+		};
+		return Fn;
+	}
+
+	public async Task<Func<
+
+		Task<nil>
+	>> Fn(IDbFnCtx Ctx, CT Ct){
+
+		var Fn = async()=>{
+			return NIL;
+		};
+		return Fn;
+	}
+
+#if false
+	public async Task<Func<
+		Task<nil>
+	>> Fn(){
+		var Fn = async()=>{
+			return NIL;
+		};
+		return Fn;
+	}
+#endif
 }
 
 
-// public class Scalar{
+// public  partial class Scalar{
 // 	public static object Arg = null!;
 // }
 
-// public class Expr<T_Po>{
+// public  partial class Expr<T_Po>{
 // 	public Expr<T_Po> Select(Expression<Func<T_Po, object>> expr){
 // 		return this;
 // 	}
@@ -433,10 +497,3 @@ ORDER BY {TW.Field(nameof(IPoBase.DbCreatedAt))} DESC
 // 	}
 
 // }
-
-
-
-// /*
-
-//  */
-

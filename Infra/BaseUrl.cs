@@ -5,12 +5,12 @@ using Tsinswreng.CsCore;
 
 namespace Ngaq.Local.Infra;
 
-public class BaseUrl(
+public  partial class BaseUrl(
 	ICfgAccessor CfgAccessor
 ):I_GetBaseUrl{
 	[Impl]
 	public str GetBaseUrl(){
-		var V = LocalCfgItems.Inst.ServerBaseUrl.GetFrom(CfgAccessor);
+		var V = LocalCfgItems.ServerBaseUrl.GetFrom(CfgAccessor);
 
 		return V??"";
 	}

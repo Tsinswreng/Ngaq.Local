@@ -2,22 +2,22 @@ using Tsinswreng.CsSqlHelper;
 
 namespace Ngaq.Local.Db;
 
-public interface IDbFnCtx
+public  partial interface IDbFnCtx
 	:IBaseDbFnCtx
 {
 
 }
 
-public class DbFnCtx : BaseDbFnCtx, IDbFnCtx{
+public  partial class DbFnCtx : BaseDbFnCtx, IDbFnCtx{
 
 }
 
 
-public interface ITxnDbFnCtxMkr{
+public  partial interface ITxnDbFnCtxMkr{
 	Task<IDbFnCtx> MkDbFnCtxAsy(CT Ct);
 }
 
-public class TxnDbFnCtxMkr(
+public  partial class TxnDbFnCtxMkr(
 	I_GetTxnAsy GetTxn
 )
 	: ITxnDbFnCtxMkr

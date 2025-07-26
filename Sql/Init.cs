@@ -7,7 +7,7 @@
 // using Ngaq.Core.Models.Po;
 // using Tsinswreng.CsSqlHelper;
 
-// public class SqlLatest{
+// public  partial class SqlLatest{
 
 // 	List<str> Segs = [];
 
