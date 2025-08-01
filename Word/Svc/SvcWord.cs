@@ -1,5 +1,4 @@
 using Ngaq.Core.Infra.Core;
-using Ngaq.Core.Model;
 using Ngaq.Core.Model.Po.Kv;
 using Ngaq.Core.Model.Po.Learn_;
 using Ngaq.Core.Model.Po.Word;
@@ -22,6 +21,7 @@ using Tsinswreng.CsPage;
 using Ngaq.Core.Word.Models;
 using Ngaq.Core.Infra;
 using Ngaq.Core.Models.UserCtx;
+using Ngaq.Core.Models;
 
 namespace Ngaq.Local.Word.Svc;
 
@@ -112,7 +112,7 @@ public  partial class SvcWord(
 		IDbFnCtx Ctx
 		,CT Ct
 	){
-		var InsertBoWords = await DaoWord.FnInsertBoWords(Ctx, Ct);
+		var InsertJnWords = await DaoWord.FnInsertJnWords(Ctx, Ct);
 		var InsertPoKvs = await DaoWord.FnInsertPoKvs(Ctx, Ct);
 		var InsertPoLearns = await DaoWord.FnInsertPoLearns(Ctx, Ct);
 
@@ -121,7 +121,7 @@ public  partial class SvcWord(
 			,DtoAddWords DtoAddWords
 			,CT Ct
 		)=>{
-			await using var NeoWords = new BatchListAsy<JnWord, nil>(InsertBoWords);
+			await using var NeoWords = new BatchListAsy<JnWord, nil>(InsertJnWords);
 			await using var NeoProps = new BatchListAsy<PoWordProp, nil>(InsertPoKvs);
 			await using var NeoLearns = new BatchListAsy<PoWordLearn, nil>(InsertPoLearns);
 
@@ -506,7 +506,7 @@ public  partial class SvcWord(
 	}
 
 	[Impl]
-	public async Task<IPageAsy<JnWord>> PageBoWord(
+	public async Task<IPageAsy<JnWord>> PageJnWord(
 		IUserCtx UserCtx
 		,IPageQuery PageQry
 		,CT Ct

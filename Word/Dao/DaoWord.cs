@@ -173,7 +173,7 @@ WHERE {TK.Fld(NWordId)} = {TW.Prm(NWordId)}
 		IEnumerable<JnWord>
 		,CT
 		,Task<nil>
-	>> FnInsertBoWords(
+	>> FnInsertJnWords(
 		Db.IDbFnCtx? Ctx
 		,CT ct
 	) {
@@ -296,16 +296,18 @@ AND {Tbl.Fld(nameof(IPoBase.Status))} <> {PoStatus.Deleted.Value}
 			,CT Ct
 		)=>{
 			var Arg = new Str_Any{
-				[NWordId] = TW.UpperToRaw(nameof(PoWord.Id), IdWord)
+				[NWordId] = TW.UpperToRaw(IdWord)
 				,[NLmt] = PageQry.PageSize
 				,[NOfst] = PageQry.Offset_()
 			};
 			var DbDict = SqlCmd.Args(Arg).Run(Ct);
 			u64 Cnt = 0;
 			//if(PageQry.HasTotalCount){Cnt = await FnCnt(Ct);}
-			var R = PageAsy<IStr_Any>.Mk(
-				PageQry, Cnt, DbDict
-			);
+			IPageAsy<IStr_Any> R = new PageAsy<IStr_Any>{
+				PageQry=PageQry,
+				TotalCount=Cnt,
+				DataAsy=DbDict,
+			};
 			return R;
 		};
 		return Fn;
@@ -323,14 +325,13 @@ AND {Tbl.Fld(nameof(IPoBase.Status))} <> {PoStatus.Deleted.Value}
 	){
 		var TW = TblMgr.GetTable<PoWord>();
 		var NOwner = nameof(PoWord.Owner);
-		str NLmt = "Lmt", NOfst = "Ofst";
 		var Sql =
 $"""
 SELECT * FROM {TW.Qt(TW.DbTblName)}
 WHERE {TW.Fld(NOwner)} = {TW.Prm(NOwner)}
 AND {TW.Fld(nameof(PoWord.Status))} <> {PoStatus.Deleted.Value}
 ORDER BY {TW.Fld(nameof(IPoBase.DbCreatedAt))} DESC
-{TW.SqlMkr.PrmLmtOfst(NLmt, NOfst)}
+{TW.SqlMkr.PrmLmtOfst(out var NLmt, out var NOfst)}
 """;
 		var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
 		var FnCnt = await RepoWord.FnCount(Ctx, Ct);
@@ -340,7 +341,7 @@ ORDER BY {TW.Fld(nameof(IPoBase.DbCreatedAt))} DESC
 			,CT Ct
 		)=>{
 			var Arg = new Str_Any(){
-				[NOwner] = TW.UpperToRaw(NOwner, UserCtx.UserId)
+				[NOwner] = TW.UpperToRaw(UserCtx.UserId)
 				,[NLmt] = PageQry.PageSize
 				,[NOfst] = PageQry.Offset_()
 			};
@@ -350,9 +351,11 @@ ORDER BY {TW.Fld(nameof(IPoBase.DbCreatedAt))} DESC
 				(Raw)=>TW.DbDictToPo<PoWord>(Raw)
 			);
 			var Cnt = PageQry.WantTotalCount?  await FnCnt(Ct)  :  0;
-			var R = PageAsy<PoWord>.Mk(
-				PageQry, Cnt, PoWords
-			);
+			IPageAsy<PoWord> R = new PageAsy<PoWord>{
+				PageQry = PageQry,
+				TotalCount = Cnt,
+				DataAsy = PoWords
+			};
 			return R;
 		};
 		return Fn;
@@ -427,24 +430,30 @@ ORDER BY {TW.Fld(nameof(IPoBase.DbCreatedAt))} DESC
 		,Task<IPageAsy<IdWord>>
 	>> FnPage_ChangedWordIdsAfterTime(IDbFnCtx Ctx, CT Ct){
 var T = TblMgr.GetTable<PoWord>();
-var PTempus = T.Prm("Tempus"); var POwner = T.Prm("Owner");
-str NId = nameof(PoWord.Id), NOwner = nameof(PoWord.Owner), NUpdateAt = nameof(PoWord.UpdatedAt);
+str
+	NId = nameof(PoWord.Id),NOwner = nameof(PoWord.Owner)
+	,NUpdateAt = nameof(PoWord.UpdatedAt),NCreatedAt = nameof(PoWord.CreatedAt)
+;
+str PTempus = T.Prm("Tempus"), POwner = T.Prm("Owner");
+
 var Sql =
 $"""
 SELECT {T.Fld(NId)} AS {T.Qt(NId)}
 FROM {T.Qt(T.DbTblName)}
 WHERE {T.Fld(NOwner)} = {POwner}
-AND {T.Fld(NUpdateAt)} > {PTempus}
+AND (
+	{T.Fld(NUpdateAt)} > {PTempus}
+	OR {T.Fld(NCreatedAt)} > {PTempus}
+)
 {T.SqlMkr.PrmLmtOfst(out str Lmt, out str Ofst)}
-""";//TODO 考慮同步後 一方ʃ新增、此旹無UpdatedAt 只有CreatedAt
+""";//考慮同步後 一方ʃ新增、此旹無UpdatedAt 只有CreatedAt
 var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
-
 		var Fn= async(IUserCtx UserCtx, IPageQuery PageQry, Tempus Tem, CT Ct)=>{
 			// [Param]=T.ToDbType(NUpdateAt, Tem)
 			// [Lmt] = []
 			var RawDictAsy = SqlCmd.WithCtx(Ctx).Args(ArgDict.Mk()
-				.Add(PTempus, T.UpperToRaw(NUpdateAt, Tem))
-				.Add(POwner, T.UpperToRaw(NOwner, UserCtx.UserId))
+				.Add(PTempus, T.UpperToRaw(Tem))
+				.Add(POwner, T.UpperToRaw(UserCtx.UserId))
 				.AddPageQry(PageQry, Lmt, Ofst)
 				.ToDict()
 			).Run(Ct);

@@ -70,7 +70,6 @@ public  partial class LocalTblMgrIniter{
 
 	protected nil CfgPoBase<TPo>(ITable Tbl){
 		var o = Tbl;
-
 		o.CodeIdName = nameof(I_Id<nil>.Id);
 		o.SetCol(nameof(I_Id<nil>.Id)).AdditionalSqls(["PRIMARY KEY"]);
 
