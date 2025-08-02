@@ -1,4 +1,3 @@
-using System.Linq.Expressions;
 using Ngaq.Core.Infra;
 using Ngaq.Core.Model.Po;
 using Ngaq.Core.Model.Po.Kv;
@@ -8,54 +7,25 @@ using Ngaq.Local.Db;
 using Tsinswreng.CsSqlHelper;
 using Str_Any = System.Collections.Generic.Dictionary<string, object?>;
 using IStr_Any = System.Collections.Generic.IDictionary<string, object?>;
-using System.Threading.Tasks;
 using Ngaq.Core.Infra.Errors;
 using Ngaq.Core.Models.Po;
-using Tsinswreng.CsUlid;
-using ToolId = Tsinswreng.CsUlid.IdTool;
 using Ngaq.Core.Word.Models.Po.Learn;
 using Tsinswreng.CsPage;
 using Ngaq.Core.Word.Models;
-using Ngaq.Core.Model.Sys.Po.User;
 using Ngaq.Core.Models.UserCtx;
 using Tsinswreng.CsTools;
+using Ngaq.Local.Db.TswG;
 
-namespace Ngaq.Local.Dao;
+namespace Ngaq.Local.Word.Dao;
 
 
 public  partial class DaoSqlWord(
 	ISqlCmdMkr SqlCmdMkr
 	,ITblMgr TblMgr
-	,Repo<PoWord, IdWord> RepoWord
-	,Repo<PoWordProp, IdWordProp> RepoKv
-	,Repo<PoWordLearn, IdLearn> RepoLearn
+	,IAppRepo<PoWord, IdWord> RepoWord
+	,IAppRepo<PoWordProp, IdWordProp> RepoKv
+	,IAppRepo<PoWordLearn, IdLearn> RepoLearn
 ){
-	// public RepoSql<Po_Word, IdWord> RepoWord{get;set;}
-	// public RepoSql<Po_Kv, IdKv> RepoKv{get;set;}
-	// public RepoSql<Po_Learn, IdKv> RepoLearn{get;set;}
-
-	// public ISqlCmdMkr SqlCmdMkr{get;set;}
-	// public ITableMgr TblMgr{get;set;}
-
-
-	// public async Task<Func<
-	// 	IUserCtx
-	// 	,CT
-	// 	,Task<IEnumerable<BoWord>>
-	// >> FnSelectAllWords(
-	// 	IDbFnCtx Ctx
-	// 	,CT Ct
-	// ){
-
-	// 	var Fn = async(
-	// 		IUserCtx UserCtx
-	// 		,CT Ct
-	// 	)=>{
-
-	// 	};
-	// 	return Fn;
-	// }
-
 
 	public async Task<Func<
 		IUserCtx
@@ -65,7 +35,7 @@ public  partial class DaoSqlWord(
 		,Task<IdWord?>
 	>>
 	FnSelectIdByHeadEtLang(
-		Db.IDbFnCtx Ctx
+		IDbFnCtx Ctx
 		,CT Ct
 	){
 		var T = TblMgr.GetTable<PoWord>();
@@ -87,10 +57,10 @@ AND Lang = @Lang
  */
 
 		return async (
-			IUserCtx OperatorCtx
-			,str Head
-			,str Lang
-			,CT ct
+OperatorCtx
+			,Head
+			,Lang
+			,ct
 		)=>{
 			var UserId = OperatorCtx.UserId;
 			var Params = new Str_Any {
@@ -119,7 +89,7 @@ AND Lang = @Lang
 		,CT
 		,Task<JnWord?>
 	>> FnSelectJnWordById(
-		Db.IDbFnCtx? Ctx
+		IDbFnCtx? Ctx
 		,CT ct
 	){
 		var TW = TblMgr.GetTable<PoWord>();
@@ -174,7 +144,7 @@ WHERE {TK.Fld(NWordId)} = {TW.Prm(NWordId)}
 		,CT
 		,Task<nil>
 	>> FnInsertJnWords(
-		Db.IDbFnCtx? Ctx
+		IDbFnCtx? Ctx
 		,CT ct
 	) {
 		var InsertPoWords = await RepoWord.FnInsertMany(Ctx, ct);
@@ -226,7 +196,7 @@ WHERE {TK.Fld(NWordId)} = {TW.Prm(NWordId)}
 		,CT
 		,Task<nil>
 	>> FnInsertPoKvs(
-		Db.IDbFnCtx? Ctx
+		IDbFnCtx? Ctx
 		,CT ct
 	){
 		var InsertMany = await RepoKv.FnInsertMany(Ctx, ct);
@@ -254,7 +224,7 @@ WHERE {TK.Fld(NWordId)} = {TW.Prm(NWordId)}
 		,CT
 		,Task<nil>
 	>> FnInsertPoLearns(
-		Db.IDbFnCtx? Ctx
+		IDbFnCtx? Ctx
 		,CT ct
 	){
 		var InsertMany = await RepoLearn.FnInsertMany(Ctx, ct);
@@ -274,7 +244,7 @@ WHERE {TK.Fld(NWordId)} = {TW.Prm(NWordId)}
 		,CT
 		,Task<IPageAsy<IStr_Any>>
 	>> FnPageByFKey(
-		Db.IDbFnCtx Ctx
+		IDbFnCtx Ctx
 		,ITable Tbl
 		,CT Ct
 	){
@@ -320,7 +290,7 @@ AND {Tbl.Fld(nameof(IPoBase.Status))} <> {PoStatus.Deleted.Value}
 		,CT
 		,Task<IPageAsy<PoWord>>
 	>> FnPagePoWords(
-		Db.IDbFnCtx Ctx
+		IDbFnCtx Ctx
 		,CT Ct
 	){
 		var TW = TblMgr.GetTable<PoWord>();
@@ -367,7 +337,7 @@ ORDER BY {TW.Fld(nameof(IPoBase.DbCreatedAt))} DESC
 		,CT
 		,Task<IPageAsy<JnWord>>
 	>> FnPageJnWords(
-		Db.IDbFnCtx Ctx
+		IDbFnCtx Ctx
 		,CT Ct
 	){
 		var TK = TblMgr.GetTable<PoWordProp>();
@@ -417,7 +387,7 @@ ORDER BY {TW.Fld(nameof(IPoBase.DbCreatedAt))} DESC
 	}
 
 /// <summary>
-/// 頁查 某時後 改˪ʹ諸詞之id
+/// 頁查 某時後 改˪ʹ 及 新增ʹ 諸詞 之id
 /// </summary>
 /// <param name="Ctx"></param>
 /// <param name="Ct"></param>
@@ -449,21 +419,21 @@ AND (
 """;//考慮同步後 一方ʃ新增、此旹無UpdatedAt 只有CreatedAt
 var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
 		var Fn= async(IUserCtx UserCtx, IPageQuery PageQry, Tempus Tem, CT Ct)=>{
-			// [Param]=T.ToDbType(NUpdateAt, Tem)
-			// [Lmt] = []
 			var RawDictAsy = SqlCmd.WithCtx(Ctx).Args(ArgDict.Mk()
 				.Add(PTempus, T.UpperToRaw(Tem))
 				.Add(POwner, T.UpperToRaw(UserCtx.UserId))
 				.AddPageQry(PageQry, Lmt, Ofst)
 				.ToDict()
 			).Run(Ct);
-			var WordIds = RawDictAsy.Select(x => T.RawToUpper<IdWord>(NId, x));
+			var WordIds = RawDictAsy.Select(x => T.RawToUpper<IdWord>(x, NId));
 			var R = PageAsy<IdWord>.Mk(PageQry, WordIds);
 			R.HasTotalCount = false;
 			return R;
 		};
 		return Fn;
 	}
+
+
 
 	public async Task<Func<
 

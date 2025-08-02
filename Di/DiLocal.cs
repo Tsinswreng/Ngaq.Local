@@ -1,6 +1,4 @@
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Data;
 using Ngaq.Core.Model.Po.Kv;
 using Ngaq.Core.Model.Po.Learn_;
 using Ngaq.Core.Model.Po.Word;
@@ -8,10 +6,7 @@ using Ngaq.Core.Model.UserCtx;
 using Ngaq.Core.Service.Word;
 
 //using Microsoft.CodeAnalysis.Text;
-using Ngaq.Core.Tools;
-using Ngaq.Core.Word;
 using Ngaq.Core.Word.Svc;
-using Ngaq.Local.Dao;
 using Ngaq.Local.Service.Word;
 using Ngaq.Local.Word.Svc;
 using Tsinswreng.CsSqlHelper;
@@ -26,6 +21,7 @@ using Ngaq.Local.Infra;
 using Tsinswreng.CsDictMapper;
 using Ngaq.Local.Db;
 using Ngaq.Core.Models.UserCtx;
+using Ngaq.Local.Word.Dao;
 
 
 namespace Ngaq.Local.Di;
@@ -66,10 +62,22 @@ return z;
 
 //倉儲
 	static IServiceCollection SetUpRepos(this IServiceCollection z){
-z.AddScoped<Repo<SchemaHistory, i64>>();
-z.AddScoped<Repo<PoWord, IdWord>>();
-z.AddScoped<Repo<PoWordProp, IdWordProp>>();
-z.AddScoped<Repo<PoWordLearn, IdLearn>>();
+z.AddScoped<
+	IAppRepo<SchemaHistory, i64>
+	,AppRepo<SchemaHistory, i64>
+>();
+z.AddScoped<
+	IAppRepo<PoWord, IdWord>
+	,AppRepo<PoWord, IdWord>
+>();
+z.AddScoped<
+	IAppRepo<PoWordProp, IdWordProp>
+	,AppRepo<PoWordProp, IdWordProp>
+>();
+z.AddScoped<
+	IAppRepo<PoWordLearn, IdLearn>
+	,AppRepo<PoWordLearn, IdLearn>
+>();
 //z.AddScoped<IRunInTxn, AdoTxnRunner>();
 return z;
 	}

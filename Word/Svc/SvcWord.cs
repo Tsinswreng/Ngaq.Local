@@ -6,7 +6,6 @@ using Ngaq.Core.Model.Word.Dto;
 using Ngaq.Core.Service.Word;
 using Ngaq.Core.Tools;
 using Ngaq.Core.Tools.Io;
-using Ngaq.Local.Dao;
 using Ngaq.Local.Db;
 using System.Collections;
 using Ngaq.Core.Infra.Errors;
@@ -22,6 +21,8 @@ using Ngaq.Core.Word.Models;
 using Ngaq.Core.Infra;
 using Ngaq.Core.Models.UserCtx;
 using Ngaq.Core.Models;
+using Ngaq.Local.Word.Dao;
+using Ngaq.Local.Db.TswG;
 
 namespace Ngaq.Local.Word.Svc;
 
@@ -31,9 +32,9 @@ public  partial class SvcWord(
 	,ITxnRunner TxnRunner
 	,DaoSqlWord DaoWord
 	,I_GetTxnAsy TxnGetter
-	,Repo<PoWord, IdWord> RepoPoWord
-	,Repo<PoWordProp, IdWordProp> RepoKv
-	,Repo<PoWordLearn, IdLearn> RepoLearn
+	,IAppRepo<PoWord, IdWord> RepoPoWord
+	,IAppRepo<PoWordProp, IdWordProp> RepoKv
+	,IAppRepo<PoWordLearn, IdLearn> RepoLearn
 	,TxnWrapper<DbFnCtx> TxnWrapper
 )
 	: ISvcWord
@@ -174,18 +175,18 @@ public  partial class SvcWord(
 
 		var Fn = async(
 			IUserCtx UserCtx
-			,IEnumerable<JnWord> BoWords
+			,IEnumerable<JnWord> JnWords
 			,CT ct
 		)=>{
 			var R = new DtoAddWords();
 
 			//按語言與詞頭分類
-			var HeadLang_Words = BoWords.GroupByLangHead();
+			var HeadLang_Words = JnWords.GroupByLangHead();
 
 			//合併後ʹ諸詞。斯列表中 同語言同詞頭之詞當只出現一次
 			IList<JnWord> Mergeds = new List<JnWord>();
 			foreach( var (HeadLang, Words) in HeadLang_Words ){
-				var OneMerged = Words.MergeSameWords();
+				var OneMerged = Words.NoDiffMergeSameWords();
 				if(OneMerged != null){
 					Mergeds.Add(OneMerged);
 				}
@@ -249,10 +250,10 @@ public  partial class SvcWord(
 		var AddOrUpdateWordsByDto = await FnAddOrUpdateWordsByDto(Ctx,Ct);
 		var Fn = async(
 			IUserCtx UserCtx
-			,IEnumerable<JnWord> BoWords
+			,IEnumerable<JnWord> JnWords
 			,CT Ct
 		)=>{
-			var DtoAddWords = await ClassifyWordsToAdd(UserCtx, BoWords, Ct);
+			var DtoAddWords = await ClassifyWordsToAdd(UserCtx, JnWords, Ct);
 			await AddOrUpdateWordsByDto(UserCtx, DtoAddWords, Ct);
 			return DtoAddWords;
 		};
@@ -330,42 +331,42 @@ public  partial class SvcWord(
 		return Fn;
 	}
 
-	[Obsolete("宜用軟刪")]
-	public async Task<Func<
-		IUserCtx
-		,IEnumerable<IdWord>
-		,CT
-		,Task<nil>
-	>> FnDeleteJnWordsByIds(
-		IDbFnCtx Ctx, CT Ct
-	){
-		var CheckOwner = await FnCheckWordOwnerOrThrow(Ctx, Ct);
+	// [Obsolete("宜用軟刪")]
+	// public async Task<Func<
+	// 	IUserCtx
+	// 	,IEnumerable<IdWord>
+	// 	,CT
+	// 	,Task<nil>
+	// >> FnDeleteJnWordsByIds(
+	// 	IDbFnCtx Ctx, CT Ct
+	// ){
+	// 	var CheckOwner = await FnCheckWordOwnerOrThrow(Ctx, Ct);
 
-		var DelPoWordById = await RepoPoWord.FnDeleteManyByKeys<IdWord>(
-			Ctx, nameof(PoWord.Id), 1000, Ct
-		);
-		var DelPoKvByWordIds = await RepoKv.FnDeleteManyByKeys<IdWord>(
-			Ctx, nameof(PoWordProp.WordId), 1000, Ct
-		);
-		var DelPoLearnByWordIds = await RepoLearn.FnDeleteManyByKeys<IdWord>(
-			Ctx, nameof(PoWordLearn.WordId), 1000, Ct
-		);
-		var Fn = async(
-			IUserCtx UserCtx
-			,IEnumerable<IdWord> Ids
-			,CT Ct
-		)=>{
-			Ids = Ids.Select(Id=>{
-				_ = CheckOwner(UserCtx, Id, Ct).Result;
-				return Id;
-			});
-			await DelPoWordById(Ids, Ct);
-			await DelPoKvByWordIds(Ids, Ct);
-			await DelPoLearnByWordIds(Ids, Ct);
-			return NIL;
-		};
-		return Fn;
-	}
+	// 	var DelPoWordById = await RepoPoWord.FnDeleteManyByKeys<IdWord>(
+	// 		Ctx, nameof(PoWord.Id), 1000, Ct
+	// 	);
+	// 	var DelPoKvByWordIds = await RepoKv.FnDeleteManyByKeys<IdWord>(
+	// 		Ctx, nameof(PoWordProp.WordId), 1000, Ct
+	// 	);
+	// 	var DelPoLearnByWordIds = await RepoLearn.FnDeleteManyByKeys<IdWord>(
+	// 		Ctx, nameof(PoWordLearn.WordId), 1000, Ct
+	// 	);
+	// 	var Fn = async(
+	// 		IUserCtx UserCtx
+	// 		,IEnumerable<IdWord> Ids
+	// 		,CT Ct
+	// 	)=>{
+	// 		Ids = Ids.Select(Id=>{
+	// 			_ = CheckOwner(UserCtx, Id, Ct).Result;
+	// 			return Id;
+	// 		});
+	// 		await DelPoWordById(Ids, Ct);
+	// 		await DelPoKvByWordIds(Ids, Ct);
+	// 		await DelPoLearnByWordIds(Ids, Ct);
+	// 		return NIL;
+	// 	};
+	// 	return Fn;
+	// }
 
 	public async Task<Func<
 		IUserCtx

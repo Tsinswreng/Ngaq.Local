@@ -1,6 +1,7 @@
 using Ngaq.Local.Db;
 using Tsinswreng.CsTools;
 using Tsinswreng.CsSqlHelper;
+using Ngaq.Local.Db.TswG;
 
 namespace Ngaq.Local.Sql;
 
@@ -13,16 +14,19 @@ public partial class DbIniter{
 	public ITxnRunner TxnRunner{get;set;}
 	public I_GetTxnAsy TxnGetter{get;set;}
 	public ITblMgr TblMgr{get;set;}
-	public Repo<SchemaHistory, i64> RepoSchemaHistory{get;set;}
+	public IAppRepo<SchemaHistory, i64> RepoSchemaHistory{get;set;}
 	public DbIniter(
 		ISqlCmdMkr SqlCmdMkr
 		,ITxnRunner TxnRunner
 		,I_GetTxnAsy TxnGetter
 		,ITblMgr TblMgr
-		,Repo<SchemaHistory, i64> RepoSchemaHistory
+		,IAppRepo<SchemaHistory, i64> RepoSchemaHistory
 	){
+		if(RepoSchemaHistory is not SqlRepo<SchemaHistory, i64> SqlRepoSchemaHistory){
+			throw new ArgumentException("RepoSchemaHistory must be SqlRepo<SchemaHistory, i64>");
+		}
 		this.RepoSchemaHistory = RepoSchemaHistory;
-		RepoSchemaHistory.DictMapper = SqlHelperDictMapper.Inst;
+		SqlRepoSchemaHistory.DictMapper = SqlHelperDictMapper.Inst;
 		this.TblMgr = TblMgr;
 		this.TxnRunner = TxnRunner;
 		this.TxnGetter = TxnGetter;
