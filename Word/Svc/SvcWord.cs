@@ -104,18 +104,26 @@ public  partial class SvcWord(
 		return Fn;
 	}
 
+
+	/// <summary>
+	/// 專用于添詞芝從文本詞表
+	/// </summary>
+	/// <param name="Ctx"></param>
+	/// <param name="Ct"></param>
+	/// <returns></returns>
 	public async Task<Func<
 		IUserCtx
 		,DtoAddWords
 		,CT
 		,Task<nil>
-	>> FnAddOrUpdateWordsByDto(
+	>> FnAddOrUpdWordsFromTxtByDto(
 		IDbFnCtx Ctx
 		,CT Ct
 	){
 		var InsertJnWords = await DaoWord.FnInsertJnWords(Ctx, Ct);
 		var InsertPoKvs = await DaoWord.FnInsertPoKvs(Ctx, Ct);
 		var InsertPoLearns = await DaoWord.FnInsertPoLearns(Ctx, Ct);
+		var UpdUpd = await RepoPoWord.FnUpd_UpdatedAt(Ctx,Ct);
 
 		var Fn = async(
 			IUserCtx UserCtx
@@ -136,15 +144,18 @@ public  partial class SvcWord(
 
 			// 有變動之諸新詞
 			foreach(var UpdatedWord in DtoAddWords.UpdatedWords){
-				if(UpdatedWord.DiffedProps.Count > 0){ //若NewProps則有變動、學習記錄添'add'
-					var NeoPoLearns = MkPoLearns(UpdatedWord.DiffedProps, UpdatedWord.WordInDb.Id);
-					await NeoLearns.AddMany(NeoPoLearns, null, Ct);
-					UpdatedWord.DiffedProps = UpdatedWord.DiffedProps.Select(x=>{
-						x.WordId = UpdatedWord.WordInDb.Id;
-						return x;
-					}).ToList();
-					await NeoProps.AddMany(UpdatedWord.DiffedProps, null, Ct);
+				if(UpdatedWord.DiffedProps.Count <= 0){
+					continue;
 				}
+				//若NewProps則有變動、學習記錄添'add'
+				var NeoPoLearns = MkPoLearns(UpdatedWord.DiffedProps, UpdatedWord.WordInDb.Id);
+				await NeoLearns.AddMany(NeoPoLearns, null, Ct);
+				UpdatedWord.DiffedProps = UpdatedWord.DiffedProps.Select(x=>{
+					x.WordId = UpdatedWord.WordInDb.Id;
+					return x;
+				}).ToList();
+				await NeoProps.AddMany(UpdatedWord.DiffedProps, null, Ct);
+				await UpdUpd(UpdatedWord.WordInDb.Id, Ct);
 			}
 
 			await NeoWords.End(Ct);
@@ -236,18 +247,23 @@ public  partial class SvcWord(
 	}
 
 
-//TODO 更新UpdateAt
+	/// <summary>
+	/// 專用于添詞芝從文本詞表
+	/// </summary>
+	/// <param name="Ctx"></param>
+	/// <param name="Ct"></param>
+	/// <returns></returns>
 	public async Task<Func<
 		IUserCtx
 		,IEnumerable<JnWord>
 		,CT
 		,Task<DtoAddWords>
-	>> FnAddOrUpdateWords(
+	>> FnAddOrUpdWordsFromTxt(
 		IDbFnCtx Ctx
 		,CT Ct
 	){
 		var ClassifyWordsToAdd = await FnClassifyWordsToAdd(Ctx, Ct);
-		var AddOrUpdateWordsByDto = await FnAddOrUpdateWordsByDto(Ctx,Ct);
+		var AddOrUpdateWordsByDto = await FnAddOrUpdWordsFromTxtByDto(Ctx,Ct);
 		var Fn = async(
 			IUserCtx UserCtx
 			,IEnumerable<JnWord> JnWords
@@ -301,6 +317,12 @@ public  partial class SvcWord(
 		return Fn;
 	}
 
+	/// <summary>
+	/// 潙已有ʹ詞 增 新ʹ學ˡ錄
+	/// </summary>
+	/// <param name="Ctx"></param>
+	/// <param name="Ct"></param>
+	/// <returns></returns>
 	public async Task<Func<
 		IUserCtx
 		,IEnumerable<WordId_PoLearns>
@@ -312,6 +334,7 @@ public  partial class SvcWord(
 	){
 		var CheckWordOwner = await FnCheckWordOwnerOrThrow(Ctx, Ct);
 		var InsertPoLearns = await DaoWord.FnInsertPoLearns(Ctx, Ct);
+		var UpdUpd = await RepoPoWord.FnUpd_UpdatedAt(Ctx,Ct);
 		var Fn = async(
 			IUserCtx UserCtx
 			,IEnumerable<WordId_PoLearns> ListOfWordId_PoLearns
@@ -325,6 +348,7 @@ public  partial class SvcWord(
 					return x;
 				});
 				await InsertPoLearns(PoLearns, Ct);
+				await UpdUpd(IdWord, Ct);
 			}
 			return NIL;
 		};
@@ -435,7 +459,7 @@ public  partial class SvcWord(
 		,CT Ct
 	) {
 		var Ctx = new DbFnCtx{Txn = await TxnGetter.GetTxnAsy(Ct)};
-		var AddOrUpdateWords = await FnAddOrUpdateWords(Ctx, Ct);
+		var AddOrUpdateWords = await FnAddOrUpdWordsFromTxt(Ctx, Ct);
 		await TxnRunner.RunTxn(Ctx.Txn, async(Ct)=>{
 			var BoWords = await SvcParseWordList.ParseWordsFromFilePath(Path_Encode);
 			await AddOrUpdateWords(UserCtx,BoWords,Ct);
@@ -452,7 +476,7 @@ public  partial class SvcWord(
 		,CT Ct
 	) {
 		var Ctx = new DbFnCtx{Txn = await TxnGetter.GetTxnAsy(Ct)};
-		var AddOrUpdateWords = await FnAddOrUpdateWords(Ctx, Ct);
+		var AddOrUpdateWords = await FnAddOrUpdWordsFromTxt(Ctx, Ct);
 		await TxnRunner.RunTxn(Ctx.Txn, async(ct)=>{
 			var BoWords = await SvcParseWordList.ParseWordsFromText(Text,ct);
 			await AddOrUpdateWords(UserCtx,BoWords,ct);

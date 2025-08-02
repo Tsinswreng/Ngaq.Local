@@ -43,9 +43,9 @@ public  partial class DaoSqlWord(
 		var Sql =
 $"""
 SELECT {T.Fld(nameof(I_Id<nil>.Id))} FROM {T.Qt(T.DbTblName)}
-WHERE {T.Fld(nameof(PoWord.Owner))} = {F.Prm(nameof(PoWord.Owner))}
-AND {T.Fld(nameof(PoWord.Head))} = {F.Prm(nameof(PoWord.Head))}
-AND {T.Fld(nameof(PoWord.Lang))} = {F.Prm(nameof(PoWord.Lang))}
+WHERE {T.Fld(nameof(PoWord.Owner))} = {F.PrmStr(nameof(PoWord.Owner))}
+AND {T.Fld(nameof(PoWord.Head))} = {F.PrmStr(nameof(PoWord.Head))}
+AND {T.Fld(nameof(PoWord.Lang))} = {F.PrmStr(nameof(PoWord.Lang))}
 """;
 		var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
 
@@ -100,7 +100,7 @@ OperatorCtx
 			var Sql =
 $"""
 SELECT * FROM {QuotedTblName}
-WHERE {TK.Fld(NWordId)} = {TW.Prm(NWordId)}
+WHERE {TK.Fld(NWordId)} = {TW.PrmStr(NWordId)}
 """;
 			return Sql;
 		};
@@ -137,8 +137,6 @@ WHERE {TK.Fld(NWordId)} = {TW.Prm(NWordId)}
 		return Fn;
 	}
 
-
-
 	public async Task<Func<
 		IEnumerable<JnWord>
 		,CT
@@ -152,44 +150,39 @@ WHERE {TK.Fld(NWordId)} = {TW.Prm(NWordId)}
 		var InsertPoLearns = await RepoLearn.FnInsertMany(Ctx, ct);
 
 		var Fn = async(
-			IEnumerable<JnWord> BoWords
+			IEnumerable<JnWord> JnWords
 			,CT ct
 		)=>{
 			u64 BatchSize = 0xfff;
-			await using var Po_Words = new BatchListAsy<PoWord, nil>(async(list, ct)=>{
+			await using var PoWords = new BatchListAsy<PoWord, nil>(async(list, ct)=>{
 				await InsertPoWords(list,ct);
 				return NIL;
 			}, BatchSize);
-			await using var Po_Kvs = new BatchListAsy<PoWordProp, nil>(async(e, ct)=>{
+			await using var PoKvs = new BatchListAsy<PoWordProp, nil>(async(e, ct)=>{
 				await InsertPoKvs(e, ct);
 				return NIL;
 			}, BatchSize);
-			await using var Po_Learns = new BatchListAsy<PoWordLearn, nil>(async(e, ct)=>{
+			await using var PoLearns = new BatchListAsy<PoWordLearn, nil>(async(e, ct)=>{
 				await InsertPoLearns(e, ct);
 				return NIL;
 			}, BatchSize);
-			u64 i = 0;
-			foreach (var BoWord in BoWords) {
-				BoWord.AssignId();
-				await Po_Words.Add(BoWord.PoWord, ct);
-				foreach (var Prop in BoWord.Props) {
-					await Po_Kvs.Add(Prop, ct);
+			foreach (var JWord in JnWords) {
+				JWord.AssignId();
+				await PoWords.Add(JWord.PoWord, ct);
+				foreach (var Prop in JWord.Props) {
+					await PoKvs.Add(Prop, ct);
 				}
-				foreach (var Learn in BoWord.Learns) {
-					await Po_Learns.Add(Learn, ct);
+				foreach (var Learn in JWord.Learns) {
+					await PoLearns.Add(Learn, ct);
 				}
-				i++;
 			}
-			await Po_Words.End(ct);
-			await Po_Kvs.End(ct);
-			await Po_Learns.End(ct);
+			await PoWords.End(ct);
+			await PoKvs.End(ct);
+			await PoLearns.End(ct);
 			return NIL;
 		};
 		return Fn;
 	}
-
-
-
 
 	public async Task<Func<
 		IEnumerable<PoWordProp>
@@ -201,19 +194,16 @@ WHERE {TK.Fld(NWordId)} = {TW.Prm(NWordId)}
 	){
 		var InsertMany = await RepoKv.FnInsertMany(Ctx, ct);
 		var Fn = async(
-			IEnumerable<PoWordProp> Po_Kvs
+			IEnumerable<PoWordProp> PoKvs
 			,CT ct
 		)=>{
-			Po_Kvs = Po_Kvs.Select(x=>{
-				// if(x.CreatedAt == null){
-				// 	throw new ErrBase("PoKv.CreatedAt should not be null. Please explicit set value");
-				// }
+			PoKvs = PoKvs.Select(x=>{
 				if(x.WordId == null || x.WordId.Value == 0){
 					throw new ErrArg("PoKv.WordId should not be null or 0.");
 				}
 				return x;
 			});
-			await InsertMany(Po_Kvs, ct);
+			await InsertMany(PoKvs, ct);
 			return NIL;
 		};
 		return Fn;
@@ -254,7 +244,7 @@ WHERE {TK.Fld(NWordId)} = {TW.Prm(NWordId)}
 		var Sql =
 $"""
 SELECT * FROM {Tbl.Qt(Tbl.DbTblName)}
-WHERE {Tbl.Fld(NWordId)} = {Tbl.Prm(NWordId)}
+WHERE {Tbl.Fld(NWordId)} = {Tbl.PrmStr(NWordId)}
 AND {Tbl.Fld(nameof(IPoBase.Status))} <> {PoStatus.Deleted.Value}
 {Tbl.SqlMkr.PrmLmtOfst(out var NLmt, out var NOfst)}
 """;
@@ -298,7 +288,7 @@ AND {Tbl.Fld(nameof(IPoBase.Status))} <> {PoStatus.Deleted.Value}
 		var Sql =
 $"""
 SELECT * FROM {TW.Qt(TW.DbTblName)}
-WHERE {TW.Fld(NOwner)} = {TW.Prm(NOwner)}
+WHERE {TW.Fld(NOwner)} = {TW.PrmStr(NOwner)}
 AND {TW.Fld(nameof(PoWord.Status))} <> {PoStatus.Deleted.Value}
 ORDER BY {TW.Fld(nameof(IPoBase.DbCreatedAt))} DESC
 {TW.SqlMkr.PrmLmtOfst(out var NLmt, out var NOfst)}
@@ -404,7 +394,7 @@ str
 	NId = nameof(PoWord.Id),NOwner = nameof(PoWord.Owner)
 	,NUpdateAt = nameof(PoWord.UpdatedAt),NCreatedAt = nameof(PoWord.CreatedAt)
 ;
-str PTempus = T.Prm("Tempus"), POwner = T.Prm("Owner");
+str PTempus = T.PrmStr("Tempus"), POwner = T.PrmStr("Owner");
 
 var Sql =
 $"""

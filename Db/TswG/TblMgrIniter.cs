@@ -74,7 +74,11 @@ public  partial class LocalTblMgrIniter{
 		o.SetCol(nameof(I_Id<nil>.Id)).AdditionalSqls(["PRIMARY KEY"]);
 
 		o.SetCol(nameof(IPoBase.CreatedAt)).HasConversionEtMapType(MapTempus());
-		o.SetCol(nameof(IPoBase.DbCreatedAt)).HasConversionEtMapType(MapTempus());
+		o.SetCol(nameof(IPoBase.DbCreatedAt)).HasConversionEtMapType(MapTempus())
+// 		.AdditionalSqls([
+// "DEFAULT (strftime('%s', 'now'))"
+// 		])
+		;
 		o.SetCol(nameof(IPoBase.UpdatedAt)).HasConversionEtMapType(MapTempusN());
 		o.SetCol(nameof(IPoBase.DbUpdatedAt)).HasConversionEtMapType(MapTempusN());
 
@@ -86,6 +90,7 @@ public  partial class LocalTblMgrIniter{
 
 		o.SetCol(nameof(IPoBase.CreatedBy)).HasConversionEtMapType(MapIdUserN());
 		o.SetCol(nameof(IPoBase.LastUpdatedBy)).HasConversionEtMapType(MapIdUserN());
+
 
 		o.SoftDelCol = new SoftDelol{
 			CodeColName = nameof(IPoBase.Status)
@@ -99,20 +104,9 @@ public  partial class LocalTblMgrIniter{
 		return NIL;
 	}
 
-	// protected ITable Mk<T>(str DbTblName){
-	// 	var TypeDict = CoreDictMapper.Inst.GetTypeDictShallowT<T>();
-	// 	return Table.Mk(
-	// 		CoreDictMapper.Inst
-	// 		,DbTblName
-	// 		,TypeDict
-	// 	);
-	// }
-
 	protected ITable Mk<T>(str DbTblName){
 		return Table.FnMkTbl<T>(CoreDictMapper.Inst)(DbTblName);
 	}
-
-
 
 	protected ITable CfgI_WordId<TPo>(ITable Tbl){
 		var o = Tbl;

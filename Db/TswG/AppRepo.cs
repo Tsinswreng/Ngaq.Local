@@ -23,13 +23,13 @@ public partial class AppRepo<
 		TId
 		,CT
 		,Task<nil>
-	>> FnAfterUpd(IDbFnCtx Ctx, CT Ct){
+	>> FnUpd_UpdatedAt(IDbFnCtx Ctx, CT Ct){
 		var T = TblMgr.GetTable<TEntity>();
-		var NDbUpdatedAt = nameof(IPoBase.DbUpdatedAt);
-		var Upd_DbUpdatedAtById = await FnUpdOneColById(Ctx, NDbUpdatedAt, Ct);
+		var NUpdatedAt = nameof(IPoBase.UpdatedAt);
+		var Upd_DbUpdatedAtById = await FnUpdOneColById(Ctx, NUpdatedAt, Ct);
 		var Fn = async(TId Id, CT Ct)=>{
 			var Now = Tempus.Now();
-			var Raw = T.UpperToRaw(Now, NDbUpdatedAt);
+			var Raw = T.UpperToRaw(Now, NUpdatedAt);
 			await Upd_DbUpdatedAtById(Id, Raw, Ct);
 			return NIL;
 		};
