@@ -39,7 +39,7 @@ public  partial class SvcWord(
 )
 	: ISvcWord
 {
-	//public DbCtx DbCtx { get; set; } = DbCtx;
+
 
 	public  partial class EErr_:EnumErr{
 		public IAppErr WordOwnerNotMatch() => Mk(nameof(WordOwnerNotMatch));
@@ -71,7 +71,7 @@ public  partial class SvcWord(
 		var Fn = async(
 			IUserCtx UserCtx
 			,IEnumerable<JnWord> JnWords
-			,CT ct
+			,CT Ct
 		)=>{
 			var NonExistingList = new List<JnWord>();
 			var ExiDupliPairs = new List<Existing_Duplication<JnWord>>();
@@ -80,12 +80,12 @@ public  partial class SvcWord(
 					UserCtx
 					,JnWord.PoWord.Head
 					,JnWord.PoWord.Lang
-					,ct
+					,Ct
 				);
 				if(IdInDb == null){
 					NonExistingList.Add(JnWord);
 				}else{
-					var BoWordInDb = await SeekBoWordById(IdInDb.Value, ct);
+					var BoWordInDb = await SeekBoWordById(IdInDb.Value, Ct);
 					if(BoWordInDb == null){
 						throw new FatalLogicErr("BoWordInDb == null");
 					}

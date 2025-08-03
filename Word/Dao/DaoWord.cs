@@ -43,9 +43,9 @@ public  partial class DaoSqlWord(
 		var Sql =
 $"""
 SELECT {T.Fld(nameof(I_Id<nil>.Id))} FROM {T.Qt(T.DbTblName)}
-WHERE {T.Fld(nameof(PoWord.Owner))} = {F.PrmStr(nameof(PoWord.Owner))}
-AND {T.Fld(nameof(PoWord.Head))} = {F.PrmStr(nameof(PoWord.Head))}
-AND {T.Fld(nameof(PoWord.Lang))} = {F.PrmStr(nameof(PoWord.Lang))}
+WHERE {T.Fld(nameof(PoWord.Owner))} = {F.Prm(nameof(PoWord.Owner))}
+AND {T.Fld(nameof(PoWord.Head))} = {F.Prm(nameof(PoWord.Head))}
+AND {T.Fld(nameof(PoWord.Lang))} = {F.Prm(nameof(PoWord.Lang))}
 """;
 		var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
 
@@ -100,7 +100,7 @@ OperatorCtx
 			var Sql =
 $"""
 SELECT * FROM {QuotedTblName}
-WHERE {TK.Fld(NWordId)} = {TW.PrmStr(NWordId)}
+WHERE {TK.Fld(NWordId)} = {TW.Prm(NWordId)}
 """;
 			return Sql;
 		};
@@ -244,7 +244,7 @@ WHERE {TK.Fld(NWordId)} = {TW.PrmStr(NWordId)}
 		var Sql =
 $"""
 SELECT * FROM {Tbl.Qt(Tbl.DbTblName)}
-WHERE {Tbl.Fld(NWordId)} = {Tbl.PrmStr(NWordId)}
+WHERE {Tbl.Fld(NWordId)} = {Tbl.Prm(NWordId)}
 AND {Tbl.Fld(nameof(IPoBase.Status))} <> {PoStatus.Deleted.Value}
 {Tbl.SqlMkr.PrmLmtOfst(out var NLmt, out var NOfst)}
 """;
@@ -288,7 +288,7 @@ AND {Tbl.Fld(nameof(IPoBase.Status))} <> {PoStatus.Deleted.Value}
 		var Sql =
 $"""
 SELECT * FROM {TW.Qt(TW.DbTblName)}
-WHERE {TW.Fld(NOwner)} = {TW.PrmStr(NOwner)}
+WHERE {TW.Fld(NOwner)} = {TW.Prm(NOwner)}
 AND {TW.Fld(nameof(PoWord.Status))} <> {PoStatus.Deleted.Value}
 ORDER BY {TW.Fld(nameof(IPoBase.DbCreatedAt))} DESC
 {TW.SqlMkr.PrmLmtOfst(out var NLmt, out var NOfst)}
@@ -394,7 +394,7 @@ str
 	NId = nameof(PoWord.Id),NOwner = nameof(PoWord.Owner)
 	,NUpdateAt = nameof(PoWord.UpdatedAt),NCreatedAt = nameof(PoWord.CreatedAt)
 ;
-str PTempus = T.PrmStr("Tempus"), POwner = T.PrmStr("Owner");
+var PTempus = T.Prm("Tempus");var POwner = T.Prm("Owner");
 
 var Sql =
 $"""

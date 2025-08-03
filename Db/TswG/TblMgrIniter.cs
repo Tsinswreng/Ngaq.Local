@@ -11,6 +11,7 @@ using Ngaq.Core.Models.Po;
 using Tsinswreng.CsUlid;
 using Ngaq.Core.Word.Models.Po.Learn;
 using Tsinswreng.CsTools;
+using Ngaq.Core.Sys.Models;
 
 //using Id_User = Ngaq.Core.Model.Po.User.IdUser;
 //using Id_Word = Ngaq.Core.Model.Po.Word.IdWord;
@@ -67,8 +68,7 @@ public  partial class LocalTblMgrIniter{
 	}
 
 
-
-	protected nil CfgPoBase<TPo>(ITable Tbl){
+	protected nil CfgPoBase(ITable Tbl){
 		var o = Tbl;
 		o.CodeIdName = nameof(I_Id<nil>.Id);
 		o.SetCol(nameof(I_Id<nil>.Id)).AdditionalSqls(["PRIMARY KEY"]);
@@ -104,6 +104,14 @@ public  partial class LocalTblMgrIniter{
 		return NIL;
 	}
 
+	protected ITable CfgIPoKv(ITable o){
+		o.OuterAdditionalSqls.AddRange([
+$"CREATE INDEX {o.Qt("Idx"+o.DbTblName+"KStr")} ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(PoWordProp.KStr))})"
+,$"CREATE INDEX {o.Qt("Idx"+o.DbTblName+"KI64")} ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(PoWordProp.KI64))})"
+		]);
+		return o;
+	}
+
 	protected ITable Mk<T>(str DbTblName){
 		return Table.FnMkTbl<T>(CoreDictMapper.Inst)(DbTblName);
 	}
@@ -117,13 +125,29 @@ public  partial class LocalTblMgrIniter{
 	public nil Init(){
 		Mgr.AddTable(new SchemaHistoryTblMkr().MkTbl());
 
+		var Tbl_Cfg = Mk<PoCfg>("Cfg");
+		Mgr.AddTable(Tbl_Cfg);
+		{
+			var o = Tbl_Cfg;
+			CfgPoBase(o);
+			CfgBizTimeVer(o);
+			CfgIPoKv(o);
+			o.SetCol(nameof(PoCfg.Id)).HasConversionEtMapType<u8[], IdCfg>(
+				(upper)=>upper.Value.ToByteArr(),
+				(raw)=>IdCfg.FromByteArr(raw)
+			);
+			o.SetCol(nameof(PoCfg.Owner)).HasConversionEtMapType(MapIdUser());
+			o.OuterAdditionalSqls.AddRange([
+$"CREATE INDEX {o.Qt("IdxCfgOwner")} ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoCfg.Owner))})"
+			]);
+		}
+
 		var Tbl_Word = Mk<PoWord>("Word");
 		Mgr.AddTable(Tbl_Word);
 		{
 			var o = Tbl_Word;
-			CfgPoBase<PoWord>(o);
+			CfgPoBase(o);
 			CfgBizTimeVer(o);
-			o.CodeIdName = nameof(PoWord.Id);
 			o.SetCol(nameof(PoWord.Id)).HasConversionEtMapType(MapIdWord());
 			o.SetCol(nameof(PoWord.Owner)).HasConversionEtMapType(MapIdUser());
 			o.InnerAdditionalSqls.AddRange([
@@ -140,24 +164,20 @@ $"CREATE INDEX {o.Qt("Idx_Word_Head_Lang")} ON {o.Qt(o.DbTblName)}({o.Fld(nameof
 		Mgr.AddTable(Tbl_Prop);
 		{
 			var o = Tbl_Prop;
-			CfgPoBase<PoWordProp>(o);
+			CfgPoBase(o);
 			CfgI_WordId<PoWordProp>(o);
-			o.CodeIdName = nameof(PoWordProp.Id);
+			CfgIPoKv(o);
 			o.SetCol(nameof(PoWordProp.Id)).HasConversionEtMapType<u8[], IdWordProp>(
 				(id)=>id.Value.ToByteArr(),
 				(val)=>IdWordProp.FromByteArr(val)
 			);
-			o.OuterAdditionalSqls.AddRange([
-$"CREATE INDEX {o.Qt("IdxKStr")} ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(PoWordProp.KStr))})"
-,$"CREATE INDEX {o.Qt("IdxKI64")} ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(PoWordProp.KI64))})"
-			]);
 		}
 
 		var Tbl_Learn = Mk<PoWordLearn>("WordLearn");
 		Mgr.AddTable(Tbl_Learn);
 		{
 			var o = Tbl_Learn;
-			CfgPoBase<PoWordLearn>(o);
+			CfgPoBase(o);
 			CfgI_WordId<PoWordLearn>(o);
 			o.CodeIdName = nameof(PoWordLearn.Id);
 			o.SetCol(nameof(PoWordLearn.Id)).HasConversionEtMapType<u8[], IdLearn>(
@@ -202,11 +222,4 @@ System.Console.WriteLine(
 	TestTblInfo.GenSql<Po_Word>()
 );
 throw new Exception("AOT");
-#endif
-
-
-#if false
-Po_Word	Id_Word
-Po_Kv	Id_Kv
-Po_Learn	Id_Kv
 #endif

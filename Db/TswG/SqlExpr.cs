@@ -38,7 +38,7 @@ public static class ExtnSqlExpr{
 	){
 		var TblMgr = (ITblMgr)LocalTblMgr.Inst;
 		var Tbl = TblMgr.GetTable<TEntity>();
-		return Tbl.PrmStr(Name);
+		return Tbl.Prm(Name);
 	}
 	public static object? Prm<TEntity>(
 		this SqlExpr<TEntity> z
