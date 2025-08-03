@@ -11,13 +11,13 @@ public  partial class LocalDb{
 protected static LocalDb? _Inst = null;
 public static LocalDb Inst => _Inst??= new LocalDb();
 
-	public ICfgAccessor CfgAccessor{ get; set; } = LocalCfg.Inst;
+	public ICfgAccessor CfgAccessor{ get; set; } = AppCfg.Inst;
 
 	public str DbPath{get;}
 	//蜮 按需開關連接㕥代單例 更佳
 	public IDbConnection DbConnection{get;set;}
 	public LocalDb(){
-		DbPath??=LocalCfgItems.SqlitePath.GetFrom(CfgAccessor)??throw new Exception();
+		DbPath??=AppCfgItems.SqlitePath.GetFrom(CfgAccessor)??throw new Exception();
 		ToolFile.EnsureFile(DbPath);
 		DbConnection = new SqliteConnection($"Data Source={DbPath}");
 		DbConnection.Open();

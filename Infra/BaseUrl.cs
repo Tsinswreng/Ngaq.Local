@@ -10,7 +10,7 @@ public  partial class BaseUrl(
 ):I_GetBaseUrl{
 	[Impl]
 	public str GetBaseUrl(){
-		var V = LocalCfgItems.ServerBaseUrl.GetFrom(CfgAccessor);
+		var V = AppCfgItems.ServerBaseUrl.GetFrom(CfgAccessor);
 
 		return V??"";
 	}

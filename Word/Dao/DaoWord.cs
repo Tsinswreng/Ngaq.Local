@@ -405,7 +405,7 @@ AND (
 	{T.Fld(NUpdateAt)} > {PTempus}
 	OR {T.Fld(NCreatedAt)} > {PTempus}
 )
-{T.SqlMkr.PrmLmtOfst(out str Lmt, out str Ofst)}
+{T.SqlMkr.PrmLmtOfstStr(out str Lmt, out str Ofst)}
 """;//考慮同步後 一方ʃ新增、此旹無UpdatedAt 只有CreatedAt
 var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
 		var Fn= async(IUserCtx UserCtx, IPageQuery PageQry, Tempus Tem, CT Ct)=>{
