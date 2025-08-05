@@ -66,7 +66,7 @@ public  partial class SvcWord(
 		,CT ct
 	){
 
-		var SeekIdByFormEtLang = await DaoWord.FnSelectIdByHeadEtLang(Ctx, ct);
+		var SeekIdByFormEtLang = await DaoWord.FnSlctIdByOwnerHeadLang(Ctx, ct);
 		var SeekBoWordById = await DaoWord.FnSelectJnWordById(Ctx, ct);
 		var Fn = async(
 			IUserCtx UserCtx
@@ -421,6 +421,34 @@ public  partial class SvcWord(
 		return Fn;
 	}
 
+	/// <summary>
+	/// 備份同步㕥合併同ʹ詞旹、當按詞頭洏非id㕥判兩詞是否潙同一詞、緣縱潙同ʹ詞、本地ʹ庫ʸ與遠端ᐪʹid恐不一
+	/// //TODO 一致ˢid、以CreatedAt最早者潙準
+	/// </summary>
+	/// <param name="Ctx"></param>
+	/// <param name="Ct"></param>
+	/// <returns></returns>
+	public async Task<Func<
+		IUserCtx
+		,JnWord
+		,CT,Task<nil>
+	>> FnSyncMergeIn(IDbFnCtx Ctx, CT Ct){
+		var CheckOwner = await FnCheckWordOwnerOrThrow(Ctx, Ct);
+		var SlctWord = await DaoWord.FnSlctIdByOwnerHeadLang(Ctx, Ct);
+		var Fn = async(IUserCtx UserCtx, JnWord NeoWords, CT Ct)=>{
+			var Existing = await SlctWord(UserCtx, NeoWords.Head, NeoWords.Lang, Ct);
+			if(Existing == null){
+
+			}else{
+
+			}
+			return NIL;
+		};
+		return Fn;
+	}
+
+
+
 
 
 
@@ -542,6 +570,8 @@ public  partial class SvcWord(
 		var Fn = await FnPageJnWords(Ctx, Ct);
 		return await Fn(UserCtx, PageQry, Ct);
 	}
+
+
 
 
 }

@@ -8,7 +8,7 @@ public  partial interface IDbFnCtx
 
 }
 
-public  partial class DbFnCtx : BaseDbFnCtx, IDbFnCtx{
+public partial class DbFnCtx : BaseDbFnCtx, IDbFnCtx{
 
 }
 

@@ -1,9 +1,11 @@
 using Ngaq.Core.Model.Po.Kv;
 using Ngaq.Core.Models.UserCtx;
 using Ngaq.Core.Sys.Models;
+using Ngaq.Core.Sys.Svc;
 using Ngaq.Local.Db;
 using Ngaq.Local.Db.TswG;
 using Ngaq.Local.Sys.Dao;
+using Tsinswreng.CsCore;
 using Tsinswreng.CsPage;
 using Tsinswreng.CsSqlHelper;
 
@@ -14,12 +16,31 @@ public partial class SvcDbCfg(
 	,TxnWrapper<DbFnCtx> TxnWrapper
 	,IAppRepo<PoCfg, IdCfg> RepoCfg
 )
+	:ISvcDbCfg
 {
 	DaoCfg DaoCfg = DaoCfg;
 	IAppRepo<PoCfg, IdCfg> RepoCfg = RepoCfg;
 	//public const str PathSep = "/";
 
-#if true
+
+	[Impl(typeof(ISvcDbCfg))]
+	public async Task<PoCfg?> GetOneByKStr(IUserCtx UserCtx, str Key, CT Ct){
+		return await TxnWrapper.Wrap(FnGetOneByKStr, UserCtx, Key, Ct);
+		//return await TxnWrapper.Wrap(new ClsGetOneByKStr(this), UserCtx, Key, Ct);
+	}
+
+	[Impl(typeof(ISvcDbCfg))]
+	public async Task<nil> SetVStrByKStr(IUserCtx UserCtx, str Key, str Value, CT Ct){
+		return await TxnWrapper.Wrap(FnAddOrSetVStrByKStr, UserCtx, Key, Value, Ct);
+	}
+
+	[Impl(typeof(ISvcDbCfg))]
+	public async Task<nil> SetVI64ByKStr(IUserCtx UserCtx, str Key, i64 Value, CT Ct){
+		return await TxnWrapper.Wrap(FnAddOrSetVI64ByKStr, UserCtx, Key, Value, Ct);
+	}
+
+
+
 	public async Task<Func<
 		IUserCtx
 		,str
@@ -37,12 +58,6 @@ public partial class SvcDbCfg(
 			return null;
 		};
 		return Fn;
-	}
-#endif
-
-	public async Task<PoCfg?> GetOneByKStr(IUserCtx UserCtx, str Key, CT Ct){
-		return await TxnWrapper.Wrap(FnGetOneByKStr, UserCtx, Key, Ct);
-		//return await TxnWrapper.Wrap(new ClsGetOneByKStr(this), UserCtx, Key, Ct);
 	}
 
 	public async Task<Func<
@@ -65,12 +80,13 @@ public partial class SvcDbCfg(
 		IUserCtx
 		,str
 		,str
+		,CT
 		,Task<nil>
 	>> FnAddOrSetVStrByKStr(IDbFnCtx Ctx, CT Ct){
 		var GetOneByKStr = await FnGetOneByKStr(Ctx, Ct);
 		var Add = await FnAdd(Ctx, Ct);
 		var SetVStrByKStr = await DaoCfg.FnSetVStrByKStr(Ctx, Ct);
-		var Fn = async(IUserCtx UserCtx, str Key, str Value)=>{
+		var Fn = async(IUserCtx UserCtx, str Key, str Value, CT Ct)=>{
 			var Existing = await GetOneByKStr(UserCtx, Key, Ct);
 			if(Existing != null){
 				await SetVStrByKStr(UserCtx, Key, Value, Ct);
@@ -78,8 +94,36 @@ public partial class SvcDbCfg(
 				var ToAdd = new PoCfg{
 					Owner = UserCtx.UserId,
 					KStr = Key,
-					KType = (i64)EKvType.I64,
+					VType = (i64)EKvType.Str,
 					VStr = Value,
+				};
+				await Add(UserCtx, ToAdd, Ct);
+			}
+			return NIL;
+		};
+		return Fn;
+	}
+
+	public async Task<Func<
+		IUserCtx
+		,str
+		,i64
+		,CT
+		,Task<nil>
+	>> FnAddOrSetVI64ByKStr(IDbFnCtx Ctx, CT Ct){
+		var GetOneByKStr = await FnGetOneByKStr(Ctx, Ct);
+		var Add = await FnAdd(Ctx, Ct);
+		var SetVI64ByKStr = await DaoCfg.FnSetVI64ByKStr(Ctx, Ct);
+		var Fn = async(IUserCtx UserCtx, str Key, i64 Value, CT Ct)=>{
+			var Existing = await GetOneByKStr(UserCtx, Key, Ct);
+			if(Existing != null){
+				await SetVI64ByKStr(UserCtx, Key, Value, Ct);
+			}else{
+				var ToAdd = new PoCfg{
+					Owner = UserCtx.UserId,
+					KStr = Key,
+					VType = (i64)EKvType.I64,
+					VI64 = Value,
 				};
 				await Add(UserCtx, ToAdd, Ct);
 			}
@@ -120,8 +164,5 @@ public partial class SvcDbCfg(
 
 
 #endif
-
-
-
 
 }

@@ -34,7 +34,7 @@ public  partial class DaoSqlWord(
 		,CT
 		,Task<IdWord?>
 	>>
-	FnSelectIdByHeadEtLang(
+	FnSlctIdByOwnerHeadLang(
 		IDbFnCtx Ctx
 		,CT Ct
 	){

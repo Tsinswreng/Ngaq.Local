@@ -22,6 +22,8 @@ using Tsinswreng.CsDictMapper;
 using Ngaq.Local.Db;
 using Ngaq.Core.Models.UserCtx;
 using Ngaq.Local.Word.Dao;
+using Ngaq.Core.Sys.Svc;
+using Ngaq.Local.Sys.Svc;
 
 
 namespace Ngaq.Local.Di;
@@ -82,11 +84,13 @@ z.AddScoped<
 return z;
 	}
 
+
 //服務類
 	static IServiceCollection SetUpSvcs(this IServiceCollection z){
 z.AddScoped<DaoSqlWord, DaoSqlWord>();
 z.AddScoped<ISvcParseWordList, SvcParseWordList>();
 z.AddScoped<ISvcWord, SvcWord>();
+z.AddScoped<ISvcDbCfg, SvcDbCfg>();
 z.AddScoped<IImgGetter, SvcImg>();
 z.AddScoped<TxnWrapper<DbFnCtx>>();
 return z;

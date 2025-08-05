@@ -22,7 +22,7 @@ public partial class DaoCfg(
 		get{return TblMgr.GetTable<PoCfg>();}
 	}
 
-#if true
+
 	public async Task<Func<
 		IUserCtx
 		,str
@@ -49,14 +49,10 @@ AND {T.Qt(NKStr)} = {PKStr}
 			var PoAsy = RawDicts.Select(R=>T.DbDictToPo<PoCfg>(R));
 			var R = PageAsy.Mk(PageQry, PoAsy);
 			return R;
-
 		};
 		return Fn;
 	}
-#endif
 
-
-#if true
 	public async Task<Func<
 		IUserCtx
 		,str
@@ -110,10 +106,6 @@ var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
 		};
 		return Fn;
 	}
-
-#endif
-
-
 
 
 #if false

@@ -147,9 +147,10 @@ $"CREATE INDEX {o.Qt("IdxCfgOwner")} ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoCfg.
 		{
 			var o = Tbl_Word;
 			CfgPoBase(o);
-			CfgBizTimeVer(o);
+			//CfgBizTimeVer(o);
 			o.SetCol(nameof(PoWord.Id)).HasConversionEtMapType(MapIdWord());
 			o.SetCol(nameof(PoWord.Owner)).HasConversionEtMapType(MapIdUser());
+			o.SetCol(nameof(PoWord.StoredAt)).HasConversionEtMapType(MapTempus());
 			o.InnerAdditionalSqls.AddRange([
 $"UNIQUE({o.Fld(nameof(PoWord.Owner))}, {o.Fld(nameof(PoWord.Head))}, {o.Fld(nameof(PoWord.Lang))})"
 			]);
