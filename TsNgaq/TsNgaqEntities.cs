@@ -1,5 +1,14 @@
 namespace Ngaq.Local.TsNgaq;
 
+using Ngaq.Core.Model.Po;
+using Ngaq.Core.Model.Po.Kv;
+using Ngaq.Core.Model.Po.Word;
+using Ngaq.Core.Models.Po;
+using Ngaq.Core.Word.Models;
+using Ngaq.Core.Word.Models.Learn_;
+using Ngaq.Core.Word.Models.Po.Learn;
+using E = Ngaq.Local.TsNgaq.TsNgaqEntities;
+
 public class TsNgaqEntities{
 	//置于內部類中減LSP提示
 	public class TsNgaqPoBase{
@@ -20,8 +29,8 @@ public class TsNgaqEntities{
 		public i64 wid{get;set;}
 	}
 
-	public class JnWord{
-		public JnWord(textWord textWord,IList<property> propertys,IList<learn> learns){
+	public class TsNgaqJnWord{
+		public TsNgaqJnWord(textWord textWord,IList<property> propertys,IList<learn> learns){
 			this.textWord = textWord;
 			this.propertys = propertys;
 			this.learns = learns;
@@ -30,4 +39,84 @@ public class TsNgaqEntities{
 		public IList<property> propertys{get;set;} = new List<property>();
 		public IList<learn> learns{get;set;} = new List<learn>();
 	}
+
+
+
+	public static ELearn ConvLearnResult(str TsNgaqLearnResult){
+		var R = (TsNgaqLearnResult)switch{
+			"add"=>ELearn.Add,
+			"rmb"=>ELearn.Rmb,
+			"fgt"=>ELearn.Fgt,
+			_ => throw new ArgumentException("Invalid learn result"),
+		};
+		return R;
+	}
+
+	public static str ConvProp(str Old){
+		var K = KeysProp.Inst;
+		var R = Old switch{
+			"mean" => K.description,
+			"tag" => K.tag,
+			"annotation" => K.note,
+			"source" => K.source,
+			"pronounce" => K.pronunciation,
+			"alias" => K.alias,
+			"weight" => K.weight,
+			_ => throw new ArgumentException("Invalid property name: " + Old),
+		};
+		return R;
+	}
+	public static nil EntityToJnWord(
+		E.TsNgaqJnWord Old
+		,ref JnWord R
+	){
+		R??= new JnWord();
+		static IPoBase ConvPoBase(E.TsNgaqPoBase Old, IPoBase PoBase){
+			PoBase.CreatedAt = Old.ct;
+			PoBase.UpdatedAt = Old.mt;
+			return PoBase;
+		}
+		static PoWord ToPoWord(E.textWord Old, ref PoWord R){
+			R??= new PoWord();
+			ConvPoBase(Old, R);
+			R.Head = Old.text;
+			return R;
+		}
+
+		static PoWordLearn ToPoLearn(E.learn Old, IdWord WordId, ref PoWordLearn R){
+			R??= new PoWordLearn();
+			ConvPoBase(Old, R);
+			R.WordId = WordId;
+			R.LearnResult = ConvLearnResult(Old.belong);
+			return R;
+		}
+
+		static PoWordProp ToPoProp(E.property Old, IdWord WordId, ref PoWordProp R){
+			R??= new PoWordProp();
+			ConvPoBase(Old, R);
+			R.WordId = WordId;
+			R.KStr = ConvProp(Old.belong);
+			R.VStr = Old.text;
+			return R;
+		}
+
+		{
+			var o = R.PoWord;
+			ToPoWord(Old.textWord, ref o);
+			R.PoWord = o;
+		}
+		foreach(var OldLearn in Old.learns){
+			var NeoPoLearn = new PoWordLearn();
+			ToPoLearn(OldLearn, R.PoWord.Id, ref NeoPoLearn);
+			R.Learns.Add(NeoPoLearn);
+		}
+
+		foreach(var OldProp in Old.propertys){
+			var NeoProp = new PoWordProp();
+			ToPoProp(OldProp, R.PoWord.Id, ref NeoProp);
+			R.Props.Add(NeoProp);
+		}
+		return NIL;
+	}
+
 }
