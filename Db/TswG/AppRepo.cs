@@ -24,7 +24,7 @@ public partial class AppRepo<
 		,CT
 		,Task<nil>
 	>> FnUpd_UpdatedAt(IDbFnCtx Ctx, CT Ct){
-		var T = TblMgr.GetTable<TEntity>();
+		var T = TblMgr.GetTbl<TEntity>();
 		var NUpdatedAt = nameof(IPoBase.UpdatedAt);
 		var Upd_DbUpdatedAtById = await FnUpdOneColById(Ctx, NUpdatedAt, Ct);
 		var Fn = async(TId Id, CT Ct)=>{

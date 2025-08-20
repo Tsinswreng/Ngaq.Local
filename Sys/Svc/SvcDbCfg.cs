@@ -47,7 +47,7 @@ public partial class SvcDbCfg(
 		,CT
 		,Task<PoCfg?>
 	>> FnGetOneByKStr(IDbFnCtx Ctx, CT Ct){
-		var PageQry = new PageQuery{PageIndex = 0, PageSize = 1, WantTotalCount = false};
+		var PageQry = new PageQry{PageIdx = 0, PageSize = 1, WantTotCnt = false};
 		var PageByKStr = await DaoCfg.FnPageByKStr(Ctx, Ct);
 		var Fn = async(IUserCtx UserCtx, str Key, CT Ct)=>{
 			var Page = await PageByKStr(UserCtx, Key, PageQry, Ct);

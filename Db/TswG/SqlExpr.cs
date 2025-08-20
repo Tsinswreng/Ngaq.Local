@@ -37,7 +37,7 @@ public static class ExtnSqlExpr{
 		str Name
 	){
 		var TblMgr = (ITblMgr)LocalTblMgr.Inst;
-		var Tbl = TblMgr.GetTable<TEntity>();
+		var Tbl = TblMgr.GetTbl<TEntity>();
 		return Tbl.Prm(Name);
 	}
 	public static object? Prm<TEntity>(
@@ -58,7 +58,7 @@ class Test_(
 	,ITblMgr TblMgr
 ){
 	void Test(){
-		var TW = TblMgr.GetTable<PoWord>();
+		var TW = TblMgr.GetTbl<PoWord>();
 		var NOwner = nameof(PoWord.Owner);
 		var E = new SqlExpr<PoWord>();
 		E

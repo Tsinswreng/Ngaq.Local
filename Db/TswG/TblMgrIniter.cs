@@ -12,47 +12,48 @@ using Tsinswreng.CsUlid;
 using Ngaq.Core.Word.Models.Po.Learn;
 using Tsinswreng.CsTools;
 using Ngaq.Core.Sys.Models;
+using Ngaq.Core.Word.Models.Learn_;
 
 //using Id_User = Ngaq.Core.Model.Po.User.IdUser;
 //using Id_Word = Ngaq.Core.Model.Po.Word.IdWord;
 //using Id_Kv = Ngaq.Core.Model.Po.Kv.IdKv;
 
-public  partial class LocalTblMgrIniter{
+public partial class LocalTblMgrIniter{
 	protected ITblMgr Mgr;
 	public LocalTblMgrIniter(ITblMgr Mgr){
 		this.Mgr = Mgr;
 	}
 
-	static IDbTypeConvFns<i64,Tempus> MapTempus(){
-		return DbTypeConvFns<i64, Tempus>.Mk(
+	static IUpperTypeMapFnT<i64,Tempus> MapTempus(){
+		return UpperTypeMapFnT<i64, Tempus>.Mk(
 			tempus=>tempus.Value,
 			val=>new Tempus(val)
 		);
 	}
 
-	static IDbTypeConvFns<i64?,Tempus?> MapTempusN(){
-		return DbTypeConvFns<i64?, Tempus?>.Mk(
+	static IUpperTypeMapFnT<i64?,Tempus?> MapTempusN(){
+		return UpperTypeMapFnT<i64?, Tempus?>.Mk(
 			tempus=>tempus?.Value,
 			val=>val==null?null:new Tempus(val.Value)
 		);
 	}
 
-	static IDbTypeConvFns<u8[], IdUser> MapIdUser(){
-		return DbTypeConvFns<u8[], IdUser>.Mk(
+	static IUpperTypeMapFnT<u8[], IdUser> MapIdUser(){
+		return UpperTypeMapFnT<u8[], IdUser>.Mk(
 			(id)=>id.Value.ToByteArr(),
 			(val)=>IdUser.FromByteArr(val)
 		);
 	}
 
-	static IDbTypeConvFns<u8[]?, IdUser?> MapIdUserN(){
-		return DbTypeConvFns<u8[]?, IdUser?>.Mk(
+	static IUpperTypeMapFnT<u8[]?, IdUser?> MapIdUserN(){
+		return UpperTypeMapFnT<u8[]?, IdUser?>.Mk(
 			(id)=>id?.Value.ToByteArr(),
 			(val)=>val==null?null:IdUser.FromByteArr(val)
 		);
 	}
 
-	static IDbTypeConvFns<u8[], IdWord> MapIdWord(){
-		return DbTypeConvFns<u8[], IdWord>.Mk(
+	static IUpperTypeMapFnT<u8[], IdWord> MapIdWord(){
+		return UpperTypeMapFnT<u8[], IdWord>.Mk(
 			(id)=>id.Value.ToByteArr(),
 			(val)=>IdWord.FromByteArr(val)
 		);
@@ -63,7 +64,7 @@ public  partial class LocalTblMgrIniter{
 
 	protected nil CfgBizTimeVer(ITable Tbl){
 		var o = Tbl;
-		o.SetCol(nameof(I_BizTimeVer.BizTimeVer)).HasConversionEtMapType(MapTempus());
+		o.SetCol(nameof(I_BizTimeVer.BizTimeVer)).MapType(MapTempus());
 		return NIL;
 	}
 
@@ -73,23 +74,23 @@ public  partial class LocalTblMgrIniter{
 		o.CodeIdName = nameof(I_Id<nil>.Id);
 		o.SetCol(nameof(I_Id<nil>.Id)).AdditionalSqls(["PRIMARY KEY"]);
 
-		o.SetCol(nameof(IPoBase.CreatedAt)).HasConversionEtMapType(MapTempus());
-		o.SetCol(nameof(IPoBase.DbCreatedAt)).HasConversionEtMapType(MapTempus())
+		o.SetCol(nameof(IPoBase.CreatedAt)).MapType(MapTempus());
+		o.SetCol(nameof(IPoBase.DbCreatedAt)).MapType(MapTempus())
 // 		.AdditionalSqls([
 // "DEFAULT (strftime('%s', 'now'))"
 // 		])
 		;
-		o.SetCol(nameof(IPoBase.UpdatedAt)).HasConversionEtMapType(MapTempusN());
-		o.SetCol(nameof(IPoBase.DbUpdatedAt)).HasConversionEtMapType(MapTempusN());
+		o.SetCol(nameof(IPoBase.UpdatedAt)).MapType(MapTempusN());
+		o.SetCol(nameof(IPoBase.DbUpdatedAt)).MapType(MapTempusN());
 
-		o.SetCol(nameof(IPoBase.Status)).HasConversionEtMapType<i32?, PoStatus>(
+		o.SetCol(nameof(IPoBase.Status)).MapType<i32?, PoStatus>(
 			s=>Convert.ToInt32(s.Value),
 			val=>new PoStatus(Convert.ToInt32(val))
 			,ObjToRaw: (obj)=>Convert.ToInt32(obj)
 		);
 
-		o.SetCol(nameof(IPoBase.CreatedBy)).HasConversionEtMapType(MapIdUserN());
-		o.SetCol(nameof(IPoBase.LastUpdatedBy)).HasConversionEtMapType(MapIdUserN());
+		o.SetCol(nameof(IPoBase.CreatedBy)).MapType(MapIdUserN());
+		o.SetCol(nameof(IPoBase.LastUpdatedBy)).MapType(MapIdUserN());
 
 
 		o.SoftDelCol = new SoftDelol{
@@ -118,39 +119,39 @@ $"CREATE INDEX {o.Qt("Idx"+o.DbTblName+"KStr")} ON {o.Qt(o.DbTblName)} ({o.Fld(n
 
 	protected ITable CfgI_WordId<TPo>(ITable Tbl){
 		var o = Tbl;
-		o.SetCol(nameof(PoWordProp.WordId)).HasConversionEtMapType(MapIdWord());
+		o.SetCol(nameof(PoWordProp.WordId)).MapType(MapIdWord());
 		return o;
 	}
 
 	public nil Init(){
-		Mgr.AddTable(new SchemaHistoryTblMkr().MkTbl());
+		Mgr.AddTbl(new SchemaHistoryTblMkr().MkTbl());
 
 		var Tbl_Cfg = Mk<PoCfg>("Cfg");
-		Mgr.AddTable(Tbl_Cfg);
+		Mgr.AddTbl(Tbl_Cfg);
 		{
 			var o = Tbl_Cfg;
 			CfgPoBase(o);
 			CfgBizTimeVer(o);
 			CfgIPoKv(o);
-			o.SetCol(nameof(PoCfg.Id)).HasConversionEtMapType<u8[], IdCfg>(
+			o.SetCol(nameof(PoCfg.Id)).MapType<u8[], IdCfg>(
 				(upper)=>upper.Value.ToByteArr(),
 				(raw)=>IdCfg.FromByteArr(raw)
 			);
-			o.SetCol(nameof(PoCfg.Owner)).HasConversionEtMapType(MapIdUser());
+			o.SetCol(nameof(PoCfg.Owner)).MapType(MapIdUser());
 			o.OuterAdditionalSqls.AddRange([
 $"CREATE INDEX {o.Qt("IdxCfgOwner")} ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoCfg.Owner))})"
 			]);
 		}
 
 		var Tbl_Word = Mk<PoWord>("Word");
-		Mgr.AddTable(Tbl_Word);
+		Mgr.AddTbl(Tbl_Word);
 		{
 			var o = Tbl_Word;
 			CfgPoBase(o);
 			//CfgBizTimeVer(o);
-			o.SetCol(nameof(PoWord.Id)).HasConversionEtMapType(MapIdWord());
-			o.SetCol(nameof(PoWord.Owner)).HasConversionEtMapType(MapIdUser());
-			o.SetCol(nameof(PoWord.StoredAt)).HasConversionEtMapType(MapTempus());
+			o.SetCol(nameof(PoWord.Id)).MapType(MapIdWord());
+			o.SetCol(nameof(PoWord.Owner)).MapType(MapIdUser());
+			o.SetCol(nameof(PoWord.StoredAt)).MapType(MapTempus());
 			o.InnerAdditionalSqls.AddRange([
 $"UNIQUE({o.Fld(nameof(PoWord.Owner))}, {o.Fld(nameof(PoWord.Head))}, {o.Fld(nameof(PoWord.Lang))})"
 			]);
@@ -158,32 +159,38 @@ $"UNIQUE({o.Fld(nameof(PoWord.Owner))}, {o.Fld(nameof(PoWord.Head))}, {o.Fld(nam
 $"CREATE INDEX {o.Qt("Idx_Word_Head_Lang")} ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoWord.Head))}, {o.Fld(nameof(PoWord.Lang))})"
 ,$"CREATE INDEX {o.Qt("Idx_Word_CreatedAt")} ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoWord.CreatedAt))})"
 ,$"CREATE INDEX {o.Qt("Idx_Word_UpdatedAt")} ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoWord.UpdatedAt))})"
+,$"CREATE INDEX {o.Qt("Idx_Word_StoragedAt")} ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoWord.UpdatedAt))})"
 			]);
 		}
 
 		var Tbl_Prop = Mk<PoWordProp>("WordProp");
-		Mgr.AddTable(Tbl_Prop);
+		Mgr.AddTbl(Tbl_Prop);
 		{
 			var o = Tbl_Prop;
 			CfgPoBase(o);
 			CfgI_WordId<PoWordProp>(o);
 			CfgIPoKv(o);
-			o.SetCol(nameof(PoWordProp.Id)).HasConversionEtMapType<u8[], IdWordProp>(
+			o.SetCol(nameof(PoWordProp.Id)).MapType<u8[], IdWordProp>(
 				(id)=>id.Value.ToByteArr(),
 				(val)=>IdWordProp.FromByteArr(val)
 			);
 		}
 
 		var Tbl_Learn = Mk<PoWordLearn>("WordLearn");
-		Mgr.AddTable(Tbl_Learn);
+		Mgr.AddTbl(Tbl_Learn);
 		{
 			var o = Tbl_Learn;
 			CfgPoBase(o);
 			CfgI_WordId<PoWordLearn>(o);
 			o.CodeIdName = nameof(PoWordLearn.Id);
-			o.SetCol(nameof(PoWordLearn.Id)).HasConversionEtMapType<u8[], IdLearn>(
+			o.SetCol(nameof(PoWordLearn.Id)).MapType<u8[], IdLearn>(
 				(id)=>id.Value.ToByteArr(),
 				(val)=>IdLearn.FromByteArr(val)
+			);
+			o.SetCol(nameof(PoWordLearn.LearnResult)).MapType<i32, ELearn>(
+				(upper)=>(i32)upper
+				,(raw)=>(ELearn)raw
+				,ObjToRaw: (obj)=>Convert.ToInt32(obj)
 			);
 		}
 		_Inited = true;

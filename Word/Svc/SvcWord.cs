@@ -137,6 +137,7 @@ public  partial class SvcWord(
 			//未加過之諸詞 加'add'ˉ學習記錄後直加入庫中則可
 			//Dictionary<str ,nil> debug = new Dictionary<str, nil>();//t
 			foreach(var OneNonExisting in DtoAddWords.NeoWords){
+				OneNonExisting.StoredAt = Tempus.Now();
 				var NeoPoLearns = MkPoLearns(OneNonExisting.Props, OneNonExisting.Id);
 				await NeoWords.Add(OneNonExisting, Ct);
 				await NeoLearns.AddMany(NeoPoLearns, null, Ct);
@@ -239,7 +240,7 @@ public  partial class SvcWord(
 			if(Prop.KStr == KeysProp.Inst.description){
 				var U = new PoWordLearn();
 				U.CreatedAt = Prop.CreatedAt;
-				U.LearnResult = ELearn.Inst.Add;
+				U.LearnResult = ELearn.Add;
 				U.WordId = WordId;
 				yield return U;
 			}
@@ -279,7 +280,7 @@ public  partial class SvcWord(
 
 	public async Task<Func<
 		IUserCtx
-		,IPageQuery
+		,IPageQry
 		,CT
 		,Task<IPageAsy<JnWord>>
 	>> FnPageJnWords(
@@ -505,9 +506,9 @@ public  partial class SvcWord(
 	) {
 		var Ctx = new DbFnCtx{Txn = await TxnGetter.GetTxnAsy(Ct)};
 		var AddOrUpdateWords = await FnAddOrUpdWordsFromTxt(Ctx, Ct);
-		await TxnRunner.RunTxn(Ctx.Txn, async(ct)=>{
-			var BoWords = await SvcParseWordList.ParseWordsFromText(Text,ct);
-			await AddOrUpdateWords(UserCtx,BoWords,ct);
+		await TxnRunner.RunTxn(Ctx.Txn, async(Ct)=>{
+			var BoWords = await SvcParseWordList.ParseWordsFromText(Text,Ct);
+			await AddOrUpdateWords(UserCtx,BoWords,Ct);
 			return NIL;
 		},Ct);
 		return NIL;
@@ -561,7 +562,7 @@ public  partial class SvcWord(
 	[Impl]
 	public async Task<IPageAsy<JnWord>> PageJnWord(
 		IUserCtx UserCtx
-		,IPageQuery PageQry
+		,IPageQry PageQry
 		,CT Ct
 	){
 

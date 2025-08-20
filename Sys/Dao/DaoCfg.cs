@@ -19,14 +19,14 @@ public partial class DaoCfg(
 	ISqlCmdMkr SqlCmdMkr = SqlCmdMkr;
 
 	protected ITable T{
-		get{return TblMgr.GetTable<PoCfg>();}
+		get{return TblMgr.GetTbl<PoCfg>();}
 	}
 
 
 	public async Task<Func<
 		IUserCtx
 		,str
-		,IPageQuery
+		,IPageQry
 		,CT
 		,Task<IPageAsy<PoCfg>>
 	>> FnPageByKStr(IDbFnCtx Ctx, CT Ct){
@@ -36,17 +36,17 @@ var Sql = $"""
 SELECT * FROM {T.Qt(T.DbTblName)}
 WHERE {T.Qt(NOwner)} = {POwner}
 AND {T.Qt(NKStr)} = {PKStr}
-{T.SqlMkr.PrmLmtOfst(out var Lmt, out var Ofst)}
+{T.SqlMkr.ParamLimOfst(out var Lmt, out var Ofst)}
 """;
 		var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
 		Ctx?.AddToDispose(SqlCmd);
-		var Fn = async(IUserCtx User, str KStr, IPageQuery PageQry, CT Ct)=>{
+		var Fn = async(IUserCtx User, str KStr, IPageQry PageQry, CT Ct)=>{
 			var Arg = ArgDict.Mk()
 			.Add(POwner, T.UpperToRaw(User.UserId))
 			.Add(PKStr, KStr)
 			.AddPageQry(PageQry, Lmt, Ofst);
 			var RawDicts = SqlCmd.Args(Arg).Run(Ct);
-			var PoAsy = RawDicts.Select(R=>T.DbDictToPo<PoCfg>(R));
+			var PoAsy = RawDicts.Select(R=>T.DbDictToEntity<PoCfg>(R));
 			var R = PageAsy.Mk(PageQry, PoAsy);
 			return R;
 		};
