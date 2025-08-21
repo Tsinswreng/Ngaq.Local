@@ -7,9 +7,9 @@ using Tsinswreng.CsTools;
 
 namespace Ngaq.Local.Db.TswG;
 
-public  partial class LocalDb{
-protected static LocalDb? _Inst = null;
-public static LocalDb Inst => _Inst??= new LocalDb();
+public partial class LocalDb{
+	protected static LocalDb? _Inst = null;
+	public static LocalDb Inst => _Inst??= new LocalDb();
 
 	public ICfgAccessor CfgAccessor{ get; set; } = AppCfg.Inst;
 

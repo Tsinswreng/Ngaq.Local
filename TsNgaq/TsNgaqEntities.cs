@@ -11,6 +11,7 @@ using E = Ngaq.Local.TsNgaq.TsNgaqEntities;
 
 public class TsNgaqEntities{
 	//置于內部類中減LSP提示
+	//字段名與數據庫ʸʹ名 同、勿緟名ᵣ
 	public class TsNgaqPoBase{
 		public i64 id{get;set;}
 		public str belong{get;set;} = "";
@@ -29,8 +30,8 @@ public class TsNgaqEntities{
 		public i64 wid{get;set;}
 	}
 
-	public class TsNgaqJnWord{
-		public TsNgaqJnWord(textWord textWord,IList<property> propertys,IList<learn> learns){
+	public class TsJnWord{
+		public TsJnWord(textWord textWord,IList<property> propertys,IList<learn> learns){
 			this.textWord = textWord;
 			this.propertys = propertys;
 			this.learns = learns;
@@ -54,20 +55,37 @@ public class TsNgaqEntities{
 
 	public static str ConvProp(str Old){
 		var K = KeysProp.Inst;
-		var R = Old switch{
+		var Warn=(str s)=>{
+			Console.WriteLine($"WarningTag: {s}");
+			return s;
+		};
+		string R = Old switch{
 			"mean" => K.description,
-			"tag" => K.tag,
+			nameof(K.tag) => K.tag,
 			"annotation" => K.note,
-			"source" => K.source,
+			nameof(K.source) => K.source,
 			"pronounce" => K.pronunciation,
-			"alias" => K.alias,
-			"weight" => K.weight,
-			_ => throw new ArgumentException("Invalid property name: " + Old),
+			nameof(K.alias) => K.alias,
+			nameof(K.weight) => K.weight,
+			nameof(K.usage) => K.usage,
+			nameof(K.example) => K.example,
+			nameof(K.relation) => K.relation,
+			"ref" => K.Ref,
+			_ => Warn(Old),
 		};
 		return R;
 	}
-	public static nil EntityToJnWord(
-		E.TsNgaqJnWord Old
+
+	public static JnWord ToNewJnWord(
+		E.TsJnWord Old
+	){
+		var R = new JnWord();
+		return ToNewJnWord(Old, ref R);
+		//return R;
+	}
+
+	public static JnWord ToNewJnWord(
+		E.TsJnWord Old
 		,ref JnWord R
 	){
 		R??= new JnWord();
@@ -116,7 +134,10 @@ public class TsNgaqEntities{
 			ToPoProp(OldProp, R.PoWord.Id, ref NeoProp);
 			R.Props.Add(NeoProp);
 		}
-		return NIL;
+		return R;
 	}
 
+
+
 }
+

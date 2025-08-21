@@ -43,8 +43,8 @@
 		<PackageReference Include="SQLite" Version="3.13.0" />
 
 		<PackageReference Include="System.Linq.Async" Version="6.0.1" />
-		<PackageReference Include="xunit" Version="2.9.2" />
-		<PackageReference Include="xunit.runner.visualstudio" Version="3.0.0-pre.49" />
+		<!-- <PackageReference Include="xunit" Version="2.9.2" />	-->
+		<!-- <PackageReference Include="xunit.runner.visualstudio" Version="3.0.0-pre.49" />	-->
 
 
 	</ItemGroup>
