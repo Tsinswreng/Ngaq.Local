@@ -1,6 +1,5 @@
 namespace Ngaq.Local.TsNgaq;
 
-using Ngaq.Core.Model.Po;
 using Ngaq.Core.Model.Po.Kv;
 using Ngaq.Core.Model.Po.Word;
 using Ngaq.Core.Models.Po;

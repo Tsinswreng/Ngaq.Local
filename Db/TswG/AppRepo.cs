@@ -2,9 +2,9 @@ namespace Ngaq.Local.Db.TswG;
 
 using Tsinswreng.CsSqlHelper;
 using Tsinswreng.CsDictMapper;
-using Ngaq.Core.Model.Po;
 using Ngaq.Core.Infra;
 using Tsinswreng.CsCore;
+using Ngaq.Core.Models.Po;
 
 public partial class AppRepo<
 	TEntity

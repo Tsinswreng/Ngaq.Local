@@ -31,8 +31,8 @@ namespace Ngaq.Local.Di;
 
 public static class DiLocal{
 
-	public static IServiceCollection SetUpLocal(this IServiceCollection z){
-		z.SetUpDbCfg().SetUpRepos().SetUpSvcs();
+	public static IServiceCollection SetupLocal(this IServiceCollection z){
+		z.SetupDbCfg().SetupRepos().SetupSvcs();
 //Core詞典映射
 z.AddSingleton<IDictMapperShallow>(CoreDictMapper.Inst);
 z.AddScoped<IUserCtxMgr, UserCtxMgr>();
@@ -44,7 +44,7 @@ return z;
 
 
 //數據庫配置
-	static IServiceCollection SetUpDbCfg(this IServiceCollection z){
+	static IServiceCollection SetupDbCfg(this IServiceCollection z){
 //數據庫連接單例
 z.AddSingleton(LocalDb.Inst.DbConnection);
 //數據庫命令ˇ建者
@@ -63,7 +63,7 @@ return z;
 	}
 
 //倉儲
-	static IServiceCollection SetUpRepos(this IServiceCollection z){
+	static IServiceCollection SetupRepos(this IServiceCollection z){
 z.AddScoped<
 	IAppRepo<SchemaHistory, i64>
 	,AppRepo<SchemaHistory, i64>
@@ -86,7 +86,7 @@ return z;
 
 
 //服務類
-	static IServiceCollection SetUpSvcs(this IServiceCollection z){
+	static IServiceCollection SetupSvcs(this IServiceCollection z){
 z.AddScoped<DaoSqlWord, DaoSqlWord>();
 z.AddScoped<ISvcParseWordList, SvcParseWordList>();
 z.AddScoped<ISvcWord, SvcWord>();

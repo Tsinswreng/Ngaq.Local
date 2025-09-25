@@ -63,11 +63,11 @@ public  partial class SvcWord(
 		,Task<DuplicationGroup<JnWord>>
 	>> FnGroupByExising(
 		IDbFnCtx Ctx
-		,CT ct
+		,CT Ct
 	){
 
-		var SeekIdByFormEtLang = await DaoWord.FnSlctIdByOwnerHeadLang(Ctx, ct);
-		var SeekBoWordById = await DaoWord.FnSelectJnWordById(Ctx, ct);
+		var SeekIdByFormEtLang = await DaoWord.FnSlctIdByOwnerHeadLang(Ctx, Ct);
+		var SeekBoWordById = await DaoWord.FnSelectJnWordById(Ctx, Ct);
 		var Fn = async(
 			IUserCtx UserCtx
 			,IEnumerable<JnWord> JnWords
@@ -116,7 +116,7 @@ public  partial class SvcWord(
 		,DtoAddWords
 		,CT
 		,Task<nil>
-	>> FnAddOrUpdWordsFromTxtByDto(
+	>> FnAddOrUpdWordsByDto(
 		IDbFnCtx Ctx
 		,CT Ct
 	){
@@ -145,17 +145,20 @@ public  partial class SvcWord(
 
 			// 有變動之諸新詞
 			foreach(var UpdatedWord in DtoAddWords.UpdatedWords){
-				if(UpdatedWord.DiffedProps.Count <= 0){
+				// if(UpdatedWord.DiffedProps.Count <= 0){
+				// 	continue;
+				// }
+				if(UpdatedWord.DiffedWord == null){
 					continue;
 				}
 				//若NewProps則有變動、學習記錄添'add'
-				var NeoPoLearns = MkPoLearns(UpdatedWord.DiffedProps, UpdatedWord.WordInDb.Id);
+				var NeoPoLearns = MkPoLearns(UpdatedWord.DiffedWord.Props, UpdatedWord.WordInDb.Id);
 				await NeoLearns.AddMany(NeoPoLearns, null, Ct);
-				UpdatedWord.DiffedProps = UpdatedWord.DiffedProps.Select(x=>{
+				UpdatedWord.DiffedWord.Props = UpdatedWord.DiffedWord.Props.Select(x=>{
 					x.WordId = UpdatedWord.WordInDb.Id;
 					return x;
 				}).ToList();
-				await NeoProps.AddMany(UpdatedWord.DiffedProps, null, Ct);
+				await NeoProps.AddMany(UpdatedWord.DiffedWord.Props, null, Ct);
 				await UpdUpd(UpdatedWord.WordInDb.Id, Ct);
 			}
 
@@ -169,10 +172,8 @@ public  partial class SvcWord(
 	}
 
 /// <summary>
-/// 蔿 待加之諸詞分類 按是否既存于庫中
+/// 蔿 生詞表文本ᙆ待加之諸詞分類 按是否既存于庫中
 /// </summary>
-/// <param name="Ctx"></param>
-/// <param name="ct"></param>
 /// <returns></returns>
 	public async Task<Func<
 		IUserCtx
@@ -181,14 +182,14 @@ public  partial class SvcWord(
 		,Task<DtoAddWords>
 	>> FnClassifyWordsToAdd(
 		IDbFnCtx Ctx
-		,CT ct
+		,CT Ct
 	){
-		var GroupByExisting = await FnGroupByExising(Ctx, ct);
+		var GroupByExisting = await FnGroupByExising(Ctx, Ct);
 
 		var Fn = async(
 			IUserCtx UserCtx
 			,IEnumerable<JnWord> JnWords
-			,CT ct
+			,CT Ct
 		)=>{
 			var R = new DtoAddWords();
 
@@ -205,7 +206,7 @@ public  partial class SvcWord(
 			}
 
 			//查庫 篩出庫中既有ʹ舊詞 與 未加過之詞
-			var ExistGroup = await GroupByExisting(UserCtx, Mergeds, ct);
+			var ExistGroup = await GroupByExisting(UserCtx, Mergeds, Ct);
 			R.NeoWords = ExistGroup.NonExistings??[];
 
 			// 有變動之諸新詞。
@@ -213,13 +214,24 @@ public  partial class SvcWord(
 			foreach(var Exi_Dupli in ExistGroup.Existing_Duplications??[]){
 				var OldWord = Exi_Dupli.Existing;//庫中已有ʹ舊詞
 				var NewWord = Exi_Dupli.Duplication;//待加ʹ新詞
-				//待加ʹ新資產
-				var NewProps = JnWord.DiffProps(NewWord.Props, OldWord.Props);
-				var DtoUpdatedWord = new DtoUpdatedWord(
+
+				// //待加ʹ新資產
+				// var NewProps = JnWord.DiffProps(NewWord.Props, OldWord.Props);
+				// var DtoUpdatedWord = new DtoUpdWord(
+				// 	WordInDb: OldWord
+				// 	,WordToAdd: NewWord
+				// 	,DiffedProps: NewProps
+				// );
+				var Diffed = NewWord.ToDiffMerge(OldWord);
+				if(Diffed == null){
+					continue;
+				}
+				var DtoUpdatedWord = new DtoUpdWord(
 					WordInDb: OldWord
 					,WordToAdd: NewWord
-					,DiffedProps: NewProps
+					,DiffedWord: Diffed
 				);
+
 				R.UpdatedWords.Add(DtoUpdatedWord);
 			}
 			return R;
@@ -227,13 +239,6 @@ public  partial class SvcWord(
 		return Fn;
 	}
 
-
-// [Obsolete]
-// 	PoLearn _MkLearn_Add(){
-// 		var R = new PoLearn();
-// 		R.SetStrToken(null, KeysProp.Inst.learn, ConstLearn.Inst.add);
-// 		return R;
-// 	}
 
 	protected IEnumerable<PoWordLearn> MkPoLearns(IEnumerable<PoWordProp> NeoProps, IdWord WordId){
 		foreach(var Prop in NeoProps){
@@ -264,7 +269,7 @@ public  partial class SvcWord(
 		,CT Ct
 	){
 		var ClassifyWordsToAdd = await FnClassifyWordsToAdd(Ctx, Ct);
-		var AddOrUpdateWordsByDto = await FnAddOrUpdWordsFromTxtByDto(Ctx,Ct);
+		var AddOrUpdateWordsByDto = await FnAddOrUpdWordsByDto(Ctx,Ct);
 		var Fn = async(
 			IUserCtx UserCtx
 			,IEnumerable<JnWord> JnWords
@@ -515,10 +520,20 @@ public  partial class SvcWord(
 	}
 
 	[Impl]
+	public async Task<nil> AddJnWords(
+		IUserCtx UserCtx
+		,IEnumerable<JnWord> JnWords
+		,CT Ct
+	){
+
+		return NIL;
+	}
+
+	[Impl]
 	public async Task<nil> AddWordsFromUrl(
 		IUserCtx UserCtx
 		,string Path
-		,CT ct
+		,CT Ct
 	) {
 		throw new NotImplementedException();
 	}
@@ -571,8 +586,5 @@ public  partial class SvcWord(
 		var Fn = await FnPageJnWords(Ctx, Ct);
 		return await Fn(UserCtx, PageQry, Ct);
 	}
-
-
-
 
 }
