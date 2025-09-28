@@ -97,6 +97,7 @@ public class TsNgaqEntities{
 			R??= new PoWord();
 			ConvPoBase(Old, R);
 			R.Head = Old.text;
+			R.Lang = Old.belong;
 			return R;
 		}
 

@@ -91,41 +91,28 @@ WHERE {TK.Fld(NWordId)} = {TW.Prm(NWordId)}
 		var Cmd_SeekLearn = await SqlCmdMkr.Prepare(Ctx, Sql_SeekByFKey(TL.Qt(TL.DbTblName)), Ct);
 
 		return async(Id,Ct)=>{
-			var st = new Stopwatch();
-			st.Start();
 			var Po_Word = await GetPoWordById(Id, Ct);
 			if(Po_Word == null){
 				return null;
 			}
-			st.Stop();
-			Console.WriteLine($"DaoSqlWord.FnSlctJnWordById: {st.ElapsedMilliseconds}ms");//t
+
 			var Arg = new Str_Any{
 				[nameof(PoWordProp.WordId)] = Id
 			};
-			st.Restart();
 			var RawPropDicts = (await Cmd_SeekKv.RawArgs(TK.ToDbDict(Arg)).All(Ct))
 				.Select(dbDict=>TK.DbDictToEntity<PoWordProp>(dbDict))
 				.ToList()
 			;
-			st.Stop();
-			Console.WriteLine($"RawPropDicts: {st.ElapsedMilliseconds}ms");//t
-			System.Console.WriteLine("RawPropDicts.Count: "+RawPropDicts.Count);
 
-			st.Restart();
 			var RawLearnDicts = (await Cmd_SeekLearn.RawArgs(TL.ToDbDict(Arg)).All(Ct))
 				.Select(dbDict=>TL.DbDictToEntity<PoWordLearn>(dbDict))
 				.ToList()
 			;
-			st.Stop();
-			Console.WriteLine($"RawLearnDicts: {st.ElapsedMilliseconds}ms");//t
-			System.Console.WriteLine("RawLearnDicts.Count: "+RawLearnDicts.Count);
 			var ans = new JnWord{
 				Word = Po_Word
 				,Props = RawPropDicts
 				,Learns = RawLearnDicts
 			};
-			st.Stop();
-			Console.WriteLine($"DaoSqlWord.FnSlctJnWordById: {st.ElapsedMilliseconds}ms");//t
 			return ans;
 		};
 	}

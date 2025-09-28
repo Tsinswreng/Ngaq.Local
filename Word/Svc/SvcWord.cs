@@ -73,25 +73,17 @@ public partial class SvcWord(
 		return async(UserCtx, JnWords, Ct)=>{
 			var NonExistingList = new List<JnWord>();
 			var ExiDupliPairs = new List<Existing_Duplication<JnWord>>();
-			var st = new EmptyStopWatch();//1.5萬數據量下 SeekJnWordById每次查詢約12ms、SeekIdByHeadEtLang約0ms
 			foreach(var (i,JnWord) in JnWords.Index()){//慢
-				System.Console.WriteLine(i+": "+JnWord.Head);//t
-				st.Restart();
 				var IdInDb = await SeekIdByHeadEtLang(
 					UserCtx
 					,JnWord.Word.Head
 					,JnWord.Word.Lang
 					,Ct
 				);
-				st.Stop();
-				//System.Console.WriteLine($"SeekIdByHeadEtLang: {st.ElapsedMilliseconds}ms");
 				if(IdInDb == null){
 					NonExistingList.Add(JnWord);
 				}else{
-					st.Restart();
 					var JnWordInDb = await SeekJnWordById(IdInDb.Value, Ct);
-					st.Stop();
-					//System.Console.WriteLine($"SeekJnWordById: {st.ElapsedMilliseconds}ms");
 					if(JnWordInDb == null){
 						throw new FatalLogicErr("BoWordInDb == null");
 					}
@@ -142,7 +134,6 @@ public partial class SvcWord(
 			await using var NeoLearns = new BatchListAsy<PoWordLearn, nil>(InsertPoLearns);
 
 			//未加過之諸詞 加'add'ˉ學習記錄後直加入庫中則可
-			//Dictionary<str ,nil> debug = new Dictionary<str, nil>();//t
 			foreach(var OneNonExisting in DtoAddWords.NeoWords){
 				OneNonExisting.StoredAt = Tempus.Now();
 				var NeoPoLearns = MkPoLearns(OneNonExisting.Props, OneNonExisting.Id);
