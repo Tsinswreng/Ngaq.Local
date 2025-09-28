@@ -19,6 +19,7 @@ using Ngaq.Core.Word.Models.Learn_;
 //using Id_Kv = Ngaq.Core.Model.Po.Kv.IdKv;
 
 public partial class LocalTblMgrIniter{
+	const str MkIdx = "CREATE INDEX"; //不建議加 "IF NOT EXISTS" 以免掩蓋錯誤
 	protected ITblMgr Mgr;
 	public LocalTblMgrIniter(ITblMgr Mgr){
 		this.Mgr = Mgr;
@@ -107,8 +108,8 @@ public partial class LocalTblMgrIniter{
 
 	protected ITable CfgIPoKv(ITable o){
 		o.OuterAdditionalSqls.AddRange([
-$"CREATE INDEX {o.Qt("Idx"+o.DbTblName+"KStr")} ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(PoWordProp.KStr))})"
-,$"CREATE INDEX {o.Qt("Idx"+o.DbTblName+"KI64")} ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(PoWordProp.KI64))})"
+$"{MkIdx} {o.Qt("Idx_"+o.DbTblName+"_KStr")} ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(PoWordProp.KStr))})"
+,$"{MkIdx} {o.Qt("Idx_"+o.DbTblName+"_KI64")} ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(PoWordProp.KI64))})"
 		]);
 		return o;
 	}
@@ -120,6 +121,9 @@ $"CREATE INDEX {o.Qt("Idx"+o.DbTblName+"KStr")} ON {o.Qt(o.DbTblName)} ({o.Fld(n
 	protected ITable CfgI_WordId<TPo>(ITable Tbl){
 		var o = Tbl;
 		o.SetCol(nameof(PoWordProp.WordId)).MapType(MapIdWord());
+		o.OuterAdditionalSqls.AddRange([
+$"{MkIdx} {o.Qt("Idx_"+o.DbTblName+"_WordId")} ON {o.Qt(o.DbTblName)}({o.Fld(nameof(I_WordId.WordId))})"
+		]);
 		return o;
 	}
 
@@ -139,7 +143,7 @@ $"CREATE INDEX {o.Qt("Idx"+o.DbTblName+"KStr")} ON {o.Qt(o.DbTblName)} ({o.Fld(n
 			);
 			o.SetCol(nameof(PoCfg.Owner)).MapType(MapIdUser());
 			o.OuterAdditionalSqls.AddRange([
-$"CREATE INDEX {o.Qt("IdxCfgOwner")} ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoCfg.Owner))})"
+$"{MkIdx} {o.Qt("IdxCfgOwner")} ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoCfg.Owner))})"
 			]);
 		}
 
@@ -156,10 +160,10 @@ $"CREATE INDEX {o.Qt("IdxCfgOwner")} ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoCfg.
 $"UNIQUE({o.Fld(nameof(PoWord.Owner))}, {o.Fld(nameof(PoWord.Head))}, {o.Fld(nameof(PoWord.Lang))})"
 			]);
 			o.OuterAdditionalSqls.AddRange([
-$"CREATE INDEX {o.Qt("Idx_Word_Head_Lang")} ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoWord.Head))}, {o.Fld(nameof(PoWord.Lang))})"
-,$"CREATE INDEX {o.Qt("Idx_Word_CreatedAt")} ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoWord.CreatedAt))})"
-,$"CREATE INDEX {o.Qt("Idx_Word_UpdatedAt")} ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoWord.UpdatedAt))})"
-,$"CREATE INDEX {o.Qt("Idx_Word_StoragedAt")} ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoWord.UpdatedAt))})"
+$"{MkIdx} {o.Qt("Idx_Word_Head_Lang")} ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoWord.Head))}, {o.Fld(nameof(PoWord.Lang))})"
+,$"{MkIdx} {o.Qt("Idx_Word_CreatedAt")} ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoWord.CreatedAt))})"
+,$"{MkIdx} {o.Qt("Idx_Word_UpdatedAt")} ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoWord.UpdatedAt))})"
+,$"{MkIdx} {o.Qt("Idx_Word_StoragedAt")} ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoWord.UpdatedAt))})"
 			]);
 		}
 

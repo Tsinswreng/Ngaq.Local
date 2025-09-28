@@ -53,10 +53,20 @@ public partial class DbIniter{
 		CT
 		,Task<nil>
 	>> FnMkSchema(Db.IDbFnCtx DbFnCtx, CT Ct){
-		var Cmd = await SqlCmdMkr.MkCmd(DbFnCtx, Sql, Ct);//勿Prepare
+		var Cmd = await SqlCmdMkr.MkCmd(DbFnCtx, Sql, Ct);//勿 Prepare、表未建好旹預無法編譯
 		var Fn = async(CT Ct)=>{
-			await Cmd.IterIAsy(Ct).FirstOrDefaultAsync(Ct);
-			return NIL;
+			try{
+				await Cmd.IterIAsy(Ct).FirstOrDefaultAsync(Ct);
+				return NIL;
+			}
+			catch (System.Exception e){
+				throw new Exception(
+					"MkSchema failed\nSql:\n"
+					+Sql+"\n"
+					,e
+				);
+
+			}
 		};
 		return Fn;
 	}
