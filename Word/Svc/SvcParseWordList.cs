@@ -19,7 +19,7 @@ public  partial class SvcParseWordList
 	}
 
 	public async Task<IEnumerable<JnWord>> ParseWordsByIterEtEncodingAsy(
-		I_Iter<u8> Iter
+		IIter<u8> Iter
 		,Encoding Encoding
 		,CancellationToken ct = default
 	){
@@ -40,7 +40,7 @@ public  partial class SvcParseWordList
 		Path_Encode Path_Encode
 		,CancellationToken ct = default
 	) {
-		I_Iter<u8> ByteReader = new ByteReader(Path_Encode.Path);
+		IIter<u8> ByteReader = new ByteReader(Path_Encode.Path);
 		return await ParseWordsByIterEtEncodingAsy(ByteReader, Path_Encode.Encoding);
 	}
 

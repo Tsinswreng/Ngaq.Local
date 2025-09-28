@@ -4,10 +4,8 @@ using Ngaq.Core.Model.Po.Learn_;
 using Ngaq.Core.Model.Po.Word;
 using Ngaq.Core.Model.Word.Dto;
 using Ngaq.Core.Service.Word;
-using Ngaq.Core.Tools;
 using Ngaq.Core.Tools.Io;
 using Ngaq.Local.Db;
-using System.Collections;
 using Ngaq.Core.Infra.Errors;
 using Tsinswreng.CsTools;
 using Ngaq.Core.Model.Word.Req;
@@ -23,11 +21,15 @@ using Ngaq.Core.Models.UserCtx;
 using Ngaq.Core.Models;
 using Ngaq.Local.Word.Dao;
 using Ngaq.Local.Db.TswG;
+using Ngaq.Core.Stream;
+using Ngaq.Core.Tools.Json;
+using Ngaq.Core.Tools;
+using System.Diagnostics;
 
 namespace Ngaq.Local.Word.Svc;
 
 //不在Svc中依賴DbCtx
-public  partial class SvcWord(
+public partial class SvcWord(
 	ISvcParseWordList SvcParseWordList
 	,ITxnRunner TxnRunner
 	,DaoSqlWord DaoWord
@@ -36,12 +38,13 @@ public  partial class SvcWord(
 	,IAppRepo<PoWordProp, IdWordProp> RepoKv
 	,IAppRepo<PoWordLearn, IdLearn> RepoLearn
 	,TxnWrapper<DbFnCtx> TxnWrapper
+	,IJsonSerializer JsonSerializer
 )
 	: ISvcWord
 {
 
 
-	public  partial class EErr_:EnumErr{
+	public partial class EErr_:EnumErr{
 		public IAppErr WordOwnerNotMatch() => Mk(nameof(WordOwnerNotMatch));
 	}
 	public EErr_ EErr = new EErr_();
@@ -65,32 +68,35 @@ public  partial class SvcWord(
 		IDbFnCtx Ctx
 		,CT Ct
 	){
-
-		var SeekIdByFormEtLang = await DaoWord.FnSlctIdByOwnerHeadLang(Ctx, Ct);
-		var SeekBoWordById = await DaoWord.FnSelectJnWordById(Ctx, Ct);
-		var Fn = async(
-			IUserCtx UserCtx
-			,IEnumerable<JnWord> JnWords
-			,CT Ct
-		)=>{
+		var SeekIdByHeadEtLang = await DaoWord.FnSlctIdByOwnerHeadLang(Ctx, Ct);
+		var SeekJnWordById = await DaoWord.FnSlctJnWordById(Ctx, Ct);
+		return async(UserCtx, JnWords, Ct)=>{
 			var NonExistingList = new List<JnWord>();
 			var ExiDupliPairs = new List<Existing_Duplication<JnWord>>();
-			foreach(var JnWord in JnWords){
-				var IdInDb = await SeekIdByFormEtLang(
+			var st = new EmptyStopWatch();//1.5萬數據量下 SeekJnWordById每次查詢約12ms、SeekIdByHeadEtLang約0ms
+			foreach(var (i,JnWord) in JnWords.Index()){//慢
+				System.Console.WriteLine(i+": "+JnWord.Head);//t
+				st.Restart();
+				var IdInDb = await SeekIdByHeadEtLang(
 					UserCtx
-					,JnWord.PoWord.Head
-					,JnWord.PoWord.Lang
+					,JnWord.Word.Head
+					,JnWord.Word.Lang
 					,Ct
 				);
+				st.Stop();
+				//System.Console.WriteLine($"SeekIdByHeadEtLang: {st.ElapsedMilliseconds}ms");
 				if(IdInDb == null){
 					NonExistingList.Add(JnWord);
 				}else{
-					var BoWordInDb = await SeekBoWordById(IdInDb.Value, Ct);
-					if(BoWordInDb == null){
+					st.Restart();
+					var JnWordInDb = await SeekJnWordById(IdInDb.Value, Ct);
+					st.Stop();
+					//System.Console.WriteLine($"SeekJnWordById: {st.ElapsedMilliseconds}ms");
+					if(JnWordInDb == null){
 						throw new FatalLogicErr("BoWordInDb == null");
 					}
 					var ExiDupliPair = new Existing_Duplication<JnWord>(
-						Existing: BoWordInDb
+						Existing: JnWordInDb
 						,Duplication: JnWord
 					);
 					ExiDupliPairs.Add(ExiDupliPair);
@@ -101,22 +107,23 @@ public  partial class SvcWord(
 			R.NonExistings = NonExistingList;
 			return R;
 		};
-		return Fn;
 	}
 
 
-	/// <summary>
+#if false
+/// <summary>
 	/// 專用于添詞芝從文本詞表
 	/// </summary>
 	/// <param name="Ctx"></param>
 	/// <param name="Ct"></param>
 	/// <returns></returns>
+	[Obsolete]
 	public async Task<Func<
 		IUserCtx
 		,DtoAddWords
 		,CT
 		,Task<nil>
-	>> FnAddOrUpdWordsByDto(
+	>> FnAddOrUpdWordsFromTxtByDto(
 		IDbFnCtx Ctx
 		,CT Ct
 	){
@@ -170,6 +177,7 @@ public  partial class SvcWord(
 		};
 		return Fn;
 	}
+#endif
 
 /// <summary>
 /// 蔿 生詞表文本ᙆ待加之諸詞分類 按是否既存于庫中
@@ -253,6 +261,108 @@ public  partial class SvcWord(
 	}
 
 
+/// <summary>
+/// 把DtoAddWords 寫入數據庫。不類[從文本生詞表導入單詞]之新增ᵣ [添加記錄]
+/// </summary>
+	public async Task<Func<
+		IUserCtx
+		,DtoAddWords
+		,CT
+		,Task<nil>
+	>> FnMergeDtoAddWordsInToDb(
+		IDbFnCtx Ctx
+		,CT Ct
+	){
+		var InsertJnWords = await DaoWord.FnInsertJnWords(Ctx, Ct);
+		var InsertPoKvs = await DaoWord.FnInsertPoKvs(Ctx, Ct);
+		var InsertPoLearns = await DaoWord.FnInsertPoLearns(Ctx, Ct);
+		var UpdUpd = await RepoPoWord.FnUpd_UpdatedAt(Ctx,Ct);
+
+		var Fn = async(
+			IUserCtx UserCtx
+			,DtoAddWords DtoAddWords
+			,CT Ct
+		)=>{
+			await using var NeoWords = new BatchListAsy<JnWord, nil>(InsertJnWords);
+			await using var NeoProps = new BatchListAsy<PoWordProp, nil>(InsertPoKvs);
+			await using var NeoLearns = new BatchListAsy<PoWordLearn, nil>(InsertPoLearns);
+
+
+
+			foreach(var OneNonExisting in DtoAddWords.NeoWords){
+				OneNonExisting.StoredAt = Tempus.Now();
+				//var NeoPoLearns = MkPoLearns(OneNonExisting.Props, OneNonExisting.Id);
+				await NeoWords.Add(OneNonExisting, Ct);
+				//await NeoLearns.AddMany(NeoPoLearns, null, Ct);
+			}
+
+			// 有變動之諸新詞
+			foreach(var UpdatedWord in DtoAddWords.UpdatedWords){
+				if(UpdatedWord.DiffedWord == null){
+					continue;
+				}
+				//若NewProps則有變動、學習記錄添'add'
+				//var NeoPoLearns = MkPoLearns(UpdatedWord.DiffedWord.Props, UpdatedWord.WordInDb.Id);
+				//await NeoLearns.AddMany(NeoPoLearns, null, Ct);
+				UpdatedWord.DiffedWord.Props = UpdatedWord.DiffedWord.Props.Select(x=>{
+					x.WordId = UpdatedWord.WordInDb.Id;
+					return x;
+				}).ToList();
+				UpdatedWord.DiffedWord.Learns = UpdatedWord.DiffedWord.Learns.Select(x=>{
+					x.WordId = UpdatedWord.WordInDb.Id;
+					return x;
+				}).ToList();
+				await NeoProps.AddMany(UpdatedWord.DiffedWord.Props, null, Ct);
+				await NeoLearns.AddMany(UpdatedWord.DiffedWord.Learns, null, Ct);
+				await UpdUpd(UpdatedWord.WordInDb.Id, Ct);
+			}
+
+			await NeoWords.End(Ct);
+			await NeoProps.End(Ct);
+			await NeoLearns.End(Ct);
+
+			return NIL;
+		};
+		return Fn;
+	}
+
+	public async Task<Func<
+		IUserCtx
+		,DtoAddWords
+		,CT
+		,Task<nil>
+	>> FnAddOrUpdWordsFromTxtByDto(
+		IDbFnCtx Ctx
+		,CT Ct
+	){
+		var MergeWordsByDto = await FnMergeDtoAddWordsInToDb(Ctx, Ct);
+		var InsertPoLearns = await DaoWord.FnInsertPoLearns(Ctx, Ct);
+		var R = async(
+			IUserCtx UserCtx
+			,DtoAddWords DtoAddWords
+			,CT Ct
+		)=>{
+			await using var NeoLearns = new BatchListAsy<PoWordLearn, nil>(InsertPoLearns);
+			//按新ʹProps 決 添加記錄
+			foreach(var OneNonExisting in DtoAddWords.NeoWords){
+				var NeoPoLearns = MkPoLearns(OneNonExisting.Props, OneNonExisting.Id);
+				await NeoLearns.AddMany(NeoPoLearns, null, Ct);
+			}
+			foreach(var UpdatedWord in DtoAddWords.UpdatedWords){
+				if(UpdatedWord.DiffedWord == null){
+					continue;
+				}
+				var NeoPoLearns = MkPoLearns(UpdatedWord.DiffedWord.Props, UpdatedWord.WordInDb.Id);
+				await NeoLearns.AddMany(NeoPoLearns, null, Ct);
+			}
+			await MergeWordsByDto(UserCtx, DtoAddWords, Ct);
+			return NIL;
+		};
+		return R;
+	}
+
+
+
 	/// <summary>
 	/// 專用于添詞芝從文本詞表
 	/// </summary>
@@ -269,7 +379,31 @@ public  partial class SvcWord(
 		,CT Ct
 	){
 		var ClassifyWordsToAdd = await FnClassifyWordsToAdd(Ctx, Ct);
-		var AddOrUpdateWordsByDto = await FnAddOrUpdWordsByDto(Ctx,Ct);
+		var AddOrUpdateWordsByDto = await FnAddOrUpdWordsFromTxtByDto(Ctx,Ct);
+		var Fn = async(
+			IUserCtx UserCtx
+			,IEnumerable<JnWord> JnWords
+			,CT Ct
+		)=>{
+			var DtoAddWords = await ClassifyWordsToAdd(UserCtx, JnWords, Ct);
+			await AddOrUpdateWordsByDto(UserCtx, DtoAddWords, Ct);
+			return DtoAddWords;
+		};
+		return Fn;
+	}
+
+
+	public async Task<Func<
+		IUserCtx
+		,IEnumerable<JnWord>
+		,CT
+		,Task<DtoAddWords>
+	>> FnMergeWordsIntoDb(
+		IDbFnCtx Ctx
+		,CT Ct
+	){
+		var ClassifyWordsToAdd = await FnClassifyWordsToAdd(Ctx, Ct);
+		var AddOrUpdateWordsByDto = await FnMergeDtoAddWordsInToDb(Ctx,Ct);
 		var Fn = async(
 			IUserCtx UserCtx
 			,IEnumerable<JnWord> JnWords
@@ -287,7 +421,7 @@ public  partial class SvcWord(
 		IUserCtx
 		,IPageQry
 		,CT
-		,Task<IPageAsy<JnWord>>
+		,Task<IPage<JnWord>>
 	>> FnPageJnWords(
 		IDbFnCtx Ctx
 		,CT Ct
@@ -304,7 +438,7 @@ public  partial class SvcWord(
 		IDbFnCtx Ctx
 		,CT Ct
 	){
-		var SelectJnWordById = await DaoWord.FnSelectJnWordById(Ctx, Ct);
+		var SelectJnWordById = await DaoWord.FnSlctJnWordById(Ctx, Ct);
 		var Fn = async(
 			IUserCtx UserCtx
 			,IdWord IdWord
@@ -454,6 +588,54 @@ public  partial class SvcWord(
 	}
 
 
+/// <summary>
+/// IIter<str>: 每次返一行 JnWord Json。文件ʹ json格式潙按換行符分隔之 獨立ₐ JnWord json、非JnWord列表
+/// 胡不用 JnWord[]? 緣用列表則其元素有「,」間隔、不易流式讀
+/// </summary>
+/// <returns></returns>
+	public async Task<Func<
+		IUserCtx
+		,IAsyncEnumerable<str>
+		,CT
+		,Task<nil>
+	>> FnAddWordsByJsonLineIter(
+		IDbFnCtx Ctx
+		,CT Ct
+	){
+		var FnAddWords = await FnMergeWordsIntoDb(Ctx, Ct);
+		var R = async (
+			IUserCtx User
+			,IAsyncEnumerable<str> JsonLineIter
+			,CT Ct
+		)=>{
+			await using var Bl = new BatchListAsy<JnWord, nil>(async (words, Ct)=>{
+				await FnAddWords(User, words, Ct);
+				return NIL;
+			});
+			await foreach(var Line in JsonLineIter){
+				var JnWord = JsonSerializer.Parse<JnWord>(Line);
+				await Bl.Add(JnWord, Ct);
+			}
+			await Bl.End(Ct);
+			return NIL;
+		};
+		return R;
+	}
+
+//TODO 只準 斯函數 珩于客戶端。宜建 環境枚舉等  if(IsClient){} //
+	// public async Task<Func<
+	// 	IUserCtx
+	// 	,str //path
+	// 	,CT
+	// 	,nil
+	// >> FnAddWordsByJsonLines(
+	// 	IDbFnCtx Ctx
+	// 	,CT Ct
+	// ){
+
+	// }
+
+
 
 
 
@@ -519,14 +701,15 @@ public  partial class SvcWord(
 		return NIL;
 	}
 
+
+
 	[Impl]
 	public async Task<nil> AddJnWords(
 		IUserCtx UserCtx
 		,IEnumerable<JnWord> JnWords
 		,CT Ct
 	){
-
-		return NIL;
+		return await TxnWrapper.Wrap(FnMergeWordsIntoDb, UserCtx, JnWords, Ct);
 	}
 
 	[Impl]
@@ -575,7 +758,7 @@ public  partial class SvcWord(
 	}
 
 	[Impl]
-	public async Task<IPageAsy<JnWord>> PageJnWord(
+	public async Task<IPage<JnWord>> PageJnWord(
 		IUserCtx UserCtx
 		,IPageQry PageQry
 		,CT Ct
@@ -585,6 +768,16 @@ public  partial class SvcWord(
 		var Ctx = new DbFnCtx();
 		var Fn = await FnPageJnWords(Ctx, Ct);
 		return await Fn(UserCtx, PageQry, Ct);
+		//return await TxnWrapper.Wrap(FnPageJnWords, UserCtx, PageQry, Ct);//報錯曰The transaction object is not associated with the same connection object as this command.
+	}
+
+	[Impl]
+	public async Task<nil> AddWordsByJsonLineIter(
+		IUserCtx User
+		,IAsyncEnumerable<str> JsonLineIter
+		,CT Ct
+	){
+		return await TxnWrapper.Wrap(FnAddWordsByJsonLineIter, User, JsonLineIter, Ct);
 	}
 
 }

@@ -118,19 +118,19 @@ public class TsNgaqEntities{
 		}
 
 		{
-			var o = R.PoWord;
+			var o = R.Word;
 			ToPoWord(Old.textWord, ref o);
-			R.PoWord = o;
+			R.Word = o;
 		}
 		foreach(var OldLearn in Old.learns){
 			var NeoPoLearn = new PoWordLearn();
-			ToPoLearn(OldLearn, R.PoWord.Id, ref NeoPoLearn);
+			ToPoLearn(OldLearn, R.Word.Id, ref NeoPoLearn);
 			R.Learns.Add(NeoPoLearn);
 		}
 
 		foreach(var OldProp in Old.propertys){
 			var NeoProp = new PoWordProp();
-			ToPoProp(OldProp, R.PoWord.Id, ref NeoProp);
+			ToPoProp(OldProp, R.Word.Id, ref NeoProp);
 			R.Props.Add(NeoProp);
 		}
 		return R;

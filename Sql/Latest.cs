@@ -44,7 +44,7 @@ public partial class DbIniter{
 		var Sql = "SELECT * FROM sqlite_master";
 		var Cmd = await SqlCmdMkr.MkCmd(DbFnCtx, Sql, Ct);
 		var Fn = async(CT Ct)=>{
-			return Cmd.Run(Ct);
+			return Cmd.IterIAsy(Ct);
 		};
 		return Fn;
 	}
@@ -55,7 +55,7 @@ public partial class DbIniter{
 	>> FnMkSchema(Db.IDbFnCtx DbFnCtx, CT Ct){
 		var Cmd = await SqlCmdMkr.MkCmd(DbFnCtx, Sql, Ct);//勿Prepare
 		var Fn = async(CT Ct)=>{
-			await Cmd.Run(Ct).FirstOrDefaultAsync(Ct);
+			await Cmd.IterIAsy(Ct).FirstOrDefaultAsync(Ct);
 			return NIL;
 		};
 		return Fn;

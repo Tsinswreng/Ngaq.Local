@@ -51,8 +51,8 @@ public partial class SvcDbCfg(
 		var PageByKStr = await DaoCfg.FnPageByKStr(Ctx, Ct);
 		var Fn = async(IUserCtx UserCtx, str Key, CT Ct)=>{
 			var Page = await PageByKStr(UserCtx, Key, PageQry, Ct);
-			if(Page.DataAsy != null){
-				var R = await Page.DataAsy.FirstOrDefaultAsync(Ct);
+			if(Page.Data != null){
+				var R = Page.Data.FirstOrDefault();
 				return R;
 			}
 			return null;

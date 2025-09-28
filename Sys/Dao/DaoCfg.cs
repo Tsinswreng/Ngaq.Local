@@ -7,6 +7,7 @@ using Tsinswreng.CsCfg;
 using Tsinswreng.CsCore;
 using Tsinswreng.CsPage;
 using Tsinswreng.CsSqlHelper;
+using Tsinswreng.CsTools;
 
 namespace Ngaq.Local.Sys.Dao;
 using Z = DaoCfg;
@@ -28,7 +29,7 @@ public partial class DaoCfg(
 		,str
 		,IPageQry
 		,CT
-		,Task<IPageAsy<PoCfg>>
+		,Task<IPage<PoCfg>>
 	>> FnPageByKStr(IDbFnCtx Ctx, CT Ct){
 var NOwner = nameof(PoCfg.Owner); var NKStr = nameof(PoCfg.KStr);
 var POwner = T.Prm(NOwner);var PKStr = T.Prm(NKStr);
@@ -45,9 +46,9 @@ AND {T.Qt(NKStr)} = {PKStr}
 			.Add(POwner, T.UpperToRaw(User.UserId))
 			.Add(PKStr, KStr)
 			.AddPageQry(PageQry, Lmt, Ofst);
-			var RawDicts = SqlCmd.Args(Arg).Run(Ct);
-			var PoAsy = RawDicts.Select(R=>T.DbDictToEntity<PoCfg>(R));
-			var R = PageAsy.Mk(PageQry, PoAsy);
+			var RawDicts = await SqlCmd.Args(Arg).All(Ct);
+			var PoAsy = RawDicts.Select(R=>T.DbDictToEntity<PoCfg>(R)).ToListTryNoCopy();
+			var R = Page.Mk(PageQry, PoAsy);
 			return R;
 		};
 		return Fn;
@@ -74,7 +75,7 @@ var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
 			var Args = ArgDict.Mk()
 			.Add(POwner, T.UpperToRaw(User.UserId))
 			.Add(PKStr, KStr).Add(PVStr, VStr);
-			await SqlCmd.Args(Args).Run(Ct).FirstOrDefaultAsync(Ct);
+			await SqlCmd.Args(Args).IterIAsy(Ct).FirstOrDefaultAsync(Ct);
 			return NIL;
 		};
 		return Fn;
@@ -101,7 +102,7 @@ var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
 			var Args = ArgDict.Mk()
 			.Add(POwner, T.UpperToRaw(User.UserId))
 			.Add(PKStr, KStr).Add(PI64, VI64);
-			await SqlCmd.Args(Args).Run(Ct).FirstOrDefaultAsync(Ct);
+			await SqlCmd.Args(Args).IterIAsy(Ct).FirstOrDefaultAsync(Ct);
 			return NIL;
 		};
 		return Fn;
