@@ -263,30 +263,22 @@ AND {Tbl.Fld(nameof(IPoBase.DelId))} IS NULL
 		,CT Ct
 	){
 		var TW = TblMgr.GetTbl<PoWord>();
-		var NOwner = nameof(PoWord.Owner);
+		var N = new PoWord.N();
+		var POwner = TW.Prm(N.Owner);
 		var Sql =
 $"""
 SELECT * FROM {TW.Qt(TW.DbTblName)}
-WHERE {TW.Fld(NOwner)} = {TW.Prm(NOwner)}
-AND {TW.Fld(nameof(PoWord.DelId))} IS NULL
-ORDER BY {TW.Fld(nameof(IPoBase.DbCreatedAt))} DESC
+WHERE {TW.Fld(N.Owner)} = {POwner}
+AND {TW.Fld(N.DelId)} IS NULL
+ORDER BY {TW.Fld(N.CreatedAt)} DESC
 {TW.SqlMkr.ParamLimOfst(out var PLmt, out var POfst)}
 """;
 		var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
 		Ctx?.AddToDispose(SqlCmd);
 		var FnCnt = await RepoWord.FnCount(Ctx, Ct);
-		var Fn = async(
-			IUserCtx UserCtx
-			,IPageQry PageQry
-			,CT Ct
-		)=>{
-			// var Arg = new Str_Any(){
-			// 	[NOwner] = TW.UpperToRaw(UserCtx.UserId)
-			// 	,[PLmt] = PageQry.PageSize
-			// 	,[POfst] = PageQry.Offset_()
-			// };
+		return async(UserCtx, PageQry ,Ct)=>{
 			var Arg = ArgDict.Mk()
-			.Add(NOwner, TW.UpperToRaw(UserCtx.UserId))
+			.Add(POwner, TW.UpperToRaw(UserCtx.UserId))
 			.AddPageQry(PageQry, PLmt, POfst);
 
 			var RawDbDicts = await SqlCmd.Args(Arg).All(Ct);
@@ -301,7 +293,6 @@ ORDER BY {TW.Fld(nameof(IPoBase.DbCreatedAt))} DESC
 			};
 			return R;
 		};
-		return Fn;
 	}
 
 	public async Task<Func<
@@ -415,15 +406,15 @@ AND (
 	>> FnPageIdSearchWordsByHeadPrefix(IDbFnCtx Ctx, CT Ct){
 var T = TblMgr.GetTbl<PoWord>();
 var NId = nameof(PoWord.Id); var NHead = nameof(PoWord.Head); var NOwner = nameof(PoWord.Owner); var NLang = nameof(PoWord.Lang);
-var PPrefix = T.Prm("Prefix"); var POwner = T.Prm("Owner"); var PLang = T.Prm("Lang");
+var PPrefix = T.Prm("Prefix"); var POwner = T.Prm(NOwner); var PLang = T.Prm(NLang);
 var Sql =
 $"""
 SELECT {NId} FROM {T.DbTblName}
 WHERE 1=1
 AND {T.Fld(nameof(IPoBase.DelId))} IS NULL
-AND {NHead} LIKE {PPrefix} || '%'
-AND {NLang} = {PLang}
-AND {NOwner} = {POwner}
+AND {T.Fld(NHead)} LIKE {PPrefix} || '%'
+AND {T.Fld(NLang)} = {PLang}
+AND {T.Fld(NOwner)} = {POwner}
 {T.SqlMkr.ParamLimOfst(out var PLmt, out var POfst)}
 """;
 		var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);;
