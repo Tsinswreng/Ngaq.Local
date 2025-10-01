@@ -13,6 +13,7 @@ using Ngaq.Core.Word.Models.Po.Learn;
 using Tsinswreng.CsTools;
 using Ngaq.Core.Sys.Models;
 using Ngaq.Core.Word.Models.Learn_;
+using Ngaq.Core.Model.Sys.Po;
 
 //using Id_User = Ngaq.Core.Model.Po.User.IdUser;
 //using Id_Word = Ngaq.Core.Model.Po.Word.IdWord;
@@ -84,25 +85,40 @@ public partial class LocalTblMgrIniter{
 		o.SetCol(nameof(IPoBase.UpdatedAt)).MapType(MapTempusN());
 		o.SetCol(nameof(IPoBase.DbUpdatedAt)).MapType(MapTempusN());
 
-		o.SetCol(nameof(IPoBase.Status)).MapType<i32?, PoStatus>(
-			s=>Convert.ToInt32(s.Value),
-			val=>new PoStatus(Convert.ToInt32(val))
-			,ObjToRaw: (obj)=>Convert.ToInt32(obj)
+		o.SetCol(nameof(IPoBase.DelId)).MapType<u8[], IdDel?>(
+			idDel=>(idDel is null?null :idDel.Value.Value.ToByteArr())!
+			,blob=>IdDel.FromByteArr(blob)
 		);
+
+		// o.SetCol(nameof(IPoBase.Status)).MapType<i32?, PoStatus>(
+		// 	s=>Convert.ToInt32(s.Value),
+		// 	val=>new PoStatus(Convert.ToInt32(val))
+		// 	,ObjToRaw: (obj)=>Convert.ToInt32(obj)
+		// );
 
 		o.SetCol(nameof(IPoBase.CreatedBy)).MapType(MapIdUserN());
 		o.SetCol(nameof(IPoBase.LastUpdatedBy)).MapType(MapIdUserN());
 
-
 		o.SoftDelCol = new SoftDelol{
-			CodeColName = nameof(IPoBase.Status)
+			CodeColName = nameof(IPoBase.DelId)
 			,FnDelete = (statusObj)=>{
-				return PoStatus.Deleted.Value;
+				return new IdDel().Value.ToByteArr();
 			}
 			,FnRestore = (statusObj)=>{
-				return PoStatus.Normal.Value;
+				return null;
 			}
 		};
+
+
+		// o.SoftDelCol = new SoftDelol{
+		// 	CodeColName = nameof(IPoBase.Status)
+		// 	,FnDelete = (statusObj)=>{
+		// 		return PoStatus.Deleted.Value;
+		// 	}
+		// 	,FnRestore = (statusObj)=>{
+		// 		return PoStatus.Normal.Value;
+		// 	}
+		// };
 		return NIL;
 	}
 
@@ -147,6 +163,8 @@ $"{MkIdx} {o.Qt("IdxCfgOwner")} ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoCfg.Owner
 			]);
 		}
 
+
+
 		var Tbl_Word = Mk<PoWord>("Word");
 		Mgr.AddTbl(Tbl_Word);
 		{
@@ -156,14 +174,22 @@ $"{MkIdx} {o.Qt("IdxCfgOwner")} ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoCfg.Owner
 			o.SetCol(nameof(PoWord.Id)).MapType(MapIdWord());
 			o.SetCol(nameof(PoWord.Owner)).MapType(MapIdUser());
 			o.SetCol(nameof(PoWord.StoredAt)).MapType(MapTempus());
-			o.InnerAdditionalSqls.AddRange([
-$"UNIQUE({o.Fld(nameof(PoWord.Owner))}, {o.Fld(nameof(PoWord.Head))}, {o.Fld(nameof(PoWord.Lang))})"
-			]);
+			// o.InnerAdditionalSqls.AddRange([
+
+			// ]);
 			o.OuterAdditionalSqls.AddRange([
 $"{MkIdx} {o.Qt("Idx_Word_Head_Lang")} ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoWord.Head))}, {o.Fld(nameof(PoWord.Lang))})"
 ,$"{MkIdx} {o.Qt("Idx_Word_CreatedAt")} ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoWord.CreatedAt))})"
 ,$"{MkIdx} {o.Qt("Idx_Word_UpdatedAt")} ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoWord.UpdatedAt))})"
 ,$"{MkIdx} {o.Qt("Idx_Word_StoragedAt")} ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoWord.UpdatedAt))})"
+,
+$"""
+CREATE UNIQUE INDEX Ux_Word_Owner_Head_Lang ON {o.Qt(o.DbTblName)} (
+{o.Fld(nameof(PoWord.Owner))}
+,{o.Fld(nameof(PoWord.Head))}
+,{o.Fld(nameof(PoWord.Lang))}
+) WHERE {o.Fld(nameof(PoWord.DelId))} IS NULL
+"""
 			]);
 		}
 

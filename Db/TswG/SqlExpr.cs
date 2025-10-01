@@ -53,21 +53,21 @@ public static class ExtnSqlExpr{
 }
 
 
-class Test_(
-	ISqlCmdMkr SqlCmdMkr
-	,ITblMgr TblMgr
-){
-	void Test(){
-		var TW = TblMgr.GetTbl<PoWord>();
-		var NOwner = nameof(PoWord.Owner);
-		var E = new SqlExpr<PoWord>();
-		E
-			.Select(w=>E.Star())
-			.Where(w=>w.Owner.Equals(E.Prm(NOwner))
-				&& w.Status != PoStatus.Deleted.Value
-			)
-			.OrderBy(x=>x.CreatedAt)
-			.Page(2,16)
-		;
-	}
-}
+// class Test_(
+// 	ISqlCmdMkr SqlCmdMkr
+// 	,ITblMgr TblMgr
+// ){
+// 	void Test(){
+// 		var TW = TblMgr.GetTbl<PoWord>();
+// 		var NOwner = nameof(PoWord.Owner);
+// 		var E = new SqlExpr<PoWord>();
+// 		E
+// 			.Select(w=>E.Star())
+// 			.Where(w=>w.Owner.Equals(E.Prm(NOwner))
+// 				&& w.Status != PoStatus.Deleted.Value
+// 			)
+// 			.OrderBy(x=>x.CreatedAt)
+// 			.Page(2,16)
+// 		;
+// 	}
+// }

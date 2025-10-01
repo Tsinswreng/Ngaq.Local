@@ -225,7 +225,7 @@ WHERE {TK.Fld(NWordId)} = {TW.Prm(NWordId)}
 $"""
 SELECT * FROM {Tbl.Qt(Tbl.DbTblName)}
 WHERE {Tbl.Fld(NWordId)} = {Tbl.Prm(NWordId)}
-AND {Tbl.Fld(nameof(IPoBase.Status))} <> {PoStatus.Deleted.Value}
+AND {Tbl.Fld(nameof(IPoBase.DelId))} IS NULL
 {Tbl.SqlMkr.ParamLimOfst(out var PLmt, out var POfst)}
 """;
 		var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
@@ -267,7 +267,7 @@ AND {Tbl.Fld(nameof(IPoBase.Status))} <> {PoStatus.Deleted.Value}
 $"""
 SELECT * FROM {TW.Qt(TW.DbTblName)}
 WHERE {TW.Fld(NOwner)} = {TW.Prm(NOwner)}
-AND {TW.Fld(nameof(PoWord.Status))} <> {PoStatus.Deleted.Value}
+AND {TW.Fld(nameof(PoWord.DelId))} IS NULL
 ORDER BY {TW.Fld(nameof(IPoBase.DbCreatedAt))} DESC
 {TW.SqlMkr.ParamLimOfst(out var PLmt, out var POfst)}
 """;
