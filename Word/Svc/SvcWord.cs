@@ -25,6 +25,7 @@ using Ngaq.Core.Stream;
 using Ngaq.Core.Tools.Json;
 using Ngaq.Core.Tools;
 using System.Diagnostics;
+using Ngaq.Core.Word.Models.Dto;
 
 namespace Ngaq.Local.Word.Svc;
 
@@ -613,20 +614,6 @@ public partial class SvcWord(
 		return R;
 	}
 
-//TODO 只準 斯函數 珩于客戶端。宜建 環境枚舉等  if(IsClient){} //
-	// public async Task<Func<
-	// 	IUserCtx
-	// 	,str //path
-	// 	,CT
-	// 	,nil
-	// >> FnAddWordsByJsonLines(
-	// 	IDbFnCtx Ctx
-	// 	,CT Ct
-	// ){
-
-	// }
-
-
 
 
 
@@ -656,6 +643,9 @@ public partial class SvcWord(
 	// 	};
 	// 	return Fn;
 	// }
+
+	// [Impl]
+	// public async Task<>
 
 
 

@@ -19,6 +19,7 @@ using Tsinswreng.CsTools;
 using Ngaq.Local.Db.TswG;
 using Ngaq.Core.Model.Sys.Po.User;
 using System.Diagnostics;
+using Ngaq.Core.Word.Models.Dto;
 
 public partial class DaoSqlWord(
 	ISqlCmdMkr SqlCmdMkr
@@ -405,7 +406,45 @@ AND (
 		return Fn;
 	}
 
-
+	public async Task<Func<
+		IUserCtx
+		,IPageQry
+		,ReqSearchWord
+		,CT
+		,Task<IPage<IdWord>>
+	>> FnPageIdSearchWordsByHeadPrefix(IDbFnCtx Ctx, CT Ct){
+var T = TblMgr.GetTbl<PoWord>();
+var NId = nameof(PoWord.Id); var NHead = nameof(PoWord.Head); var NOwner = nameof(PoWord.Owner); var NLang = nameof(PoWord.Lang);
+var PPrefix = T.Prm("Prefix"); var POwner = T.Prm("Owner"); var PLang = T.Prm("Lang");
+var Sql =
+$"""
+SELECT {NId} FROM {T.DbTblName}
+WHERE 1=1
+AND {T.Fld(nameof(IPoBase.DelId))} IS NULL
+AND {NHead} LIKE {PPrefix} || '%'
+AND {NLang} = {PLang}
+AND {NOwner} = {POwner}
+{T.SqlMkr.ParamLimOfst(out var PLmt, out var POfst)}
+""";
+		var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);;
+		Ctx?.AddToDispose(SqlCmd);
+		return async(User, PageQry, Req, Ct)=>{
+			var Arg = ArgDict.Mk()
+			.Add(PPrefix, Req.RawStr)
+			.Add(PLang, Req.Lang)
+			.Add(POwner, T.UpperToRaw(User.UserId))
+			.AddPageQry(PageQry, PLmt, POfst)
+			;
+			var RawDicts = await SqlCmd.WithCtx(Ctx).Args(Arg).All(Ct);
+			IList<IdWord> WordIds = RawDicts.Select(d=>{
+				var Id = d[NId];
+				return T.RawToUpper<IdWord>(d, NId);
+			}).ToListTryNoCopy();
+			var R = Page<IdWord>.Mk(PageQry, WordIds);
+			R.HasTotCnt = false;
+			return R;
+		};
+	}
 
 	public async Task<Func<
 
