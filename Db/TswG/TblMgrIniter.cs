@@ -85,9 +85,9 @@ public partial class LocalTblMgrIniter{
 		o.SetCol(nameof(IPoBase.UpdatedAt)).MapType(MapTempusN());
 		o.SetCol(nameof(IPoBase.DbUpdatedAt)).MapType(MapTempusN());
 
-		o.SetCol(nameof(IPoBase.DelId)).MapType<u8[], IdDel?>(
+		o.SetCol(nameof(IPoBase.DelId)).MapType<u8[]?, IdDel?>(
 			idDel=>(idDel is null?null :idDel.Value.Value.ToByteArr())!
-			,blob=>IdDel.FromByteArr(blob)
+			,blob=>blob is null? null :IdDel.FromByteArr(blob)
 		);
 
 		// o.SetCol(nameof(IPoBase.Status)).MapType<i32?, PoStatus>(

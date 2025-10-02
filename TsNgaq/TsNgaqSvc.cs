@@ -28,12 +28,12 @@ public class TsNgaqSvc(
 			var propPage = await PageProp(SlctAll, Ct);
 			var learnPage = await PageLearn(SlctAll, Ct);
 
-			if(textWordPage.DataAsy == null || propPage.DataAsy == null || learnPage.DataAsy == null){
+			if(textWordPage.DataAsyE == null || propPage.DataAsyE == null || learnPage.DataAsyE == null){
 				throw new Exception("DataAsy is null");
 			}
-			var TextWords = await textWordPage.DataAsy.ToListAsync(Ct);
-			var Props = await propPage.DataAsy.ToListAsync(Ct);
-			var Learns = await learnPage.DataAsy.ToListAsync(Ct);
+			var TextWords = await textWordPage.DataAsyE.ToListAsync(Ct);
+			var Props = await propPage.DataAsyE.ToListAsync(Ct);
+			var Learns = await learnPage.DataAsyE.ToListAsync(Ct);
 
 			var Id_TextWord = TextWords.Select(x=>x).ToDictionary(x=>x.id, x=>x);
 

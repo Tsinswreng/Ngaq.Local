@@ -402,21 +402,21 @@ AND (
 		,IPageQry
 		,ReqSearchWord
 		,CT
-		,Task<IPage<IdWord>>
-	>> FnPageIdSearchWordsByHeadPrefix(IDbFnCtx Ctx, CT Ct){
+		,Task<IPageIAsy<IdWord>>
+	>> FnPageSearchWordIdsByHeadPrefix(IDbFnCtx Ctx, CT Ct){
 var T = TblMgr.GetTbl<PoWord>();
-var NId = nameof(PoWord.Id); var NHead = nameof(PoWord.Head); var NOwner = nameof(PoWord.Owner); var NLang = nameof(PoWord.Lang);
-var PPrefix = T.Prm("Prefix"); var POwner = T.Prm(NOwner); var PLang = T.Prm(NLang);
+var N = new PoWord.N();
+var PPrefix = T.Prm("Prefix"); var POwner = T.Prm(N.Owner); var PLang = T.Prm(N.Lang);
 var Sql =
 $"""
-SELECT {NId} FROM {T.DbTblName}
+SELECT {N.Id} FROM {T.DbTblName}
 WHERE 1=1
-AND {T.Fld(nameof(IPoBase.DelId))} IS NULL
-AND {T.Fld(NHead)} LIKE {PPrefix} || '%'
-AND {T.Fld(NLang)} = {PLang}
-AND {T.Fld(NOwner)} = {POwner}
+AND {T.Fld(N.DelId)} IS NULL
+AND {T.Fld(N.Head)} LIKE {PPrefix} || '%'
+AND {T.Fld(N.Owner)} = {POwner}
+ORDER BY {T.Fld(N.Head)} ASC
 {T.SqlMkr.ParamLimOfst(out var PLmt, out var POfst)}
-""";
+"""; // AND {T.Fld(NLang)} = {PLang}
 		var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);;
 		Ctx?.AddToDispose(SqlCmd);
 		return async(User, PageQry, Req, Ct)=>{
@@ -426,12 +426,12 @@ AND {T.Fld(NOwner)} = {POwner}
 			.Add(POwner, T.UpperToRaw(User.UserId))
 			.AddPageQry(PageQry, PLmt, POfst)
 			;
-			var RawDicts = await SqlCmd.WithCtx(Ctx).Args(Arg).All(Ct);
-			IList<IdWord> WordIds = RawDicts.Select(d=>{
-				var Id = d[NId];
-				return T.RawToUpper<IdWord>(d, NId);
-			}).ToListTryNoCopy();
-			var R = Page<IdWord>.Mk(PageQry, WordIds);
+			var RawDicts = SqlCmd.WithCtx(Ctx).Args(Arg).IterIAsy(Ct);
+			var WordIds = RawDicts.Select(d=>{
+				var Id = d[N.Id];
+				return T.RawToUpper<IdWord>(Id, N.Id);
+			});
+			var R = PageIAsy<IdWord>.Mk(PageQry, WordIds);
 			R.HasTotCnt = false;
 			return R;
 		};

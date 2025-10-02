@@ -26,6 +26,7 @@ using Ngaq.Core.Tools.Json;
 using Ngaq.Core.Tools;
 using System.Diagnostics;
 using Ngaq.Core.Word.Models.Dto;
+using System.Runtime.CompilerServices;
 
 namespace Ngaq.Local.Word.Svc;
 
@@ -421,6 +422,7 @@ public partial class SvcWord(
 		return await DaoWord.FnPageJnWords(Ctx,Ct);
 	}
 
+
 	public async Task<Func<
 		IUserCtx
 		,IdWord
@@ -640,10 +642,49 @@ public partial class SvcWord(
 	// 	return Fn;
 	// }
 
-	// [Impl]
-	// public async Task<>
+	public async Task<Func<
+		IUserCtx
+		,IPageQry
+		,ReqSearchWord
+		,CT
+		,Task<IPage<JnWord>>
+	>> FnSearchWord(IDbFnCtx Ctx, CT Ct){
+		var PageSearchIdsByPrefix = await DaoWord.FnPageSearchWordIdsByHeadPrefix(Ctx, Ct);
+		var CheckWordOwnerOrThrow = await FnCheckWordOwnerOrThrow(Ctx, Ct);
+		return async (User, PageQry, Req, Ct)=>{
+			var IdPage = await PageSearchIdsByPrefix(User, PageQry, Req, Ct);
+			List<JnWord> Words = [];
+			try{
+				var WordId = IdWord.FromLow64Base(Req.RawStr);
+				var Word = await CheckWordOwnerOrThrow(User, WordId, Ct);
+				if(Word is not null){
+					Words.Add(Word);
+				}
+			}catch (System.Exception){
+				//TODO 判斷異常類型
+			}
+			if(IdPage.DataAsyE is not null){
+				await foreach(var IdWord in IdPage.DataAsyE){
+					var Word = await CheckWordOwnerOrThrow(User, IdWord, Ct);//不應再拋異常
+					if(Word is not null){
+						Words.Add(Word);
+					}
+				}
+			}
+			var R = Page.Mk(PageQry, Words);
+			return R;
+		};
+	}
 
-
+	[Impl]
+	public async Task<IPage<JnWord>> SearchWord(
+		IUserCtx User
+		,IPageQry PageQry
+		,ReqSearchWord Req
+		,CT Ct
+	){
+		return await TxnWrapper.Wrap(FnSearchWord, User, PageQry, Req, Ct);
+	}
 
 	[Impl]
 	public async Task<nil> AddWordsFromFilePath(
@@ -677,7 +718,6 @@ public partial class SvcWord(
 		},Ct);
 		return NIL;
 	}
-
 
 
 	[Impl]
