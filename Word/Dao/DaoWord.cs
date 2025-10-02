@@ -20,6 +20,7 @@ using Ngaq.Local.Db.TswG;
 using Ngaq.Core.Model.Sys.Po.User;
 using System.Diagnostics;
 using Ngaq.Core.Word.Models.Dto;
+using Ngaq.Core.Model.UserCtx;
 
 public partial class DaoSqlWord(
 	ISqlCmdMkr SqlCmdMkr
@@ -399,6 +400,34 @@ AND (
 
 	public async Task<Func<
 		IUserCtx
+		,IdWord
+		,str
+		,CT
+		,Task<nil>
+	>> FnUpdPoWordHead(IDbFnCtx Ctx, CT Ct){
+var T = TblMgr.GetTbl<PoWord>();
+var N = new PoWord.N();
+var PId = T.Prm(N.Id); var PHead = T.Prm(N.Head);
+var Sql =
+$"""
+UPDATE {T.DbTblName}
+SET {T.Fld(N.Head)} = {PHead}
+WHERE {T.Fld(N.Id)} = {PId}
+""";
+var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
+Ctx?.AddToDispose(SqlCmd);
+return async(UserCtx, IdWord, Head, Ct)=>{
+	var Arg = ArgDict.Mk()
+	.Add(PId, T.UpperToRaw(IdWord))
+	.Add(PHead, Head)
+	;
+	await SqlCmd.WithCtx(Ctx).Args(Arg).All(Ct);
+	return NIL;
+};
+	}
+
+	public async Task<Func<
+		IUserCtx
 		,IPageQry
 		,ReqSearchWord
 		,CT
@@ -436,6 +465,27 @@ ORDER BY {T.Fld(N.Head)} ASC
 			return R;
 		};
 	}
+
+	// public async Task<Func<
+	// 	IUserCtx
+	// 	,IdWord
+	// 	,CT
+	// 	,Task<nil>
+	// >> FnSoftDelJnWordById(IDbFnCtx Ctx, CT Ct){
+	// 	var TW = TblMgr.GetTbl<PoWord>();
+	// 	var NId = nameof(I_Id<nil>.Id);
+	// 	var NWordId = nameof(I_WordId.WordId);
+	// 	var WordSoftDelManyByKeys = await RepoWord.FnSoftDelManyByKeys(Ctx, NId, 99, Ct);
+	// 	var PropSofDelManyByKeys = await RepoKv.FnSoftDelManyByKeys(Ctx, NWordId, 99, Ct);
+	// 	var LearnSofDelManyByKeys = await RepoLearn.FnSoftDelManyByKeys(Ctx, NWordId, 99, Ct);
+	// 	return async(User, IdWord, Ct)=>{
+	// 		var RawIdWord = TW.UpperToRaw(IdWord);
+	// 		await WordSoftDelManyByKeys([RawIdWord], Ct);
+	// 		await PropSofDelManyByKeys([RawIdWord], Ct);
+	// 		await LearnSofDelManyByKeys([RawIdWord], Ct);
+	// 		return NIL;
+	// 	};
+	// }
 
 	public async Task<Func<
 

@@ -223,7 +223,7 @@ public partial class SvcWord(
 				// 	,WordToAdd: NewWord
 				// 	,DiffedProps: NewProps
 				// );
-				var Diffed = NewWord.ToDiffMerge(OldWord);
+				var Diffed = NewWord.Diff(OldWord);
 				if(Diffed == null){
 					continue;
 				}
@@ -676,6 +676,42 @@ public partial class SvcWord(
 		};
 	}
 
+
+	public async Task<Func<
+		IUserCtx
+		,IdWord
+		,str
+		,CT
+		,Task<nil>
+	>> FnUpdPoWordHead(IDbFnCtx Ctx, CT Ct){
+		var CheckOwner = await FnCheckWordOwnerOrThrow(Ctx, Ct);
+		var UpdPoWordHead = await DaoWord.FnUpdPoWordHead(Ctx, Ct);
+		var SlctIdByOwnerHeadLang = await DaoWord.FnSlctIdByOwnerHeadLang(Ctx, Ct);
+		var MergeWordsIntoDb = await FnMergeWordsIntoDb(Ctx, Ct);
+		var SoftDelJnWordById = await FnSoftDelJnWordsByIds(Ctx,Ct);
+
+		return async (User, IdWord, Head, Ct)=>{
+			var SrcWord = await CheckOwner(User, IdWord, Ct);
+			if(SrcWord is null){
+				return NIL;
+			}
+			var Lang = SrcWord.Lang;
+			var TargetId = await SlctIdByOwnerHeadLang(User, Head, Lang, Ct);
+			if(TargetId is null){
+				await UpdPoWordHead(User, IdWord, Head, Ct);
+				return NIL;
+			}
+			var TargetWord = await CheckOwner(User, TargetId.Value, Ct) ?? throw new FatalLogicErr("Existing is null");
+			var DiffedWord = SrcWord.Diff(TargetWord);
+			if(DiffedWord is null){
+				return NIL;
+			}
+			await MergeWordsIntoDb(User, [DiffedWord], Ct);
+			await SoftDelJnWordById(User, [IdWord], Ct);
+			return NIL;
+		};
+	}
+
 	[Impl]
 	public async Task<IPage<JnWord>> SearchWord(
 		IUserCtx User
@@ -795,6 +831,15 @@ public partial class SvcWord(
 		,CT Ct
 	){
 		return await TxnWrapper.Wrap(FnAddWordsByJsonLineIter, User, JsonLineIter, Ct);
+	}
+
+	[Impl]
+	public async Task<nil> SoftDelJnWordsByIds(
+		IUserCtx User
+		,IEnumerable<IdWord> Ids
+		,CT Ct
+	){
+		return await TxnWrapper.Wrap(FnSoftDelJnWordsByIds, User, Ids, Ct);
 	}
 
 }
