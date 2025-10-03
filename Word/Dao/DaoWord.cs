@@ -27,7 +27,7 @@ public partial class DaoSqlWord(
 	,ITblMgr TblMgr
 	,IAppRepo<PoWord, IdWord> RepoWord
 	,IAppRepo<PoWordProp, IdWordProp> RepoKv
-	,IAppRepo<PoWordLearn, IdLearn> RepoLearn
+	,IAppRepo<PoWordLearn, IdWordLearn> RepoLearn
 ){
 
 	public async Task<Func<
@@ -47,6 +47,7 @@ public partial class DaoSqlWord(
 $"""
 SELECT {T.Fld(NId)} FROM {T.Qt(T.DbTblName)}
 WHERE 1=1
+AND {T.Fld(nameof(IPoBase.DelId))} IS NULL
 AND {T.Fld(NOwner)} = {POwner}
 AND {T.Fld(NHead)} = {PHead}
 AND {T.Fld(NLang)} = {PLang}
@@ -84,7 +85,9 @@ AND {T.Fld(NLang)} = {PLang}
 			var Sql =
 $"""
 SELECT * FROM {QuotedTblName}
-WHERE {TK.Fld(NWordId)} = {TW.Prm(NWordId)}
+WHERE 1=1
+AND {TK.Fld(nameof(IPoBase.DelId))} IS NULL
+AND {TK.Fld(NWordId)} = {TW.Prm(NWordId)}
 """;
 			return Sql;
 		};
@@ -93,8 +96,11 @@ WHERE {TK.Fld(NWordId)} = {TW.Prm(NWordId)}
 		var Cmd_SeekLearn = await SqlCmdMkr.Prepare(Ctx, Sql_SeekByFKey(TL.Qt(TL.DbTblName)), Ct);
 
 		return async(Id,Ct)=>{
-			var Po_Word = await GetPoWordById(Id, Ct);
-			if(Po_Word == null){
+			var PoWord = await GetPoWordById(Id, Ct);
+			if(PoWord == null){
+				return null;
+			}
+			if(PoWord.IsDeleted()){
 				return null;
 			}
 
@@ -111,7 +117,7 @@ WHERE {TK.Fld(NWordId)} = {TW.Prm(NWordId)}
 				.ToList()
 			;
 			var ans = new JnWord{
-				Word = Po_Word
+				Word = PoWord
 				,Props = RawPropDicts
 				,Learns = RawLearnDicts
 			};
@@ -149,7 +155,7 @@ WHERE {TK.Fld(NWordId)} = {TW.Prm(NWordId)}
 				return NIL;
 			}, BatchSize);
 			foreach (var JWord in JnWords) {
-				JWord.AssignId();
+				JWord.EnsureForeignId();
 				await PoWords.Add(JWord.Word, ct);
 				foreach (var Prop in JWord.Props) {
 					await PoKvs.Add(Prop, ct);
@@ -398,6 +404,13 @@ AND (
 		return Fn;
 	}
 
+/// <summary>
+/// 不校驗、直接update語句㕥改
+/// </summary>
+/// <param name="Ctx"></param>
+/// <param name="Ct"></param>
+/// <returns></returns>
+	[Obsolete]
 	public async Task<Func<
 		IUserCtx
 		,IdWord
@@ -426,12 +439,52 @@ return async(UserCtx, IdWord, Head, Ct)=>{
 };
 	}
 
+
+/// <summary>
+/// 不校驗、直接update語句㕥改
+/// </summary>
+/// <param name="Ctx"></param>
+/// <param name="Ct"></param>
+/// <returns></returns>
+	public async Task<Func<
+		IUserCtx
+		,IdWord
+		,str//head
+		,str//lang
+		,CT
+		,Task<nil>
+	>> FnUpdPoWordHeadLang(IDbFnCtx Ctx, CT Ct){
+var T = TblMgr.GetTbl<PoWord>();
+var N = new PoWord.N();
+var PId = T.Prm(N.Id); var PHead = T.Prm(N.Head); var PLang = T.Prm(N.Lang);
+var Sql =
+$"""
+UPDATE {T.DbTblName}
+SET {T.Fld(N.Head)} = {PHead}
+,{T.Fld(N.Lang)} = {PLang}
+WHERE {T.Fld(N.Id)} = {PId}
+""";
+var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
+Ctx?.AddToDispose(SqlCmd);
+return async(UserCtx, IdWord, Head, Lang, Ct)=>{
+	var Arg = ArgDict.Mk()
+	.Add(PId, T.UpperToRaw(IdWord))
+	.Add(PHead, Head)
+	.Add(PLang, Lang)
+	;
+	await SqlCmd.WithCtx(Ctx).Args(Arg).All(Ct);
+	return NIL;
+};
+	}
+
+
+
 	public async Task<Func<
 		IUserCtx
 		,IPageQry
 		,ReqSearchWord
 		,CT
-		,Task<IPageIAsy<IdWord>>
+		,Task<IPageAsyE<IdWord>>
 	>> FnPageSearchWordIdsByHeadPrefix(IDbFnCtx Ctx, CT Ct){
 var T = TblMgr.GetTbl<PoWord>();
 var N = new PoWord.N();
@@ -460,7 +513,7 @@ ORDER BY {T.Fld(N.Head)} ASC
 				var Id = d[N.Id];
 				return T.RawToUpper<IdWord>(Id, N.Id);
 			});
-			var R = PageIAsy<IdWord>.Mk(PageQry, WordIds);
+			var R = PageAsyE<IdWord>.Mk(PageQry, WordIds);
 			R.HasTotCnt = false;
 			return R;
 		};

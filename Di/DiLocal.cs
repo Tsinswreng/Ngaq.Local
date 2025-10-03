@@ -77,8 +77,8 @@ z.AddScoped<
 	,AppRepo<PoWordProp, IdWordProp>
 >();
 z.AddScoped<
-	IAppRepo<PoWordLearn, IdLearn>
-	,AppRepo<PoWordLearn, IdLearn>
+	IAppRepo<PoWordLearn, IdWordLearn>
+	,AppRepo<PoWordLearn, IdWordLearn>
 >();
 //z.AddScoped<IRunInTxn, AdoTxnRunner>();
 return z;

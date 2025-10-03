@@ -21,12 +21,8 @@ using Ngaq.Core.Models.UserCtx;
 using Ngaq.Core.Models;
 using Ngaq.Local.Word.Dao;
 using Ngaq.Local.Db.TswG;
-using Ngaq.Core.Stream;
 using Ngaq.Core.Tools.Json;
-using Ngaq.Core.Tools;
-using System.Diagnostics;
 using Ngaq.Core.Word.Models.Dto;
-using System.Runtime.CompilerServices;
 
 namespace Ngaq.Local.Word.Svc;
 
@@ -38,7 +34,7 @@ public partial class SvcWord(
 	,I_GetTxnAsy TxnGetter
 	,IAppRepo<PoWord, IdWord> RepoPoWord
 	,IAppRepo<PoWordProp, IdWordProp> RepoKv
-	,IAppRepo<PoWordLearn, IdLearn> RepoLearn
+	,IAppRepo<PoWordLearn, IdWordLearn> RepoLearn
 	,TxnWrapper<DbFnCtx> TxnWrapper
 	,IJsonSerializer JsonSerializer
 )
@@ -428,7 +424,7 @@ public partial class SvcWord(
 		,IdWord
 		,CT
 		,Task<JnWord?>
-	>> FnCheckWordOwnerOrThrow(
+	>> FnGetJnWordByIdEtCheckOwner(
 		IDbFnCtx Ctx
 		,CT Ct
 	){
@@ -466,7 +462,7 @@ public partial class SvcWord(
 		IDbFnCtx Ctx
 		,CT Ct
 	){
-		var CheckWordOwner = await FnCheckWordOwnerOrThrow(Ctx, Ct);
+		var CheckWordOwner = await FnGetJnWordByIdEtCheckOwner(Ctx, Ct);
 		var InsertPoLearns = await DaoWord.FnInsertPoLearns(Ctx, Ct);
 		var UpdUpd = await RepoPoWord.FnUpd_UpdatedAt(Ctx,Ct);
 		var Fn = async(
@@ -534,7 +530,7 @@ public partial class SvcWord(
 	>> FnSoftDelJnWordsByIds(
 		IDbFnCtx Ctx ,CT Ct
 	){
-		var CheckOwner = await FnCheckWordOwnerOrThrow(Ctx, Ct);
+		var CheckOwner = await FnGetJnWordByIdEtCheckOwner(Ctx, Ct);
 		var SoftDelPoWordById = await RepoPoWord.FnSoftDelManyByKeys<IdWord>(Ctx, nameof(PoWord.Id), 1000, Ct);
 		var DelPoKvByWordIds = await RepoKv.FnSoftDelManyByKeys<IdWord>(Ctx, nameof(PoWordProp.WordId), 1000, Ct);
 		var DelPoLearnByWordIds = await RepoLearn.FnSoftDelManyByKeys<IdWord>(Ctx, nameof(PoWordLearn.WordId), 1000, Ct);
@@ -567,7 +563,7 @@ public partial class SvcWord(
 		,JnWord
 		,CT,Task<nil>
 	>> FnSyncMergeIn(IDbFnCtx Ctx, CT Ct){
-		var CheckOwner = await FnCheckWordOwnerOrThrow(Ctx, Ct);
+		var CheckOwner = await FnGetJnWordByIdEtCheckOwner(Ctx, Ct);
 		var SlctWord = await DaoWord.FnSlctIdByOwnerHeadLang(Ctx, Ct);
 		var Fn = async(IUserCtx UserCtx, JnWord NeoWords, CT Ct)=>{
 			var Existing = await SlctWord(UserCtx, NeoWords.Head, NeoWords.Lang, Ct);
@@ -650,7 +646,7 @@ public partial class SvcWord(
 		,Task<IPage<JnWord>>
 	>> FnSearchWord(IDbFnCtx Ctx, CT Ct){
 		var PageSearchIdsByPrefix = await DaoWord.FnPageSearchWordIdsByHeadPrefix(Ctx, Ct);
-		var CheckWordOwnerOrThrow = await FnCheckWordOwnerOrThrow(Ctx, Ct);
+		var CheckWordOwnerOrThrow = await FnGetJnWordByIdEtCheckOwner(Ctx, Ct);
 		return async (User, PageQry, Req, Ct)=>{
 			var IdPage = await PageSearchIdsByPrefix(User, PageQry, Req, Ct);
 			List<JnWord> Words = [];
@@ -677,14 +673,22 @@ public partial class SvcWord(
 	}
 
 
+	/// <summary>
+	/// 返詞頭對應之id
+	/// 庫中無新改ʹ詞頭則返源ʹ詞ʹid
+	/// 若有新改ʹ詞頭 即把源詞合併入目標詞後 返舊詞ʹid
+	/// 傳入ʹIdWordˋ在庫中尋不見旹返null
+	/// </summary>
+	/// <exception cref="FatalLogicErr"></exception>
+	[Obsolete]
 	public async Task<Func<
 		IUserCtx
 		,IdWord
-		,str
+		,str//head
 		,CT
-		,Task<nil>
-	>> FnUpdPoWordHead(IDbFnCtx Ctx, CT Ct){
-		var CheckOwner = await FnCheckWordOwnerOrThrow(Ctx, Ct);
+		,Task<IdWord?> //詞頭對應之id
+	>> FnUpdWordHead(IDbFnCtx Ctx, CT Ct){
+		var CheckOwner = await FnGetJnWordByIdEtCheckOwner(Ctx, Ct);
 		var UpdPoWordHead = await DaoWord.FnUpdPoWordHead(Ctx, Ct);
 		var SlctIdByOwnerHeadLang = await DaoWord.FnSlctIdByOwnerHeadLang(Ctx, Ct);
 		var MergeWordsIntoDb = await FnMergeWordsIntoDb(Ctx, Ct);
@@ -693,23 +697,148 @@ public partial class SvcWord(
 		return async (User, IdWord, Head, Ct)=>{
 			var SrcWord = await CheckOwner(User, IdWord, Ct);
 			if(SrcWord is null){
-				return NIL;
+				return null;
 			}
 			var Lang = SrcWord.Lang;
 			var TargetId = await SlctIdByOwnerHeadLang(User, Head, Lang, Ct);
 			if(TargetId is null){
 				await UpdPoWordHead(User, IdWord, Head, Ct);
-				return NIL;
+				return IdWord;
 			}
 			var TargetWord = await CheckOwner(User, TargetId.Value, Ct) ?? throw new FatalLogicErr("Existing is null");
 			var DiffedWord = SrcWord.Diff(TargetWord);
 			if(DiffedWord is null){
-				return NIL;
+				await SoftDelJnWordById(User, [IdWord], Ct);
+				return TargetId;
 			}
 			await MergeWordsIntoDb(User, [DiffedWord], Ct);
 			await SoftDelJnWordById(User, [IdWord], Ct);
+			return TargetId;
+		};
+	}
+
+	/// <summary>
+	/// 返(詞頭,語言)對應之id
+	/// 庫中無新改ʹ(詞頭,語言)則返源ʹ詞ʹid
+	/// 若有新改ʹ(詞頭,語言) 即把源詞合併入目標詞後 返舊詞ʹid
+	/// 傳入ʹIdWordˋ在庫中尋不見旹返null
+	/// </summary>
+	/// <exception cref="FatalLogicErr"></exception>
+	public async Task<Func<
+		IUserCtx
+		,IdWord
+		,str//head
+		,str//lang
+		,CT
+		,Task<IdWord?> //詞頭對應之id
+	>> FnUpdWordHeadLang(IDbFnCtx Ctx, CT Ct){
+		var GetJnWordByIdEtCheckOwner = await FnGetJnWordByIdEtCheckOwner(Ctx, Ct);
+		var UpdWordHeadLang = await DaoWord.FnUpdPoWordHeadLang(Ctx, Ct);
+		var SlctIdByOwnerHeadLang = await DaoWord.FnSlctIdByOwnerHeadLang(Ctx, Ct);
+		var MergeWordsIntoDb = await FnMergeWordsIntoDb(Ctx, Ct);
+		var SoftDelJnWordById = await FnSoftDelJnWordsByIds(Ctx,Ct);
+
+		return async (User, IdWord, Head, Lang, Ct)=>{
+			var SrcWord = await GetJnWordByIdEtCheckOwner(User, IdWord, Ct);
+			if(SrcWord is null){
+				return null;
+			}
+			//var Lang = SrcWord.Lang;
+			var TargetId = await SlctIdByOwnerHeadLang(User, Head, Lang, Ct);
+			if(TargetId is null){
+				await UpdWordHeadLang(User, IdWord, Head, Lang, Ct);
+				return IdWord;
+			}
+			var TargetWord = await GetJnWordByIdEtCheckOwner(User, TargetId.Value, Ct) ?? throw new FatalLogicErr("Existing is null");
+			var DiffedWord = SrcWord.Diff(TargetWord);
+			if(DiffedWord is null){//無差
+				await SoftDelJnWordById(User, [IdWord], Ct);
+				return TargetId;
+			}
+			await MergeWordsIntoDb(User, [DiffedWord], Ct);
+			await SoftDelJnWordById(User, [IdWord], Ct);
+			return TargetId;
+		};
+	}
+
+
+	/// <summary>
+	/// 更新JnWord。以新傳入之JnWord潙基準、缺者補 盈者刪
+	/// </summary>
+	/// <param name="Ctx"></param>
+	/// <param name="Ct"></param>
+	/// <returns></returns>
+	/// <exception cref="FatalLogicErr"></exception>
+	public async Task<Func<
+		IUserCtx
+		,JnWord
+		,CT
+		,Task<nil>
+	>> FnUpdJnWord(IDbFnCtx Ctx, CT Ct){
+		var GetJnWordByIdEtCheckOwner = await FnGetJnWordByIdEtCheckOwner(Ctx, Ct);
+		var UpdWordHeadLang = await FnUpdWordHeadLang(Ctx, Ct);
+		var MergeWordsIntoDb = await FnMergeWordsIntoDb(Ctx, Ct);
+		var SofeDelPropsByIds = await RepoKv.FnSoftDelManyByKeys<IdWordProp>(Ctx, nameof(PoWordProp.Id), 1000, Ct);
+		var SofeDelLearnByIds = await RepoLearn.FnSoftDelManyByKeys<IdWordLearn>(Ctx, nameof(PoWordLearn.Id), 1000, Ct);
+
+		return async(User, JnWord, Ct)=>{
+			var OldWord = await GetJnWordByIdEtCheckOwner(User, JnWord.Id, Ct);
+			if(OldWord is null){//JnWord潙新詞
+				//清洗ID、不 用ᵣ用戶ʃ輸
+				JnWord.Id = new IdWord();
+				foreach(var Prop in JnWord.Props){
+					Prop.Id = new IdWordProp();
+				}
+				foreach(var Learn in JnWord.Learns){
+					Learn.Id = new IdWordLearn();
+				}
+				JnWord.EnsureForeignId();
+
+				await MergeWordsIntoDb(User, [JnWord], Ct);
+				return NIL;
+			}else{//JnWord非新詞
+				if(JnWord.Owner != User.UserId){
+					throw EErr.WordOwnerNotMatch().ToErrBase();
+				}
+
+				if(JnWord.Head != OldWord.Head || JnWord.Lang != OldWord.Lang){
+					var amended = await UpdWordHeadLang(User, JnWord.Id, JnWord.Head, JnWord.Lang, Ct)?? throw new FatalLogicErr("Existing is null");
+					if(amended != OldWord.Id){
+						throw new FatalLogicErr("amended != OldWord.Id");
+					}
+					JnWord.Id = amended;
+				}
+
+				var NeoDiffOld = JnWord.Diff(OldWord);//JnWord比OldWord多出之內容
+				var OldDiffNeo = OldWord.Diff(JnWord);//OldWord比JnWord多出之內容
+				if(NeoDiffOld is not null){
+					await MergeWordsIntoDb(User, [NeoDiffOld], Ct);
+				}
+				if(OldDiffNeo is null){
+					return NIL;
+				}
+				await using var DelProps = new BatchListAsy<IdWordProp, nil>(async(ids, Ct)=>{
+					await SofeDelPropsByIds(ids, Ct);
+					return NIL;
+				});
+				await using var DelLearns = new BatchListAsy<IdWordLearn, nil>(async(ids, Ct)=>{
+					return await SofeDelLearnByIds(ids, Ct);
+				});
+				foreach(var Prop in OldDiffNeo.Props){
+					await DelProps.Add(Prop.Id, Ct);
+				}
+				foreach(var Learn in OldDiffNeo.Learns){
+					await DelLearns.Add(Learn.Id, Ct);
+				}
+			}
 			return NIL;
 		};
+	}
+
+	#region API
+
+	public async Task<nil> UpdJnWord(IUserCtx User, JnWord JnWord, CT Ct){
+		return await TxnWrapper.Wrap(FnUpdJnWord, User, JnWord, Ct);
 	}
 
 	[Impl]
@@ -781,14 +910,6 @@ public partial class SvcWord(
 		,CT Ct
 	){
 		return await TxnWrapper.Wrap(FnAddWordId_PoLearnss, UserCtx, WordId_PoLearnss, Ct);
-		// var Ctx = new DbFnCtx{Txn = await TxnGetter.GetTxnAsy(Ct)};
-		// var AddLearnRecords = await FnAddWordId_PoLearnss(Ctx, Ct);
-		// return await Ctx.Txn.RunTxn(async(Ct)=>{
-		// 	return await AddLearnRecords(UserCtx, WordId_PoLearnss, Ct);
-		// }, Ct);
-		// return await TxnRunner.RunTxn(Ctx.Txn, async(Ct)=>{
-		// 	return await AddLearnRecords(UserCtx, WordId_PoLearnss, Ct);
-		// },Ct);
 	}
 
 	[Impl]
@@ -841,5 +962,6 @@ public partial class SvcWord(
 	){
 		return await TxnWrapper.Wrap(FnSoftDelJnWordsByIds, User, Ids, Ct);
 	}
+	#endregion #region API
 
 }

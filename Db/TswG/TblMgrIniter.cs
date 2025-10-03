@@ -213,9 +213,9 @@ CREATE UNIQUE INDEX Ux_Word_Owner_Head_Lang ON {o.Qt(o.DbTblName)} (
 			CfgPoBase(o);
 			CfgI_WordId<PoWordLearn>(o);
 			o.CodeIdName = nameof(PoWordLearn.Id);
-			o.SetCol(nameof(PoWordLearn.Id)).MapType<u8[], IdLearn>(
+			o.SetCol(nameof(PoWordLearn.Id)).MapType<u8[], IdWordLearn>(
 				(id)=>id.Value.ToByteArr(),
-				(val)=>IdLearn.FromByteArr(val)
+				(val)=>IdWordLearn.FromByteArr(val)
 			);
 			o.SetCol(nameof(PoWordLearn.LearnResult)).MapType<i32, ELearn>(
 				(upper)=>(i32)upper
