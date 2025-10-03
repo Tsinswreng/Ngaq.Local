@@ -519,6 +519,41 @@ ORDER BY {T.Fld(N.Head)} ASC
 		};
 	}
 
+// 	public async Task<Func<
+// 		IUserCtx
+// 		,obj //IdWordProp or IdWordLearn
+// 		,IdWord//New
+// 		,CT
+// 		,Task<nil>
+// 	>> FnUpdAssetsForeignWordIdById(IDbFnCtx Ctx, CT Ct){
+// 		// var TP = TblMgr.GetTbl<PoWordProp>();
+// 		// var TL = TblMgr.GetTbl<PoWordLearn>();
+// 		var UpdRawPropIdById = await RepoKv.FnUpdOneColById(Ctx, nameof(PoWordProp.WordId), Ct);
+// 		var UpdRawLearnIdById = await RepoLearn.FnUpdOneColById(Ctx, nameof(PoWordLearn.WordId), Ct);
+// 		// var NWordId = nameof(I_WordId.WordId); var NId = nameof(I_Id<nil>.Id);
+// 		// var PWordId = TP.Prm(NWordId);
+// // 		var GenSql = (ITable T)=>{
+// // return
+// // $"""
+// // UPDATE {T.DbTblName}
+// // SET {T.Fld(NWordId)} = {PWordId}
+// // WHERE 1=1
+// // AND {T.Fld(nameof(IPoBase.DelId))} IS NULL
+// // AND {T.Fld(NWordId)} = {T.Prm(NId)}
+// // """;
+// // 		};
+// // 		var SqlCmdP = SqlCmdMkr.Prepare(Ctx, GenSql(TP), Ct);
+// // 		var SqlCmdW = SqlCmdMkr.Prepare(Ctx, GenSql(TL), Ct);
+// 		return async(User, IdObj, NeoWordId, Ct)=>{
+
+// 		};
+// 	}
+	public obj? IdUpperToRaw<TPo>(obj UpperId){
+		var T = TblMgr.GetTbl<TPo>();
+		//不指定列名旹 UpperId潙obj、typeof<T> 得object 于默認轉換緩存詞典中尋不見
+		return T.UpperToRaw(UpperId, nameof(I_Id<nil>.Id));
+	}
+
 	// public async Task<Func<
 	// 	IUserCtx
 	// 	,IdWord

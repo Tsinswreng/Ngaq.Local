@@ -717,7 +717,7 @@ public partial class SvcWord(
 		};
 	}
 
-	/// <summary>
+/// <summary>
 	/// 返(詞頭,語言)對應之id
 	/// 庫中無新改ʹ(詞頭,語言)則返源ʹ詞ʹid
 	/// 若有新改ʹ(詞頭,語言) 即把源詞合併入目標詞後 返舊詞ʹid
@@ -737,10 +737,12 @@ public partial class SvcWord(
 		var SlctIdByOwnerHeadLang = await DaoWord.FnSlctIdByOwnerHeadLang(Ctx, Ct);
 		var MergeWordsIntoDb = await FnMergeWordsIntoDb(Ctx, Ct);
 		var SoftDelJnWordById = await FnSoftDelJnWordsByIds(Ctx,Ct);
+		var UpdPropForeignWordIdById = await RepoKv.FnUpdOneColById(Ctx, nameof(PoWordProp.WordId), Ct);
+		var UpdLearnForeignWordIdById = await RepoLearn.FnUpdOneColById(Ctx, nameof(PoWordLearn.WordId), Ct);
 
 		return async (User, IdWord, Head, Lang, Ct)=>{
-			var SrcWord = await GetJnWordByIdEtCheckOwner(User, IdWord, Ct);
-			if(SrcWord is null){
+			var WordWithId = await GetJnWordByIdEtCheckOwner(User, IdWord, Ct);
+			if(WordWithId is null){
 				return null;
 			}
 			//var Lang = SrcWord.Lang;
@@ -749,21 +751,71 @@ public partial class SvcWord(
 				await UpdWordHeadLang(User, IdWord, Head, Lang, Ct);
 				return IdWord;
 			}
-			var TargetWord = await GetJnWordByIdEtCheckOwner(User, TargetId.Value, Ct) ?? throw new FatalLogicErr("Existing is null");
-			var DiffedWord = SrcWord.Diff(TargetWord);
-			if(DiffedWord is null){//無差
-				await SoftDelJnWordById(User, [IdWord], Ct);
-				return TargetId;
+			var WordWithTextLang = await GetJnWordByIdEtCheckOwner(User, TargetId.Value, Ct) ?? throw new FatalLogicErr("Existing is null");
+			var RawWordId = DaoWord.IdUpperToRaw<PoWord>(TargetId);
+			foreach(var prop in WordWithId.Props){
+				await UpdPropForeignWordIdById(prop.Id, RawWordId, Ct);
 			}
-			await MergeWordsIntoDb(User, [DiffedWord], Ct);
+			foreach(var learn in WordWithId.Learns){
+				await UpdLearnForeignWordIdById(learn.Id, RawWordId , Ct);
+			}
 			await SoftDelJnWordById(User, [IdWord], Ct);
 			return TargetId;
 		};
 	}
 
+	// /// <summary>
+	// /// 返(詞頭,語言)對應之id
+	// /// 庫中無新改ʹ(詞頭,語言)則返源ʹ詞ʹid
+	// /// 若有新改ʹ(詞頭,語言) 即把源詞合併入目標詞後 返舊詞ʹid
+	// /// 傳入ʹIdWordˋ在庫中尋不見旹返null
+	// /// </summary>
+	// /// <exception cref="FatalLogicErr"></exception>
+	// public async Task<Func<
+	// 	IUserCtx
+	// 	,IdWord
+	// 	,str//head
+	// 	,str//lang
+	// 	,CT
+	// 	,Task<IdWord?> //詞頭對應之id
+	// >> FnUpdWordHeadLang(IDbFnCtx Ctx, CT Ct){
+	// 	var GetJnWordByIdEtCheckOwner = await FnGetJnWordByIdEtCheckOwner(Ctx, Ct);
+	// 	var UpdWordHeadLang = await DaoWord.FnUpdPoWordHeadLang(Ctx, Ct);
+	// 	var SlctIdByOwnerHeadLang = await DaoWord.FnSlctIdByOwnerHeadLang(Ctx, Ct);
+	// 	var MergeWordsIntoDb = await FnMergeWordsIntoDb(Ctx, Ct);
+	// 	var SoftDelJnWordById = await FnSoftDelJnWordsByIds(Ctx,Ct);
+
+	// 	return async (User, IdWord, Head, Lang, Ct)=>{
+	// 		var WordWithId = await GetJnWordByIdEtCheckOwner(User, IdWord, Ct);
+	// 		if(WordWithId is null){
+	// 			return null;
+	// 		}
+	// 		//var Lang = SrcWord.Lang;
+	// 		var TargetId = await SlctIdByOwnerHeadLang(User, Head, Lang, Ct);
+	// 		if(TargetId is null){
+	// 			await UpdWordHeadLang(User, IdWord, Head, Lang, Ct);
+	// 			return IdWord;
+	// 		}
+	// 		var WordWithTextLang = await GetJnWordByIdEtCheckOwner(User, TargetId.Value, Ct) ?? throw new FatalLogicErr("Existing is null");
+	// 		//先統一(詞頭, 語言) 㕥防diff報錯
+	// 		WordWithId.Head = Head;
+	// 		WordWithId.Lang = Lang;
+	// 		var DiffedWord = WordWithId.Diff(WordWithTextLang);
+	// 		if(DiffedWord is null){//無差
+	// 			await SoftDelJnWordById(User, [IdWord], Ct);
+	// 			return TargetId;
+	// 		}
+	// 		//先刪舊詞汶合新詞ʹ盈部、免Id衝突
+	// 		await SoftDelJnWordById(User, [IdWord], Ct);
+	// 		await MergeWordsIntoDb(User, [DiffedWord], Ct);
+	// 		return TargetId;
+	// 	};
+	// }
+
 
 	/// <summary>
 	/// 更新JnWord。以新傳入之JnWord潙基準、缺者補 盈者刪
+	/// 以id潙基準
 	/// </summary>
 	/// <param name="Ctx"></param>
 	/// <param name="Ct"></param>
@@ -783,7 +835,7 @@ public partial class SvcWord(
 
 		return async(User, JnWord, Ct)=>{
 			var OldWord = await GetJnWordByIdEtCheckOwner(User, JnWord.Id, Ct);
-			if(OldWord is null){//JnWord潙新詞
+			if(OldWord is null){//JnWord潙新詞(其Id不存于數據庫)
 				//清洗ID、不 用ᵣ用戶ʃ輸
 				JnWord.Id = new IdWord();
 				foreach(var Prop in JnWord.Props){
@@ -796,18 +848,21 @@ public partial class SvcWord(
 
 				await MergeWordsIntoDb(User, [JnWord], Ct);
 				return NIL;
-			}else{//JnWord非新詞
+			}else{//JnWord非新詞(其Id己存于數據庫)
 				if(JnWord.Owner != User.UserId){
 					throw EErr.WordOwnerNotMatch().ToErrBase();
 				}
 
 				if(JnWord.Head != OldWord.Head || JnWord.Lang != OldWord.Lang){
 					var amended = await UpdWordHeadLang(User, JnWord.Id, JnWord.Head, JnWord.Lang, Ct)?? throw new FatalLogicErr("Existing is null");
-					if(amended != OldWord.Id){
-						throw new FatalLogicErr("amended != OldWord.Id");
-					}
+					// if(amended != OldWord.Id){
+					// 	throw new FatalLogicErr("amended != OldWord.Id");
+					// }
 					JnWord.Id = amended;
 				}
+
+				OldWord.Head = JnWord.Head;//先改老詞ʹ (詞頭,語言)、否則後ʹdiff旹報錯曰非同一詞
+				OldWord.Lang = JnWord.Lang;
 
 				var NeoDiffOld = JnWord.Diff(OldWord);//JnWord比OldWord多出之內容
 				var OldDiffNeo = OldWord.Diff(JnWord);//OldWord比JnWord多出之內容
