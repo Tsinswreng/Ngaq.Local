@@ -10,6 +10,11 @@ using Ngaq.Core.Infra;
 using Ngaq.Core.Models.UserCtx;
 using Ngaq.Core.Models;
 using Ngaq.Core.Word.Models.Dto;
+using Ngaq.Core.Model.Po.Kv;
+using Ngaq.Core.Word.Models.Po.Kv;
+using Ngaq.Core.Model.Po.Learn_;
+using Ngaq.Core.Word.Models.Po.Learn;
+using Tsinswreng.CsTools;
 
 public partial class SvcWord{
 public async Task<Func<
@@ -202,6 +207,68 @@ public async Task<Func<
 	public async Task<Func<
 		IUserCtx
 		,IPageQry
+		,ReqSearchWord
+		,CT
+		,Task<IPage<ITypedObj>> //其Type可能潙 JnWord, DtoJnWordEtAsset
+	>> FnPageSearch(IDbFnCtx Ctx, CT Ct){
+		var PageSearchIdsByPrefix = await DaoWord.FnPageSearchWordIdsByHeadPrefix(Ctx, Ct);
+		var CheckWordOwnerOrThrow = await FnGetJnWordByIdEtCheckOwner(Ctx, Ct);
+		var SeekProp = await FnSlctPropEtJnWordByPropId(Ctx, Ct);
+		var SeekLearn = await FnSlctLearnEtJnWordByLearnId(Ctx, Ct);
+		return async (User, PageQry, Req, Ct)=>{
+			var IdPage = await PageSearchIdsByPrefix(User, PageQry, Req, Ct);
+			List<ITypedObj> Objs = [];
+			try{
+				var WordId = IdWord.FromLow64Base(Req.RawStr);
+				var Word = await CheckWordOwnerOrThrow(User, WordId, Ct);
+				if(Word is not null){
+					Objs.Add(new TypedObj{
+						Data = Word
+						,Type = typeof(JnWord)
+					});
+				}
+				var Prop_JnWord = await SeekProp(User, IdWordProp.FromLow64Base(Req.RawStr), Ct);
+				if(Prop_JnWord is not null){
+					Objs.Add(new TypedObj{
+						Data = new DtoJnWordEtAsset{
+							JnWord = Prop_JnWord.Value.Item2
+							,Asset = Prop_JnWord.Value.Item1
+						}
+						,Type = typeof(PoWordProp)
+					});
+				}
+				var Learn_JnWord = await SeekLearn(User, IdWordLearn.FromLow64Base(Req.RawStr), Ct);
+				if(Learn_JnWord is not null){
+					Objs.Add(new TypedObj{
+						Data = new DtoJnWordEtAsset{
+							JnWord = Learn_JnWord.Value.Item2
+							,Asset = Learn_JnWord.Value.Item1
+						}
+						,Type = typeof(PoWordLearn)
+					});
+				}
+			}catch (System.Exception){
+				throw;
+			}
+			if(IdPage.DataAsyE is not null){
+				await foreach(var IdWord in IdPage.DataAsyE){
+					var Word = await CheckWordOwnerOrThrow(User, IdWord, Ct);//不應再拋異常
+					if(Word is not null){
+						Objs.Add(new TypedObj{
+							Data = Word
+							,Type = typeof(JnWord)
+						});
+					}
+				}
+			}
+			var R = Page.Mk(PageQry, Objs);
+			return R;
+		};
+	}
+
+	public async Task<Func<
+		IUserCtx
+		,IPageQry
 		,Tempus
 		,CT
 		,Task<IPage<JnWord>>
@@ -222,12 +289,44 @@ public async Task<Func<
 		};
 	}
 
-	public async Task<IPage<JnWord>> PageChangedWordsWithDelWordsAfterTime(
-		IUserCtx User
-		,IPageQry PageQry
-		,Tempus Tempus
-		,CT Ct
-	){
-		return await TxnWrapper.Wrap(FnPageChangedWordsWithDelWordsAfterTime, User, PageQry, Tempus, Ct);
+	public async Task<Func<
+		IUserCtx
+		,IdWordProp
+		,CT
+		,Task<(PoWordProp,JnWord)?>
+	>> FnSlctPropEtJnWordByPropId(IDbFnCtx Ctx, CT Ct){
+		var SeekIdByPropId = await DaoWord.FnSlctRootIdByPropId(Ctx, Ct);
+		var GetJnWordByIdEtCheckOwner = await FnGetJnWordByIdEtCheckOwner(Ctx, Ct);
+		var SeekProp = await RepoKv.FnSlctById(Ctx, Ct);
+		return async(User, PropId, Ct)=>{
+			var WordId = await SeekIdByPropId(PropId, Ct);
+			if(WordId is null){
+				return null;
+			}
+			var JnWord = await GetJnWordByIdEtCheckOwner(User, WordId.Value, Ct);
+			var Prop = await SeekProp(PropId, Ct);
+			return (Prop!, JnWord!);
+		};
 	}
+
+	public async Task<Func<
+		IUserCtx
+		,IdWordLearn
+		,CT
+		,Task<(PoWordLearn,JnWord)?>
+	>> FnSlctLearnEtJnWordByLearnId(IDbFnCtx Ctx, CT Ct){
+		var SeekIdByLearnId = await DaoWord.FnSlctRootIdByLearnId(Ctx, Ct);
+		var GetJnWordByIdEtCheckOwner = await FnGetJnWordByIdEtCheckOwner(Ctx, Ct);
+		var SeekLearn = await RepoLearn.FnSlctById(Ctx, Ct);
+		return async(User, LearnId, Ct)=>{
+			var WordId = await SeekIdByLearnId(LearnId, Ct);
+			if(WordId is null){
+				return null;
+			}
+			var JnWord = await GetJnWordByIdEtCheckOwner(User, WordId.Value, Ct);
+			var Learn = await SeekLearn(LearnId, Ct);
+			return (Learn!, JnWord!);
+		};
+	}
+
 }

@@ -62,7 +62,7 @@ AND {T.Fld(NLang)} = {PLang}
 		};
 	}
 
-public async Task<Func<
+	public async Task<Func<
 		IdWord
 		,CT
 		,Task<JnWord?>
@@ -334,7 +334,53 @@ ORDER BY {T.Fld(N.Head)} ASC
 		};
 	}
 
+	public async Task<Func<
+		obj
+		,CT
+		,Task<IdWord?>
+	>> FnSlctRootIdByUpperId(IDbFnCtx? Ctx, ITable Tbl, CT Ct){
+var NWordId = nameof(I_WordId.WordId); var NId = nameof(I_Id<nil>.Id);
+var PId = Tbl.Prm(NId);
+var Sql =
+$"""
+SELECT {Tbl.Fld(NWordId)} AS {Tbl.Qt(NWordId)} FROM {Tbl.DbTblName}
+WHERE {Tbl.Fld(NId)} = {PId}
+""";
+		var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
+		Ctx?.AddToDispose(SqlCmd);
+		return async (Id, Ct)=>{
+			var Arg = ArgDict.Mk()
+			.Add(PId, Tbl.UpperToRaw(Id, NId));
+			var RawDicts = await SqlCmd.WithCtx(Ctx).Args(Arg).All(Ct);
+			if(RawDicts.Count == 0){
+				return null;
+			}
+			var RawWordId = RawDicts.First()[NWordId];
+			return Tbl.RawToUpper<IdWord>(RawWordId, NWordId);
+		};
+	}
 
+	public async Task<Func<
+		IdWordProp
+		,CT
+		,Task<IdWord?>
+	>> FnSlctRootIdByPropId(IDbFnCtx? Ctx, CT Ct){
+		var Fn = await FnSlctRootIdByUpperId(Ctx, TblMgr.GetTbl<PoWordProp>(), Ct);
+		return async(PropId, Ct)=>{
+			return await Fn(PropId, Ct);
+		};
+	}
+
+	public async Task<Func<
+		IdWordLearn
+		,CT
+		,Task<IdWord?>
+	>> FnSlctRootIdByLearnId(IDbFnCtx? Ctx, CT Ct){
+		var Fn = await FnSlctRootIdByUpperId(Ctx, TblMgr.GetTbl<PoWordLearn>(), Ct);
+		return async(LearnId, Ct)=>{
+			return await Fn(LearnId, Ct);
+		};
+	}
 
 }
 

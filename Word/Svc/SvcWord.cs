@@ -523,6 +523,16 @@ public partial class SvcWord(
 	// }
 
 
+	public async Task<Func<
+		IUserCtx
+		,IdWordProp
+		,CT
+		,Task<nil>
+	>> FnDelPropById(IDbFnCtx Ctx, CT CT){
+		throw new NotImplementedException();
+	}
+
+
 	/// <summary>
 	/// 更新JnWord。以新傳入之JnWord潙基準、缺者補 盈者刪
 	/// 以id潙基準
@@ -533,6 +543,7 @@ public partial class SvcWord(
 	/// <exception cref="FatalLogicErr"></exception>
 	/// //TODO Id或時間爲空時先自動填充
 	/// TODO 返回實ʹ操作 如 無變, 有增 等
+	/// 多個Prop芝厥CreatedAt同旹 減其一汶保存、不效 ʃ被減者未被刪 緣時ˋ同旹diff不出
 	public async Task<Func<
 		IUserCtx
 		,JnWord

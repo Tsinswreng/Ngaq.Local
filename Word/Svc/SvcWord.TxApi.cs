@@ -1,32 +1,16 @@
 namespace Ngaq.Local.Word.Svc;
-using Ngaq.Core.Infra.Core;
-using Ngaq.Core.Model.Po.Kv;
-using Ngaq.Core.Model.Po.Learn_;
 using Ngaq.Core.Model.Po.Word;
-using Ngaq.Core.Model.Word.Dto;
-using Ngaq.Core.Service.Word;
 using Ngaq.Core.Tools.Io;
 using Ngaq.Local.Db;
-using Ngaq.Core.Infra.Errors;
-using Tsinswreng.CsTools;
 using Ngaq.Core.Model.Word.Req;
 using Ngaq.Core.Word.Models.Learn_;
-using Tsinswreng.CsSqlHelper;
-using Ngaq.Core.Word.Models.Po.Learn;
-using Ngaq.Core.Word.Svc;
 using Tsinswreng.CsCore;
 using Tsinswreng.CsPage;
 using Ngaq.Core.Word.Models;
 using Ngaq.Core.Infra;
 using Ngaq.Core.Models.UserCtx;
-using Ngaq.Core.Models;
-using Ngaq.Local.Word.Dao;
-using Ngaq.Local.Db.TswG;
-using Ngaq.Core.Tools.Json;
 using Ngaq.Core.Word.Models.Dto;
-using Ngaq.Core.Word.Models.Po.Word;
-using Ngaq.Core.Word.Models.Po.Kv;
-
+using Tsinswreng.CsTools;
 
 public partial class SvcWord{
 #region API
@@ -43,6 +27,16 @@ public partial class SvcWord{
 		,CT Ct
 	){
 		return await TxnWrapper.Wrap(FnSearchWord, User, PageQry, Req, Ct);
+	}
+
+	[Impl]
+	public async Task<IPage<ITypedObj>> PageSearch(
+		IUserCtx User
+		,IPageQry PageQry
+		,ReqSearchWord Req
+		,CT Ct
+	){
+		return await TxnWrapper.Wrap(FnPageSearch, User, PageQry, Req, Ct);
 	}
 
 	[Impl]
@@ -156,6 +150,15 @@ public partial class SvcWord{
 	){
 		return await TxnWrapper.Wrap(FnSoftDelJnWordsByIds, User, Ids, Ct);
 	}
-	#endregion #region API
+	[Impl]
+	public async Task<IPage<JnWord>> PageChangedWordsWithDelWordsAfterTime(
+		IUserCtx User
+		,IPageQry PageQry
+		,Tempus Tempus
+		,CT Ct
+	){
+		return await TxnWrapper.Wrap(FnPageChangedWordsWithDelWordsAfterTime, User, PageQry, Tempus, Ct);
+	}
+	#endregion API
 
 }
