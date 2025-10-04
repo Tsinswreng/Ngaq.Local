@@ -32,14 +32,21 @@ public partial class DaoSqlWord(
 	,IAppRepo<PoWordLearn, IdWordLearn> RepoLearn
 ){
 
+	/// <summary>
+	/// 予Svc層調用、不在Dao層調用。
+	/// Dao層之操作更低級、直ᵈ操作數據庫、寡聚合、不作額外校驗
+	/// 如FnInsertPoKvs中、內ʹ函數ʹ參數ˋ只受IEnumerable<PoWordProp>、未必潙同一詞ᐪ。且初加旹亦蜮調此 洏初加旹不璫更新UpdatedAt
+	/// </summary>
+	/// <param name="Ctx"></param>
+	/// <param name="Ct"></param>
+	/// <returns></returns>
 	public async Task<Func<
-		IUserCtx
-		,IdWord
+		IdWord
 		,CT
 		,Task<nil>
-	>> FnTriggerOnRootAfterUpd(IDbFnCtx Ctx, CT Ct){
+	>> FnTriggerOnRootAfterUpd(IDbFnCtx? Ctx, CT Ct){
 		var UpdPoWord = await RepoWord.FnUpd_UpdatedAt(Ctx,Ct);
-		return async(User, WordId, Ct)=>{
+		return async(WordId, Ct)=>{
 			await UpdPoWord(WordId, Ct);
 			return NIL;
 		};

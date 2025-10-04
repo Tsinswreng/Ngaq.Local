@@ -79,9 +79,9 @@ public partial class DaoSqlWord{
 		,Task<nil>
 	>> FnInsertPoKvs(
 		IDbFnCtx? Ctx
-		,CT ct
+		,CT Ct
 	){
-		var InsertMany = await RepoKv.FnInsertMany(Ctx, ct);
+		var InsertMany = await RepoKv.FnInsertMany(Ctx, Ct);
 		var Fn = async(
 			IEnumerable<PoWordProp> PoKvs
 			,CT ct
@@ -104,9 +104,9 @@ public partial class DaoSqlWord{
 		,Task<nil>
 	>> FnInsertPoLearns(
 		IDbFnCtx? Ctx
-		,CT ct
+		,CT Ct
 	){
-		var InsertMany = await RepoLearn.FnInsertMany(Ctx, ct);
+		var InsertMany = await RepoLearn.FnInsertMany(Ctx, Ct);
 		var Fn = async(
 			IEnumerable<PoWordLearn> PoLearns
 			,CT ct
