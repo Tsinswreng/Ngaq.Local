@@ -260,10 +260,10 @@ ORDER BY {TW.Fld(N.CreatedAt)} DESC
 		,Tempus
 		,CT
 		,Task<IPage<IdWord>>
-	>> FnPage_ChangedWordIdsAfterTime(IDbFnCtx Ctx, CT Ct){
+	>> FnPageChangedWordIdsWithDelWordsAfterTime(IDbFnCtx Ctx, CT Ct){
 var T = TblMgr.GetTbl<PoWord>();
 str NId = nameof(PoWord.Id),NOwner = nameof(PoWord.Owner)
-	,NUpdateAt = nameof(PoWord.UpdatedAt),NCreatedAt = nameof(PoWord.CreatedAt)
+	,NUpdateAt = nameof(PoWord.UpdatedAt),NStoredAt = nameof(PoWord.StoredAt)
 ;
 var PTempus = T.Prm("Tempus");var POwner = T.Prm("Owner");
 
@@ -274,28 +274,25 @@ FROM {T.Qt(T.DbTblName)}
 WHERE {T.Fld(NOwner)} = {POwner}
 AND (
 	{T.Fld(NUpdateAt)} > {PTempus}
-	OR {T.Fld(NCreatedAt)} > {PTempus}
+	OR {T.Fld(NStoredAt)} > {PTempus}
 )
 {T.SqlMkr.ParamLimOfst(out var Lmt, out var Ofst)}
 """;//考慮同步後 一方ʃ新增、此旹無UpdatedAt 只有CreatedAt
 		var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
 		Ctx?.AddToDispose(SqlCmd);
-		var Fn= async(IUserCtx UserCtx, IPageQry PageQry, Tempus Tem, CT Ct)=>{
+		return async(UserCtx, PageQry, Tempus, Ct)=>{
 			var RawDictAsy = await SqlCmd.WithCtx(Ctx).RawArgs(ArgDict.Mk()
-				.Add(PTempus, T.UpperToRaw(Tem))
+				.Add(PTempus, T.UpperToRaw(Tempus))
 				.Add(POwner, T.UpperToRaw(UserCtx.UserId))
 				.AddPageQry(PageQry, Lmt, Ofst)
 				.ToDict()
 			).All(Ct);
-			var WordIds = RawDictAsy.Select(x => T.RawToUpper<IdWord>(x, NId)).ToList();
+			var WordIds = RawDictAsy.Select(x => T.RawToUpper<IdWord>(x[NId], NId)).ToList();
 			var R = Page<IdWord>.Mk(PageQry, WordIds);
 			R.HasTotCnt = false;
 			return R;
 		};
-		return Fn;
 	}
-
-
 
 	public async Task<Func<
 		IUserCtx

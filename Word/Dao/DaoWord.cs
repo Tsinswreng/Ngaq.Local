@@ -33,9 +33,11 @@ public partial class DaoSqlWord(
 ){
 
 	/// <summary>
-	/// 予Svc層調用、不在Dao層調用。
+	/// <delete>
+	/// /// 予Svc層調用、不在Dao層調用。
 	/// Dao層之操作更低級、直ᵈ操作數據庫、寡聚合、不作額外校驗
 	/// 如FnInsertPoKvs中、內ʹ函數ʹ參數ˋ只受IEnumerable<PoWordProp>、未必潙同一詞ᐪ。且初加旹亦蜮調此 洏初加旹不璫更新UpdatedAt
+	/// </delete>
 	/// </summary>
 	/// <param name="Ctx"></param>
 	/// <param name="Ct"></param>

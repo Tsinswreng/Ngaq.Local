@@ -74,46 +74,42 @@ public partial class DaoSqlWord{
 	}
 
 	public async Task<Func<
-		IEnumerable<PoWordProp>
+		IdWord? //斯批PoWordProp 屬于哪個詞
+		,IEnumerable<PoWordProp>
 		,CT
 		,Task<nil>
 	>> FnInsertPoKvs(
 		IDbFnCtx? Ctx
 		,CT Ct
 	){
+		var UpdUpd = await FnTriggerOnRootAfterUpd(Ctx,Ct);
 		var InsertMany = await RepoKv.FnInsertMany(Ctx, Ct);
-		var Fn = async(
-			IEnumerable<PoWordProp> PoKvs
-			,CT ct
-		)=>{
-			PoKvs = PoKvs.Select(x=>{
-				if(x.WordId == null || x.WordId.Value == 0){
-					throw new ErrArg("PoKv.WordId should not be null or 0.");
-				}
-				return x;
-			});
-			await InsertMany(PoKvs, ct);
+		return async(WordId,PoKvs,Ct)=>{
+			await InsertMany(PoKvs, Ct);
+			if(WordId is not null){
+				await UpdUpd(WordId.Value, Ct);
+			}
 			return NIL;
 		};
-		return Fn;
 	}
 
 	public async Task<Func<
-		IEnumerable<PoWordLearn>
+		IdWord?
+		,IEnumerable<PoWordLearn>
 		,CT
 		,Task<nil>
 	>> FnInsertPoLearns(
 		IDbFnCtx? Ctx
 		,CT Ct
 	){
+		var UpdUpd = await FnTriggerOnRootAfterUpd(Ctx, Ct);
 		var InsertMany = await RepoLearn.FnInsertMany(Ctx, Ct);
-		var Fn = async(
-			IEnumerable<PoWordLearn> PoLearns
-			,CT ct
-		)=>{
-			await InsertMany(PoLearns, ct);
+		return async(WordId, PoLearns, Ct)=>{
+			await InsertMany(PoLearns, Ct);
+			if(WordId is not null){
+				await UpdUpd(WordId.Value, Ct);
+			}
 			return NIL;
 		};
-		return Fn;
 	}
 }

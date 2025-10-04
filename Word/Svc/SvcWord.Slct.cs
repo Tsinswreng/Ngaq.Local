@@ -1,32 +1,15 @@
 namespace Ngaq.Local.Word.Svc;
 using Ngaq.Core.Infra.Core;
-using Ngaq.Core.Model.Po.Kv;
-using Ngaq.Core.Model.Po.Learn_;
 using Ngaq.Core.Model.Po.Word;
 using Ngaq.Core.Model.Word.Dto;
-using Ngaq.Core.Service.Word;
-using Ngaq.Core.Tools.Io;
 using Ngaq.Local.Db;
 using Ngaq.Core.Infra.Errors;
-using Tsinswreng.CsTools;
-using Ngaq.Core.Model.Word.Req;
-using Ngaq.Core.Word.Models.Learn_;
-using Tsinswreng.CsSqlHelper;
-using Ngaq.Core.Word.Models.Po.Learn;
-using Ngaq.Core.Word.Svc;
-using Tsinswreng.CsCore;
 using Tsinswreng.CsPage;
 using Ngaq.Core.Word.Models;
 using Ngaq.Core.Infra;
 using Ngaq.Core.Models.UserCtx;
 using Ngaq.Core.Models;
-using Ngaq.Local.Word.Dao;
-using Ngaq.Local.Db.TswG;
-using Ngaq.Core.Tools.Json;
 using Ngaq.Core.Word.Models.Dto;
-using Ngaq.Core.Word.Models.Po.Word;
-using Ngaq.Core.Word.Models.Po.Kv;
-
 
 public partial class SvcWord{
 public async Task<Func<
@@ -123,7 +106,7 @@ public async Task<Func<
 				// 	,WordToAdd: NewWord
 				// 	,DiffedProps: NewProps
 				// );
-				var Diffed = NewWord.Diff(OldWord);
+				var Diffed = NewWord.DiffByTime(OldWord);
 				if(Diffed == null){
 					continue;
 				}
@@ -214,5 +197,37 @@ public async Task<Func<
 			var R = Page.Mk(PageQry, Words);
 			return R;
 		};
+	}
+
+	public async Task<Func<
+		IUserCtx
+		,IPageQry
+		,Tempus
+		,CT
+		,Task<IPage<JnWord>>
+	>> FnPageChangedWordsWithDelWordsAfterTime(IDbFnCtx Ctx, CT Ct){
+		var PageChangedIds = await DaoWord.FnPageChangedWordIdsWithDelWordsAfterTime(Ctx, Ct);
+		var GetJnWordByIdEtCheckOwner = await FnGetJnWordByIdEtCheckOwner(Ctx, Ct);
+		return async(User, PageQry, Tempus, Ct)=>{
+			var IdPage = await PageChangedIds(User, PageQry, Tempus, Ct);
+			var RList = new List<JnWord>();
+			foreach(var id in IdPage.Data??[]){
+				var U = await GetJnWordByIdEtCheckOwner(User, id, Ct);
+				if(U is not null){
+					RList.Add(U);
+				}
+			}
+			var R = Page.Mk(PageQry, RList);
+			return R;
+		};
+	}
+
+	public async Task<IPage<JnWord>> PageChangedWordsWithDelWordsAfterTime(
+		IUserCtx User
+		,IPageQry PageQry
+		,Tempus Tempus
+		,CT Ct
+	){
+		return await TxnWrapper.Wrap(FnPageChangedWordsWithDelWordsAfterTime, User, PageQry, Tempus, Ct);
 	}
 }
