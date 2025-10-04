@@ -14,6 +14,8 @@ using Tsinswreng.CsTools;
 using Ngaq.Core.Sys.Models;
 using Ngaq.Core.Word.Models.Learn_;
 using Ngaq.Core.Model.Sys.Po;
+using Ngaq.Core.Word.Models.Po.Word;
+using Ngaq.Core.Word.Models.Po.Kv;
 
 //using Id_User = Ngaq.Core.Model.Po.User.IdUser;
 //using Id_Word = Ngaq.Core.Model.Po.Word.IdWord;

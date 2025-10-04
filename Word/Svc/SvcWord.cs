@@ -23,6 +23,8 @@ using Ngaq.Local.Word.Dao;
 using Ngaq.Local.Db.TswG;
 using Ngaq.Core.Tools.Json;
 using Ngaq.Core.Word.Models.Dto;
+using Ngaq.Core.Word.Models.Po.Word;
+using Ngaq.Core.Word.Models.Po.Kv;
 
 namespace Ngaq.Local.Word.Svc;
 
@@ -673,50 +675,6 @@ public partial class SvcWord(
 	}
 
 
-	/// <summary>
-	/// 返詞頭對應之id
-	/// 庫中無新改ʹ詞頭則返源ʹ詞ʹid
-	/// 若有新改ʹ詞頭 即把源詞合併入目標詞後 返舊詞ʹid
-	/// 傳入ʹIdWordˋ在庫中尋不見旹返null
-	/// </summary>
-	/// <exception cref="FatalLogicErr"></exception>
-	[Obsolete]
-	public async Task<Func<
-		IUserCtx
-		,IdWord
-		,str//head
-		,CT
-		,Task<IdWord?> //詞頭對應之id
-	>> FnUpdWordHead(IDbFnCtx Ctx, CT Ct){
-		var CheckOwner = await FnGetJnWordByIdEtCheckOwner(Ctx, Ct);
-		var UpdPoWordHead = await DaoWord.FnUpdPoWordHead(Ctx, Ct);
-		var SlctIdByOwnerHeadLang = await DaoWord.FnSlctIdByOwnerHeadLang(Ctx, Ct);
-		var MergeWordsIntoDb = await FnMergeWordsIntoDb(Ctx, Ct);
-		var SoftDelJnWordById = await FnSoftDelJnWordsByIds(Ctx,Ct);
-
-		return async (User, IdWord, Head, Ct)=>{
-			var SrcWord = await CheckOwner(User, IdWord, Ct);
-			if(SrcWord is null){
-				return null;
-			}
-			var Lang = SrcWord.Lang;
-			var TargetId = await SlctIdByOwnerHeadLang(User, Head, Lang, Ct);
-			if(TargetId is null){
-				await UpdPoWordHead(User, IdWord, Head, Ct);
-				return IdWord;
-			}
-			var TargetWord = await CheckOwner(User, TargetId.Value, Ct) ?? throw new FatalLogicErr("Existing is null");
-			var DiffedWord = SrcWord.Diff(TargetWord);
-			if(DiffedWord is null){
-				await SoftDelJnWordById(User, [IdWord], Ct);
-				return TargetId;
-			}
-			await MergeWordsIntoDb(User, [DiffedWord], Ct);
-			await SoftDelJnWordById(User, [IdWord], Ct);
-			return TargetId;
-		};
-	}
-
 /// <summary>
 	/// 返(詞頭,語言)對應之id
 	/// 庫中無新改ʹ(詞頭,語言)則返源ʹ詞ʹid
@@ -832,7 +790,7 @@ public partial class SvcWord(
 		var MergeWordsIntoDb = await FnMergeWordsIntoDb(Ctx, Ct);
 		var SofeDelPropsByIds = await RepoKv.FnSoftDelManyByKeys<IdWordProp>(Ctx, nameof(PoWordProp.Id), 1000, Ct);
 		var SofeDelLearnByIds = await RepoLearn.FnSoftDelManyByKeys<IdWordLearn>(Ctx, nameof(PoWordLearn.Id), 1000, Ct);
-
+//var UpdUpd = await RepoPoWord.FnUpd_UpdatedAt(Ctx,Ct);
 		return async(User, JnWord, Ct)=>{
 			var OldWord = await GetJnWordByIdEtCheckOwner(User, JnWord.Id, Ct);
 			if(OldWord is null){//JnWord潙新詞(其Id不存于數據庫)
