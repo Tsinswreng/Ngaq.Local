@@ -16,6 +16,8 @@ using Ngaq.Core.Word.Models.Learn_;
 using Ngaq.Core.Model.Sys.Po;
 using Ngaq.Core.Word.Models.Po.Word;
 using Ngaq.Core.Word.Models.Po.Kv;
+using Ngaq.Core.Model.Po.Role;
+using Ngaq.Core.Models.Sys.Po.Permission;
 
 //using Id_User = Ngaq.Core.Model.Po.User.IdUser;
 //using Id_Word = Ngaq.Core.Model.Po.Word.IdWord;
@@ -23,46 +25,33 @@ using Ngaq.Core.Word.Models.Po.Kv;
 
 public partial class LocalTblMgrIniter{
 	const str MkIdx = "CREATE INDEX"; //不建議加 "IF NOT EXISTS" 以免掩蓋錯誤
-	protected ITblMgr Mgr;
+	public ITblMgr Mgr{get;set;}
 	public LocalTblMgrIniter(ITblMgr Mgr){
 		this.Mgr = Mgr;
 	}
 
-	static IUpperTypeMapFnT<i64,Tempus> MapTempus(){
+	public static IUpperTypeMapFnT<i64,Tempus> MapTempus(){
 		return UpperTypeMapFnT<i64, Tempus>.Mk(
-			tempus=>tempus.Value,
-			val=>new Tempus(val)
+			raw=>new Tempus(raw)
+			,tempus=>tempus.Value
 		);
 	}
 
-	static IUpperTypeMapFnT<i64?,Tempus?> MapTempusN(){
+	public static IUpperTypeMapFnT<i64?,Tempus?> MapTempusN(){
 		return UpperTypeMapFnT<i64?, Tempus?>.Mk(
-			tempus=>tempus?.Value,
 			val=>val==null?null:new Tempus(val.Value)
+			,tempus=>tempus?.Value
 		);
 	}
 
-	static IUpperTypeMapFnT<u8[], IdUser> MapIdUser(){
-		return UpperTypeMapFnT<u8[], IdUser>.Mk(
-			(id)=>id.Value.ToByteArr(),
-			(val)=>IdUser.FromByteArr(val)
-		);
-	}
+	public static IUpperTypeMapFnT<u8[], IdUser> MapIdUser(){
+		return IdUser.MkTypeMapFn();
 
-	static IUpperTypeMapFnT<u8[]?, IdUser?> MapIdUserN(){
-		return UpperTypeMapFnT<u8[]?, IdUser?>.Mk(
-			(id)=>id?.Value.ToByteArr(),
-			(val)=>val==null?null:IdUser.FromByteArr(val)
-		);
+		// return UpperTypeMapFnT<u8[], IdUser>.Mk(
+		// 	(id)=>id.Value.ToByteArr(),
+		// 	(val)=>IdUser.FromByteArr(val)
+		// );
 	}
-
-	static IUpperTypeMapFnT<u8[], IdWord> MapIdWord(){
-		return UpperTypeMapFnT<u8[], IdWord>.Mk(
-			(id)=>id.Value.ToByteArr(),
-			(val)=>IdWord.FromByteArr(val)
-		);
-	}
-
 
 	protected bool _Inited{get;set;} = false;
 
@@ -73,7 +62,7 @@ public partial class LocalTblMgrIniter{
 	}
 
 
-	protected nil CfgPoBase(ITable Tbl){
+	public ITable CfgPoBase(ITable Tbl){
 		var o = Tbl;
 		o.CodeIdName = nameof(I_Id<nil>.Id);
 		o.SetCol(nameof(I_Id<nil>.Id)).AdditionalSqls(["PRIMARY KEY"]);
@@ -87,19 +76,15 @@ public partial class LocalTblMgrIniter{
 		o.SetCol(nameof(IPoBase.UpdatedAt)).MapType(MapTempusN());
 		o.SetCol(nameof(IPoBase.DbUpdatedAt)).MapType(MapTempusN());
 
-		o.SetCol(nameof(IPoBase.DelId)).MapType<u8[]?, IdDel?>(
-			idDel=>(idDel is null?null :idDel.Value.Value.ToByteArr())!
-			,blob=>blob is null? null :IdDel.FromByteArr(blob)
-		);
-
+		o.SetCol(nameof(IPoBase.DelId)).MapType(IdDel.MkTypeMapFnNullable());
 		// o.SetCol(nameof(IPoBase.Status)).MapType<i32?, PoStatus>(
 		// 	s=>Convert.ToInt32(s.Value),
 		// 	val=>new PoStatus(Convert.ToInt32(val))
 		// 	,ObjToRaw: (obj)=>Convert.ToInt32(obj)
 		// );
 
-		o.SetCol(nameof(IPoBase.CreatedBy)).MapType(MapIdUserN());
-		o.SetCol(nameof(IPoBase.LastUpdatedBy)).MapType(MapIdUserN());
+		o.SetCol(nameof(IPoBase.CreatedBy)).MapType(IdUser.MkTypeMapFnNullable());
+		o.SetCol(nameof(IPoBase.LastUpdatedBy)).MapType(IdUser.MkTypeMapFnNullable());
 
 		o.SoftDelCol = new SoftDelol{
 			CodeColName = nameof(IPoBase.DelId)
@@ -121,7 +106,7 @@ public partial class LocalTblMgrIniter{
 		// 		return PoStatus.Normal.Value;
 		// 	}
 		// };
-		return NIL;
+		return o;
 	}
 
 	protected ITable CfgIPoKv(ITable o){
@@ -132,15 +117,18 @@ $"{MkIdx} {o.Qt("Idx_"+o.DbTblName+"_KStr")} ON {o.Qt(o.DbTblName)} ({o.Fld(name
 		return o;
 	}
 
-	protected ITable Mk<T>(str DbTblName){
+	public ITable Mk<T>(str DbTblName){
 		return Table.FnMkTbl<T>(CoreDictMapper.Inst)(DbTblName);
 	}
 
 	protected ITable CfgI_WordId<TPo>(ITable Tbl){
 		var o = Tbl;
-		o.SetCol(nameof(PoWordProp.WordId)).MapType(MapIdWord());
+		o.SetCol(nameof(PoWordProp.WordId)).MapType(IdWord.MkTypeMapFn());
 		o.OuterAdditionalSqls.AddRange([
-$"{MkIdx} {o.Qt("Idx_"+o.DbTblName+"_WordId")} ON {o.Qt(o.DbTblName)}({o.Fld(nameof(I_WordId.WordId))})"
+$"""
+{MkIdx} {o.Qt("Idx_"+o.DbTblName+"_WordId")}
+ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(I_WordId.WordId))})
+"""
 		]);
 		return o;
 	}
@@ -155,10 +143,7 @@ $"{MkIdx} {o.Qt("Idx_"+o.DbTblName+"_WordId")} ON {o.Qt(o.DbTblName)}({o.Fld(nam
 			CfgPoBase(o);
 			CfgBizTimeVer(o);
 			CfgIPoKv(o);
-			o.SetCol(nameof(PoCfg.Id)).MapType<u8[], IdCfg>(
-				(upper)=>upper.Value.ToByteArr(),
-				(raw)=>IdCfg.FromByteArr(raw)
-			);
+			o.SetCol(nameof(PoCfg.Id)).MapType(IdCfg.MkTypeMapFn());
 			o.SetCol(nameof(PoCfg.Owner)).MapType(MapIdUser());
 			o.OuterAdditionalSqls.AddRange([
 $"{MkIdx} {o.Qt("IdxCfgOwner")} ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoCfg.Owner))})"
@@ -173,20 +158,20 @@ $"{MkIdx} {o.Qt("IdxCfgOwner")} ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoCfg.Owner
 			var o = Tbl_Word;
 			CfgPoBase(o);
 			//CfgBizTimeVer(o);
-			o.SetCol(nameof(PoWord.Id)).MapType(MapIdWord());
+			o.SetCol(nameof(PoWord.Id)).MapType(IdWord.MkTypeMapFn());
 			o.SetCol(nameof(PoWord.Owner)).MapType(MapIdUser());
 			o.SetCol(nameof(PoWord.StoredAt)).MapType(MapTempus());
 			// o.InnerAdditionalSqls.AddRange([
 
 			// ]);
 			o.OuterAdditionalSqls.AddRange([
-$"{MkIdx} {o.Qt("Idx_Word_Head_Lang")} ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoWord.Head))}, {o.Fld(nameof(PoWord.Lang))})"
-,$"{MkIdx} {o.Qt("Idx_Word_CreatedAt")} ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoWord.CreatedAt))})"
-,$"{MkIdx} {o.Qt("Idx_Word_UpdatedAt")} ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoWord.UpdatedAt))})"
-,$"{MkIdx} {o.Qt("Idx_Word_StoragedAt")} ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoWord.UpdatedAt))})"
+$"{MkIdx} {o.Qt($"Idx_{o.DbTblName}_Head_Lang")} ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoWord.Head))}, {o.Fld(nameof(PoWord.Lang))})"
+,$"{MkIdx} {o.Qt($"Idx_{o.DbTblName}_CreatedAt")} ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoWord.CreatedAt))})"
+,$"{MkIdx} {o.Qt($"Idx_{o.DbTblName}_UpdatedAt")} ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoWord.UpdatedAt))})"
+,$"{MkIdx} {o.Qt($"Idx_{o.DbTblName}_StoragedAt")} ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoWord.UpdatedAt))})"
 ,
 $"""
-CREATE UNIQUE INDEX Ux_Word_Owner_Head_Lang ON {o.Qt(o.DbTblName)} (
+CREATE UNIQUE INDEX {o.Qt($"Ux_{o.DbTblName}_Owner_Head_Lang")} ON {o.Qt(o.DbTblName)} (
 {o.Fld(nameof(PoWord.Owner))}
 ,{o.Fld(nameof(PoWord.Head))}
 ,{o.Fld(nameof(PoWord.Lang))}
@@ -202,10 +187,7 @@ CREATE UNIQUE INDEX Ux_Word_Owner_Head_Lang ON {o.Qt(o.DbTblName)} (
 			CfgPoBase(o);
 			CfgI_WordId<PoWordProp>(o);
 			CfgIPoKv(o);
-			o.SetCol(nameof(PoWordProp.Id)).MapType<u8[], IdWordProp>(
-				(id)=>id.Value.ToByteArr(),
-				(val)=>IdWordProp.FromByteArr(val)
-			);
+			o.SetCol(nameof(PoWordProp.Id)).MapType(IdWordProp.MkTypeMapFn());
 		}
 
 		var Tbl_Learn = Mk<PoWordLearn>("WordLearn");
@@ -215,15 +197,13 @@ CREATE UNIQUE INDEX Ux_Word_Owner_Head_Lang ON {o.Qt(o.DbTblName)} (
 			CfgPoBase(o);
 			CfgI_WordId<PoWordLearn>(o);
 			o.CodeIdName = nameof(PoWordLearn.Id);
-			o.SetCol(nameof(PoWordLearn.Id)).MapType<u8[], IdWordLearn>(
-				(id)=>id.Value.ToByteArr(),
-				(val)=>IdWordLearn.FromByteArr(val)
-			);
-			o.SetCol(nameof(PoWordLearn.LearnResult)).MapType<i32, ELearn>(
-				(upper)=>(i32)upper
-				,(raw)=>(ELearn)raw
-				,ObjToRaw: (obj)=>Convert.ToInt32(obj)
-			);
+			o.SetCol(nameof(PoWordLearn.Id)).MapType(IdWordLearn.MkTypeMapFn());
+			// o.SetCol(nameof(PoWordLearn.LearnResult)).MapType<i32, ELearn>(
+			// 	(raw)=>(ELearn)raw
+			// 	,(upper)=>(i32)upper
+			// 	,ObjToRaw: (obj)=>Convert.ToInt32(obj)
+			// );
+			o.SetCol(nameof(PoWordLearn.LearnResult)).MapEnumTypeInt32<ELearn>();
 		}
 		_Inited = true;
 		return NIL;

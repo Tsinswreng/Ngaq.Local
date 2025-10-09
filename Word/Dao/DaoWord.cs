@@ -1,6 +1,5 @@
 namespace Ngaq.Local.Word.Dao;
 
-using Ngaq.Core.Infra;
 using Ngaq.Core.Model.Po;
 using Ngaq.Core.Model.Po.Kv;
 using Ngaq.Core.Model.Po.Learn_;
@@ -9,18 +8,10 @@ using Ngaq.Local.Db;
 using Tsinswreng.CsSqlHelper;
 using Str_Any = System.Collections.Generic.Dictionary<str, obj?>;
 using IStr_Any = System.Collections.Generic.IDictionary<str, obj?>;
-using Ngaq.Core.Infra.Errors;
-using Ngaq.Core.Models.Po;
 using Ngaq.Core.Word.Models.Po.Learn;
 using Tsinswreng.CsPage;
-using Ngaq.Core.Word.Models;
-using Ngaq.Core.Models.UserCtx;
 using Tsinswreng.CsTools;
 using Ngaq.Local.Db.TswG;
-using Ngaq.Core.Model.Sys.Po.User;
-using System.Diagnostics;
-using Ngaq.Core.Word.Models.Dto;
-using Ngaq.Core.Model.UserCtx;
 using Ngaq.Core.Word.Models.Po.Word;
 using Ngaq.Core.Word.Models.Po.Kv;
 
@@ -105,27 +96,6 @@ public partial class DaoSqlWord(
 		//不指定列名旹 UpperId潙obj、typeof<T> 得object 于默認轉換緩存詞典中尋不見
 		return T.UpperToRaw(UpperId, nameof(I_Id<nil>.Id));
 	}
-
-	// public async Task<Func<
-	// 	IUserCtx
-	// 	,IdWord
-	// 	,CT
-	// 	,Task<nil>
-	// >> FnSoftDelJnWordById(IDbFnCtx Ctx, CT Ct){
-	// 	var TW = TblMgr.GetTbl<PoWord>();
-	// 	var NId = nameof(I_Id<nil>.Id);
-	// 	var NWordId = nameof(I_WordId.WordId);
-	// 	var WordSoftDelManyByKeys = await RepoWord.FnSoftDelManyByKeys(Ctx, NId, 99, Ct);
-	// 	var PropSofDelManyByKeys = await RepoKv.FnSoftDelManyByKeys(Ctx, NWordId, 99, Ct);
-	// 	var LearnSofDelManyByKeys = await RepoLearn.FnSoftDelManyByKeys(Ctx, NWordId, 99, Ct);
-	// 	return async(User, IdWord, Ct)=>{
-	// 		var RawIdWord = TW.UpperToRaw(IdWord);
-	// 		await WordSoftDelManyByKeys([RawIdWord], Ct);
-	// 		await PropSofDelManyByKeys([RawIdWord], Ct);
-	// 		await LearnSofDelManyByKeys([RawIdWord], Ct);
-	// 		return NIL;
-	// 	};
-	// }
 
 	public async Task<Func<
 

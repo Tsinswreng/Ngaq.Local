@@ -292,7 +292,7 @@ public partial class SvcWord(
 		return Fn;
 	}
 
-	// [Obsolete("宜用軟刪")]
+
 	// public async Task<Func<
 	// 	IUserCtx
 	// 	,IEnumerable<IdWord>
@@ -544,6 +544,7 @@ public partial class SvcWord(
 	/// //TODO Id或時間爲空時先自動填充
 	/// TODO 返回實ʹ操作 如 無變, 有增 等
 	/// 多個Prop芝厥CreatedAt同旹 減其一汶保存、不效 ʃ被減者未被刪 緣時ˋ同旹diff不出
+
 	public async Task<Func<
 		IUserCtx
 		,JnWord
