@@ -22,6 +22,7 @@ using Ngaq.Core.Word.Models.Dto;
 using Ngaq.Core.Model.UserCtx;
 using Ngaq.Core.Word.Models.Po.Word;
 using Ngaq.Core.Word.Models.Po.Kv;
+using System.Linq.Expressions;
 
 public partial class DaoSqlWord{
 	public async Task<Func<
@@ -294,6 +295,10 @@ AND (
 		};
 	}
 
+	void _(){
+
+	}
+
 	public async Task<Func<
 		IUserCtx
 		,IPageQry
@@ -314,13 +319,13 @@ AND {T.Fld(N.Owner)} = {POwner}
 ORDER BY {T.Fld(N.Head)} ASC
 {T.SqlMkr.ParamLimOfst(out var PLmt, out var POfst)}
 """; // AND {T.Fld(NLang)} = {PLang}
-		var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);;
+		var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
 		Ctx?.AddToDispose(SqlCmd);
 		return async(User, PageQry, Req, Ct)=>{
-			var Arg = ArgDict.Mk()
+			var Arg = ArgDict.Mk(T)
 			.Add(PPrefix, Req.RawStr)
 			.Add(PLang, Req.Lang)
-			.Add(POwner, T.UpperToRaw(User.UserId))
+			.AddConv(POwner, User.UserId)
 			.AddPageQry(PageQry, PLmt, POfst)
 			;
 			var RawDicts = SqlCmd.WithCtx(Ctx).Args(Arg).IterIAsy(Ct);
@@ -383,5 +388,3 @@ WHERE {Tbl.Fld(NId)} = {PId}
 	}
 
 }
-
-

@@ -49,6 +49,7 @@ return z;
 	static IServiceCollection SetupDbCfg(this IServiceCollection z){
 //數據庫連接單例
 z.AddSingleton(LocalDb.Inst.DbConnection);
+z.AddSingleton<I_GetDbConnAsy, SingletonDbConnGetter>();
 //數據庫命令ˇ建者
 z.AddScoped<ISqlCmdMkr, SqliteCmdMkr>();
 //數據庫諸表ˇ司者

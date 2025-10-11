@@ -15,13 +15,15 @@ public class TsNgaqDependency{
 		DbConn = new SqliteConnection($"Data Source={DbPath}");
 		DbConn.Open();
 
+		var DbConnGetter = new SingletonDbConnGetter(DbConn);
+
 		DictMapper = TsNgaqDictMapper.Inst;
 
 		TblMgr = new TsNgaqTblMgr();
 		TsNgaqSchema = new TsNgaqSchema(TblMgr);
 		TsNgaqSchema.Init();
 
-		SqlCmdMkr = new SqliteCmdMkr(DbConn);
+		SqlCmdMkr = new SqliteCmdMkr(DbConnGetter);
 		this.RepoTextWord = new AppRepo<E.textWord, i64>(TblMgr, SqlCmdMkr, DictMapper);
 		this.RepoProp = new AppRepo<E.property, i64>(TblMgr, SqlCmdMkr, DictMapper);
 		this.RepoLearn = new AppRepo<E.learn, i64>(TblMgr, SqlCmdMkr, DictMapper);
