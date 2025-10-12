@@ -36,9 +36,9 @@ var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
 Ctx?.AddToDispose(SqlCmd);
 return async(UserCtx, IdWord, Head, Lang, Ct)=>{
 	var Arg = ArgDict.Mk()
-	.Add(PId, T.UpperToRaw(IdWord))
-	.Add(PHead, Head)
-	.Add(PLang, Lang)
+	.AddRaw(PId, T.UpperToRaw(IdWord))
+	.AddRaw(PHead, Head)
+	.AddRaw(PLang, Lang)
 	;
 	await SqlCmd.WithCtx(Ctx).Args(Arg).All(Ct);
 	await UpdUpd(IdWord, Ct);

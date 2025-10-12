@@ -33,32 +33,30 @@ public partial class DaoSqlWord{
 		,Task<IdWord?>
 	>>
 	FnSlctIdByOwnerHeadLang(IDbFnCtx Ctx,CT Ct){
-		var T = TblMgr.GetTbl<PoWord>();
-		var NId = nameof(PoWord.Id); var NOwner = nameof(PoWord.Owner); var NHead = nameof(PoWord.Head); var NLang = nameof(PoWord.Lang);
-		var POwner = T.Prm(NOwner);var PHead = T.Prm(NHead);
-		var PLang = T.Prm(NLang);
-		var L = T.UpperToRaw;
+		var T = TblMgr.GetTbl<PoWord>(); var N = new PoWord.N();
+		var POwner = T.Prm(N.Owner);var PHead = T.Prm(N.Head); var PLang = T.Prm(N.Lang);
 		var Sql =
 $"""
-SELECT {T.Fld(NId)} FROM {T.Qt(T.DbTblName)}
+SELECT {T.Fld(N.Id)} AS {T.Qt(N.Id)}
+FROM {T.Qt(T.DbTblName)}
 WHERE 1=1
 AND {T.Fld(nameof(IPoBase.DelId))} IS NULL
-AND {T.Fld(NOwner)} = {POwner}
-AND {T.Fld(NHead)} = {PHead}
-AND {T.Fld(NLang)} = {PLang}
+AND {T.Fld(N.Owner)} = {POwner}
+AND {T.Fld(N.Head)} = {PHead}
+AND {T.Fld(N.Lang)} = {PLang}
 """;
 		var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
 		return async (User,Head,Lang,Ct)=>{
 			var UserId = User.UserId;
-			var Args = ArgDict.Mk()
-			.Add(POwner, L(UserId, NOwner))
-			.Add(PHead, L(Head, NHead))
-			.Add(PLang, L(Lang, NLang));
+			var Args = ArgDict.Mk(T)
+			.AddT(POwner, UserId)
+			.AddT(PHead, Head)
+			.AddT(PLang, Lang);
 			var GotDict = await SqlCmd.Args(Args).IterIAsy(Ct).FirstOrDefaultAsync(Ct);
 			if(GotDict == null){
 				return null;
 			}
-			var ans = GotDict[T.ColNameToDb(NId)];
+			var ans = GotDict[N.Id];
 			return IdWord.FromByteArr((u8[])ans);
 		};
 	}
@@ -173,28 +171,28 @@ AND {Tbl.Fld(nameof(IPoBase.DelId))} IS NULL
 		IDbFnCtx Ctx
 		,CT Ct
 	){
-		var TW = TblMgr.GetTbl<PoWord>();
+		var T = TblMgr.GetTbl<PoWord>();
 		var N = new PoWord.N();
-		var POwner = TW.Prm(N.Owner);
+		var POwner = T.Prm(N.Owner);
 		var Sql =
 $"""
-SELECT * FROM {TW.Qt(TW.DbTblName)}
-WHERE {TW.Fld(N.Owner)} = {POwner}
-AND {TW.Fld(N.DelId)} IS NULL
-ORDER BY {TW.Fld(N.CreatedAt)} DESC
-{TW.SqlMkr.ParamLimOfst(out var PLmt, out var POfst)}
+SELECT * FROM {T.Qt(T.DbTblName)}
+WHERE {T.Fld(N.Owner)} = {POwner}
+AND {T.Fld(N.DelId)} IS NULL
+ORDER BY {T.Fld(N.CreatedAt)} DESC
+{T.SqlMkr.ParamLimOfst(out var PLmt, out var POfst)}
 """;
 		var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
 		Ctx?.AddToDispose(SqlCmd);
 		var FnCnt = await RepoWord.FnCount(Ctx, Ct);
 		return async(UserCtx, PageQry ,Ct)=>{
-			var Arg = ArgDict.Mk()
-			.Add(POwner, TW.UpperToRaw(UserCtx.UserId))
+			var Arg = ArgDict.Mk(T)
+			.AddT(POwner, UserCtx.UserId)
 			.AddPageQry(PageQry, PLmt, POfst);
 
 			var RawDbDicts = await SqlCmd.Args(Arg).All(Ct);
 			var PoWords = RawDbDicts.Select(
-				(Raw)=>TW.DbDictToEntity<PoWord>(Raw)
+				(Raw)=>T.DbDictToEntity<PoWord>(Raw)
 			).ToListTryNoCopy();
 			var Cnt = PageQry.WantTotCnt?  await FnCnt(Ct)  :  0;
 			IPage<PoWord> R = new Page<PoWord>{
@@ -282,11 +280,10 @@ AND (
 		var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
 		Ctx?.AddToDispose(SqlCmd);
 		return async(UserCtx, PageQry, Tempus, Ct)=>{
-			var RawDictAsy = await SqlCmd.WithCtx(Ctx).RawArgs(ArgDict.Mk()
-				.Add(PTempus, T.UpperToRaw(Tempus))
-				.Add(POwner, T.UpperToRaw(UserCtx.UserId))
+			var RawDictAsy = await SqlCmd.WithCtx(Ctx).Args(ArgDict.Mk(T)
+				.AddT(PTempus, Tempus)
+				.AddT(POwner, UserCtx.UserId)
 				.AddPageQry(PageQry, Lmt, Ofst)
-				.ToDict()
 			).All(Ct);
 			var WordIds = RawDictAsy.Select(x => T.RawToUpper<IdWord>(x[NId], NId)).ToList();
 			var R = Page<IdWord>.Mk(PageQry, WordIds);
@@ -323,9 +320,9 @@ ORDER BY {T.Fld(N.Head)} ASC
 		Ctx?.AddToDispose(SqlCmd);
 		return async(User, PageQry, Req, Ct)=>{
 			var Arg = ArgDict.Mk(T)
-			.Add(PPrefix, Req.RawStr)
-			.Add(PLang, Req.Lang)
-			.AddConv(POwner, User.UserId)
+			.AddRaw(PPrefix, Req.RawStr)
+			.AddRaw(PLang, Req.Lang)
+			.AddT(POwner, User.UserId)
 			.AddPageQry(PageQry, PLmt, POfst)
 			;
 			var RawDicts = SqlCmd.WithCtx(Ctx).Args(Arg).IterIAsy(Ct);
@@ -355,7 +352,7 @@ WHERE {Tbl.Fld(NId)} = {PId}
 		Ctx?.AddToDispose(SqlCmd);
 		return async (Id, Ct)=>{
 			var Arg = ArgDict.Mk()
-			.Add(PId, Tbl.UpperToRaw(Id, NId));
+			.AddRaw(PId, Tbl.UpperToRaw(Id, NId));
 			var RawDicts = await SqlCmd.WithCtx(Ctx).Args(Arg).All(Ct);
 			if(RawDicts.Count == 0){
 				return null;

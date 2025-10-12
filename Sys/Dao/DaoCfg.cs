@@ -43,8 +43,8 @@ AND {T.Qt(NKStr)} = {PKStr}
 		Ctx?.AddToDispose(SqlCmd);
 		var Fn = async(IUserCtx User, str KStr, IPageQry PageQry, CT Ct)=>{
 			var Arg = ArgDict.Mk()
-			.Add(POwner, T.UpperToRaw(User.UserId))
-			.Add(PKStr, KStr)
+			.AddRaw(POwner, T.UpperToRaw(User.UserId))
+			.AddRaw(PKStr, KStr)
 			.AddPageQry(PageQry, Lmt, Ofst);
 			var RawDicts = await SqlCmd.Args(Arg).All(Ct);
 			var PoAsy = RawDicts.Select(R=>T.DbDictToEntity<PoCfg>(R)).ToListTryNoCopy();
@@ -73,8 +73,8 @@ var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
 		Ctx?.AddToDispose(SqlCmd);
 		var Fn = async(IUserCtx User, str KStr, str VStr, CT Ct)=>{
 			var Args = ArgDict.Mk()
-			.Add(POwner, T.UpperToRaw(User.UserId))
-			.Add(PKStr, KStr).Add(PVStr, VStr);
+			.AddRaw(POwner, T.UpperToRaw(User.UserId))
+			.AddRaw(PKStr, KStr).AddRaw(PVStr, VStr);
 			await SqlCmd.Args(Args).IterIAsy(Ct).FirstOrDefaultAsync(Ct);
 			return NIL;
 		};
@@ -100,8 +100,8 @@ var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
 		Ctx?.AddToDispose(SqlCmd);
 		var Fn = async(IUserCtx User, str KStr, i64 VI64, CT Ct)=>{
 			var Args = ArgDict.Mk()
-			.Add(POwner, T.UpperToRaw(User.UserId))
-			.Add(PKStr, KStr).Add(PI64, VI64);
+			.AddRaw(POwner, T.UpperToRaw(User.UserId))
+			.AddRaw(PKStr, KStr).AddRaw(PI64, VI64);
 			await SqlCmd.Args(Args).IterIAsy(Ct).FirstOrDefaultAsync(Ct);
 			return NIL;
 		};
