@@ -1,8 +1,8 @@
+namespace Ngaq.Local.Db.TswG;
 using Tsinswreng.CsSqlHelper;
 
-namespace Ngaq.Local.Db;
 
-public  partial interface IDbFnCtx
+public partial interface IDbFnCtx
 	:IBaseDbFnCtx
 {
 

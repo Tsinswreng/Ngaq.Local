@@ -6,7 +6,6 @@ using Ngaq.Core.Model.Po.Word;
 using Ngaq.Core.Infra;
 using Ngaq.Core.Model.Po;
 using System.Data;
-using Ngaq.Core.Model.Sys.Po.User;
 using Ngaq.Core.Models.Po;
 using Tsinswreng.CsUlid;
 using Ngaq.Core.Word.Models.Po.Learn;
@@ -18,10 +17,7 @@ using Ngaq.Core.Word.Models.Po.Word;
 using Ngaq.Core.Word.Models.Po.Kv;
 using Ngaq.Core.Model.Po.Role;
 using Ngaq.Core.Models.Sys.Po.Permission;
-
-//using Id_User = Ngaq.Core.Model.Po.User.IdUser;
-//using Id_Word = Ngaq.Core.Model.Po.Word.IdWord;
-//using Id_Kv = Ngaq.Core.Model.Po.Kv.IdKv;
+using Ngaq.Core.Domains.User.Models.Po.User;
 
 public partial class LocalTblMgrIniter{
 	const str MkIdx = "CREATE INDEX"; //不建議加 "IF NOT EXISTS" 以免掩蓋錯誤
@@ -46,11 +42,6 @@ public partial class LocalTblMgrIniter{
 
 	public static IUpperTypeMapFnT<u8[], IdUser> MapIdUser(){
 		return IdUser.MkTypeMapFn();
-
-		// return UpperTypeMapFnT<u8[], IdUser>.Mk(
-		// 	(id)=>id.Value.ToByteArr(),
-		// 	(val)=>IdUser.FromByteArr(val)
-		// );
 	}
 
 	protected bool _Inited{get;set;} = false;
@@ -68,20 +59,12 @@ public partial class LocalTblMgrIniter{
 		o.SetCol(nameof(I_Id<nil>.Id)).AdditionalSqls(["PRIMARY KEY"]);
 
 		o.SetCol(nameof(IPoBase.CreatedAt)).MapType(MapTempus());
-		o.SetCol(nameof(IPoBase.DbCreatedAt)).MapType(MapTempus())
-// 		.AdditionalSqls([
-// "DEFAULT (strftime('%s', 'now'))"
-// 		])
-		;
+		o.SetCol(nameof(IPoBase.DbCreatedAt)).MapType(MapTempus());
+
 		o.SetCol(nameof(IPoBase.UpdatedAt)).MapType(MapTempusN());
 		o.SetCol(nameof(IPoBase.DbUpdatedAt)).MapType(MapTempusN());
 
 		o.SetCol(nameof(IPoBase.DelId)).MapType(IdDel.MkTypeMapFnNullable());
-		// o.SetCol(nameof(IPoBase.Status)).MapType<i32?, PoStatus>(
-		// 	s=>Convert.ToInt32(s.Value),
-		// 	val=>new PoStatus(Convert.ToInt32(val))
-		// 	,ObjToRaw: (obj)=>Convert.ToInt32(obj)
-		// );
 
 		o.SetCol(nameof(IPoBase.CreatedBy)).MapType(IdUser.MkTypeMapFnNullable());
 		o.SetCol(nameof(IPoBase.LastUpdatedBy)).MapType(IdUser.MkTypeMapFnNullable());
@@ -96,16 +79,6 @@ public partial class LocalTblMgrIniter{
 			}
 		};
 
-
-		// o.SoftDelCol = new SoftDelol{
-		// 	CodeColName = nameof(IPoBase.Status)
-		// 	,FnDelete = (statusObj)=>{
-		// 		return PoStatus.Deleted.Value;
-		// 	}
-		// 	,FnRestore = (statusObj)=>{
-		// 		return PoStatus.Normal.Value;
-		// 	}
-		// };
 		return o;
 	}
 
@@ -146,18 +119,18 @@ ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(I_WordId.WordId))})
 			o.SetCol(nameof(PoCfg.Id)).MapType(IdCfg.MkTypeMapFn());
 			o.SetCol(nameof(PoCfg.Owner)).MapType(MapIdUser());
 			o.OuterAdditionalSqls.AddRange([
-$"{MkIdx} {o.Qt("IdxCfgOwner")} ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoCfg.Owner))})"
+$"""
+{MkIdx} {o.Qt($"Idx_{o.DbTblName}_{nameof(PoCfg.Owner)}")}
+ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoCfg.Owner))})
+"""
 			]);
 		}
-
-
 
 		var Tbl_Word = Mk<PoWord>("Word");
 		Mgr.AddTbl(Tbl_Word);
 		{
 			var o = Tbl_Word;
 			CfgPoBase(o);
-			//CfgBizTimeVer(o);
 			o.SetCol(nameof(PoWord.Id)).MapType(IdWord.MkTypeMapFn());
 			o.SetCol(nameof(PoWord.Owner)).MapType(MapIdUser());
 			o.SetCol(nameof(PoWord.StoredAt)).MapType(MapTempus());
@@ -198,11 +171,6 @@ CREATE UNIQUE INDEX {o.Qt($"Ux_{o.DbTblName}_Owner_Head_Lang")} ON {o.Qt(o.DbTbl
 			CfgI_WordId<PoWordLearn>(o);
 			o.CodeIdName = nameof(PoWordLearn.Id);
 			o.SetCol(nameof(PoWordLearn.Id)).MapType(IdWordLearn.MkTypeMapFn());
-			// o.SetCol(nameof(PoWordLearn.LearnResult)).MapType<i32, ELearn>(
-			// 	(raw)=>(ELearn)raw
-			// 	,(upper)=>(i32)upper
-			// 	,ObjToRaw: (obj)=>Convert.ToInt32(obj)
-			// );
 			o.SetCol(nameof(PoWordLearn.LearnResult)).MapEnumTypeInt32<ELearn>();
 		}
 		_Inited = true;
@@ -210,19 +178,6 @@ CREATE UNIQUE INDEX {o.Qt($"Ux_{o.DbTblName}_Owner_Head_Lang")} ON {o.Qt(o.DbTbl
 
 	}
 
-	// public static str GenSql<T_Po>()where T_Po:new(){
-	// 	var Table = TableMgr.Inst.GetTable<T_Po>();
-	// 	var name = Table.Name;
-	// 	var sql = $"SELECT * FROM {name}";
-	// 	var po = new T_Po();
-	// 	var dict = DictCtx.ToDict(po);
-
-	// 	foreach(var kv in dict){
-	// 		System.Console.WriteLine(kv.Key);
-	// 		System.Console.WriteLine(kv.Value);
-	// 	}
-	// 	return sql;
-	// }
 }
 
 

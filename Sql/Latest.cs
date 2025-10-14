@@ -1,12 +1,14 @@
-using Ngaq.Local.Db;
+namespace Ngaq.Local.Sql;
+
 using Tsinswreng.CsTools;
 using Tsinswreng.CsSqlHelper;
 using Ngaq.Local.Db.TswG;
 
-namespace Ngaq.Local.Sql;
+
 
 /// <summary>
 /// note: 建庫前勿用預編譯sql
+/// TODO 使通用化
 /// </summary>
 public partial class DbIniter{
 
@@ -40,7 +42,7 @@ public partial class DbIniter{
 	public async Task<Func<
 		CT
 		,Task<IAsyncEnumerable<IDictionary<str, object?>>>
-	>> FnSelectSqliteMaster(Db.IDbFnCtx DbFnCtx, CT Ct){
+	>> FnSelectSqliteMaster(IDbFnCtx DbFnCtx, CT Ct){
 		var Sql = "SELECT * FROM sqlite_master";
 		var Cmd = await SqlCmdMkr.MkCmd(DbFnCtx, Sql, Ct);
 		var Fn = async(CT Ct)=>{
@@ -52,7 +54,7 @@ public partial class DbIniter{
 	public async Task<Func<
 		CT
 		,Task<nil>
-	>> FnMkSchema(Db.IDbFnCtx DbFnCtx, CT Ct){
+	>> FnMkSchema(IDbFnCtx DbFnCtx, CT Ct){
 		var Cmd = await SqlCmdMkr.MkCmd(DbFnCtx, Sql, Ct);//勿 Prepare、表未建好旹預無法編譯
 		var Fn = async(CT Ct)=>{
 			try{
@@ -74,7 +76,7 @@ public partial class DbIniter{
 	public async Task<Func<
 		CT
 		,Task<nil>
-	>> FnInit(Db.IDbFnCtx DbFnCtx, CT Ct){
+	>> FnInit(IDbFnCtx DbFnCtx, CT Ct){
 		var MkSchema = await FnMkSchema(DbFnCtx, Ct);
 		var InsertSchemaHistory = await RepoSchemaHistory.FnInsertManyNoPrepare(DbFnCtx, Ct);
 		var SelectSqliteMaster = await FnSelectSqliteMaster(DbFnCtx, Ct);
@@ -85,7 +87,7 @@ public partial class DbIniter{
 				return NIL;
 			}
 			var SchemaHistory = new SchemaHistory{
-				CreatedAt = this.CreatedAt
+				CreatedMs = this.CreatedAt
 				,Name = "Init"
 			};
 			await MkSchema(Ct);

@@ -4,7 +4,6 @@ using Ngaq.Core.Model.Po;
 using Ngaq.Core.Model.Po.Kv;
 using Ngaq.Core.Model.Po.Learn_;
 using Ngaq.Core.Model.Po.Word;
-using Ngaq.Local.Db;
 using Tsinswreng.CsSqlHelper;
 using Str_Any = System.Collections.Generic.Dictionary<str, obj?>;
 using IStr_Any = System.Collections.Generic.IDictionary<str, obj?>;

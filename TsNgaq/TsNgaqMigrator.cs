@@ -1,6 +1,7 @@
 using Ngaq.Core.Word.Models;
 using Ngaq.Core.Word.Svc;
 using Ngaq.Local.Db;
+using Ngaq.Local.Db.TswG;
 using Ngaq.Local.Word.Dao;
 
 namespace Ngaq.Local.TsNgaq;

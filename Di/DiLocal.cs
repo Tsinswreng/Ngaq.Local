@@ -2,7 +2,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Ngaq.Core.Model.Po.Kv;
 using Ngaq.Core.Model.Po.Learn_;
 using Ngaq.Core.Model.Po.Word;
-using Ngaq.Core.Model.UserCtx;
 using Ngaq.Core.Service.Word;
 
 //using Microsoft.CodeAnalysis.Text;
@@ -19,13 +18,12 @@ using Tsinswreng.CsSqlHelper.Sqlite;
 using Ngaq.Core.Word.Models.Po.Learn;
 using Ngaq.Local.Infra;
 using Tsinswreng.CsDictMapper;
-using Ngaq.Local.Db;
-using Ngaq.Core.Models.UserCtx;
 using Ngaq.Local.Word.Dao;
 using Ngaq.Core.Sys.Svc;
 using Ngaq.Local.Sys.Svc;
 using Ngaq.Core.Word.Models.Po.Word;
 using Ngaq.Core.Word.Models.Po.Kv;
+using Ngaq.Core.Domains.User.UserCtx;
 
 
 namespace Ngaq.Local.Di;

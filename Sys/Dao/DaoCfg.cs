@@ -1,7 +1,5 @@
-using Ngaq.Core.Model.UserCtx;
-using Ngaq.Core.Models.UserCtx;
+using Ngaq.Core.Domains.User.UserCtx;
 using Ngaq.Core.Sys.Models;
-using Ngaq.Local.Db;
 using Ngaq.Local.Db.TswG;
 using Tsinswreng.CsCfg;
 using Tsinswreng.CsCore;

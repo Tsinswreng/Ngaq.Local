@@ -8,9 +8,10 @@ using Tsinswreng.CsCore;
 using Tsinswreng.CsPage;
 using Ngaq.Core.Word.Models;
 using Ngaq.Core.Infra;
-using Ngaq.Core.Models.UserCtx;
 using Ngaq.Core.Word.Models.Dto;
 using Tsinswreng.CsTools;
+using Ngaq.Local.Db.TswG;
+using Ngaq.Core.Domains.User.UserCtx;
 
 public partial class SvcWord{
 #region API

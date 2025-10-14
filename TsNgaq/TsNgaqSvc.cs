@@ -2,7 +2,6 @@
 
 namespace Ngaq.Local.TsNgaq;
 
-using Ngaq.Local.Db;
 using Ngaq.Local.Db.TswG;
 using Tsinswreng.CsPage;
 using Tsinswreng.CsSqlHelper;

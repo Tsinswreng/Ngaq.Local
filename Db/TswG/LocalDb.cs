@@ -33,7 +33,7 @@ public partial class LocalDb{
 			return this;
 		}
 		ITblMgr Mgr = LocalTblMgr.Inst;//TODO 自蔿己ʹ項目維護一TblMgr
-		Mgr.DbSrcType = "Sqlite";
+		Mgr.DbSrcType = ConstDbSrcType.Sqlite;
 		new LocalTblMgrIniter(Mgr).Init();
 		return this;
 	}
