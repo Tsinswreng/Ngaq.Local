@@ -1,47 +1,95 @@
 namespace Ngaq.Local.Domains.Kv.Svc;
 using Ngaq.Core.Domains.User.Models;
+using Ngaq.Core.Domains.User.Models.Po.User;
+using Ngaq.Core.Domains.User.Svc;
 using Ngaq.Core.Domains.User.UserCtx;
 using Ngaq.Core.Domains.Word.Models.Po.Kv;
 using Ngaq.Core.Sys.Models;
-using Ngaq.Core.Sys.Svc;
 using Ngaq.Local.Db.TswG;
 using Ngaq.Local.Domains.Kv.Dao;
 using Tsinswreng.CsCore;
 using Tsinswreng.CsPage;
 using Tsinswreng.CsSqlHelper;
 
-
 using Z = SvcKv;
 public partial class SvcKv(
-	DaoKv DaoCfg
+	DaoKv DaoKv
 	,TxnWrapper<DbFnCtx> TxnWrapper
-	,IAppRepo<PoKv, IdKv> RepoCfg
+	,IAppRepo<PoKv, IdKv> RepoKv
 )
-	:ISvcDbCfg
+	:ISvcKv
 {
-	DaoKv DaoCfg = DaoCfg;
-	IAppRepo<PoKv, IdKv> RepoCfg = RepoCfg;
+	DaoKv DaoKv = DaoKv;
+	IAppRepo<PoKv, IdKv> RepoCfg = RepoKv;
 	//public const str PathSep = "/";
 
+	public Task<PoKv?> GetByOwnerEtKey(IdUser? Owner, obj Key, CT Ct){
+		return TxnWrapper.Wrap(FnGetByOwnerEtKey, Owner, Key, Ct);
+	}
+	public Task<nil> AddOrUpdByOwnerEtKey(IdUser? Owner, obj Key, PoKv Po, CT Ct){
+		return TxnWrapper.Wrap(FnAddOrUpdByOwnerEtKey, Owner, Key, Po, Ct);
+	}
 
-	[Impl(typeof(ISvcDbCfg))]
-	public async Task<PoKv?> GetOneByKStr(IUserCtx UserCtx, str Key, CT Ct){
+
+	public async Task<Func<
+		IdUser?
+		,obj
+		,CT, Task<PoKv?>
+	>> FnGetByOwnerEtKey(IDbFnCtx Ctx, CT Ct){
+		var GetByKStr = await DaoKv.FnGetByOwnerEtKStr(Ctx, Ct);
+		var GetByKI64 = await DaoKv.FnGetByOwnerEtKI64(Ctx, Ct);
+		return async(IdUser? Owner, obj Key, CT Ct)=>{
+			if(Key is i64 KI64){
+				return await GetByKI64(Owner, KI64, Ct);
+			}else{
+				return await GetByKStr(Owner, Key+"", Ct);
+			}
+		};
+	}
+
+	public async Task<Func<
+		IdUser?
+		,obj
+		,PoKv
+		,CT, Task<nil>
+	>> FnAddOrUpdByOwnerEtKey(IDbFnCtx Ctx, CT Ct){
+		var GetByOwnerEtKey = await FnGetByOwnerEtKey(Ctx, Ct);
+		var UpdById = await DaoKv.FnUpdById(Ctx, Ct);
+		var InsertMany = await RepoCfg.FnInsertMany(Ctx, Ct);
+		return async(UserId, Key, Po, Ct)=>{
+			var Existing = await GetByOwnerEtKey(UserId, Key, Ct);
+			if(Existing is not null){
+				await UpdById(Existing.Id, Po, Ct);
+				return NIL;
+			}
+			Po.Owner = UserId;
+			await InsertMany([Po], Ct);
+			return NIL;
+		};
+	}
+
+
+
+
+	[Obsolete]
+	[Impl(typeof(ISvcKv))]
+	public async Task<PoKv?> GetByKStr(IUserCtx UserCtx, str Key, CT Ct){
 		return await TxnWrapper.Wrap(FnGetOneByKStr, UserCtx, Key, Ct);
 		//return await TxnWrapper.Wrap(new ClsGetOneByKStr(this), UserCtx, Key, Ct);
 	}
-
-	[Impl(typeof(ISvcDbCfg))]
+	[Obsolete]
+	[Impl(typeof(ISvcKv))]
 	public async Task<nil> SetVStrByKStr(IUserCtx UserCtx, str Key, str Value, CT Ct){
 		return await TxnWrapper.Wrap(FnAddOrSetVStrByKStr, UserCtx, Key, Value, Ct);
 	}
-
-	[Impl(typeof(ISvcDbCfg))]
+	[Obsolete]
+	[Impl(typeof(ISvcKv))]
 	public async Task<nil> SetVI64ByKStr(IUserCtx UserCtx, str Key, i64 Value, CT Ct){
 		return await TxnWrapper.Wrap(FnAddOrSetVI64ByKStr, UserCtx, Key, Value, Ct);
 	}
 
 
-
+	[Obsolete]
 	public async Task<Func<
 		IUserCtx
 		,str
@@ -49,7 +97,7 @@ public partial class SvcKv(
 		,Task<PoKv?>
 	>> FnGetOneByKStr(IDbFnCtx Ctx, CT Ct){
 		var PageQry = new PageQry{PageIdx = 0, PageSize = 1, WantTotCnt = false};
-		var PageByKStr = await DaoCfg.FnPageByKStr(Ctx, Ct);
+		var PageByKStr = await DaoKv.FnPageByKStr(Ctx, Ct);
 		var Fn = async(IUserCtx UserCtx, str Key, CT Ct)=>{
 			var Page = await PageByKStr(UserCtx, Key, PageQry, Ct);
 			if(Page.Data != null){
@@ -61,6 +109,20 @@ public partial class SvcKv(
 		return Fn;
 	}
 
+	[Obsolete]
+	public async Task<Func<
+		IUserCtx
+		,PoKv
+		,CT, Task<nil>
+	>> FnUpdByKey(IDbFnCtx Ctx, CT Ct){
+		var UpdById = await DaoKv.FnUpdById(Ctx, Ct);
+		return async(User, Po, Ct)=>{
+
+			return NIL;
+		};
+	}
+
+	[Obsolete]
 	public async Task<Func<
 		IUserCtx
 		,PoKv
@@ -77,6 +139,7 @@ public partial class SvcKv(
 	}
 
 
+	[Obsolete]
 	public async Task<Func<
 		IUserCtx
 		,str
@@ -86,7 +149,7 @@ public partial class SvcKv(
 	>> FnAddOrSetVStrByKStr(IDbFnCtx Ctx, CT Ct){
 		var GetOneByKStr = await FnGetOneByKStr(Ctx, Ct);
 		var Add = await FnAdd(Ctx, Ct);
-		var SetVStrByKStr = await DaoCfg.FnSetVStrByKStr(Ctx, Ct);
+		var SetVStrByKStr = await DaoKv.FnSetVStrByKStr(Ctx, Ct);
 		var Fn = async(IUserCtx UserCtx, str Key, str Value, CT Ct)=>{
 			var Existing = await GetOneByKStr(UserCtx, Key, Ct);
 			if(Existing != null){
@@ -105,6 +168,7 @@ public partial class SvcKv(
 		return Fn;
 	}
 
+	[Obsolete]
 	public async Task<Func<
 		IUserCtx
 		,str
@@ -114,7 +178,7 @@ public partial class SvcKv(
 	>> FnAddOrSetVI64ByKStr(IDbFnCtx Ctx, CT Ct){
 		var GetOneByKStr = await FnGetOneByKStr(Ctx, Ct);
 		var Add = await FnAdd(Ctx, Ct);
-		var SetVI64ByKStr = await DaoCfg.FnSetVI64ByKStr(Ctx, Ct);
+		var SetVI64ByKStr = await DaoKv.FnSetVI64ByKStr(Ctx, Ct);
 		var Fn = async(IUserCtx UserCtx, str Key, i64 Value, CT Ct)=>{
 			var Existing = await GetOneByKStr(UserCtx, Key, Ct);
 			if(Existing != null){
@@ -132,7 +196,6 @@ public partial class SvcKv(
 		};
 		return Fn;
 	}
-
 
 #if false
 	public class ClsGetOneByKStr(Z z):DbFn<IUserCtx, str, PoCfg?>{

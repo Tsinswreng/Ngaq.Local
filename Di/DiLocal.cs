@@ -19,11 +19,11 @@ using Ngaq.Core.Word.Models.Po.Learn;
 using Ngaq.Local.Infra;
 using Tsinswreng.CsDictMapper;
 using Ngaq.Local.Word.Dao;
-using Ngaq.Core.Sys.Svc;
 using Ngaq.Local.Sys.Svc;
 using Ngaq.Core.Word.Models.Po.Word;
 using Ngaq.Core.Domains.User.UserCtx;
 using Ngaq.Core.Domains.Word.Models.Po.Kv;
+using Ngaq.Core.Domains.User.Svc;
 
 
 namespace Ngaq.Local.Di;
@@ -91,7 +91,7 @@ return z;
 z.AddScoped<DaoSqlWord, DaoSqlWord>();
 z.AddScoped<ISvcParseWordList, SvcParseWordList>();
 z.AddScoped<ISvcWord, SvcWord>();
-z.AddScoped<ISvcDbCfg, SvcDbCfg>();
+z.AddScoped<ISvcKv, SvcDbCfg>();
 z.AddScoped<IImgGetter, SvcImg>();
 z.AddScoped<TxnWrapper<DbFnCtx>>();
 return z;

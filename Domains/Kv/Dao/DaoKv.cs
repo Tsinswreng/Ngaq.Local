@@ -1,7 +1,9 @@
 namespace Ngaq.Local.Domains.Kv.Dao;
 
 using Ngaq.Core.Domains.User.Models;
+using Ngaq.Core.Domains.User.Models.Po.User;
 using Ngaq.Core.Domains.User.UserCtx;
+using Ngaq.Core.Domains.Word.Models.Po.Kv;
 using Ngaq.Core.Sys.Models;
 using Ngaq.Local.Db.TswG;
 using Tsinswreng.CsCfg;
@@ -15,13 +17,66 @@ using Z = DaoKv;
 public partial class DaoKv(
 	ISqlCmdMkr SqlCmdMkr
 	,ITblMgr TblMgr
-	,IAppRepo<PoKv, IdKv> RepoCfg
+	,IAppRepo<PoKv, IdKv> RepoKv
 ){
 
 	ISqlCmdMkr SqlCmdMkr = SqlCmdMkr;
 
 	protected ITable T{
 		get{return TblMgr.GetTbl<PoKv>();}
+	}
+
+	public async Task<Func<
+		IdKv
+		,PoKv
+		,CT, Task<nil>
+	>> FnUpdById(IDbFnCtx Ctx, CT Ct){
+		var UpdById = await RepoKv.FnUpdById(Ctx,null, Ct);
+		return async(Id, Po, Ct)=>{
+			await UpdById(Id, Po, Ct);
+			return NIL;
+		};
+	}
+
+	async Task<Func<
+		IdUser?
+		,obj
+		,CT, Task<PoKv?>
+	>> FnGetByOwnerEtKey(IDbFnCtx Ctx, str KeyCol, CT Ct){
+var T = TblMgr.GetTbl<PoKv>(); var POwner = T.Prm(nameof(PoKv.Owner)); var PKeyCol = T.Prm(KeyCol);
+var Sql =$"""
+SELECT * FROM {T.Qt(T.DbTblName)}
+WHERE 1=1
+AND {T.Fld(nameof(PoKv.DelId))} IS NULL
+AND {T.Fld(POwner)} = {POwner}
+AND {T.Fld(PKeyCol)} = {PKeyCol}
+""";
+		var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
+		Ctx?.AddToDispose(SqlCmd);
+		return async(Id, Key, Ct)=>{
+			var Arg = ArgDict.Mk(T).AddT(POwner, Id).AddT(PKeyCol, Key);
+			return await SqlCmd.Args(Arg).FirstOrDefault<PoKv>(T, Ct);
+		};
+	}
+
+	public async Task<Func<
+		IdUser?
+		,str
+		,CT, Task<PoKv?>
+	>> FnGetByOwnerEtKStr(IDbFnCtx Ctx, CT Ct){
+		return await FnGetByOwnerEtKey(Ctx, nameof(PoKv.KStr), Ct);
+	}
+
+	public async Task<Func<
+		IdUser?
+		,i64
+		,CT, Task<PoKv?>
+	>> FnGetByOwnerEtKI64(IDbFnCtx Ctx, CT Ct){
+		var Fn = await FnGetByOwnerEtKey(Ctx, nameof(PoKv.KI64), Ct);
+		return async(Id, Key, Ct)=>{
+			var R = await Fn(Id, Key, Ct);
+			return R;
+		};
 	}
 
 
@@ -43,9 +98,9 @@ AND {T.Qt(NKStr)} = {PKStr}
 		var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
 		Ctx?.AddToDispose(SqlCmd);
 		var Fn = async(IUserCtx User, str KStr, IPageQry PageQry, CT Ct)=>{
-			var Arg = ArgDict.Mk()
-			.AddRaw(POwner, T.UpperToRaw(User.UserId))
-			.AddRaw(PKStr, KStr)
+			var Arg = ArgDict.Mk(T)
+			.AddT(POwner, User.UserId)
+			.AddT(PKStr, KStr)
 			.AddPageQry(PageQry, Lmt, Ofst);
 			var RawDicts = await SqlCmd.Args(Arg).All(Ct);
 			var PoAsy = RawDicts.Select(R=>T.DbDictToEntity<PoKv>(R)).ToListTryNoCopy();
