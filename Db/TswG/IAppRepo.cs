@@ -1,6 +1,7 @@
+namespace Ngaq.Local.Db.TswG;
 using Tsinswreng.CsSqlHelper;
 
-namespace Ngaq.Local.Db.TswG;
+
 public partial interface IAppRepo<
 	TEntity
 	,TId

@@ -3,6 +3,14 @@ namespace Ngaq.Local.Sql;
 using Tsinswreng.CsTools;
 using Tsinswreng.CsSqlHelper;
 using Ngaq.Local.Db.TswG;
+using Ngaq.Core.Domains.User.Models.Po.User;
+using Ngaq.Core.Domains.User.Models.Po.Device;
+using Ngaq.Core.Domains.User.Models;
+using Ngaq.Core.Domains.Kv.Models;
+using Tsinswreng.CsCfg;
+using Ngaq.Core.Domains.Word.Models.Po.Kv;
+using Ngaq.Local.Domains.Kv.Svc;
+using Ngaq.Core.Domains.User.Svc;
 
 
 
@@ -12,28 +20,32 @@ using Ngaq.Local.Db.TswG;
 /// </summary>
 public partial class DbIniter{
 
-	public ISqlCmdMkr SqlCmdMkr{get;set;}
-	public ITxnRunner TxnRunner{get;set;}
-	public I_GetTxnAsy TxnGetter{get;set;}
-	public ITblMgr TblMgr{get;set;}
-	public IAppRepo<SchemaHistory, i64> RepoSchemaHistory{get;set;}
+	public ISqlCmdMkr SqlCmdMkr;
+	public ITxnRunner TxnRunner;
+	public I_GetTxnAsy TxnGetter;
+	public ITblMgr TblMgr;
+	public IAppRepo<SchemaHistory, i64> RepoSchemaHistory;
+	public ISvcKv SvcKv;
 	public DbIniter(
 		ISqlCmdMkr SqlCmdMkr
 		,ITxnRunner TxnRunner
 		,I_GetTxnAsy TxnGetter
 		,ITblMgr TblMgr
 		,IAppRepo<SchemaHistory, i64> RepoSchemaHistory
+		,ISvcKv SvcKv
 	){
 		if(RepoSchemaHistory is not SqlRepo<SchemaHistory, i64> SqlRepoSchemaHistory){
 			throw new ArgumentException("RepoSchemaHistory must be SqlRepo<SchemaHistory, i64>");
 		}
 		this.RepoSchemaHistory = RepoSchemaHistory;
 		SqlRepoSchemaHistory.DictMapper = SqlHelperDictMapper.Inst;
+		this.SvcKv = SvcKv;
 		this.TblMgr = TblMgr;
 		this.TxnRunner = TxnRunner;
 		this.TxnGetter = TxnGetter;
 		this.SqlCmdMkr = SqlCmdMkr;
 		this.Sql = TblMgr.SqlMkSchema();
+
 	}
 
 	public long CreatedAt{get;set;} = 1749888405026;
@@ -101,6 +113,18 @@ public partial class DbIniter{
 		var Ctx = new DbFnCtx{Txn = await TxnGetter.GetTxnAsy(Ct)};
 		var Init = await FnInit(Ctx, Ct);
 		await TxnRunner.RunTxn(Ctx.Txn, Init, Ct);
+		await InitKv(Ct);
+		return NIL;
+	}
+
+	public async Task<nil> InitKv(CT Ct){
+		IdUser? Owner = null;
+		IdClient ClientId = new();
+		var PoKv = new PoKv();
+		PoKv.Owner = Owner;
+		var Path = KeysClientKv.ClientId.GetFullPath();
+		PoKv.SetStr(Path, ClientId+"");
+		await SvcKv.AddOrUpd(PoKv, Ct);
 		return NIL;
 	}
 }

@@ -26,9 +26,13 @@ public partial class SvcKv(
 	public Task<PoKv?> GetByOwnerEtKey(IdUser? Owner, obj Key, CT Ct){
 		return TxnWrapper.Wrap(FnGetByOwnerEtKey, Owner, Key, Ct);
 	}
-	public Task<nil> AddOrUpdByOwnerEtKey(IdUser? Owner, obj Key, PoKv Po, CT Ct){
-		return TxnWrapper.Wrap(FnAddOrUpdByOwnerEtKey, Owner, Key, Po, Ct);
+
+	public Task<nil> AddOrUpd(PoKv Po, CT Ct){
+		return TxnWrapper.Wrap(FnAddOrUpd, Po, Ct);
 	}
+
+
+
 
 
 	public async Task<Func<
@@ -48,15 +52,20 @@ public partial class SvcKv(
 	}
 
 	public async Task<Func<
-		IdUser?
-		,obj
-		,PoKv
+		PoKv
 		,CT, Task<nil>
-	>> FnAddOrUpdByOwnerEtKey(IDbFnCtx Ctx, CT Ct){
+	>> FnAddOrUpd(IDbFnCtx Ctx, CT Ct){
 		var GetByOwnerEtKey = await FnGetByOwnerEtKey(Ctx, Ct);
 		var UpdById = await DaoKv.FnUpdById(Ctx, Ct);
 		var InsertMany = await RepoCfg.FnInsertMany(Ctx, Ct);
-		return async(UserId, Key, Po, Ct)=>{
+		return async(Po, Ct)=>{
+			var UserId = Po.Owner;
+			obj Key = null!;
+			if(Po.KType == EKvType.Str){
+				Key = Po.KStr!;
+			}else{
+				Key = Po.KI64;
+			}
 			var Existing = await GetByOwnerEtKey(UserId, Key, Ct);
 			if(Existing is not null){
 				await UpdById(Existing.Id, Po, Ct);
@@ -67,6 +76,8 @@ public partial class SvcKv(
 			return NIL;
 		};
 	}
+
+
 
 
 

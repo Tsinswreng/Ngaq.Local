@@ -19,11 +19,14 @@ using Ngaq.Core.Word.Models.Po.Learn;
 using Ngaq.Local.Infra;
 using Tsinswreng.CsDictMapper;
 using Ngaq.Local.Word.Dao;
-using Ngaq.Local.Sys.Svc;
 using Ngaq.Core.Word.Models.Po.Word;
 using Ngaq.Core.Domains.User.UserCtx;
 using Ngaq.Core.Domains.Word.Models.Po.Kv;
 using Ngaq.Core.Domains.User.Svc;
+using Ngaq.Local.Domains.Kv.Svc;
+using Ngaq.Local.Domains.Kv.Dao;
+using Ngaq.Core.Domains.User.Models;
+using Ngaq.Core.Sys.Models;
 
 
 namespace Ngaq.Local.Di;
@@ -63,6 +66,15 @@ z.AddTransient<DbIniter>();
 return z;
 	}
 
+	static IServiceCollection AddRepoScoped<TEntity, TId>(
+		this IServiceCollection z
+	)where TEntity:class, new()
+	{
+		//z.AddScoped<IRepo<TEntity, TId>, EfRepo<TEntity, TId>>();
+		z.AddScoped<IAppRepo<TEntity, TId>, AppRepo<TEntity, TId>>();
+		return z;
+	}
+
 //倉儲
 	static IServiceCollection SetupRepos(this IServiceCollection z){
 z.AddScoped<
@@ -81,6 +93,7 @@ z.AddScoped<
 	IAppRepo<PoWordLearn, IdWordLearn>
 	,AppRepo<PoWordLearn, IdWordLearn>
 >();
+z.AddRepoScoped<PoKv, IdKv>();
 //z.AddScoped<IRunInTxn, AdoTxnRunner>();
 return z;
 	}
@@ -89,9 +102,10 @@ return z;
 //服務類
 	static IServiceCollection SetupSvcs(this IServiceCollection z){
 z.AddScoped<DaoSqlWord, DaoSqlWord>();
+z.AddScoped<DaoKv, DaoKv>();
 z.AddScoped<ISvcParseWordList, SvcParseWordList>();
 z.AddScoped<ISvcWord, SvcWord>();
-z.AddScoped<ISvcKv, SvcDbCfg>();
+z.AddScoped<ISvcKv, SvcKv>();
 z.AddScoped<IImgGetter, SvcImg>();
 z.AddScoped<TxnWrapper<DbFnCtx>>();
 return z;
