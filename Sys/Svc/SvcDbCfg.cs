@@ -1,7 +1,8 @@
+using Ngaq.Core.Domains.User.Models;
 using Ngaq.Core.Domains.User.UserCtx;
+using Ngaq.Core.Domains.Word.Models.Po.Kv;
 using Ngaq.Core.Sys.Models;
 using Ngaq.Core.Sys.Svc;
-using Ngaq.Core.Word.Models.Po.Kv;
 using Ngaq.Local.Db.TswG;
 using Ngaq.Local.Sys.Dao;
 using Tsinswreng.CsCore;
@@ -13,17 +14,17 @@ using Z = SvcDbCfg;
 public partial class SvcDbCfg(
 	DaoCfg DaoCfg
 	,TxnWrapper<DbFnCtx> TxnWrapper
-	,IAppRepo<PoCfg, IdCfg> RepoCfg
+	,IAppRepo<PoKv, IdKv> RepoCfg
 )
 	:ISvcDbCfg
 {
 	DaoCfg DaoCfg = DaoCfg;
-	IAppRepo<PoCfg, IdCfg> RepoCfg = RepoCfg;
+	IAppRepo<PoKv, IdKv> RepoCfg = RepoCfg;
 	//public const str PathSep = "/";
 
 
 	[Impl(typeof(ISvcDbCfg))]
-	public async Task<PoCfg?> GetOneByKStr(IUserCtx UserCtx, str Key, CT Ct){
+	public async Task<PoKv?> GetOneByKStr(IUserCtx UserCtx, str Key, CT Ct){
 		return await TxnWrapper.Wrap(FnGetOneByKStr, UserCtx, Key, Ct);
 		//return await TxnWrapper.Wrap(new ClsGetOneByKStr(this), UserCtx, Key, Ct);
 	}
@@ -44,7 +45,7 @@ public partial class SvcDbCfg(
 		IUserCtx
 		,str
 		,CT
-		,Task<PoCfg?>
+		,Task<PoKv?>
 	>> FnGetOneByKStr(IDbFnCtx Ctx, CT Ct){
 		var PageQry = new PageQry{PageIdx = 0, PageSize = 1, WantTotCnt = false};
 		var PageByKStr = await DaoCfg.FnPageByKStr(Ctx, Ct);
@@ -61,12 +62,12 @@ public partial class SvcDbCfg(
 
 	public async Task<Func<
 		IUserCtx
-		,PoCfg
+		,PoKv
 		,CT
 		,Task<nil>
 	>> FnAdd(IDbFnCtx Ctx, CT Ct){
 		var InsertMany = await RepoCfg.FnInsertMany(Ctx, Ct);
-		var Fn = async(IUserCtx UserCtx, PoCfg PoCfg, CT Ct)=>{
+		var Fn = async(IUserCtx UserCtx, PoKv PoCfg, CT Ct)=>{
 			PoCfg.Owner = UserCtx.UserId;
 			await InsertMany([PoCfg], Ct);
 			return NIL;
@@ -90,10 +91,10 @@ public partial class SvcDbCfg(
 			if(Existing != null){
 				await SetVStrByKStr(UserCtx, Key, Value, Ct);
 			}else{
-				var ToAdd = new PoCfg{
+				var ToAdd = new PoKv{
 					Owner = UserCtx.UserId,
 					KStr = Key,
-					VType = (i64)EKvType.Str,
+					VType = EKvType.Str,
 					VStr = Value,
 				};
 				await Add(UserCtx, ToAdd, Ct);
@@ -118,10 +119,10 @@ public partial class SvcDbCfg(
 			if(Existing != null){
 				await SetVI64ByKStr(UserCtx, Key, Value, Ct);
 			}else{
-				var ToAdd = new PoCfg{
+				var ToAdd = new PoKv{
 					Owner = UserCtx.UserId,
 					KStr = Key,
-					VType = (i64)EKvType.I64,
+					VType = EKvType.I64,
 					VI64 = Value,
 				};
 				await Add(UserCtx, ToAdd, Ct);

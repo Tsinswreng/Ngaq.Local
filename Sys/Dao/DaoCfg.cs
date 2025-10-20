@@ -1,3 +1,4 @@
+using Ngaq.Core.Domains.User.Models;
 using Ngaq.Core.Domains.User.UserCtx;
 using Ngaq.Core.Sys.Models;
 using Ngaq.Local.Db.TswG;
@@ -12,13 +13,13 @@ using Z = DaoCfg;
 public partial class DaoCfg(
 	ISqlCmdMkr SqlCmdMkr
 	,ITblMgr TblMgr
-	,IAppRepo<PoCfg, IdCfg> RepoCfg
+	,IAppRepo<PoKv, IdKv> RepoCfg
 ){
 
 	ISqlCmdMkr SqlCmdMkr = SqlCmdMkr;
 
 	protected ITable T{
-		get{return TblMgr.GetTbl<PoCfg>();}
+		get{return TblMgr.GetTbl<PoKv>();}
 	}
 
 
@@ -27,9 +28,9 @@ public partial class DaoCfg(
 		,str
 		,IPageQry
 		,CT
-		,Task<IPage<PoCfg>>
+		,Task<IPage<PoKv>>
 	>> FnPageByKStr(IDbFnCtx Ctx, CT Ct){
-var NOwner = nameof(PoCfg.Owner); var NKStr = nameof(PoCfg.KStr);
+var NOwner = nameof(PoKv.Owner); var NKStr = nameof(PoKv.KStr);
 var POwner = T.Prm(NOwner);var PKStr = T.Prm(NKStr);
 var Sql = $"""
 SELECT * FROM {T.Qt(T.DbTblName)}
@@ -45,7 +46,7 @@ AND {T.Qt(NKStr)} = {PKStr}
 			.AddRaw(PKStr, KStr)
 			.AddPageQry(PageQry, Lmt, Ofst);
 			var RawDicts = await SqlCmd.Args(Arg).All(Ct);
-			var PoAsy = RawDicts.Select(R=>T.DbDictToEntity<PoCfg>(R)).ToListTryNoCopy();
+			var PoAsy = RawDicts.Select(R=>T.DbDictToEntity<PoKv>(R)).ToListTryNoCopy();
 			var R = Page.Mk(PageQry, PoAsy);
 			return R;
 		};
@@ -59,7 +60,7 @@ AND {T.Qt(NKStr)} = {PKStr}
 		,CT
 		,Task<nil>
 	>> FnSetVStrByKStr(IDbFnCtx Ctx, CT Ct){
-var NVStr = nameof(PoCfg.VStr); var NOwner = nameof(PoCfg.Owner); var NKStr = nameof(PoCfg.KStr);
+var NVStr = nameof(PoKv.VStr); var NOwner = nameof(PoKv.Owner); var NKStr = nameof(PoKv.KStr);
 var PVStr = T.Prm(NVStr);var POwner = T.Prm(NOwner); var PKStr = T.Prm(NKStr);
 var Sql = $"""
 UPDATE {T.Qt(T.DbTblName)}
@@ -86,7 +87,7 @@ var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
 		,CT
 		,Task<nil>
 	>> FnSetVI64ByKStr(IDbFnCtx Ctx, CT Ct){
-var NVI64 = nameof(PoCfg.VI64); var NOwner = nameof(PoCfg.Owner); var NKStr = nameof(PoCfg.KStr);
+var NVI64 = nameof(PoKv.VI64); var NOwner = nameof(PoKv.Owner); var NKStr = nameof(PoKv.KStr);
 var PI64 = T.Prm(NVI64);var POwner = T.Prm(NOwner); var PKStr = T.Prm(NKStr);
 var Sql = $"""
 UPDATE {T.Qt(T.DbTblName)}

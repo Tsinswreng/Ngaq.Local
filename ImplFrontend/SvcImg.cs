@@ -17,7 +17,7 @@ public  partial class SvcImg:IImgGetter{
 //TODO 若此中拋異常且無catch則初始化DI旹則崩 宜傳異常置前端
 	public SvcImg(){
 try{
-var CfgDir = AppCfgItems.GalleryDirs.GetFrom(CfgAccessor)??[];
+var CfgDir = ItemAppCfg.GalleryDirs.GetFrom(CfgAccessor)??[];
 		foreach(var Dir in CfgDir){
 			if(Dir is str s && !str.IsNullOrEmpty(s)){
 				if(Directory.Exists(s)){

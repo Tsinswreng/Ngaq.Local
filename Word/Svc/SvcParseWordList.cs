@@ -1,10 +1,10 @@
 using System.Text;
+using Ngaq.Core.Domains.Word.Models;
 using Ngaq.Core.Infra.Errors;
 using Ngaq.Core.Service.Parser;
 using Ngaq.Core.Service.Word;
 using Ngaq.Core.Stream;
 using Ngaq.Core.Tools.Io;
-using Ngaq.Core.Word.Models;
 
 namespace Ngaq.Local.Service.Word;
 

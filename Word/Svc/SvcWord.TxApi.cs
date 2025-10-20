@@ -3,15 +3,15 @@ using Ngaq.Core.Model.Po.Word;
 using Ngaq.Core.Tools.Io;
 using Ngaq.Local.Db;
 using Ngaq.Core.Model.Word.Req;
-using Ngaq.Core.Word.Models.Learn_;
 using Tsinswreng.CsCore;
 using Tsinswreng.CsPage;
-using Ngaq.Core.Word.Models;
 using Ngaq.Core.Infra;
 using Ngaq.Core.Word.Models.Dto;
 using Tsinswreng.CsTools;
 using Ngaq.Local.Db.TswG;
 using Ngaq.Core.Domains.User.UserCtx;
+using Ngaq.Core.Domains.Word.Models.Learn_;
+using Ngaq.Core.Domains.Word.Models;
 
 public partial class SvcWord{
 #region API

@@ -17,7 +17,7 @@ public partial class LocalDb{
 	//蜮 按需開關連接㕥代單例 更佳
 	public IDbConnection DbConnection{get;set;}
 	public LocalDb(){
-		DbPath??=AppCfgItems.SqlitePath.GetFrom(CfgAccessor)??throw new Exception();
+		DbPath??=ItemAppCfg.SqlitePath.GetFrom(CfgAccessor)??throw new Exception();
 		ToolFile.EnsureFile(DbPath);
 		DbConnection = new SqliteConnection($"Data Source={DbPath}");
 		DbConnection.Open();

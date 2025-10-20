@@ -12,7 +12,7 @@ using Tsinswreng.CsPage;
 using Tsinswreng.CsTools;
 using Ngaq.Local.Db.TswG;
 using Ngaq.Core.Word.Models.Po.Word;
-using Ngaq.Core.Word.Models.Po.Kv;
+using Ngaq.Core.Domains.Word.Models.Po.Kv;
 
 public partial class DaoSqlWord(
 	ISqlCmdMkr SqlCmdMkr

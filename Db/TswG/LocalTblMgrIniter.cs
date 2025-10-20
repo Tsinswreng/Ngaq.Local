@@ -11,13 +11,15 @@ using Tsinswreng.CsUlid;
 using Ngaq.Core.Word.Models.Po.Learn;
 using Tsinswreng.CsTools;
 using Ngaq.Core.Sys.Models;
-using Ngaq.Core.Word.Models.Learn_;
 using Ngaq.Core.Model.Sys.Po;
 using Ngaq.Core.Word.Models.Po.Word;
-using Ngaq.Core.Word.Models.Po.Kv;
 using Ngaq.Core.Model.Po.Role;
 using Ngaq.Core.Models.Sys.Po.Permission;
 using Ngaq.Core.Domains.User.Models.Po.User;
+using Ngaq.Core.Domains.User.Models;
+using Ngaq.Core.Domains.Word.Models.Po.Kv;
+using Ngaq.Core.Domains.Word.Models.Learn_;
+using Ngaq.Core.Domains.Base.Models.Po;
 
 public partial class LocalTblMgrIniter{
 	const str MkIdx = "CREATE INDEX"; //不建議加 "IF NOT EXISTS" 以免掩蓋錯誤
@@ -83,9 +85,11 @@ public partial class LocalTblMgrIniter{
 	}
 
 	protected ITable CfgIPoKv(ITable o){
+		o.SetCol(nameof(IPoKv.KType)).MapEnumTypeInt32<EKvType>();
+		o.SetCol(nameof(IPoKv.VType)).MapEnumTypeInt32<EKvType>();
 		o.OuterAdditionalSqls.AddRange([
-$"{MkIdx} {o.Qt("Idx_"+o.DbTblName+"_KStr")} ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(PoWordProp.KStr))})"
-,$"{MkIdx} {o.Qt("Idx_"+o.DbTblName+"_KI64")} ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(PoWordProp.KI64))})"
+$"{MkIdx} {o.Qt("Idx_"+o.DbTblName+"_KStr")} ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(IPoKv.KStr))})"
+,$"{MkIdx} {o.Qt("Idx_"+o.DbTblName+"_KI64")} ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(IPoKv.KI64))})"
 		]);
 		return o;
 	}
@@ -109,19 +113,19 @@ ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(I_WordId.WordId))})
 	public nil Init(){
 		Mgr.AddTbl(new SchemaHistoryTblMkr().MkTbl());
 
-		var Tbl_Cfg = Mk<PoCfg>("Cfg");
+		var Tbl_Cfg = Mk<PoKv>("Kv");
 		Mgr.AddTbl(Tbl_Cfg);
 		{
 			var o = Tbl_Cfg;
 			CfgPoBase(o);
-			CfgBizTimeVer(o);
 			CfgIPoKv(o);
-			o.SetCol(nameof(PoCfg.Id)).MapType(IdCfg.MkTypeMapFn());
-			o.SetCol(nameof(PoCfg.Owner)).MapType(MapIdUser());
+			o.SetCol(nameof(PoKv.Id)).MapType(IdKv.MkTypeMapFn());
+			o.SetCol(nameof(PoKv.Owner)).MapType(IdUser.MkTypeMapFnNullable());
+
 			o.OuterAdditionalSqls.AddRange([
 $"""
-{MkIdx} {o.Qt($"Idx_{o.DbTblName}_{nameof(PoCfg.Owner)}")}
-ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoCfg.Owner))})
+{MkIdx} {o.Qt($"Idx_{o.DbTblName}_{nameof(PoKv.Owner)}")}
+ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoKv.Owner))})
 """
 			]);
 		}
@@ -161,6 +165,7 @@ CREATE UNIQUE INDEX {o.Qt($"Ux_{o.DbTblName}_Owner_Head_Lang")} ON {o.Qt(o.DbTbl
 			CfgI_WordId<PoWordProp>(o);
 			CfgIPoKv(o);
 			o.SetCol(nameof(PoWordProp.Id)).MapType(IdWordProp.MkTypeMapFn());
+
 		}
 
 		var Tbl_Learn = Mk<PoWordLearn>("WordLearn");

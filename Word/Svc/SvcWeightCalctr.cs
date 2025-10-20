@@ -1,7 +1,7 @@
+using Ngaq.Core.Domains.Word.Models.Learn_;
 using Ngaq.Core.Infra.Errors;
 using Ngaq.Core.Tools;
 using Ngaq.Core.Word.Models;
-using Ngaq.Core.Word.Models.Learn_;
 using Ngaq.Core.Word.Models.Weight;
 using Ngaq.Local.Tools.Cmd;
 
