@@ -1,3 +1,5 @@
+namespace Ngaq.Local.Domains.Kv.Dao;
+
 using Ngaq.Core.Domains.User.Models;
 using Ngaq.Core.Domains.User.UserCtx;
 using Ngaq.Core.Sys.Models;
@@ -8,9 +10,9 @@ using Tsinswreng.CsPage;
 using Tsinswreng.CsSqlHelper;
 using Tsinswreng.CsTools;
 
-namespace Ngaq.Local.Sys.Dao;
-using Z = DaoCfg;
-public partial class DaoCfg(
+
+using Z = DaoKv;
+public partial class DaoKv(
 	ISqlCmdMkr SqlCmdMkr
 	,ITblMgr TblMgr
 	,IAppRepo<PoKv, IdKv> RepoCfg

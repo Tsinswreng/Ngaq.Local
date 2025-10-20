@@ -1,24 +1,25 @@
+namespace Ngaq.Local.Domains.Kv.Svc;
 using Ngaq.Core.Domains.User.Models;
 using Ngaq.Core.Domains.User.UserCtx;
 using Ngaq.Core.Domains.Word.Models.Po.Kv;
 using Ngaq.Core.Sys.Models;
 using Ngaq.Core.Sys.Svc;
 using Ngaq.Local.Db.TswG;
-using Ngaq.Local.Sys.Dao;
+using Ngaq.Local.Domains.Kv.Dao;
 using Tsinswreng.CsCore;
 using Tsinswreng.CsPage;
 using Tsinswreng.CsSqlHelper;
 
-namespace Ngaq.Local.Sys.Svc;
-using Z = SvcDbCfg;
-public partial class SvcDbCfg(
-	DaoCfg DaoCfg
+
+using Z = SvcKv;
+public partial class SvcKv(
+	DaoKv DaoCfg
 	,TxnWrapper<DbFnCtx> TxnWrapper
 	,IAppRepo<PoKv, IdKv> RepoCfg
 )
 	:ISvcDbCfg
 {
-	DaoCfg DaoCfg = DaoCfg;
+	DaoKv DaoCfg = DaoCfg;
 	IAppRepo<PoKv, IdKv> RepoCfg = RepoCfg;
 	//public const str PathSep = "/";
 
