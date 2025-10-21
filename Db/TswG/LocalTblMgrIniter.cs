@@ -75,7 +75,7 @@ public partial class LocalTblMgrIniter{
 		o.CodeIdName = nameof(I_Id<nil>.Id);
 		o.SetCol(nameof(I_Id<nil>.Id)).AdditionalSqls(["PRIMARY KEY"]);
 		o.SetCol(nameof(IPoBase.DbCreatedAt)).MapType(MapTempus());
-		o.SetCol(nameof(IPoBase.DbUpdatedAt)).MapType(MapTempusN());
+		o.SetCol(nameof(IPoBase.DbUpdatedAt)).MapType(MapTempus());
 		o.SetCol(nameof(IPoBase.DelAt)).MapType(MapDelId());
 
 		// o.SetCol(nameof(IPoBase.CreatedBy)).MapType(IdUser.MkTypeMapFnNullable());
@@ -140,11 +140,13 @@ ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoKv.Owner))})
 CREATE UNIQUE INDEX {o.Qt($"Ux_{o.DbTblName}_{nameof(PoKv.Owner)}_{nameof(PoKv.KStr)}")}
 ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoKv.Owner))},{o.Fld(nameof(PoKv.KStr))})
 WHERE {o.SqlIsNonDel()}
+AND {o.Fld(nameof(PoKv.KType))} = {o.UpperToRaw(EKvType.Str)}
 """
 ,$"""
 CREATE UNIQUE INDEX {o.Qt($"Ux_{o.DbTblName}_{nameof(PoKv.Owner)}_{nameof(PoKv.KI64)}")}
 ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoKv.Owner))},{o.Fld(nameof(PoKv.KI64))})
 WHERE {o.SqlIsNonDel()}
+AND {o.Fld(nameof(PoKv.KType))} = {o.UpperToRaw(EKvType.I64)}
 """
 
 			]);

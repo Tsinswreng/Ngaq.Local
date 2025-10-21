@@ -6,7 +6,6 @@ using Ngaq.Core.Service.Word;
 
 //using Microsoft.CodeAnalysis.Text;
 using Ngaq.Core.Word.Svc;
-using Ngaq.Local.Service.Word;
 using Ngaq.Local.Word.Svc;
 using Tsinswreng.CsSqlHelper;
 using Ngaq.Local.Db.TswG;

@@ -21,7 +21,7 @@ public class TsNgaqEntities{
 	public class textWord:TsNgaqPoBase{
 		public str text{get;set;} = "";
 	}
-
+#pragma warning disable CS8981
 	public class property:TsNgaqPoBase{
 		public i64 wid{get;set;}
 		public str text{get;set;} = "";

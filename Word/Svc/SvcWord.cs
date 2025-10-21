@@ -219,6 +219,10 @@ public partial class SvcWord(
 			,IEnumerable<JnWord> JnWords
 			,CT Ct
 		)=>{
+			JnWords = JnWords.Select(x=>{
+				x.Owner = UserCtx.UserId;
+				return x;
+			});
 			var DtoAddWords = await ClassifyWordsToAdd(UserCtx, JnWords, Ct);
 			await AddOrUpdateWordsByDto(UserCtx, DtoAddWords, Ct);
 			return DtoAddWords;

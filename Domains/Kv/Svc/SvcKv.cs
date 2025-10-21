@@ -71,7 +71,6 @@ public partial class SvcKv(
 				await UpdById(Existing.Id, Po, Ct);
 				return NIL;
 			}
-			Po.Owner = UserId;
 			await InsertMany([Po], Ct);
 			return NIL;
 		};

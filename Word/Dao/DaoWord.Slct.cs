@@ -56,7 +56,7 @@ AND {T.Eq(PLang)}
 				return null;
 			}
 			var ans = GotDict[N.Id];
-			return IdWord.FromByteArr((u8[])ans);
+			return IdWord.FromByteArr((u8[])ans!);
 		};
 	}
 

@@ -31,7 +31,7 @@ public async Task<Func<
 		return async(UserCtx, JnWords, Ct)=>{
 			var NonExistingList = new List<JnWord>();
 			var ExiDupliPairs = new List<Existing_Duplication<JnWord>>();
-			foreach(var (i,JnWord) in JnWords.Index()){//慢
+			foreach(var (i,JnWord) in JnWords.Index()){
 				var IdInDb = await SeekIdByHeadEtLang(
 					UserCtx
 					,JnWord.Word.Head
