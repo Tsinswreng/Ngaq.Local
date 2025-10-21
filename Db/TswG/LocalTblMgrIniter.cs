@@ -11,7 +11,6 @@ using Tsinswreng.CsUlid;
 using Ngaq.Core.Word.Models.Po.Learn;
 using Tsinswreng.CsTools;
 using Ngaq.Core.Sys.Models;
-using Ngaq.Core.Model.Sys.Po;
 using Ngaq.Core.Word.Models.Po.Word;
 using Ngaq.Core.Model.Po.Role;
 using Ngaq.Core.Models.Sys.Po.Permission;
@@ -20,6 +19,9 @@ using Ngaq.Core.Domains.User.Models;
 using Ngaq.Core.Domains.Word.Models.Po.Kv;
 using Ngaq.Core.Domains.Word.Models.Learn_;
 using Ngaq.Core.Domains.Base.Models.Po;
+using Ngaq.Core.Domains.Kv.Models;
+using Ngaq.Core.Domains.Word.Models.Po.Word;
+using Ngaq.Core.Domains.User.Models.Po;
 
 public partial class LocalTblMgrIniter{
 	const str MkIdx = "CREATE INDEX"; //不建議加 "IF NOT EXISTS" 以免掩蓋錯誤
@@ -31,6 +33,13 @@ public partial class LocalTblMgrIniter{
 	public static IUpperTypeMapFnT<i64,Tempus> MapTempus(){
 		return UpperTypeMapFnT<i64, Tempus>.Mk(
 			raw=>new Tempus(raw)
+			,tempus=>tempus.Value
+		);
+	}
+
+	public static IUpperTypeMapFnT<i64,IdDel> MapDelId(){
+		return UpperTypeMapFnT<i64, IdDel>.Mk(
+			raw=>new IdDel(raw)
 			,tempus=>tempus.Value
 		);
 	}
@@ -66,17 +75,16 @@ public partial class LocalTblMgrIniter{
 		o.SetCol(nameof(IPoBase.UpdatedAt)).MapType(MapTempusN());
 		o.SetCol(nameof(IPoBase.DbUpdatedAt)).MapType(MapTempusN());
 
-		o.SetCol(nameof(IPoBase.DelId)).MapType(IdDel.MkTypeMapFnNullable());
+		o.SetCol(nameof(IPoBase.DelAt)).MapType(MapDelId());
 
 		o.SetCol(nameof(IPoBase.CreatedBy)).MapType(IdUser.MkTypeMapFnNullable());
 		o.SetCol(nameof(IPoBase.LastUpdatedBy)).MapType(IdUser.MkTypeMapFnNullable());
 
 		o.SoftDelCol = new SoftDelol{
-			CodeColName = nameof(IPoBase.DelId)
-			,FnDelete = (statusObj)=>{
-				return new IdDel().Value.ToByteArr();
-			}
-			,FnRestore = (statusObj)=>{
+			CodeColName = nameof(IPoBase.DelAt)
+			,FnDelete = (o)=>{
+				return new IdDel().Value;
+			},FnRestore = (o)=>{
 				return null;
 			}
 		};
@@ -152,7 +160,7 @@ CREATE UNIQUE INDEX {o.Qt($"Ux_{o.DbTblName}_Owner_Head_Lang")} ON {o.Qt(o.DbTbl
 {o.Fld(nameof(PoWord.Owner))}
 ,{o.Fld(nameof(PoWord.Head))}
 ,{o.Fld(nameof(PoWord.Lang))}
-) WHERE {o.Fld(nameof(PoWord.DelId))} IS NULL
+) WHERE {o.SqlIsNonDel()}
 """
 			]);
 		}

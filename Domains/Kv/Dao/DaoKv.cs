@@ -1,5 +1,6 @@
 namespace Ngaq.Local.Domains.Kv.Dao;
 
+using Ngaq.Core.Domains.Kv.Models;
 using Ngaq.Core.Domains.User.Models;
 using Ngaq.Core.Domains.User.Models.Po.User;
 using Ngaq.Core.Domains.User.UserCtx;
@@ -47,9 +48,9 @@ var T = TblMgr.GetTbl<PoKv>(); var POwner = T.Prm(nameof(PoKv.Owner)); var PKeyC
 var Sql =$"""
 SELECT * FROM {T.Qt(T.DbTblName)}
 WHERE 1=1
-AND {T.Fld(nameof(PoKv.DelId))} IS NULL
-AND {T.Fld(POwner)} = {POwner}
-AND {T.Fld(PKeyCol)} = {PKeyCol}
+AND {T.SqlIsNonDel()}
+AND {T.Eq(POwner)}
+AND {T.Eq(PKeyCol)}
 """;
 		var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
 		Ctx?.AddToDispose(SqlCmd);
@@ -80,6 +81,7 @@ AND {T.Fld(PKeyCol)} = {PKeyCol}
 	}
 
 
+	[Obsolete]
 	public async Task<Func<
 		IUserCtx
 		,str
@@ -110,6 +112,7 @@ AND {T.Qt(NKStr)} = {PKStr}
 		return Fn;
 	}
 
+	[Obsolete]
 	public async Task<Func<
 		IUserCtx
 		,str
@@ -137,6 +140,7 @@ var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
 		return Fn;
 	}
 
+	[Obsolete]
 	public async Task<Func<
 		IUserCtx
 		,str

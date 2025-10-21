@@ -3,10 +3,10 @@ namespace Ngaq.Local.TsNgaq;
 using Ngaq.Core.Domains.Word.Models;
 using Ngaq.Core.Domains.Word.Models.Learn_;
 using Ngaq.Core.Domains.Word.Models.Po.Kv;
+using Ngaq.Core.Domains.Word.Models.Po.Word;
 using Ngaq.Core.Model.Po.Word;
 using Ngaq.Core.Models.Po;
 using Ngaq.Core.Word.Models.Po.Learn;
-using Ngaq.Core.Word.Models.Po.Word;
 using E = Ngaq.Local.TsNgaq.TsNgaqEntities;
 
 public class TsNgaqEntities{

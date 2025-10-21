@@ -19,7 +19,6 @@ using Ngaq.Core.Word.Models.Po.Learn;
 using Ngaq.Local.Infra;
 using Tsinswreng.CsDictMapper;
 using Ngaq.Local.Word.Dao;
-using Ngaq.Core.Word.Models.Po.Word;
 using Ngaq.Core.Domains.User.UserCtx;
 using Ngaq.Core.Domains.Word.Models.Po.Kv;
 using Ngaq.Core.Domains.User.Svc;
@@ -27,6 +26,8 @@ using Ngaq.Local.Domains.Kv.Svc;
 using Ngaq.Local.Domains.Kv.Dao;
 using Ngaq.Core.Domains.User.Models;
 using Ngaq.Core.Sys.Models;
+using Ngaq.Core.Domains.Kv.Models;
+using Ngaq.Core.Domains.Word.Models.Po.Word;
 
 
 namespace Ngaq.Local.Di;
@@ -38,7 +39,7 @@ public static class DiLocal{
 		z.SetupDbCfg().SetupRepos().SetupSvcs();
 //Core詞典映射
 z.AddSingleton<IDictMapperShallow>(CoreDictMapper.Inst);
-z.AddScoped<IUserCtxMgr, UserCtxMgr>();
+z.AddSingleton<IUserCtxMgr>(UserCtxMgr.Inst);
 //baseUrl
 z.AddSingleton<I_GetBaseUrl, BaseUrl>();
 return z;

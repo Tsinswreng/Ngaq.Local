@@ -20,6 +20,8 @@ using System.Linq.Expressions;
 using Ngaq.Core.Domains.User.UserCtx;
 using Ngaq.Core.Domains.Word.Models.Po.Kv;
 using Ngaq.Core.Domains.Word.Models;
+using Ngaq.Core.Domains.Word.Models.Po.Word;
+using Ngaq.Core.Domains.Base.Models.Po;
 
 public partial class DaoSqlWord{
 	public async Task<Func<
@@ -37,10 +39,10 @@ $"""
 SELECT {T.Fld(N.Id)} AS {T.Qt(N.Id)}
 FROM {T.Qt(T.DbTblName)}
 WHERE 1=1
-AND {T.Fld(nameof(IPoBase.DelId))} IS NULL
-AND {T.Fld(N.Owner)} = {POwner}
-AND {T.Fld(N.Head)} = {PHead}
-AND {T.Fld(N.Lang)} = {PLang}
+AND {T.SqlIsNonDel()}
+AND {T.Eq(POwner)}
+AND {T.Eq(PHead)}
+AND {T.Eq(PLang)}
 """;
 		var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
 		return async (User,Head,Lang,Ct)=>{
@@ -67,21 +69,21 @@ AND {T.Fld(N.Lang)} = {PLang}
 		,CT Ct
 	){
 		var TW = TblMgr.GetTbl<PoWord>();
-		var TK = TblMgr.GetTbl<PoWordProp>();
+		var TP = TblMgr.GetTbl<PoWordProp>();
 		var TL = TblMgr.GetTbl<PoWordLearn>();
-		var NWordId = nameof(PoWordProp.WordId);
+		var PWordId = TP.Prm(nameof(PoWordProp.WordId));
 		var Sql_SeekByFKey = (str QuotedTblName)=>{
 			var Sql =
 $"""
 SELECT * FROM {QuotedTblName}
 WHERE 1=1
-AND {TK.Fld(nameof(IPoBase.DelId))} IS NULL
-AND {TK.Fld(NWordId)} = {TW.Prm(NWordId)}
+AND {TP.SqlIsNonDel()}
+AND {TP.Eq(PWordId)}
 """;
 			return Sql;
 		};
 		var GetPoWordById = await RepoWord.FnSlctById(Ctx, Ct);
-		var Cmd_SeekKv = await SqlCmdMkr.Prepare(Ctx, Sql_SeekByFKey(TK.Qt(TK.DbTblName)), Ct);
+		var Cmd_SeekKv = await SqlCmdMkr.Prepare(Ctx, Sql_SeekByFKey(TP.Qt(TP.DbTblName)), Ct);
 		var Cmd_SeekLearn = await SqlCmdMkr.Prepare(Ctx, Sql_SeekByFKey(TL.Qt(TL.DbTblName)), Ct);
 
 		return async(Id,Ct)=>{
@@ -96,8 +98,8 @@ AND {TK.Fld(NWordId)} = {TW.Prm(NWordId)}
 			var Arg = new Str_Any{
 				[nameof(PoWordProp.WordId)] = Id
 			};
-			var RawPropDicts = (await Cmd_SeekKv.RawArgs(TK.ToDbDict(Arg)).All(Ct))
-				.Select(dbDict=>TK.DbDictToEntity<PoWordProp>(dbDict))
+			var RawPropDicts = (await Cmd_SeekKv.RawArgs(TP.ToDbDict(Arg)).All(Ct))
+				.Select(dbDict=>TP.DbDictToEntity<PoWordProp>(dbDict))
 				.ToList()
 			;
 
@@ -127,12 +129,13 @@ AND {TK.Fld(NWordId)} = {TW.Prm(NWordId)}
 	){
 		var T = Tbl;
 		var TW = TblMgr.GetTbl<PoWord>();
-		var NWordId = nameof(I_WordId.WordId);
+		var PWordId = T.Prm(nameof(I_WordId.WordId));
 		var Sql =
 $"""
 SELECT * FROM {Tbl.Qt(Tbl.DbTblName)}
-WHERE {Tbl.Fld(NWordId)} = {Tbl.Prm(NWordId)}
-AND {Tbl.Fld(nameof(IPoBase.DelId))} IS NULL
+WHERE 1=1
+AND {Tbl.SqlIsNonDel()}
+AND {T.Eq(PWordId)}
 {Tbl.SqlMkr.ParamLimOfst(out var PLmt, out var POfst)}
 """;
 		var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
@@ -142,8 +145,8 @@ AND {Tbl.Fld(nameof(IPoBase.DelId))} IS NULL
 			,CT Ct
 		)=>{
 
-			var Arg = ArgDict.Mk()
-			.Add(NWordId, TW.UpperToRaw(IdWord))
+			var Arg = ArgDict.Mk(T)
+			.AddT(PWordId, IdWord)
 			.AddPageQry(PageQry, PLmt, POfst);
 			var DbDict = await SqlCmd.Args(Arg).All(Ct);
 			u64 Cnt = 0;
@@ -174,8 +177,9 @@ AND {Tbl.Fld(nameof(IPoBase.DelId))} IS NULL
 		var Sql =
 $"""
 SELECT * FROM {T.Qt(T.DbTblName)}
-WHERE {T.Fld(N.Owner)} = {POwner}
-AND {T.Fld(N.DelId)} IS NULL
+WHERE 1=1
+AND {T.SqlIsNonDel()}
+AND {T.Eq(POwner)}
 ORDER BY {T.Fld(N.CreatedAt)} DESC
 {T.SqlMkr.ParamLimOfst(out var PLmt, out var POfst)}
 """;
@@ -258,7 +262,7 @@ ORDER BY {T.Fld(N.CreatedAt)} DESC
 		,Task<IPage<IdWord>>
 	>> FnPageChangedWordIdsWithDelWordsAfterTime(IDbFnCtx Ctx, CT Ct){
 var T = TblMgr.GetTbl<PoWord>();
-str NId = nameof(PoWord.Id),NOwner = nameof(PoWord.Owner)
+str NId = nameof(PoWord.Id)
 	,NUpdateAt = nameof(PoWord.UpdatedAt),NStoredAt = nameof(PoWord.StoredAt)
 ;
 var PTempus = T.Prm("Tempus");var POwner = T.Prm("Owner");
@@ -267,7 +271,8 @@ var Sql =
 $"""
 SELECT {T.Fld(NId)} AS {T.Qt(NId)}
 FROM {T.Qt(T.DbTblName)}
-WHERE {T.Fld(NOwner)} = {POwner}
+WHERE 1=1
+AND {T.Eq(POwner)}
 AND (
 	{T.Fld(NUpdateAt)} > {PTempus}
 	OR {T.Fld(NStoredAt)} > {PTempus}
@@ -307,9 +312,9 @@ var Sql =
 $"""
 SELECT {N.Id} FROM {T.DbTblName}
 WHERE 1=1
-AND {T.Fld(N.DelId)} IS NULL
+AND {T.SqlIsNonDel()}
 AND {T.Fld(N.Head)} LIKE {PPrefix} || '%'
-AND {T.Fld(N.Owner)} = {POwner}
+AND {T.Eq(POwner)}
 ORDER BY {T.Fld(N.Head)} ASC
 {T.SqlMkr.ParamLimOfst(out var PLmt, out var POfst)}
 """; // AND {T.Fld(NLang)} = {PLang}
@@ -343,7 +348,8 @@ var PId = Tbl.Prm(NId);
 var Sql =
 $"""
 SELECT {Tbl.Fld(NWordId)} AS {Tbl.Qt(NWordId)} FROM {Tbl.DbTblName}
-WHERE {Tbl.Fld(NId)} = {PId}
+WHERE 1=1
+AND {Tbl.Eq(PId)}
 """;
 		var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
 		Ctx?.AddToDispose(SqlCmd);

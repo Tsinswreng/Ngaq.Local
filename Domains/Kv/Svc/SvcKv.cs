@@ -1,5 +1,6 @@
 namespace Ngaq.Local.Domains.Kv.Svc;
-using Ngaq.Core.Domains.User.Models;
+
+using Ngaq.Core.Domains.Kv.Models;
 using Ngaq.Core.Domains.User.Models.Po.User;
 using Ngaq.Core.Domains.User.Svc;
 using Ngaq.Core.Domains.User.UserCtx;
@@ -32,9 +33,6 @@ public partial class SvcKv(
 	}
 
 
-
-
-
 	public async Task<Func<
 		IdUser?
 		,obj
@@ -44,9 +42,11 @@ public partial class SvcKv(
 		var GetByKI64 = await DaoKv.FnGetByOwnerEtKI64(Ctx, Ct);
 		return async(IdUser? Owner, obj Key, CT Ct)=>{
 			if(Key is i64 KI64){
-				return await GetByKI64(Owner, KI64, Ct);
+				PoKv? R = await GetByKI64(Owner, KI64, Ct);
+				return R;
 			}else{
-				return await GetByKStr(Owner, Key+"", Ct);
+				PoKv? R = await GetByKStr(Owner, Key+"", Ct);
+				return R;
 			}
 		};
 	}

@@ -122,7 +122,7 @@ public partial class DbIniter{
 		IdClient ClientId = new();
 		var PoKv = new PoKv();
 		PoKv.Owner = Owner;
-		var Path = KeysClientKv.ClientId.GetFullPath();
+		var Path = KeysClientKv.ClientId;
 		PoKv.SetStr(Path, ClientId+"");
 		await SvcKv.AddOrUpd(PoKv, Ct);
 		return NIL;
