@@ -24,17 +24,16 @@ public partial class AppRepo<
 		TId
 		,CT
 		,Task<nil>
-	>> FnUpd_UpdatedAt(IDbFnCtx Ctx, CT Ct){
+	>> FnUpd_BizUpdatedAt(IDbFnCtx? Ctx, CT Ct){
 		var T = TblMgr.GetTbl<TEntity>();
-		var NUpdatedAt = nameof(IPoBase.UpdatedAt);
+		var NUpdatedAt = nameof(IBizCreateUpdateTime.BizUpdatedAt);
 		var Upd_DbUpdatedAtById = await FnUpdOneColById(Ctx, NUpdatedAt, Ct);
-		var Fn = async(TId Id, CT Ct)=>{
+		return async(Id, Ct)=>{
 			var Now = Tempus.Now();
 			var Raw = T.UpperToRaw(Now, NUpdatedAt);
 			await Upd_DbUpdatedAtById(Id, Raw, Ct);
 			return NIL;
 		};
-		return Fn;
 	}
 
 

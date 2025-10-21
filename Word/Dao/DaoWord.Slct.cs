@@ -263,7 +263,7 @@ ORDER BY {T.Fld(N.CreatedAt)} DESC
 	>> FnPageChangedWordIdsWithDelWordsAfterTime(IDbFnCtx Ctx, CT Ct){
 var T = TblMgr.GetTbl<PoWord>();
 str NId = nameof(PoWord.Id)
-	,NUpdateAt = nameof(PoWord.UpdatedAt),NStoredAt = nameof(PoWord.StoredAt)
+	,NUpdateAt = nameof(PoWord.BizUpdatedAt),NStoredAt = nameof(PoWord.StoredAt)
 ;
 var PTempus = T.Prm("Tempus");var POwner = T.Prm("Owner");
 

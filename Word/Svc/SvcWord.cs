@@ -60,7 +60,7 @@ public partial class SvcWord(
 		foreach(var Prop in NeoProps){
 			if(Prop.KStr == KeysProp.Inst.description){
 				var U = new PoWordLearn();
-				U.CreatedAt = Prop.CreatedAt;
+				U.BizCreatedAt = Prop.BizCreatedAt;
 				U.LearnResult = ELearn.Add;
 				U.WordId = WordId;
 				R.Add(U);
@@ -73,7 +73,7 @@ public partial class SvcWord(
 		foreach(var Prop in NeoProps){
 			if(Prop.KStr == KeysProp.Inst.description){
 				var U = new PoWordLearn();
-				U.CreatedAt = Prop.CreatedAt;
+				U.BizCreatedAt = Prop.BizCreatedAt;
 				U.LearnResult = ELearn.Add;
 				U.WordId = WordId;
 				yield return U;
@@ -589,13 +589,13 @@ public partial class SvcWord(
 				foreach(var Prop in JnWord.Props){
 					if(Prop.Id.Value == 0){//新增條目 則設ID潙0
 						Prop.Id = new IdWordProp();
-						Prop.CreatedAt = new Tempus();
+						Prop.BizCreatedAt = new Tempus();
 					}
 				}
 				foreach(var Learn in JnWord.Learns){
 					if(Learn.Id.Value == 0){
 						Learn.Id = new IdWordLearn();
-						Learn.CreatedAt = new Tempus();
+						Learn.BizCreatedAt = new Tempus();
 					}
 				}
 				JnWord.EnsureForeignId();

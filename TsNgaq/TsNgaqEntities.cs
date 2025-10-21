@@ -89,14 +89,14 @@ public class TsNgaqEntities{
 		,ref JnWord R
 	){
 		R??= new JnWord();
-		static IPoBase ConvPoBase(E.TsNgaqPoBase Old, IPoBase PoBase){
-			PoBase.CreatedAt = Old.ct;
-			PoBase.UpdatedAt = Old.mt;
+		static IBizCreateUpdateTime ConvBizTime(E.TsNgaqPoBase Old, IBizCreateUpdateTime PoBase){
+			PoBase.BizCreatedAt = Old.ct;
+			PoBase.BizUpdatedAt = Old.mt;
 			return PoBase;
 		}
 		static PoWord ToPoWord(E.textWord Old, ref PoWord R){
 			R??= new PoWord();
-			ConvPoBase(Old, R);
+			ConvBizTime(Old, R);
 			R.Head = Old.text;
 			R.Lang = Old.belong;
 			return R;
@@ -104,7 +104,7 @@ public class TsNgaqEntities{
 
 		static PoWordLearn ToPoLearn(E.learn Old, IdWord WordId, ref PoWordLearn R){
 			R??= new PoWordLearn();
-			ConvPoBase(Old, R);
+			ConvBizTime(Old, R);
 			R.WordId = WordId;
 			R.LearnResult = ConvLearnResult(Old.belong);
 			return R;
@@ -112,7 +112,7 @@ public class TsNgaqEntities{
 
 		static PoWordProp ToPoProp(E.property Old, IdWord WordId, ref PoWordProp R){
 			R??= new PoWordProp();
-			ConvPoBase(Old, R);
+			ConvBizTime(Old, R);
 			R.WordId = WordId;
 			R.KStr = ConvProp(Old.belong);
 			R.VStr = Old.text;

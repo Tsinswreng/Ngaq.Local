@@ -37,7 +37,7 @@ public partial class DaoSqlWord(
 		,CT
 		,Task<nil>
 	>> FnTriggerOnRootAfterUpd(IDbFnCtx? Ctx, CT Ct){
-		var UpdPoWord = await RepoWord.FnUpd_UpdatedAt(Ctx,Ct);
+		var UpdPoWord = await RepoWord.FnUpd_BizUpdatedAt(Ctx,Ct);
 		return async(WordId, Ct)=>{
 			await UpdPoWord(WordId, Ct);
 			return NIL;
