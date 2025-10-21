@@ -10,7 +10,6 @@ using Ngaq.Core.Infra.Errors;
 using Tsinswreng.CsTools;
 using Ngaq.Core.Model.Word.Req;
 using Tsinswreng.CsSqlHelper;
-using Ngaq.Core.Word.Models.Po.Learn;
 using Ngaq.Core.Word.Svc;
 using Tsinswreng.CsCore;
 using Tsinswreng.CsPage;
@@ -25,6 +24,7 @@ using Ngaq.Core.Domains.Word.Models.Po.Kv;
 using Ngaq.Core.Domains.Word.Models.Learn_;
 using Ngaq.Core.Domains.Word.Models;
 using Ngaq.Core.Domains.Word.Models.Po.Word;
+using Ngaq.Core.Domains.Word.Models.Po.Learn;
 
 public partial class SvcWord(
 	ISvcParseWordList SvcParseWordList

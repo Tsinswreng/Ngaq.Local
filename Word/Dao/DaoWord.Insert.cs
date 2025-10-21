@@ -1,11 +1,11 @@
 namespace Ngaq.Local.Word.Dao;
 using Ngaq.Core.Model.Po.Word;
-using Ngaq.Core.Word.Models.Po.Learn;
 using Tsinswreng.CsTools;
 using Ngaq.Local.Db.TswG;
 using Ngaq.Core.Domains.Word.Models.Po.Kv;
 using Ngaq.Core.Domains.Word.Models;
 using Ngaq.Core.Domains.Word.Models.Po.Word;
+using Ngaq.Core.Domains.Word.Models.Po.Learn;
 
 public partial class DaoSqlWord{
 

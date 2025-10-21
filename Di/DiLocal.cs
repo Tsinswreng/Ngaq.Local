@@ -14,7 +14,6 @@ using Ngaq.Core.Infra;
 using Ngaq.Core.FrontendIF;
 using Ngaq.Local.ImplFrontend;
 using Tsinswreng.CsSqlHelper.Sqlite;
-using Ngaq.Core.Word.Models.Po.Learn;
 using Ngaq.Local.Infra;
 using Tsinswreng.CsDictMapper;
 using Ngaq.Local.Word.Dao;
@@ -27,6 +26,7 @@ using Ngaq.Core.Domains.User.Models;
 using Ngaq.Core.Sys.Models;
 using Ngaq.Core.Domains.Kv.Models;
 using Ngaq.Core.Domains.Word.Models.Po.Word;
+using Ngaq.Core.Domains.Word.Models.Po.Learn;
 
 
 namespace Ngaq.Local.Di;

@@ -8,7 +8,6 @@ using Ngaq.Core.Model.Po;
 using System.Data;
 using Ngaq.Core.Models.Po;
 using Tsinswreng.CsUlid;
-using Ngaq.Core.Word.Models.Po.Learn;
 using Tsinswreng.CsTools;
 using Ngaq.Core.Sys.Models;
 using Ngaq.Core.Word.Models.Po.Word;
@@ -22,6 +21,7 @@ using Ngaq.Core.Domains.Base.Models.Po;
 using Ngaq.Core.Domains.Kv.Models;
 using Ngaq.Core.Domains.Word.Models.Po.Word;
 using Ngaq.Core.Domains.User.Models.Po;
+using Ngaq.Core.Domains.Word.Models.Po.Learn;
 
 public partial class LocalTblMgrIniter{
 	const str MkIdx = "CREATE INDEX"; //不建議加 "IF NOT EXISTS" 以免掩蓋錯誤

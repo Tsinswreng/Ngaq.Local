@@ -7,12 +7,12 @@ using Ngaq.Core.Model.Po.Word;
 using Tsinswreng.CsSqlHelper;
 using Str_Any = System.Collections.Generic.Dictionary<str, obj?>;
 using IStr_Any = System.Collections.Generic.IDictionary<str, obj?>;
-using Ngaq.Core.Word.Models.Po.Learn;
 using Tsinswreng.CsPage;
 using Tsinswreng.CsTools;
 using Ngaq.Local.Db.TswG;
 using Ngaq.Core.Domains.Word.Models.Po.Kv;
 using Ngaq.Core.Domains.Word.Models.Po.Word;
+using Ngaq.Core.Domains.Word.Models.Po.Learn;
 
 public partial class DaoSqlWord(
 	ISqlCmdMkr SqlCmdMkr
