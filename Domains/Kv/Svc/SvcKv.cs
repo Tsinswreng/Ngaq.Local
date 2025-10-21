@@ -24,7 +24,7 @@ public partial class SvcKv(
 	IAppRepo<PoKv, IdKv> RepoCfg = RepoKv;
 	//public const str PathSep = "/";
 
-	public Task<PoKv?> GetByOwnerEtKey(IdUser? Owner, obj Key, CT Ct){
+	public Task<PoKv?> GetByOwnerEtKey(IdUser Owner, obj Key, CT Ct){
 		return TxnWrapper.Wrap(FnGetByOwnerEtKey, Owner, Key, Ct);
 	}
 
@@ -34,13 +34,13 @@ public partial class SvcKv(
 
 
 	public async Task<Func<
-		IdUser?
+		IdUser
 		,obj
 		,CT, Task<PoKv?>
 	>> FnGetByOwnerEtKey(IDbFnCtx Ctx, CT Ct){
 		var GetByKStr = await DaoKv.FnGetByOwnerEtKStr(Ctx, Ct);
 		var GetByKI64 = await DaoKv.FnGetByOwnerEtKI64(Ctx, Ct);
-		return async(IdUser? Owner, obj Key, CT Ct)=>{
+		return async(Owner, Key, Ct)=>{
 			if(Key is i64 KI64){
 				PoKv? R = await GetByKI64(Owner, KI64, Ct);
 				return R;

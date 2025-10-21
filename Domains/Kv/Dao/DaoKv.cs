@@ -40,7 +40,7 @@ public partial class DaoKv(
 	}
 
 	async Task<Func<
-		IdUser?
+		IdUser
 		,obj
 		,CT, Task<PoKv?>
 	>> FnGetByOwnerEtKey(IDbFnCtx Ctx, str KeyCol, CT Ct){
@@ -61,7 +61,7 @@ AND {T.Eq(PKeyCol)}
 	}
 
 	public async Task<Func<
-		IdUser?
+		IdUser
 		,str
 		,CT, Task<PoKv?>
 	>> FnGetByOwnerEtKStr(IDbFnCtx Ctx, CT Ct){
@@ -69,7 +69,7 @@ AND {T.Eq(PKeyCol)}
 	}
 
 	public async Task<Func<
-		IdUser?
+		IdUser
 		,i64
 		,CT, Task<PoKv?>
 	>> FnGetByOwnerEtKI64(IDbFnCtx Ctx, CT Ct){

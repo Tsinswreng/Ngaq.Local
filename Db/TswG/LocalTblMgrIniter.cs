@@ -128,13 +128,24 @@ ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(I_WordId.WordId))})
 			CfgPoBase(o);
 			CfgIPoKv(o);
 			o.SetCol(nameof(PoKv.Id)).MapType(IdKv.MkTypeMapFn());
-			o.SetCol(nameof(PoKv.Owner)).MapType(IdUser.MkTypeMapFnNullable());
+			o.SetCol(nameof(PoKv.Owner)).MapType(IdUser.MkTypeMapFn());
 
 			o.OuterAdditionalSqls.AddRange([
 $"""
 {MkIdx} {o.Qt($"Idx_{o.DbTblName}_{nameof(PoKv.Owner)}")}
 ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoKv.Owner))})
 """
+,$"""
+CREATE UNIQUE INDEX {o.Qt($"Ux_{o.DbTblName}_{nameof(PoKv.Owner)}_{nameof(PoKv.KStr)}")}
+ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoKv.Owner))},{o.Fld(nameof(PoKv.KStr))})
+WHERE {o.SqlIsNonDel()}
+"""
+,$"""
+CREATE UNIQUE INDEX {o.Qt($"Ux_{o.DbTblName}_{nameof(PoKv.Owner)}_{nameof(PoKv.KI64)}")}
+ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoKv.Owner))},{o.Fld(nameof(PoKv.KI64))})
+WHERE {o.SqlIsNonDel()}
+"""
+
 			]);
 		}
 
