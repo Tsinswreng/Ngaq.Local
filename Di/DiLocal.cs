@@ -27,6 +27,7 @@ using Ngaq.Core.Sys.Models;
 using Ngaq.Core.Domains.Kv.Models;
 using Ngaq.Core.Domains.Word.Models.Po.Word;
 using Ngaq.Core.Domains.Word.Models.Po.Learn;
+using Ngaq.Core.Infra.Url;
 
 
 namespace Ngaq.Local.Di;

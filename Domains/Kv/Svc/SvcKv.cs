@@ -1,5 +1,6 @@
 namespace Ngaq.Local.Domains.Kv.Svc;
 
+using System.Collections;
 using Ngaq.Core.Domains.Kv.Models;
 using Ngaq.Core.Domains.User.Models.Po.User;
 using Ngaq.Core.Domains.User.Svc;
@@ -24,12 +25,16 @@ public partial class SvcKv(
 	IAppRepo<PoKv, IdKv> RepoCfg = RepoKv;
 	//public const str PathSep = "/";
 
-	public Task<PoKv?> GetByOwnerEtKey(IdUser Owner, obj Key, CT Ct){
+	public Task<PoKv?> GetByOwnerEtKeyAsy(IdUser Owner, obj Key, CT Ct){
 		return TxnWrapper.Wrap(FnGetByOwnerEtKey, Owner, Key, Ct);
 	}
 
-	public Task<nil> AddOrUpd(PoKv Po, CT Ct){
+	public Task<nil> SetAsy(PoKv Po, CT Ct){
 		return TxnWrapper.Wrap(FnAddOrUpd, Po, Ct);
+	}
+
+	public Task<nil> SetManyAsy(IEnumerable<PoKv> Pos, CT Ct){
+		return TxnWrapper.Wrap(FnAddOrUpdMany, Pos, Ct);
 	}
 
 
@@ -68,10 +73,35 @@ public partial class SvcKv(
 			}
 			var Existing = await GetByOwnerEtKey(UserId, Key, Ct);
 			if(Existing is not null){
-				await UpdById(Existing.Id, Po, Ct);
+				await UpdById(Po, Ct);
 				return NIL;
 			}
 			await InsertMany([Po], Ct);
+			return NIL;
+		};
+	}
+
+
+	public async Task<Func<
+		IEnumerable<PoKv>
+		,CT, Task<nil>
+	>> FnAddOrUpdMany(IDbFnCtx Ctx, CT Ct){
+		var GetByOwnerEtKey = await FnGetByOwnerEtKey(Ctx, Ct);
+		var UpdManyById = await DaoKv.FnUpdManyById(Ctx, Ct);
+		var InsertMany = await RepoCfg.FnInsertMany(Ctx, Ct);
+		return async(Pos, Ct)=>{
+			List<PoKv> Existings = new List<PoKv>();
+			List<PoKv> NonExistings = new List<PoKv>();
+			foreach(var Po in Pos){
+				var Existing = await GetByOwnerEtKey(Po.Owner, Po.GetKey(), Ct);
+				if(Existing is not null){
+					Existings.Add(Existing);
+				}else{
+					NonExistings.Add(Po);
+				}
+			}
+			await UpdManyById(Existings, Ct);
+			await InsertMany(NonExistings, Ct);
 			return NIL;
 		};
 	}

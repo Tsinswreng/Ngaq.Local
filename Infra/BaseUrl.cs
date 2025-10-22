@@ -1,11 +1,13 @@
-using Ngaq.Core.Infra;
+namespace Ngaq.Local.Infra;
+
 using Ngaq.Core.Infra.Cfg;
+using Ngaq.Core.Infra.Url;
 using Tsinswreng.CsCfg;
 using Tsinswreng.CsCore;
 
-namespace Ngaq.Local.Infra;
 
-public  partial class BaseUrl(
+
+public partial class BaseUrl(
 	ICfgAccessor CfgAccessor
 ):I_GetBaseUrl{
 	[Impl]

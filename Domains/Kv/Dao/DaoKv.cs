@@ -28,13 +28,23 @@ public partial class DaoKv(
 	}
 
 	public async Task<Func<
-		IdKv
-		,PoKv
+		PoKv
 		,CT, Task<nil>
 	>> FnUpdById(IDbFnCtx Ctx, CT Ct){
 		var UpdById = await RepoKv.FnUpdById(Ctx,null, Ct);
-		return async(Id, Po, Ct)=>{
-			await UpdById(Id, Po, Ct);
+		return async(Po, Ct)=>{
+			await UpdById(Po, Ct);
+			return NIL;
+		};
+	}
+
+	public async Task<Func<
+		IEnumerable<PoKv>
+		,CT, Task<nil>
+	>> FnUpdManyById(IDbFnCtx Ctx, CT Ct){
+		var UpdById = await RepoKv.FnUpdManyById(Ctx, null, Ct);
+		return async(Po, Ct)=>{
+			await UpdById(Po, Ct);
 			return NIL;
 		};
 	}
