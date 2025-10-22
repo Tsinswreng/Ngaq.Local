@@ -30,6 +30,7 @@ using Ngaq.Core.Infra.Url;
 using Ngaq.Core.Shared.Encryption.Svc;
 using Ngaq.Local.Domains.Encryption;
 using Ngaq.Core.Frontend.ImgBg;
+using Ngaq.Core.Shared.Kv.Svc;
 
 
 namespace Ngaq.Local.Di;
@@ -109,7 +110,6 @@ z.AddScoped<DaoKv, DaoKv>();
 z.AddScoped<ISvcParseWordList, SvcParseWordList>();
 z.AddScoped<ISvcWord, SvcWord>();
 z.AddScoped<ISvcKv, SvcKv>();
-z.AddScoped<ISvcSecretKv, SvcSecretKv>();
 z.AddScoped<IImgGetter, SvcImg>();
 z.AddScoped<TxnWrapper<DbFnCtx>>();
 return z;
