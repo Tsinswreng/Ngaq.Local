@@ -10,11 +10,11 @@ using Ngaq.Core.Model.Po.Kv;
 using Ngaq.Core.Model.Po.Learn_;
 using Tsinswreng.CsTools;
 using Ngaq.Local.Db.TswG;
-using Ngaq.Core.Domains.Base.Models;
-using Ngaq.Core.Domains.User.UserCtx;
-using Ngaq.Core.Domains.Word.Models.Po.Kv;
-using Ngaq.Core.Domains.Word.Models;
-using Ngaq.Core.Domains.Word.Models.Po.Learn;
+using Ngaq.Core.Shared.Base.Models;
+using Ngaq.Core.Shared.User.UserCtx;
+using Ngaq.Core.Shared.Word.Models.Po.Kv;
+using Ngaq.Core.Shared.Word.Models;
+using Ngaq.Core.Shared.Word.Models.Po.Learn;
 
 public partial class SvcWord{
 public async Task<Func<

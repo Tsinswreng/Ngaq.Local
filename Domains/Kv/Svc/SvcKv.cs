@@ -1,11 +1,11 @@
 namespace Ngaq.Local.Domains.Kv.Svc;
 
-using System.Collections;
-using Ngaq.Core.Domains.Kv.Models;
-using Ngaq.Core.Domains.User.Models.Po.User;
-using Ngaq.Core.Domains.User.Svc;
-using Ngaq.Core.Domains.User.UserCtx;
-using Ngaq.Core.Domains.Word.Models.Po.Kv;
+using Ngaq.Core.Shared.Kv.Models;
+using Ngaq.Core.Shared.Kv.Svc;
+using Ngaq.Core.Shared.User.Models.Po.User;
+using Ngaq.Core.Shared.User.Svc;
+using Ngaq.Core.Shared.User.UserCtx;
+using Ngaq.Core.Shared.Word.Models.Po.Kv;
 using Ngaq.Core.Sys.Models;
 using Ngaq.Local.Db.TswG;
 using Ngaq.Local.Domains.Kv.Dao;

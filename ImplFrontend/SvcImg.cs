@@ -1,4 +1,4 @@
-using Ngaq.Core.FrontendIF;
+using Ngaq.Core.Frontend.ImgBg;
 using Ngaq.Core.Infra.Cfg;
 using Ngaq.Core.Tools;
 using Tsinswreng.CsCfg;

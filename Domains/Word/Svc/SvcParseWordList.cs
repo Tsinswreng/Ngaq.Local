@@ -1,7 +1,7 @@
 namespace Ngaq.Local.Word.Svc;
 
 using System.Text;
-using Ngaq.Core.Domains.Word.Models;
+using Ngaq.Core.Shared.Word.Models;
 using Ngaq.Core.Infra.Errors;
 using Ngaq.Core.Service.Parser;
 using Ngaq.Core.Service.Word;

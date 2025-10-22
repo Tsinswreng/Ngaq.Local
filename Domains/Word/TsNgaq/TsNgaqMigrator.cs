@@ -1,4 +1,4 @@
-using Ngaq.Core.Domains.Word.Models;
+using Ngaq.Core.Shared.Word.Models;
 using Ngaq.Core.Word.Svc;
 using Ngaq.Local.Db;
 using Ngaq.Local.Db.TswG;

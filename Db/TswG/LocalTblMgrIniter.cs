@@ -13,15 +13,15 @@ using Ngaq.Core.Sys.Models;
 using Ngaq.Core.Word.Models.Po.Word;
 using Ngaq.Core.Model.Po.Role;
 using Ngaq.Core.Models.Sys.Po.Permission;
-using Ngaq.Core.Domains.User.Models.Po.User;
-using Ngaq.Core.Domains.User.Models;
-using Ngaq.Core.Domains.Word.Models.Po.Kv;
-using Ngaq.Core.Domains.Word.Models.Learn_;
-using Ngaq.Core.Domains.Base.Models.Po;
-using Ngaq.Core.Domains.Kv.Models;
-using Ngaq.Core.Domains.Word.Models.Po.Word;
-using Ngaq.Core.Domains.User.Models.Po;
-using Ngaq.Core.Domains.Word.Models.Po.Learn;
+using Ngaq.Core.Shared.User.Models.Po.User;
+using Ngaq.Core.Shared.User.Models;
+using Ngaq.Core.Shared.Word.Models.Po.Kv;
+using Ngaq.Core.Shared.Word.Models.Learn_;
+using Ngaq.Core.Shared.Base.Models.Po;
+using Ngaq.Core.Shared.Kv.Models;
+using Ngaq.Core.Shared.Word.Models.Po.Word;
+using Ngaq.Core.Shared.User.Models.Po;
+using Ngaq.Core.Shared.Word.Models.Po.Learn;
 
 public partial class LocalTblMgrIniter{
 	const str MkIdx = "CREATE INDEX"; //不建議加 "IF NOT EXISTS" 以免掩蓋錯誤

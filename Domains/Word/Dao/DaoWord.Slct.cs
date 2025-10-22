@@ -16,12 +16,12 @@ using System.Diagnostics;
 using Ngaq.Core.Word.Models.Dto;
 using Ngaq.Core.Word.Models.Po.Word;
 using System.Linq.Expressions;
-using Ngaq.Core.Domains.User.UserCtx;
-using Ngaq.Core.Domains.Word.Models.Po.Kv;
-using Ngaq.Core.Domains.Word.Models;
-using Ngaq.Core.Domains.Word.Models.Po.Word;
-using Ngaq.Core.Domains.Base.Models.Po;
-using Ngaq.Core.Domains.Word.Models.Po.Learn;
+using Ngaq.Core.Shared.User.UserCtx;
+using Ngaq.Core.Shared.Word.Models.Po.Kv;
+using Ngaq.Core.Shared.Word.Models;
+using Ngaq.Core.Shared.Word.Models.Po.Word;
+using Ngaq.Core.Shared.Base.Models.Po;
+using Ngaq.Core.Shared.Word.Models.Po.Learn;
 
 public partial class DaoSqlWord{
 	public async Task<Func<

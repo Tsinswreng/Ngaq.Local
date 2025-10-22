@@ -10,9 +10,9 @@ using IStr_Any = System.Collections.Generic.IDictionary<str, obj?>;
 using Tsinswreng.CsPage;
 using Tsinswreng.CsTools;
 using Ngaq.Local.Db.TswG;
-using Ngaq.Core.Domains.Word.Models.Po.Kv;
-using Ngaq.Core.Domains.Word.Models.Po.Word;
-using Ngaq.Core.Domains.Word.Models.Po.Learn;
+using Ngaq.Core.Shared.Word.Models.Po.Kv;
+using Ngaq.Core.Shared.Word.Models.Po.Word;
+using Ngaq.Core.Shared.Word.Models.Po.Learn;
 
 public partial class DaoSqlWord(
 	ISqlCmdMkr SqlCmdMkr

@@ -1,4 +1,4 @@
-using Ngaq.Core.Domains.Word.Models.Learn_;
+using Ngaq.Core.Shared.Word.Models.Learn_;
 using Ngaq.Core.Infra.Errors;
 using Ngaq.Core.Tools;
 using Ngaq.Core.Word.Models;

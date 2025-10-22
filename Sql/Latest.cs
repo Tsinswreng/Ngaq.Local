@@ -3,14 +3,15 @@ namespace Ngaq.Local.Sql;
 using Tsinswreng.CsTools;
 using Tsinswreng.CsSqlHelper;
 using Ngaq.Local.Db.TswG;
-using Ngaq.Core.Domains.User.Models.Po.User;
-using Ngaq.Core.Domains.User.Models.Po.Device;
-using Ngaq.Core.Domains.User.Models;
-using Ngaq.Core.Domains.Kv.Models;
+using Ngaq.Core.Shared.User.Models.Po.User;
+using Ngaq.Core.Shared.User.Models.Po.Device;
+using Ngaq.Core.Shared.User.Models;
+using Ngaq.Core.Shared.Kv.Models;
 using Tsinswreng.CsCfg;
-using Ngaq.Core.Domains.Word.Models.Po.Kv;
+using Ngaq.Core.Shared.Word.Models.Po.Kv;
 using Ngaq.Local.Domains.Kv.Svc;
-using Ngaq.Core.Domains.User.Svc;
+using Ngaq.Core.Shared.User.Svc;
+using Ngaq.Core.Frontend.Kv;
 
 
 

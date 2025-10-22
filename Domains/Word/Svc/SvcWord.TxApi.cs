@@ -9,9 +9,9 @@ using Ngaq.Core.Infra;
 using Ngaq.Core.Word.Models.Dto;
 using Tsinswreng.CsTools;
 using Ngaq.Local.Db.TswG;
-using Ngaq.Core.Domains.User.UserCtx;
-using Ngaq.Core.Domains.Word.Models.Learn_;
-using Ngaq.Core.Domains.Word.Models;
+using Ngaq.Core.Shared.User.UserCtx;
+using Ngaq.Core.Shared.Word.Models.Learn_;
+using Ngaq.Core.Shared.Word.Models;
 
 public partial class SvcWord{
 #region API
