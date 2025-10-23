@@ -1,17 +1,12 @@
 namespace Ngaq.Local.Sql;
 
-using Tsinswreng.CsTools;
 using Tsinswreng.CsSqlHelper;
 using Ngaq.Local.Db.TswG;
-using Ngaq.Core.Shared.User.Models.Po.User;
 using Ngaq.Core.Shared.User.Models.Po.Device;
-using Ngaq.Core.Shared.User.Models;
 using Ngaq.Core.Shared.Kv.Models;
-using Tsinswreng.CsCfg;
 using Ngaq.Core.Shared.Word.Models.Po.Kv;
-using Ngaq.Local.Domains.Kv.Svc;
-using Ngaq.Core.Shared.User.Svc;
 using Ngaq.Core.Frontend.Kv;
+using Ngaq.Core.Shared.Kv.Svc;
 
 
 

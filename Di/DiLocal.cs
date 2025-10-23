@@ -42,9 +42,6 @@ public static class DiLocal{
 		z.SetupDbCfg().SetupRepos().SetupSvcs();
 //Core詞典映射
 z.AddSingleton<IDictMapperShallow>(CoreDictMapper.Inst);
-z.AddSingleton<IUserCtxMgr>(UserCtxMgr.Inst);
-//baseUrl
-z.AddSingleton<I_GetBaseUrl, BaseUrl>();
 return z;
 	}
 
