@@ -31,7 +31,7 @@ public partial class DaoKv(
 		PoKv
 		,CT, Task<nil>
 	>> FnUpdById(IDbFnCtx Ctx, CT Ct){
-		var UpdById = await RepoKv.FnUpdById(Ctx,null, Ct);
+		var UpdById = await RepoKv.FnUpdOneById(Ctx,null, Ct);
 		return async(Po, Ct)=>{
 			await UpdById(Po, Ct);
 			return NIL;
