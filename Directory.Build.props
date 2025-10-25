@@ -8,7 +8,6 @@
 		<ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
 		<!-- <PublishAot>true</PublishAot> -->
 		<NoWarn>CS1998</NoWarn>
-		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
 	</PropertyGroup>
 
 	<PropertyGroup>
