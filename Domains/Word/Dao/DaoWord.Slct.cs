@@ -209,7 +209,7 @@ ORDER BY {T.Fld(N.CreatedAt)} DESC
 		IUserCtx
 		,IPageQry
 		,CT
-		,Task<IPage<JnWord>>
+		,Task<IPage<IJnWord>>
 	>> FnPageJnWords(
 		IDbFnCtx Ctx
 		,CT Ct
@@ -220,13 +220,9 @@ ORDER BY {T.Fld(N.CreatedAt)} DESC
 		var PageKvByFKey = await FnPageByFKey(Ctx, TK, Ct);
 		var PageLearnByFKey = await FnPageByFKey(Ctx, TL, Ct);
 
-		var Fn = async(
-			IUserCtx UserCtx
-			,IPageQry PageQry
-			,CT Ct
-		)=>{
+		return async(UserCtx, PageQry, Ct)=>{
 			var PoWordsPage = await PagePoWords(UserCtx, PageQry, Ct);
-			var R = Page<JnWord>.Mk(PageQry, null, true, PoWordsPage.TotCnt);
+			var R = Page<IJnWord>.Mk(PageQry, null, true, PoWordsPage.TotCnt);
 			if(PoWordsPage.Data == null){
 				return R;
 			}
@@ -244,7 +240,6 @@ ORDER BY {T.Fld(N.CreatedAt)} DESC
 			R.Data = await Task.WhenAll(JnWordsTasks);
 			return R;
 		};
-		return Fn;
 	}
 
 

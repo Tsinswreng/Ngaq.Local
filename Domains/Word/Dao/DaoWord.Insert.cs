@@ -11,7 +11,7 @@ public partial class DaoSqlWord{
 
 
 	public async Task<Func<
-		IEnumerable<JnWord>
+		IEnumerable<IJnWord>
 		,CT
 		,Task<nil>
 	>> FnInsertJnWords(
@@ -22,10 +22,7 @@ public partial class DaoSqlWord{
 		var InsertPoKvs = await RepoKv.FnInsertMany(Ctx, ct);
 		var InsertPoLearns = await RepoLearn.FnInsertMany(Ctx, ct);
 
-		var Fn = async(
-			IEnumerable<JnWord> JnWords
-			,CT ct
-		)=>{
+		return async(JnWords, Ct)=>{
 			u64 BatchSize = 0xfff;
 			await using var PoWords = new BatchListAsy<PoWord, nil>(async(list, ct)=>{
 				await InsertPoWords(list,ct);
@@ -41,20 +38,19 @@ public partial class DaoSqlWord{
 			}, BatchSize);
 			foreach (var JWord in JnWords) {
 				JWord.EnsureForeignId();
-				await PoWords.Add(JWord.Word, ct);
+				await PoWords.Add(JWord.Word, Ct);
 				foreach (var Prop in JWord.Props) {
-					await PoKvs.Add(Prop, ct);
+					await PoKvs.Add(Prop, Ct);
 				}
 				foreach (var Learn in JWord.Learns) {
-					await PoLearns.Add(Learn, ct);
+					await PoLearns.Add(Learn, Ct);
 				}
 			}
-			await PoWords.End(ct);
-			await PoKvs.End(ct);
-			await PoLearns.End(ct);
+			await PoWords.End(Ct);
+			await PoKvs.End(Ct);
+			await PoLearns.End(Ct);
 			return NIL;
 		};
-		return Fn;
 	}
 
 	public async Task<Func<

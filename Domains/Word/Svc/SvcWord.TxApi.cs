@@ -12,16 +12,17 @@ using Ngaq.Local.Db.TswG;
 using Ngaq.Core.Shared.User.UserCtx;
 using Ngaq.Core.Shared.Word.Models.Learn_;
 using Ngaq.Core.Shared.Word.Models;
+using Ngaq.Core.Word.Svc;
 
 public partial class SvcWord{
 #region API
 
-	public async Task<nil> UpdJnWord(IUserCtx User, JnWord JnWord, CT Ct){
+	public async Task<nil> UpdJnWord(IUserCtx User, IJnWord JnWord, CT Ct){
 		return await TxnWrapper.Wrap(FnUpdJnWord, User, JnWord, Ct);
 	}
 
 	[Impl]
-	public async Task<IPage<JnWord>> SearchWord(
+	public async Task<IPage<IJnWord>> SearchWord(
 		IUserCtx User
 		,IPageQry PageQry
 		,ReqSearchWord Req
@@ -75,12 +76,12 @@ public partial class SvcWord{
 
 
 	[Impl]
-	public async Task<nil> AddJnWords(
+	public async Task<nil> AddEtMergeWords(
 		IUserCtx UserCtx
-		,IEnumerable<JnWord> JnWords
+		,IEnumerable<IJnWord> JnWords
 		,CT Ct
 	){
-		return await TxnWrapper.Wrap(FnMergeWordsIntoDb, UserCtx, JnWords, Ct);
+		return await TxnWrapper.Wrap(FnAddEtMergeWords, UserCtx, JnWords, Ct);
 	}
 
 	[Impl]
@@ -121,7 +122,7 @@ public partial class SvcWord{
 	}
 
 	[Impl]
-	public async Task<IPage<JnWord>> PageJnWord(
+	public async Task<IPage<IJnWord>> PageJnWord(
 		IUserCtx UserCtx
 		,IPageQry PageQry
 		,CT Ct
@@ -152,7 +153,7 @@ public partial class SvcWord{
 		return await TxnWrapper.Wrap(FnSoftDelJnWordsByIds, User, Ids, Ct);
 	}
 	[Impl]
-	public async Task<IPage<JnWord>> PageChangedWordsWithDelWordsAfterTime(
+	public async Task<IPage<IJnWord>> PageChangedWordsWithDelWordsAfterTime(
 		IUserCtx User
 		,IPageQry PageQry
 		,Tempus Tempus

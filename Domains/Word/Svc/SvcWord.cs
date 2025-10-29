@@ -3,7 +3,6 @@ using Ngaq.Core.Infra.Core;
 using Ngaq.Core.Model.Po.Kv;
 using Ngaq.Core.Model.Po.Learn_;
 using Ngaq.Core.Model.Po.Word;
-using Ngaq.Core.Model.Word.Dto;
 using Ngaq.Core.Service.Word;
 using Ngaq.Core.Tools.Io;
 using Ngaq.Core.Infra.Errors;
@@ -25,6 +24,7 @@ using Ngaq.Core.Shared.Word.Models.Learn_;
 using Ngaq.Core.Shared.Word.Models;
 using Ngaq.Core.Shared.Word.Models.Po.Word;
 using Ngaq.Core.Shared.Word.Models.Po.Learn;
+using Ngaq.Core.Shared.Word.Models.Dto;
 
 public partial class SvcWord(
 	ISvcParseWordList SvcParseWordList
@@ -99,12 +99,8 @@ public partial class SvcWord(
 		var InsertPoLearns = await DaoWord.FnInsertPoLearns(Ctx, Ct);
 		var UpdUpd = await DaoWord.FnTriggerOnRootAfterUpd(Ctx, Ct);
 
-		var Fn = async(
-			IUserCtx UserCtx
-			,DtoAddWords DtoAddWords
-			,CT Ct
-		)=>{
-			await using var NeoWords = new BatchListAsy<JnWord, nil>(InsertJnWords);
+		return async(UserCtx, DtoAddWords, Ct)=>{
+			await using var NeoWords = new BatchListAsy<IJnWord, nil>(InsertJnWords);
 			await using var NeoProps = new BatchListAsy<PoWordProp, nil>(async(kvs, Ct)=>{
 				return await InsertPoKvs(null, kvs, Ct);
 			});
@@ -113,7 +109,8 @@ public partial class SvcWord(
 			});
 
 
-			foreach(var OneNonExisting in DtoAddWords.NeoWords){
+			foreach(var OneNonExisting_ in DtoAddWords.NeoWords){
+				var OneNonExisting = OneNonExisting_.AsOrToJnWord();
 				OneNonExisting.StoredAt = Tempus.Now();
 				//var NeoPoLearns = MkPoLearns(OneNonExisting.Props, OneNonExisting.Id);
 				await NeoWords.Add(OneNonExisting, Ct);
@@ -131,14 +128,14 @@ public partial class SvcWord(
 				}
 				//若NewProps則有變動、學習記錄添'add'
 				DiffedWord.Props = DiffedWord.Props.Select(x=>{
-					x.WordId = UpdatedWord.WordInDb.Id;
+					x.WordId = UpdatedWord.WordInDb.Id_();
 					return x;
 				}).ToList();
 				DiffedWord.Learns = DiffedWord.Learns.Select(x=>{
-					x.WordId = UpdatedWord.WordInDb.Id;
+					x.WordId = UpdatedWord.WordInDb.Id_();
 					return x;
 				}).ToList();
-				var WordId = DiffedWord.Id;
+				var WordId = DiffedWord.Id_();
 				await NeoProps.AddMany(DiffedWord.Props, null, Ct);
 				await NeoLearns.AddMany(DiffedWord.Learns, null, Ct);
 				await UpdUpd(WordId, Ct);
@@ -150,7 +147,6 @@ public partial class SvcWord(
 
 			return NIL;
 		};
-		return Fn;
 	}
 
 	public async Task<Func<
@@ -176,17 +172,17 @@ public partial class SvcWord(
 
 			//按新ʹProps 決 添加記錄
 			foreach(var OneNonExisting in DtoAddWords.NeoWords){
-				var NeoPoLearns = MkPoLearnList(OneNonExisting.Props, OneNonExisting.Id);
+				var NeoPoLearns = MkPoLearnList(OneNonExisting.Props, OneNonExisting.Id_());
 				await NeoLearns.AddMany(NeoPoLearns, null, Ct);
 			}
 			foreach(var UpdatedWord in DtoAddWords.UpdatedWords){
 				if(UpdatedWord.DiffedWord == null){
 					continue;
 				}
-				var NeoPoLearns = MkPoLearnList(UpdatedWord.DiffedWord.Props, UpdatedWord.WordInDb.Id);
+				var NeoPoLearns = MkPoLearnList(UpdatedWord.DiffedWord.Props, UpdatedWord.WordInDb.Id_());
 				if(NeoPoLearns.Count > 0){
 					await NeoLearns.AddMany(NeoPoLearns, null, Ct);
-					await UpdUpd(UpdatedWord.WordInDb.Id, Ct);
+					await UpdUpd(UpdatedWord.WordInDb.Id_(), Ct);
 				};
 			}
 			await MergeWordsByDto(UserCtx, DtoAddWords, Ct);
@@ -233,25 +229,20 @@ public partial class SvcWord(
 
 	public async Task<Func<
 		IUserCtx
-		,IEnumerable<JnWord>
+		,IEnumerable<IJnWord>
 		,CT
 		,Task<DtoAddWords>
-	>> FnMergeWordsIntoDb(
+	>> FnAddEtMergeWords(
 		IDbFnCtx Ctx
 		,CT Ct
 	){
 		var ClassifyWordsToAdd = await FnClassifyWordsToAdd(Ctx, Ct);
 		var AddOrUpdateWordsByDto = await FnMergeDtoAddWordsInToDb(Ctx,Ct);
-		var Fn = async(
-			IUserCtx UserCtx
-			,IEnumerable<JnWord> JnWords
-			,CT Ct
-		)=>{
+		return async(UserCtx,JnWords,Ct)=>{
 			var DtoAddWords = await ClassifyWordsToAdd(UserCtx, JnWords, Ct);
 			await AddOrUpdateWordsByDto(UserCtx, DtoAddWords, Ct);
 			return DtoAddWords;
 		};
-		return Fn;
 	}
 
 
@@ -406,7 +397,7 @@ public partial class SvcWord(
 		IDbFnCtx Ctx
 		,CT Ct
 	){
-		var FnAddWords = await FnMergeWordsIntoDb(Ctx, Ct);
+		var FnAddWords = await FnAddEtMergeWords(Ctx, Ct);
 		var R = async (
 			IUserCtx User
 			,IAsyncEnumerable<str> JsonLineIter
@@ -444,7 +435,7 @@ public partial class SvcWord(
 		var GetJnWordByIdEtCheckOwner = await FnGetJnWordByIdEtCheckOwner(Ctx, Ct);
 		var UpdWordHeadLang = await DaoWord.FnUpdPoWordHeadLang(Ctx, Ct);
 		var SlctIdByOwnerHeadLang = await DaoWord.FnSlctIdByOwnerHeadLang(Ctx, Ct);
-		var MergeWordsIntoDb = await FnMergeWordsIntoDb(Ctx, Ct);
+		var MergeWordsIntoDb = await FnAddEtMergeWords(Ctx, Ct);
 		var SoftDelJnWordById = await FnSoftDelJnWordsByIds(Ctx,Ct);
 		var UpdPropForeignWordIdById = await RepoKv.FnUpdOneColById(Ctx, nameof(PoWordProp.WordId), Ct);
 		var UpdLearnForeignWordIdById = await RepoLearn.FnUpdOneColById(Ctx, nameof(PoWordLearn.WordId), Ct);
@@ -534,7 +525,10 @@ public partial class SvcWord(
 		throw new NotImplementedException();
 	}
 
-
+	[Doc("""
+	更新JnWord。以新傳入之JnWord潙基準、缺者補 盈者刪
+	以id潙基準
+	""")]
 	/// <summary>
 	/// 更新JnWord。以新傳入之JnWord潙基準、缺者補 盈者刪
 	/// 以id潙基準
@@ -549,17 +543,18 @@ public partial class SvcWord(
 
 	public async Task<Func<
 		IUserCtx
-		,JnWord
+		,IJnWord
 		,CT
 		,Task<nil>
 	>> FnUpdJnWord(IDbFnCtx Ctx, CT Ct){
 		var GetJnWordByIdEtCheckOwner = await FnGetJnWordByIdEtCheckOwner(Ctx, Ct);
 		var UpdWordHeadLang = await FnUpdWordHeadLang(Ctx, Ct);
-		var MergeWordsIntoDb = await FnMergeWordsIntoDb(Ctx, Ct);
+		var MergeWordsIntoDb = await FnAddEtMergeWords(Ctx, Ct);
 		var SofeDelPropsByIds = await RepoKv.FnSoftDelManyByKeys<IdWordProp>(Ctx, nameof(PoWordProp.Id), 1000, Ct);
 		var SofeDelLearnByIds = await RepoLearn.FnSoftDelManyByKeys<IdWordLearn>(Ctx, nameof(PoWordLearn.Id), 1000, Ct);
 		//var UpdUpd = await DaoWord.FnTriggerOnRootAfterUpd(Ctx, Ct);
-		return async(User, JnWord, Ct)=>{
+		return async(User, SimpleJnWord, Ct)=>{
+			var JnWord = SimpleJnWord.AsOrToJnWord(); //TODO 待有擴展特性後直ᵈ于IJnWord中增擴展屬性如Id等
 			var OldWord = await GetJnWordByIdEtCheckOwner(User, JnWord.Id, Ct);
 			if(OldWord is null){//JnWord潙新詞(其Id不存于數據庫)
 				//清洗ID、不 用ᵣ用戶ʃ輸

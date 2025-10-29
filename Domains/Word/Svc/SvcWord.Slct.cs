@@ -1,7 +1,6 @@
 namespace Ngaq.Local.Word.Svc;
 using Ngaq.Core.Infra.Core;
 using Ngaq.Core.Model.Po.Word;
-using Ngaq.Core.Model.Word.Dto;
 using Ngaq.Core.Infra.Errors;
 using Tsinswreng.CsPage;
 using Ngaq.Core.Infra;
@@ -15,13 +14,14 @@ using Ngaq.Core.Shared.User.UserCtx;
 using Ngaq.Core.Shared.Word.Models.Po.Kv;
 using Ngaq.Core.Shared.Word.Models;
 using Ngaq.Core.Shared.Word.Models.Po.Learn;
+using Ngaq.Core.Shared.Word.Models.Dto;
 
 public partial class SvcWord{
 public async Task<Func<
 		IUserCtx
-		,IEnumerable<JnWord>
+		,IEnumerable<IJnWord>
 		,CT
-		,Task<DuplicationGroup<JnWord>>
+		,Task<DuplicationGroup<IJnWord>>
 	>> FnGroupByExising(
 		IDbFnCtx Ctx
 		,CT Ct
@@ -29,8 +29,8 @@ public async Task<Func<
 		var SeekIdByHeadEtLang = await DaoWord.FnSlctIdByOwnerHeadLang(Ctx, Ct);
 		var SeekJnWordById = await DaoWord.FnSlctJnWordById(Ctx, Ct);
 		return async(UserCtx, JnWords, Ct)=>{
-			var NonExistingList = new List<JnWord>();
-			var ExiDupliPairs = new List<Existing_Duplication<JnWord>>();
+			var NonExistingList = new List<IJnWord>();
+			var ExiDupliPairs = new List<Existing_Duplication<IJnWord>>();
 			foreach(var (i,JnWord) in JnWords.Index()){
 				var IdInDb = await SeekIdByHeadEtLang(
 					UserCtx
@@ -45,14 +45,14 @@ public async Task<Func<
 					if(JnWordInDb == null){
 						throw new FatalLogicErr("BoWordInDb == null");
 					}
-					var ExiDupliPair = new Existing_Duplication<JnWord>(
+					var ExiDupliPair = new Existing_Duplication<IJnWord>(
 						Existing: JnWordInDb
 						,Duplication: JnWord
 					);
 					ExiDupliPairs.Add(ExiDupliPair);
 				}
 			}
-			var R = new DuplicationGroup<JnWord>();
+			var R = new DuplicationGroup<IJnWord>();
 			R.Existing_Duplications = ExiDupliPairs;
 			R.NonExistings = NonExistingList;
 			return R;
@@ -66,7 +66,7 @@ public async Task<Func<
 /// <returns></returns>
 	public async Task<Func<
 		IUserCtx
-		,IEnumerable<JnWord>
+		,IEnumerable<IJnWord>
 		,CT
 		,Task<DtoAddWords>
 	>> FnClassifyWordsToAdd(
@@ -75,18 +75,14 @@ public async Task<Func<
 	){
 		var GroupByExisting = await FnGroupByExising(Ctx, Ct);
 
-		var Fn = async(
-			IUserCtx UserCtx
-			,IEnumerable<JnWord> JnWords
-			,CT Ct
-		)=>{
+		return async(UserCtx,JnWords,Ct)=>{
 			var R = new DtoAddWords();
 
 			//按語言與詞頭分類
 			var HeadLang_Words = JnWords.GroupByLangHead();
 
 			//合併後ʹ諸詞。斯列表中 同語言同詞頭之詞當只出現一次
-			IList<JnWord> Mergeds = new List<JnWord>();
+			var Mergeds = new List<IJnWord>();
 			foreach( var (HeadLang, Words) in HeadLang_Words ){
 				var OneMerged = Words.NoDiffMergeSameWords();
 				if(OneMerged != null){
@@ -99,7 +95,7 @@ public async Task<Func<
 			R.NeoWords = ExistGroup.NonExistings??[];
 
 			// 有變動之諸新詞。
-			var ChangedNewWords = new List<JnWord>();
+			var ChangedNewWords = new List<IJnWord>();
 			foreach(var Exi_Dupli in ExistGroup.Existing_Duplications??[]){
 				var OldWord = Exi_Dupli.Existing;//庫中已有ʹ舊詞
 				var NewWord = Exi_Dupli.Duplication;//待加ʹ新詞
@@ -125,7 +121,6 @@ public async Task<Func<
 			}
 			return R;
 		};
-		return Fn;
 	}
 
 
@@ -133,7 +128,7 @@ public async Task<Func<
 		IUserCtx
 		,IPageQry
 		,CT
-		,Task<IPage<JnWord>>
+		,Task<IPage<IJnWord>>
 	>> FnPageJnWords(
 		IDbFnCtx Ctx
 		,CT Ct
@@ -175,13 +170,13 @@ public async Task<Func<
 		,IPageQry
 		,ReqSearchWord
 		,CT
-		,Task<IPage<JnWord>>
+		,Task<IPage<IJnWord>>
 	>> FnSearchWord(IDbFnCtx Ctx, CT Ct){
 		var PageSearchIdsByPrefix = await DaoWord.FnPageSearchWordIdsByHeadPrefix(Ctx, Ct);
 		var CheckWordOwnerOrThrow = await FnGetJnWordByIdEtCheckOwner(Ctx, Ct);
 		return async (User, PageQry, Req, Ct)=>{
 			var IdPage = await PageSearchIdsByPrefix(User, PageQry, Req, Ct);
-			List<JnWord> Words = [];
+			List<IJnWord> Words = [];
 			try{
 				var WordId = IdWord.FromLow64Base(Req.RawStr);
 				var Word = await CheckWordOwnerOrThrow(User, WordId, Ct);
@@ -271,13 +266,13 @@ public async Task<Func<
 		,IPageQry
 		,Tempus
 		,CT
-		,Task<IPage<JnWord>>
+		,Task<IPage<IJnWord>>
 	>> FnPageChangedWordsWithDelWordsAfterTime(IDbFnCtx Ctx, CT Ct){
 		var PageChangedIds = await DaoWord.FnPageChangedWordIdsWithDelWordsAfterTime(Ctx, Ct);
 		var GetJnWordByIdEtCheckOwner = await FnGetJnWordByIdEtCheckOwner(Ctx, Ct);
 		return async(User, PageQry, Tempus, Ct)=>{
 			var IdPage = await PageChangedIds(User, PageQry, Tempus, Ct);
-			var RList = new List<JnWord>();
+			var RList = new List<IJnWord>();
 			foreach(var id in IdPage.Data??[]){
 				var U = await GetJnWordByIdEtCheckOwner(User, id, Ct);
 				if(U is not null){
