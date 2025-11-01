@@ -95,7 +95,8 @@ public partial class SvcKv(
 			foreach(var Po in Pos){
 				var Existing = await GetByOwnerEtKey(Po.Owner, Po.GetKey(), Ct);
 				if(Existing is not null){
-					Existings.Add(Existing);
+					Po.Id = Existing.Id;
+					Existings.Add(Po);
 				}else{
 					NonExistings.Add(Po);
 				}

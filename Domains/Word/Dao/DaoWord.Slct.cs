@@ -210,7 +210,7 @@ ORDER BY {T.Fld(N.CreatedAt)} DESC
 		,IPageQry
 		,CT
 		,Task<IPage<IJnWord>>
-	>> FnPageJnWords(
+	>> FnPageWords(
 		IDbFnCtx Ctx
 		,CT Ct
 	){

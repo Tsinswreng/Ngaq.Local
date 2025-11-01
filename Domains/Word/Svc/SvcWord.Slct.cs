@@ -1,4 +1,4 @@
-namespace Ngaq.Local.Word.Svc;
+namespace Ngaq.Local.Domains.Word.Svc;
 using Ngaq.Core.Infra.Core;
 using Ngaq.Core.Model.Po.Word;
 using Ngaq.Core.Infra.Errors;
@@ -15,6 +15,10 @@ using Ngaq.Core.Shared.Word.Models.Po.Kv;
 using Ngaq.Core.Shared.Word.Models;
 using Ngaq.Core.Shared.Word.Models.Po.Learn;
 using Ngaq.Core.Shared.Word.Models.Dto;
+using Ngaq.Core.Tools;
+using System.IO.Compression;
+using System.Text;
+using System.Collections;
 
 public partial class SvcWord{
 public async Task<Func<
@@ -129,11 +133,11 @@ public async Task<Func<
 		,IPageQry
 		,CT
 		,Task<IPage<IJnWord>>
-	>> FnPageJnWords(
+	>> FnPageWords(
 		IDbFnCtx Ctx
 		,CT Ct
 	){
-		return await DaoWord.FnPageJnWords(Ctx,Ct);
+		return await DaoWord.FnPageWords(Ctx,Ct);
 	}
 
 public async Task<Func<
@@ -183,7 +187,7 @@ public async Task<Func<
 				if(Word is not null){
 					Words.Add(Word);
 				}
-			}catch (System.Exception){
+			}catch (Exception) {
 				//TODO 判斷異常類型
 			}
 			if(IdPage.DataAsyE is not null){
@@ -242,7 +246,7 @@ public async Task<Func<
 						,Type = typeof(PoWordLearn)
 					});
 				}
-			}catch (System.Exception){
+			}catch (Exception) {
 				throw;
 			}
 			if(IdPage.DataAsyE is not null){
@@ -322,6 +326,81 @@ public async Task<Func<
 			var Learn = await SeekLearn(LearnId, Ct);
 			return (Learn!, JnWord!);
 		};
+	}
+
+	/// <summary>
+	/// 蔿臨時 速ᵈ上線
+	/// </summary>
+	/// <param name="Ctx"></param>
+	/// <param name="Ct"></param>
+	/// <returns></returns>
+	public async Task<Func<
+		IUserCtx, CT, Task<DtoCompressedWords>
+	>> FnZipAllWordsJsonNoStream(IDbFnCtx Ctx, CT Ct){
+		var FnPage = await FnPageWords(Ctx, Ct);
+		return async(User, Ct)=>{
+			var PageAll = await FnPage(User, PageQry.SlctAll(), Ct);
+			var Jsons = new List<str>();
+			foreach(var JnWord in PageAll.Data??[]){
+				Jsons.Add(JSON.stringify(JnWord));
+			}
+			var Json = str.Join('\n', Jsons);
+			var Compressed = CompressGZip(Encoding.UTF8.GetBytes(Json));
+			return new DtoCompressedWords{
+				Data = Compressed
+				,Type = EWordsPack.LineSepJnWordJsonGZip
+			};
+		};
+	}
+
+	public async Task<IEnumerable<IJnWord>> DecompressFromWordsJson(
+		DtoCompressedWords Compressed, CT Ct
+	){
+		try{
+			if(Compressed.Type == EWordsPack.JnWordArrJsonGZip){
+				var decompressedBytes = Decompress(Compressed.Data??[]);
+				var Json = Encoding.UTF8.GetString(decompressedBytes);
+				return JSON.parse<IList<JnWord>>(Json)!;
+			}else if(Compressed.Type == EWordsPack.LineSepJnWordJsonGZip){
+				var decompressedBytes = Decompress(Compressed.Data??[]);
+				var Json = Encoding.UTF8.GetString(decompressedBytes);
+				var Lines = Json.Split('\n');
+				var JnWords = new List<IJnWord>();
+				foreach(var line in Lines){
+					if(str.IsNullOrWhiteSpace(line)){
+						continue;
+					}
+					var JnWord = JSON.parse<JnWord>(line);
+					if(JnWord is null){
+						continue;
+					}
+					JnWords.Add(JnWord);
+				}
+				return JnWords;
+			}else{
+				throw new NotImplementedException();
+			}
+		}catch (System.Exception){
+
+			throw;
+		}
+	}
+
+
+	public static byte[] CompressGZip(byte[] data){
+		using var output = new MemoryStream();
+		using (var gzip = new GZipStream(output, CompressionMode.Compress)){
+			gzip.Write(data, 0, data.Length);
+		}
+		return output.ToArray();
+	}
+
+	public static byte[] Decompress(byte[] compressedData){
+		using var input = new MemoryStream(compressedData);
+		using var gzip = new GZipStream(input, CompressionMode.Decompress);
+		using var output = new MemoryStream();
+		gzip.CopyTo(output);
+		return output.ToArray();
 	}
 
 }

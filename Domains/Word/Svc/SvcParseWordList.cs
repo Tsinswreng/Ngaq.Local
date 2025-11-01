@@ -1,14 +1,12 @@
-namespace Ngaq.Local.Word.Svc;
+namespace Ngaq.Local.Domains.Word.Svc;
 
 using System.Text;
 using Ngaq.Core.Shared.Word.Models;
 using Ngaq.Core.Infra.Errors;
 using Ngaq.Core.Service.Parser;
-using Ngaq.Core.Service.Word;
 using Ngaq.Core.Stream;
 using Ngaq.Core.Tools.Io;
-
-
+using Ngaq.Core.Shared.Word.Svc;
 
 public  partial class SvcParseWordList
 	: ISvcParseWordList
@@ -31,7 +29,7 @@ public  partial class SvcParseWordList
 		var DateBlocks = Parser.Parse();
 		var metadata = Parser.Status.Metadata;
 		if (metadata == null) {
-			throw new ErrBase("Metadata is null");
+			throw new AppErr("Metadata is null");
 		}
 		var JnWords = ParseResultMapper.Inst.Map(metadata, DateBlocks);
 		return JnWords;

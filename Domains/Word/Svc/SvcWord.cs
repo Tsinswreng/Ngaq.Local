@@ -1,23 +1,22 @@
-namespace Ngaq.Local.Word.Svc;
+namespace Ngaq.Local.Domains.Word.Svc;
 using Ngaq.Core.Infra.Core;
 using Ngaq.Core.Model.Po.Kv;
 using Ngaq.Core.Model.Po.Learn_;
 using Ngaq.Core.Model.Po.Word;
-using Ngaq.Core.Service.Word;
-using Ngaq.Core.Tools.Io;
+
 using Ngaq.Core.Infra.Errors;
 using Tsinswreng.CsTools;
 using Ngaq.Core.Model.Word.Req;
 using Tsinswreng.CsSqlHelper;
 using Ngaq.Core.Word.Svc;
 using Tsinswreng.CsCore;
-using Tsinswreng.CsPage;
+
 using Ngaq.Core.Infra;
-using Ngaq.Core.Models;
+
 using Ngaq.Local.Word.Dao;
 using Ngaq.Local.Db.TswG;
 using Ngaq.Core.Tools.Json;
-using Ngaq.Core.Word.Models.Dto;
+
 using Ngaq.Core.Shared.User.UserCtx;
 using Ngaq.Core.Shared.Word.Models.Po.Kv;
 using Ngaq.Core.Shared.Word.Models.Learn_;
@@ -25,6 +24,7 @@ using Ngaq.Core.Shared.Word.Models;
 using Ngaq.Core.Shared.Word.Models.Po.Word;
 using Ngaq.Core.Shared.Word.Models.Po.Learn;
 using Ngaq.Core.Shared.Word.Models.Dto;
+using Ngaq.Core.Shared.Word.Svc;
 
 public partial class SvcWord(
 	ISvcParseWordList SvcParseWordList
@@ -42,7 +42,7 @@ public partial class SvcWord(
 
 
 	public partial class EErr_:EnumErr{
-		public IAppErr WordOwnerNotMatch() => Mk(nameof(WordOwnerNotMatch));
+		public OldAppErr WordOwnerNotMatch() => Mk(nameof(WordOwnerNotMatch));
 	}
 	public EErr_ EErr = new EErr_();
 
@@ -239,6 +239,7 @@ public partial class SvcWord(
 		var ClassifyWordsToAdd = await FnClassifyWordsToAdd(Ctx, Ct);
 		var AddOrUpdateWordsByDto = await FnMergeDtoAddWordsInToDb(Ctx,Ct);
 		return async(UserCtx,JnWords,Ct)=>{
+			JnWords = JnWords.Select(x=>{x.Word.Owner = UserCtx.UserId; return x;});
 			var DtoAddWords = await ClassifyWordsToAdd(UserCtx, JnWords, Ct);
 			await AddOrUpdateWordsByDto(UserCtx, DtoAddWords, Ct);
 			return DtoAddWords;
@@ -625,5 +626,14 @@ public partial class SvcWord(
 		};
 	}
 
-
+	public async Task<Func<
+		IUserCtx, DtoCompressedWords, CT, Task<nil>
+	>> FnAddCompressedWord(IDbFnCtx Ctx, CT Ct){
+		var AddEtMergeWords = await FnAddEtMergeWords(Ctx, Ct);
+		return async(User, Dto, Ct)=>{
+			var Words = await DecompressFromWordsJson(Dto, Ct);
+			await AddEtMergeWords(User, Words, Ct);
+			return NIL;
+		};
+	}
 }

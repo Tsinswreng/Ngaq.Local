@@ -1,4 +1,4 @@
-namespace Ngaq.Local.Word.Svc;
+namespace Ngaq.Local.Domains.Word.Svc;
 using Ngaq.Core.Model.Po.Word;
 using Ngaq.Core.Tools.Io;
 using Ngaq.Local.Db;
@@ -13,6 +13,7 @@ using Ngaq.Core.Shared.User.UserCtx;
 using Ngaq.Core.Shared.Word.Models.Learn_;
 using Ngaq.Core.Shared.Word.Models;
 using Ngaq.Core.Word.Svc;
+using Ngaq.Core.Shared.Word.Models.Dto;
 
 public partial class SvcWord{
 #region API
@@ -122,15 +123,14 @@ public partial class SvcWord{
 	}
 
 	[Impl]
-	public async Task<IPage<IJnWord>> PageJnWord(
+	public async Task<IPage<IJnWord>> PageWord(
 		IUserCtx UserCtx
 		,IPageQry PageQry
 		,CT Ct
 	){
-
 		//var Ctx = new DbFnCtx{Txn = await GetTxnAsy.GetTxn()};
 		var Ctx = new DbFnCtx();
-		var Fn = await FnPageJnWords(Ctx, Ct);
+		var Fn = await FnPageWords(Ctx, Ct);
 		return await Fn(UserCtx, PageQry, Ct);
 		//return await TxnWrapper.Wrap(FnPageJnWords, UserCtx, PageQry, Ct);//報錯曰The transaction object is not associated with the same connection object as this command.
 	}
@@ -162,5 +162,13 @@ public partial class SvcWord{
 		return await TxnWrapper.Wrap(FnPageChangedWordsWithDelWordsAfterTime, User, PageQry, Tempus, Ct);
 	}
 	#endregion API
+
+	public async Task<DtoCompressedWords> ZipAllWordsJson(IUserCtx User, CT Ct){
+		return await TxnWrapper.Wrap(FnZipAllWordsJsonNoStream, User, Ct);
+	}
+
+	public async Task<nil> AddCompressedWord(IUserCtx User, DtoCompressedWords Dto, CT Ct){
+		return await TxnWrapper.Wrap(FnAddCompressedWord, User, Dto, Ct);
+	}
 
 }
