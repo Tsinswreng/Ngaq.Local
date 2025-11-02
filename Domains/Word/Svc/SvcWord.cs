@@ -25,6 +25,7 @@ using Ngaq.Core.Shared.Word.Models.Po.Word;
 using Ngaq.Core.Shared.Word.Models.Po.Learn;
 using Ngaq.Core.Shared.Word.Models.Dto;
 using Ngaq.Core.Shared.Word.Svc;
+using Ngaq.Core.Tools;
 
 public partial class SvcWord(
 	ISvcParseWordList SvcParseWordList
@@ -633,6 +634,21 @@ public partial class SvcWord(
 		return async(User, Dto, Ct)=>{
 			var Words = await DecompressFromWordsJson(Dto, Ct);
 			await AddEtMergeWords(User, Words, Ct);
+			return NIL;
+		};
+	}
+
+	public async Task<Func<
+		IUserCtx, TextWithBlob, CT, Task<nil>
+	>> FnAddFromTextWithBlob(IDbFnCtx Ctx, CT Ct){
+		var AddCompressedWord = await FnAddCompressedWord(Ctx, Ct);
+		return async(User, TextWithBlob, Ct)=>{
+			var info = JSON.parse<WordsPackInfo>(TextWithBlob.Text);
+			if(info is null){
+				throw ItemsErr.Common.ArgErr.ToErr();
+			}
+			var Req = info.ToDtoCompressedWords(TextWithBlob.Blob.ToArray());
+			await AddCompressedWord(User, Req, Ct);
 			return NIL;
 		};
 	}

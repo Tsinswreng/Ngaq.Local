@@ -54,7 +54,7 @@ public partial class DbIniter{
 		var Sql = "SELECT * FROM sqlite_master";
 		var Cmd = await SqlCmdMkr.MkCmd(DbFnCtx, Sql, Ct);
 		var Fn = async(CT Ct)=>{
-			return Cmd.IterIAsy(Ct);
+			return Cmd.IterAsyE(Ct);
 		};
 		return Fn;
 	}
@@ -66,7 +66,7 @@ public partial class DbIniter{
 		var Cmd = await SqlCmdMkr.MkCmd(DbFnCtx, Sql, Ct);//勿 Prepare、表未建好旹預無法編譯
 		var Fn = async(CT Ct)=>{
 			try{
-				await Cmd.IterIAsy(Ct).FirstOrDefaultAsync(Ct);
+				await Cmd.IterAsyE(Ct).FirstOrDefaultAsync(Ct);
 				return NIL;
 			}
 			catch (System.Exception e){

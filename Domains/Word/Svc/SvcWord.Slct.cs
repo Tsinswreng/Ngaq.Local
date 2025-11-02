@@ -19,6 +19,7 @@ using Ngaq.Core.Tools;
 using System.IO.Compression;
 using System.Text;
 using System.Collections;
+using Tsinswreng.CsSqlHelper;
 
 public partial class SvcWord{
 public async Task<Func<
@@ -132,7 +133,7 @@ public async Task<Func<
 		IUserCtx
 		,IPageQry
 		,CT
-		,Task<IPage<IJnWord>>
+		,Task<IPageAsyE<IJnWord>>
 	>> FnPageWords(
 		IDbFnCtx Ctx
 		,CT Ct
@@ -277,12 +278,15 @@ public async Task<Func<
 		return async(User, PageQry, Tempus, Ct)=>{
 			var IdPage = await PageChangedIds(User, PageQry, Tempus, Ct);
 			var RList = new List<IJnWord>();
-			foreach(var id in IdPage.Data??[]){
-				var U = await GetJnWordByIdEtCheckOwner(User, id, Ct);
-				if(U is not null){
-					RList.Add(U);
+			if(IdPage.DataAsyE is not null){
+				await foreach(var id in IdPage.DataAsyE){
+					var U = await GetJnWordByIdEtCheckOwner(User, id, Ct);
+					if(U is not null){
+						RList.Add(U);
+					}
 				}
 			}
+
 			var R = Page.Mk(PageQry, RList);
 			return R;
 		};
@@ -335,14 +339,19 @@ public async Task<Func<
 	/// <param name="Ct"></param>
 	/// <returns></returns>
 	public async Task<Func<
-		IUserCtx, CT, Task<DtoCompressedWords>
+		IUserCtx, ReqPackWords, CT, Task<DtoCompressedWords>
 	>> FnZipAllWordsJsonNoStream(IDbFnCtx Ctx, CT Ct){
 		var FnPage = await FnPageWords(Ctx, Ct);
-		return async(User, Ct)=>{
+		return async(User, Req, Ct)=>{
+			if(Req.Type != EWordsPack.LineSepJnWordJsonGZip){
+				throw new NotSupportedException();
+			}
 			var PageAll = await FnPage(User, PageQry.SlctAll(), Ct);
 			var Jsons = new List<str>();
-			foreach(var JnWord in PageAll.Data??[]){
-				Jsons.Add(JSON.stringify(JnWord));
+			if(PageAll.DataAsyE is not null){
+				await foreach(var JnWord in PageAll.DataAsyE){
+					Jsons.Add(JSON.stringify(JnWord));
+				}
 			}
 			var Json = str.Join('\n', Jsons);
 			var Compressed = CompressGZip(Encoding.UTF8.GetBytes(Json));
@@ -350,6 +359,20 @@ public async Task<Func<
 				Data = Compressed
 				,Type = EWordsPack.LineSepJnWordJsonGZip
 			};
+		};
+	}
+
+	public async Task<Func<
+		IUserCtx, ReqPackWords, CT, Task<TextWithBlob>
+	>> FnPackAllWordsToTextWithBlobNoStream(IDbFnCtx Ctx, CT Ct){
+		var ZipFn = await FnZipAllWordsJsonNoStream(Ctx, Ct);
+		return async(User, Req, Ct)=>{
+			var DtoCompressed = await ZipFn(User, Req, Ct);
+			var packInfo = DtoCompressed.ToOrAssWordsPackInfo();
+			var textWithBlob = ToolTextWithBlob.Pack(
+				JSON.stringify(packInfo), DtoCompressed.Data
+			);
+			return textWithBlob;
 		};
 	}
 

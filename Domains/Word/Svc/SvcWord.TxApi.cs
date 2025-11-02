@@ -14,6 +14,7 @@ using Ngaq.Core.Shared.Word.Models.Learn_;
 using Ngaq.Core.Shared.Word.Models;
 using Ngaq.Core.Word.Svc;
 using Ngaq.Core.Shared.Word.Models.Dto;
+using Ngaq.Core.Tools;
 
 public partial class SvcWord{
 #region API
@@ -123,7 +124,7 @@ public partial class SvcWord{
 	}
 
 	[Impl]
-	public async Task<IPage<IJnWord>> PageWord(
+	public async Task<IPageAsyE<IJnWord>> PageWord(
 		IUserCtx UserCtx
 		,IPageQry PageQry
 		,CT Ct
@@ -163,12 +164,21 @@ public partial class SvcWord{
 	}
 	#endregion API
 
-	public async Task<DtoCompressedWords> ZipAllWordsJson(IUserCtx User, CT Ct){
-		return await TxnWrapper.Wrap(FnZipAllWordsJsonNoStream, User, Ct);
+	public async Task<DtoCompressedWords> ZipAllWordsJson(IUserCtx User, ReqPackWords ReqPackWords, CT Ct){
+		return await TxnWrapper.Wrap(FnZipAllWordsJsonNoStream, User, ReqPackWords, Ct);
 	}
 
 	public async Task<nil> AddCompressedWord(IUserCtx User, DtoCompressedWords Dto, CT Ct){
 		return await TxnWrapper.Wrap(FnAddCompressedWord, User, Dto, Ct);
+	}
+
+	public async Task<TextWithBlob> PackAllWordsToTextWithBlobNoStream(IUserCtx User, ReqPackWords Req, CT Ct){
+		return await TxnWrapper.Wrap(FnPackAllWordsToTextWithBlobNoStream, User, Req, Ct);
+	}
+
+
+	public async Task<nil> AddFromTextWithBlob(IUserCtx User, TextWithBlob TextWithBlob, CT Ct){
+		return await TxnWrapper.Wrap(FnAddFromTextWithBlob, User, TextWithBlob, Ct);
 	}
 
 }

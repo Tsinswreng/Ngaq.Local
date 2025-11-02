@@ -144,7 +144,7 @@ var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
 			var Args = ArgDict.Mk()
 			.AddRaw(POwner, T.UpperToRaw(User.UserId))
 			.AddRaw(PKStr, KStr).AddRaw(PVStr, VStr);
-			await SqlCmd.Args(Args).IterIAsy(Ct).FirstOrDefaultAsync(Ct);
+			await SqlCmd.Args(Args).IterAsyE(Ct).FirstOrDefaultAsync(Ct);
 			return NIL;
 		};
 		return Fn;
@@ -172,7 +172,7 @@ var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
 			var Args = ArgDict.Mk()
 			.AddRaw(POwner, T.UpperToRaw(User.UserId))
 			.AddRaw(PKStr, KStr).AddRaw(PI64, VI64);
-			await SqlCmd.Args(Args).IterIAsy(Ct).FirstOrDefaultAsync(Ct);
+			await SqlCmd.Args(Args).IterAsyE(Ct).FirstOrDefaultAsync(Ct);
 			return NIL;
 		};
 		return Fn;
