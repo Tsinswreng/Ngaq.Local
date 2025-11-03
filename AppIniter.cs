@@ -10,18 +10,26 @@ using Ngaq.Core.Frontend.User;
 using Ngaq.Core.Shared.User.Models.Po.Device;
 using Microsoft.Extensions.DependencyInjection;
 
-public interface IDependencyGetter{
-	public T GetSvc<T>()where T : class;
-}
+// public interface IDependencyGetter{
+// 	public T GetSvc<T>()where T : class;
+// }
 
-public class DependencyGetter(
-	IServiceProvider SvcProvider
-) : IDependencyGetter{
+// public class DependencyGetter(
+// 	IServiceProvider SvcProvider
+// ) : IDependencyGetter{
 
-	public T GetSvc<T>()
+// 	public T GetSvc<T>()
+// 		where T : class
+// 	{
+// 		return SvcProvider.GetRequiredService<T>();
+// 	}
+// }
+
+public static class ExtnIServiceProvider{
+	public static T GetSvc<T>(this IServiceProvider z)
 		where T : class
 	{
-		return SvcProvider.GetRequiredService<T>();
+		return z.GetRequiredService<T>();
 	}
 }
 
@@ -31,10 +39,10 @@ public class DependencyGetter(
 public class AppIniter{
 	protected static AppIniter? _Inst = null;
 	public static AppIniter Inst => _Inst??= new AppIniter();
-	public IDependencyGetter SvcMgr{get;set;} = null!;
+	public IServiceProvider SvcProvider{get;set;} = null!;
 
 	public async Task<nil> Init(CT Ct){
-		if(SvcMgr is null){
+		if(SvcProvider is null){
 			throw new InvalidOperationException("SvcMgr is null. Make sure DependencyGetter is initialized manually.");
 		}
 		await InitDbSchema(Ct);
@@ -44,7 +52,7 @@ public class AppIniter{
 
 
 	async Task<IdClient> InitClientId(CT Ct){
-		var SvcKv = SvcMgr.GetSvc<ISvcKv>();
+		var SvcKv = SvcProvider.GetSvc<ISvcKv>();
 		var Key = KeysClientKv.ClientId;
 		var CliendIdKv = await SvcKv.GetByOwnerEtKeyAsy(
 			IdUser.Zero, Key, Ct
@@ -65,8 +73,8 @@ public class AppIniter{
 	}
 
 	public async Task<nil> InitUserCtx(CT Ct){
-		var userCtxMgr = SvcMgr.GetSvc<IFrontendUserCtxMgr>();
-		var SvcKv = SvcMgr.GetSvc<ISvcKv>();
+		var userCtxMgr = SvcProvider.GetSvc<IFrontendUserCtxMgr>();
+		var SvcKv = SvcProvider.GetSvc<ISvcKv>();
 
 		var CurLocalUserKv = await SvcKv.GetByOwnerEtKeyAsy(IdUser.Zero,KeysClientKv.CurLocalUserId,Ct);
 		var CurLoginUserKv = await SvcKv.GetByOwnerEtKeyAsy(IdUser.Zero,KeysClientKv.CurLoginUserId,Ct);
@@ -105,7 +113,7 @@ public class AppIniter{
 	}
 
 	public async Task<nil> InitDbSchema(CT Ct){
-		var DbIniter = SvcMgr.GetSvc<DbIniter>();
+		var DbIniter = SvcProvider.GetSvc<DbIniter>();
 		_ = DbIniter.Init(Ct).Result;
 		return NIL;
 	}
