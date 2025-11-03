@@ -129,15 +129,15 @@ public async Task<Func<
 	/// <returns></returns>
 	public async Task<Func<
 		IUserCtx,IEnumerable<IJnWord>,CT
-		,Task<DtoAddWords>
-	>> FnClassifyWordsToMergeIn(
+		,Task<DtoSyncWords>
+	>> FnClassifyWordsToSync(
 		IDbFnCtx Ctx
 		,CT Ct
 	){
 		var GroupByExisting = await FnGroupByExising(Ctx, Ct);
 
 		return async(UserCtx,JnWords,Ct)=>{
-			var R = new DtoAddWords();
+			var R = new DtoSyncWords();
 
 			//按語言與詞頭分類
 			var HeadLang_Words = JnWords.GroupByLangHead();
@@ -161,21 +161,15 @@ public async Task<Func<
 				var OldWord = Exi_Dupli.Existing;//庫中已有ʹ舊詞
 				var NewWord = Exi_Dupli.Duplication;//待加ʹ新詞
 
-				IJnWord? NeoPart = new JnWord();
-				IJnWord? ChangedPart = new JnWord();
+				IJnWord? NeoPart = new JnWord{Word = OldWord.Word};
+				IJnWord? ChangedPart = new JnWord{Word = OldWord.Word};
 				var SycnResult = OldWord.Sync(NewWord, ref NeoPart, ref ChangedPart);
 				//var Diffed = NewWord.DiffByTime(OldWord);
-				if(SycnResult == ESyncResult.NoNeedToSync){
-					continue;
+
+				var UpdatedWord = SycnResult.ToDtoSyncWords(OldWord).UpdatedWords.FirstOrDefault();
+				if(UpdatedWord is not null){
+					R.UpdatedWords.Add(UpdatedWord);
 				}
-
-				var DtoUpdatedWord = new DtoUpdWord(
-					WordInDb: OldWord
-					,WordToAdd: NeoPart!
-					,DiffedWord: ChangedPart!
-				);
-
-				R.UpdatedWords.Add(DtoUpdatedWord);
 			}
 			return R;
 		};
