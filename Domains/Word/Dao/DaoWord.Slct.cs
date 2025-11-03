@@ -22,6 +22,7 @@ using Ngaq.Core.Shared.Word.Models;
 using Ngaq.Core.Shared.Word.Models.Po.Word;
 using Ngaq.Core.Shared.Base.Models.Po;
 using Ngaq.Core.Shared.Word.Models.Po.Learn;
+using Ngaq.Local.Domains.Word.Dao;
 
 public partial class DaoSqlWord{
 	public async Task<Func<
@@ -64,7 +65,7 @@ AND {T.Eq(PLang)}
 		IdWord
 		,CT
 		,Task<JnWord?>
-	>> FnSlctJnWordById(
+	>> FnSlctJnWordByIdWithDel(
 		IDbFnCtx? Ctx
 		,CT Ct
 	){
@@ -77,7 +78,6 @@ AND {T.Eq(PLang)}
 $"""
 SELECT * FROM {QuotedTblName}
 WHERE 1=1
-AND {TP.SqlIsNonDel()}
 AND {TP.Eq(PWordId)}
 """;
 			return Sql;
@@ -91,9 +91,9 @@ AND {TP.Eq(PWordId)}
 			if(PoWord == null){
 				return null;
 			}
-			if(PoWord.IsDeleted()){
-				return null;
-			}
+			// if(PoWord.IsDeleted()){
+			// 	return null;
+			// }
 
 			var Arg = new Str_Any{
 				[nameof(PoWordProp.WordId)] = Id
@@ -116,6 +116,14 @@ AND {TP.Eq(PWordId)}
 		};
 	}
 
+	static str SqlFilterDel(
+		ITable Tbl,
+		bool IncludeDel
+	){
+		return IncludeDel
+			? ""
+			: $"AND {Tbl.SqlIsNonDel()}";
+	}
 
 	public async Task<Func<
 		IdWord
@@ -125,16 +133,18 @@ AND {TP.Eq(PWordId)}
 	>> FnPageByFKey(
 		IDbFnCtx Ctx
 		,ITable Tbl
+		,CfgQry CfgQry
 		,CT Ct
 	){
 		var T = Tbl;
 		var TW = TblMgr.GetTbl<PoWord>();
 		var PWordId = T.Prm(nameof(I_WordId.WordId));
+		var FilterDel = SqlFilterDel(T, CfgQry.IncludeDeleted);
 		var Sql =
 $"""
 SELECT * FROM {Tbl.Qt(Tbl.DbTblName)}
 WHERE 1=1
-AND {Tbl.SqlIsNonDel()}
+{FilterDel}
 AND {T.Eq(PWordId)}
 {Tbl.SqlMkr.ParamLimOfst(out var PLmt, out var POfst)}
 """;
@@ -162,6 +172,7 @@ AND {T.Eq(PWordId)}
 		,Task<IPageAsyE<PoWord>>
 	>> FnPagePoWords(
 		IDbFnCtx Ctx
+		,CfgQry CfgQry
 		,CT Ct
 	){
 		var T = TblMgr.GetTbl<PoWord>();
@@ -171,7 +182,7 @@ AND {T.Eq(PWordId)}
 $"""
 SELECT * FROM {T.Qt(T.DbTblName)}
 WHERE 1=1
-AND {T.SqlIsNonDel()}
+{SqlFilterDel(T, CfgQry.IncludeDeleted)}
 AND {T.Eq(POwner)}
 ORDER BY {T.Fld(N.CreatedAt)} DESC
 {T.SqlMkr.ParamLimOfst(out var PLmt, out var POfst)}
@@ -205,13 +216,14 @@ ORDER BY {T.Fld(N.CreatedAt)} DESC
 		,Task<IPageAsyE<IJnWord>>
 	>> FnPageWords(
 		IDbFnCtx Ctx
+		,CfgQry CfgQry
 		,CT Ct
 	){
 		var TK = TblMgr.GetTbl<PoWordProp>();
 		var TL = TblMgr.GetTbl<PoWordLearn>();
-		var PagePoWords = await FnPagePoWords(Ctx, Ct);
-		var PageKvByFKey = await FnPageByFKey(Ctx, TK, Ct);
-		var PageLearnByFKey = await FnPageByFKey(Ctx, TL, Ct);
+		var PagePoWords = await FnPagePoWords(Ctx, CfgQry, Ct);
+		var PageKvByFKey = await FnPageByFKey(Ctx, TK, CfgQry, Ct);
+		var PageLearnByFKey = await FnPageByFKey(Ctx, TL, CfgQry, Ct);
 
 		return async(UserCtx, PageQry, Ct)=>{
 			var PoWordsPage = await PagePoWords(UserCtx, PageQry, Ct);
@@ -320,7 +332,7 @@ AND (
 		,ReqSearchWord
 		,CT
 		,Task<IPageAsyE<IdWord>>
-	>> FnPageSearchWordIdsByHeadPrefix(IDbFnCtx Ctx, CT Ct){
+	>> FnPageSearchWordIdsByHeadPrefixWithDel(IDbFnCtx Ctx, CT Ct){
 var T = TblMgr.GetTbl<PoWord>();
 var N = new PoWord.N();
 var PPrefix = T.Prm("Prefix"); var POwner = T.Prm(N.Owner); var PLang = T.Prm(N.Lang);
@@ -328,7 +340,6 @@ var Sql =
 $"""
 SELECT {N.Id} FROM {T.DbTblName}
 WHERE 1=1
-AND {T.SqlIsNonDel()}
 AND {T.Fld(N.Head)} LIKE {PPrefix} || '%'
 AND {T.Eq(POwner)}
 ORDER BY {T.Fld(N.Head)} ASC

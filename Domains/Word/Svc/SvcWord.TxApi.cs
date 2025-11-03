@@ -83,7 +83,7 @@ public partial class SvcWord{
 		,IEnumerable<IJnWord> JnWords
 		,CT Ct
 	){
-		return await TxnWrapper.Wrap(FnAddEtMergeWords, UserCtx, JnWords, Ct);
+		return await TxnWrapper.Wrap(FnAddEtMergeWordsOld, UserCtx, JnWords, Ct);
 	}
 
 	[Impl]
@@ -168,8 +168,8 @@ public partial class SvcWord{
 		return await TxnWrapper.Wrap(FnZipAllWordsJsonNoStream, User, ReqPackWords, Ct);
 	}
 
-	public async Task<nil> AddCompressedWord(IUserCtx User, DtoCompressedWords Dto, CT Ct){
-		return await TxnWrapper.Wrap(FnAddCompressedWord, User, Dto, Ct);
+	public async Task<nil> SyncCompressedWord(IUserCtx User, DtoCompressedWords Dto, CT Ct){
+		return await TxnWrapper.Wrap(FnSyncFromCompressedWord, User, Dto, Ct);
 	}
 
 	public async Task<TextWithBlob> PackAllWordsToTextWithBlobNoStream(IUserCtx User, ReqPackWords Req, CT Ct){
@@ -177,8 +177,8 @@ public partial class SvcWord{
 	}
 
 
-	public async Task<nil> AddFromTextWithBlob(IUserCtx User, TextWithBlob TextWithBlob, CT Ct){
-		return await TxnWrapper.Wrap(FnAddFromTextWithBlob, User, TextWithBlob, Ct);
+	public async Task<nil> SyncFromTextWithBlob(IUserCtx User, TextWithBlob TextWithBlob, CT Ct){
+		return await TxnWrapper.Wrap(FnSyncFromTextWithBlob, User, TextWithBlob, Ct);
 	}
 
 }

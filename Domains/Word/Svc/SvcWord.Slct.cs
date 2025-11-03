@@ -20,6 +20,8 @@ using System.IO.Compression;
 using System.Text;
 using System.Collections;
 using Tsinswreng.CsSqlHelper;
+using Ngaq.Local.Domains.Word.Dao;
+using Ngaq.Core.Shared.Word;
 
 public partial class SvcWord{
 public async Task<Func<
@@ -32,7 +34,7 @@ public async Task<Func<
 		,CT Ct
 	){
 		var SeekIdByHeadEtLang = await DaoWord.FnSlctIdByOwnerHeadLang(Ctx, Ct);
-		var SeekJnWordById = await DaoWord.FnSlctJnWordById(Ctx, Ct);
+		var SeekJnWordById = await DaoWord.FnSlctJnWordByIdWithDel(Ctx, Ct);
 		return async(UserCtx, JnWords, Ct)=>{
 			var NonExistingList = new List<IJnWord>();
 			var ExiDupliPairs = new List<Existing_Duplication<IJnWord>>();
@@ -73,8 +75,62 @@ public async Task<Func<
 		IUserCtx
 		,IEnumerable<IJnWord>
 		,CT
+		,Task<DtoAddWordsOld>
+	>> FnClassifyWordsToAddOld(
+		IDbFnCtx Ctx
+		,CT Ct
+	){
+		var GroupByExisting = await FnGroupByExising(Ctx, Ct);
+
+		return async(UserCtx,JnWords,Ct)=>{
+			var R = new DtoAddWordsOld();
+
+			//按語言與詞頭分類
+			var HeadLang_Words = JnWords.GroupByLangHead();
+
+			//合併後ʹ諸詞。斯列表中 同語言同詞頭之詞當只出現一次
+			var Mergeds = new List<IJnWord>();
+			foreach( var (HeadLang, Words) in HeadLang_Words ){
+				var OneMerged = Words.NoDiffMergeSameWords();
+				if(OneMerged != null){
+					Mergeds.Add(OneMerged);
+				}
+			}
+
+			//查庫 篩出庫中既有ʹ舊詞 與 未加過之詞
+			var ExistGroup = await GroupByExisting(UserCtx, Mergeds, Ct);
+			R.NeoWords = ExistGroup.NonExistings??[];
+
+			// 有變動之諸新詞。
+			var ChangedNewWords = new List<IJnWord>();
+			foreach(var Exi_Dupli in ExistGroup.Existing_Duplications??[]){
+				var OldWord = Exi_Dupli.Existing;//庫中已有ʹ舊詞
+				var NewWord = Exi_Dupli.Duplication;//待加ʹ新詞
+
+				var Diffed = NewWord.DiffByTime(OldWord);
+				if(Diffed == null){
+					continue;
+				}
+				var DtoUpdatedWord = new DtoUpdWordOld(
+					WordInDb: OldWord
+					,WordToAdd: NewWord
+					,DiffedWord: Diffed
+				);
+
+				R.UpdatedWords.Add(DtoUpdatedWord);
+			}
+			return R;
+		};
+	}
+
+	/// <summary>
+	/// 按是否既存于庫中 蔿 待合入之諸詞 分類
+	/// </summary>
+	/// <returns></returns>
+	public async Task<Func<
+		IUserCtx,IEnumerable<IJnWord>,CT
 		,Task<DtoAddWords>
-	>> FnClassifyWordsToAdd(
+	>> FnClassifyWordsToMergeIn(
 		IDbFnCtx Ctx
 		,CT Ct
 	){
@@ -105,21 +161,18 @@ public async Task<Func<
 				var OldWord = Exi_Dupli.Existing;//庫中已有ʹ舊詞
 				var NewWord = Exi_Dupli.Duplication;//待加ʹ新詞
 
-				// //待加ʹ新資產
-				// var NewProps = JnWord.DiffProps(NewWord.Props, OldWord.Props);
-				// var DtoUpdatedWord = new DtoUpdWord(
-				// 	WordInDb: OldWord
-				// 	,WordToAdd: NewWord
-				// 	,DiffedProps: NewProps
-				// );
-				var Diffed = NewWord.DiffByTime(OldWord);
-				if(Diffed == null){
+				IJnWord? NeoPart = new JnWord();
+				IJnWord? ChangedPart = new JnWord();
+				var SycnResult = OldWord.Sync(NewWord, ref NeoPart, ref ChangedPart);
+				//var Diffed = NewWord.DiffByTime(OldWord);
+				if(SycnResult == ESyncResult.NoNeedToSync){
 					continue;
 				}
+
 				var DtoUpdatedWord = new DtoUpdWord(
 					WordInDb: OldWord
-					,WordToAdd: NewWord
-					,DiffedWord: Diffed
+					,WordToAdd: NeoPart!
+					,DiffedWord: ChangedPart!
 				);
 
 				R.UpdatedWords.Add(DtoUpdatedWord);
@@ -127,6 +180,7 @@ public async Task<Func<
 			return R;
 		};
 	}
+
 
 
 	public async Task<Func<
@@ -138,10 +192,34 @@ public async Task<Func<
 		IDbFnCtx Ctx
 		,CT Ct
 	){
-		return await DaoWord.FnPageWords(Ctx,Ct);
+		return await DaoWord.FnPageWords(
+			Ctx
+			,new CfgQry{
+				IncludeDeleted = false
+			}
+			,Ct
+		);
 	}
 
-public async Task<Func<
+	public async Task<Func<
+		IUserCtx
+		,IPageQry
+		,CT
+		,Task<IPageAsyE<IJnWord>>
+	>> FnPageWordsWithDel(
+		IDbFnCtx Ctx
+		,CT Ct
+	){
+		return await DaoWord.FnPageWords(
+			Ctx
+			,new CfgQry{
+				IncludeDeleted = true
+			}
+			,Ct
+		);
+	}
+
+	public async Task<Func<
 		IUserCtx
 		,IdWord
 		,CT
@@ -150,7 +228,7 @@ public async Task<Func<
 		IDbFnCtx Ctx
 		,CT Ct
 	){
-		var SelectJnWordById = await DaoWord.FnSlctJnWordById(Ctx, Ct);
+		var SelectJnWordById = await DaoWord.FnSlctJnWordByIdWithDel(Ctx, Ct);
 		var Fn = async(
 			IUserCtx UserCtx
 			,IdWord IdWord
@@ -162,7 +240,7 @@ public async Task<Func<
 			}
 
 			if(JWord.Owner != UserCtx.UserId){
-				throw EErr.WordOwnerNotMatch().ToErrBase();
+				throw ItemsErr.Word.__And__IsNotSameUserWord.ToErr();
 			}
 			return JWord;
 		};
@@ -177,7 +255,7 @@ public async Task<Func<
 		,CT
 		,Task<IPage<IJnWord>>
 	>> FnSearchWord(IDbFnCtx Ctx, CT Ct){
-		var PageSearchIdsByPrefix = await DaoWord.FnPageSearchWordIdsByHeadPrefix(Ctx, Ct);
+		var PageSearchIdsByPrefix = await DaoWord.FnPageSearchWordIdsByHeadPrefixWithDel(Ctx, Ct);
 		var CheckWordOwnerOrThrow = await FnGetJnWordByIdEtCheckOwner(Ctx, Ct);
 		return async (User, PageQry, Req, Ct)=>{
 			var IdPage = await PageSearchIdsByPrefix(User, PageQry, Req, Ct);
@@ -211,7 +289,7 @@ public async Task<Func<
 		,CT
 		,Task<IPage<ITypedObj>> //其Type可能潙 JnWord, DtoJnWordEtAsset
 	>> FnPageSearch(IDbFnCtx Ctx, CT Ct){
-		var PageSearchIdsByPrefix = await DaoWord.FnPageSearchWordIdsByHeadPrefix(Ctx, Ct);
+		var PageSearchIdsByPrefix = await DaoWord.FnPageSearchWordIdsByHeadPrefixWithDel(Ctx, Ct);
 		var CheckWordOwnerOrThrow = await FnGetJnWordByIdEtCheckOwner(Ctx, Ct);
 		var SeekProp = await FnSlctPropEtJnWordByPropId(Ctx, Ct);
 		var SeekLearn = await FnSlctLearnEtJnWordByLearnId(Ctx, Ct);
@@ -300,7 +378,7 @@ public async Task<Func<
 	>> FnSlctPropEtJnWordByPropId(IDbFnCtx Ctx, CT Ct){
 		var SeekIdByPropId = await DaoWord.FnSlctRootIdByPropId(Ctx, Ct);
 		var GetJnWordByIdEtCheckOwner = await FnGetJnWordByIdEtCheckOwner(Ctx, Ct);
-		var SeekProp = await RepoKv.FnSlctById(Ctx, Ct);
+		var SeekProp = await RepoProp.FnSlctById(Ctx, Ct);
 		return async(User, PropId, Ct)=>{
 			var WordId = await SeekIdByPropId(PropId, Ct);
 			if(WordId is null){
@@ -341,7 +419,7 @@ public async Task<Func<
 	public async Task<Func<
 		IUserCtx, ReqPackWords, CT, Task<DtoCompressedWords>
 	>> FnZipAllWordsJsonNoStream(IDbFnCtx Ctx, CT Ct){
-		var FnPage = await FnPageWords(Ctx, Ct);
+		var FnPage = await FnPageWordsWithDel(Ctx, Ct);
 		return async(User, Req, Ct)=>{
 			if(Req.Type != EWordsPack.LineSepJnWordJsonGZip){
 				throw new NotSupportedException();
