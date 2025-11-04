@@ -1,5 +1,6 @@
 using Ngaq.Core.Frontend.ImgBg;
 using Ngaq.Core.Infra.Cfg;
+using Ngaq.Core.Infra.Url;
 using Ngaq.Core.Tools;
 using Tsinswreng.CsCfg;
 using Tsinswreng.CsTools;
@@ -13,13 +14,16 @@ public  partial class SvcImg:IImgGetter{
 	public IList<u64> Order = new List<u64>();
 	protected u64 Index{get;set;}=0;
 	public ICfgAccessor CfgAccessor{ get; set; } = AppCfg.Inst;
+	public I_GetBaseDir BaseDir = BaseDirMgr.Inst;
 
 //TODO 若此中拋異常且無catch則初始化DI旹則崩 宜傳異常置前端
 	public SvcImg(){
 try{
 var CfgDir = ItemAppCfg.GalleryDirs.GetFrom(CfgAccessor)??[];
-		foreach(var Dir in CfgDir){
-			if(Dir is str s && !str.IsNullOrEmpty(s)){
+		foreach(var _Dir in CfgDir){
+			if(_Dir is str s && !str.IsNullOrEmpty(s)){
+				var Dir = s;
+				Dir = BaseDir.Combine(Dir);
 				if(Directory.Exists(s)){
 					GalleryDirs.Add(s);
 				}

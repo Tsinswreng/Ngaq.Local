@@ -24,6 +24,7 @@ using Ngaq.Core.Frontend.ImgBg;
 using Ngaq.Core.Shared.Kv.Svc;
 using Ngaq.Local.Domains.Word.Svc;
 using Ngaq.Core.Shared.Word.Svc;
+using Ngaq.Core.Infra.Url;
 
 
 namespace Ngaq.Local.Di;
@@ -32,6 +33,7 @@ namespace Ngaq.Local.Di;
 public static class DiLocal{
 
 	public static IServiceCollection SetupLocal(this IServiceCollection z){
+		z.AddSingleton<I_GetBaseDir>(BaseDirMgr.Inst);
 		z.SetupDbCfg().SetupRepos().SetupSvcs();
 //Core詞典映射
 z.AddSingleton<IDictMapperShallow>(CoreDictMapper.Inst);
