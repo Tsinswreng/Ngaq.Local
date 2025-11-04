@@ -1,5 +1,6 @@
 using Ngaq.Core.Frontend.ImgBg;
 using Ngaq.Core.Infra.Cfg;
+using Ngaq.Core.Infra.Errors;
 using Ngaq.Core.Infra.Url;
 using Ngaq.Core.Tools;
 using Tsinswreng.CsCfg;
@@ -19,7 +20,7 @@ public  partial class SvcImg:IImgGetter{
 //TODO 若此中拋異常且無catch則初始化DI旹則崩 宜傳異常置前端
 	public SvcImg(){
 try{
-var CfgDir = ItemAppCfg.GalleryDirs.GetFrom(CfgAccessor)??[];
+var CfgDir = ItemsAppCfg.GalleryDirs.GetFrom(CfgAccessor)??[];
 		foreach(var _Dir in CfgDir){
 			if(_Dir is str s && !str.IsNullOrEmpty(s)){
 				var Dir = s;
@@ -37,8 +38,7 @@ var CfgDir = ItemAppCfg.GalleryDirs.GetFrom(CfgAccessor)??[];
 		Order = ToolRandom.RandomArrU64(0, (u64)FilePaths.Count-1, (u64)FilePaths.Count);
 }
 catch (System.Exception e){
-	System.Console.Error.WriteLine(e);
-	//throw;
+	ItemsErr.Word.BackgroundImageServiceFailedToInit.ToErr().AddDebugArgs(e);
 }
 	}
 
