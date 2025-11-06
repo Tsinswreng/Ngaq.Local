@@ -23,10 +23,9 @@ public  partial class TxnDbFnCtxMkr(
 	: ITxnDbFnCtxMkr
 {
 	public async Task<IDbFnCtx> MkDbFnCtxAsy(CT Ct){
-		var Txn = await GetTxn.GetTxnAsy(Ct);
 		var R = new DbFnCtx(){
-			Txn=Txn
 		};
+		R.Txn = await GetTxn.GetTxnAsy(R, Ct);
 		return R;
 	}
 }

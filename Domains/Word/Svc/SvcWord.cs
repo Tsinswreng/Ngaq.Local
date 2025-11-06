@@ -208,7 +208,7 @@ public partial class SvcWord(
 			await using var UpdLearns = new BatchListAsy<PoWordLearn, nil>(UpdLearn);
 			await using var UpdPoWords = new BatchListAsy<PoWord, nil>(UpdPoWord);
 
-			foreach(var OneNonExisting_ in DtoAddWords.NeoWords){
+			foreach(var (i,OneNonExisting_) in DtoAddWords.NeoWords.Index()){
 				var OneNonExisting = OneNonExisting_.AsOrToJnWord();
 				OneNonExisting.StoredAt = Tempus.Now();
 				//var NeoPoLearns = MkPoLearns(OneNonExisting.Props, OneNonExisting.Id);

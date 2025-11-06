@@ -13,7 +13,6 @@ using Tsinswreng.CsPage;
 using Tsinswreng.CsTools;
 using Ngaq.Local.Db.TswG;
 using System.Diagnostics;
-using Ngaq.Core.Word.Models.Dto;
 using Ngaq.Core.Word.Models.Po.Word;
 using System.Linq.Expressions;
 using Ngaq.Core.Shared.User.UserCtx;
@@ -23,6 +22,7 @@ using Ngaq.Core.Shared.Word.Models.Po.Word;
 using Ngaq.Core.Shared.Base.Models.Po;
 using Ngaq.Core.Shared.Word.Models.Po.Learn;
 using Ngaq.Local.Domains.Word.Dao;
+using Ngaq.Core.Shared.Word.Models.Dto;
 
 public partial class DaoSqlWord{
 	public async Task<Func<

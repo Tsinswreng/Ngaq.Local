@@ -6,7 +6,6 @@ using Ngaq.Core.Model.Word.Req;
 using Tsinswreng.CsCore;
 using Tsinswreng.CsPage;
 using Ngaq.Core.Infra;
-using Ngaq.Core.Word.Models.Dto;
 using Tsinswreng.CsTools;
 using Ngaq.Local.Db.TswG;
 using Ngaq.Core.Shared.User.UserCtx;
@@ -49,7 +48,8 @@ public partial class SvcWord{
 		,Path_Encode Path_Encode
 		,CT Ct
 	) {
-		var Ctx = new DbFnCtx{Txn = await TxnGetter.GetTxnAsy(Ct)};
+		var Ctx = new DbFnCtx{};
+		Ctx.Txn = await TxnGetter.GetTxnAsy(Ctx, Ct);
 		var AddOrUpdateWords = await FnAddOrUpdWordsFromTxt(Ctx, Ct);
 		await TxnRunner.RunTxn(Ctx.Txn, async(Ct)=>{
 			var BoWords = await SvcParseWordList.ParseWordsFromFilePath(Path_Encode);
@@ -66,7 +66,8 @@ public partial class SvcWord{
 		,string Text
 		,CT Ct
 	) {
-		var Ctx = new DbFnCtx{Txn = await TxnGetter.GetTxnAsy(Ct)};
+		var Ctx = new DbFnCtx{};
+		Ctx.Txn = await TxnGetter.GetTxnAsy(Ctx, Ct);
 		var AddOrUpdateWords = await FnAddOrUpdWordsFromTxt(Ctx, Ct);
 		await TxnRunner.RunTxn(Ctx.Txn, async(Ct)=>{
 			var BoWords = await SvcParseWordList.ParseWordsFromText(Text,Ct);
@@ -110,7 +111,8 @@ public partial class SvcWord{
 		,IEnumerable<WordId_LearnRecords> WordId_LearnRecordss
 		,CT Ct
 	){
-		var Ctx = new DbFnCtx{Txn = await TxnGetter.GetTxnAsy(Ct)};
+		var Ctx = new DbFnCtx{};
+		Ctx.Txn = await TxnGetter.GetTxnAsy(Ctx, Ct);
 		var AddWordId_PoLearnss = await FnAddWordId_PoLearnss(Ctx, Ct);
 		return await TxnRunner.RunTxn(Ctx.Txn, async(Ct)=>{
 			var WordId_PoLearns = WordId_LearnRecordss.Select(WordId_LearnRecords=>{

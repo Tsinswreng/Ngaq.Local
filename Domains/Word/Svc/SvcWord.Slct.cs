@@ -415,7 +415,7 @@ public async Task<Func<
 	>> FnZipAllWordsJsonNoStream(IDbFnCtx Ctx, CT Ct){
 		var FnPage = await FnPageWordsWithDel(Ctx, Ct);
 		return async(User, Req, Ct)=>{
-			if(Req.Type != EWordsPack.LineSepJnWordJsonGZip){
+			if(!EWordsPack.LineSepJnWordJsonGZip.Eq(Req.Type)){
 				throw new NotSupportedException();
 			}
 			var PageAll = await FnPage(User, PageQry.SlctAll(), Ct);
@@ -452,11 +452,11 @@ public async Task<Func<
 		DtoCompressedWords Compressed, CT Ct
 	){
 		try{
-			if(Compressed.Type == EWordsPack.JnWordArrJsonGZip){
+			if(EWordsPack.JnWordArrJsonGZip.Eq(Compressed.Type)){
 				var decompressedBytes = Decompress(Compressed.Data??[]);
 				var Json = Encoding.UTF8.GetString(decompressedBytes);
 				return JSON.parse<IList<JnWord>>(Json)!;
-			}else if(Compressed.Type == EWordsPack.LineSepJnWordJsonGZip){
+			}else if(EWordsPack.LineSepJnWordJsonGZip.Eq(Compressed.Type)){
 				var decompressedBytes = Decompress(Compressed.Data??[]);
 				var Json = Encoding.UTF8.GetString(decompressedBytes);
 				var Lines = Json.Split('\n');

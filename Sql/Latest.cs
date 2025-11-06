@@ -7,6 +7,7 @@ using Ngaq.Core.Shared.Kv.Models;
 using Ngaq.Core.Shared.Word.Models.Po.Kv;
 using Ngaq.Core.Frontend.Kv;
 using Ngaq.Core.Shared.Kv.Svc;
+using Ngaq.Core.Shared.User.Models.Po.User;
 
 
 
@@ -106,7 +107,8 @@ public partial class DbIniter{
 	}
 
 	public async Task<nil> Init(CT Ct) {
-		var Ctx = new DbFnCtx{Txn = await TxnGetter.GetTxnAsy(Ct)};
+		var Ctx = new DbFnCtx{};
+		Ctx.Txn = await TxnGetter.GetTxnAsy(Ctx, Ct);
 		var Init = await FnInit(Ctx, Ct);
 		await TxnRunner.RunTxn(Ctx.Txn, Init, Ct);
 		await InitKv(Ct);
@@ -118,6 +120,10 @@ public partial class DbIniter{
 		var PoKv = new PoKv();
 		var Path = KeysClientKv.ClientId;
 		PoKv.SetStrStr(Path, ClientId+"");
+		var Old = await SvcKv.GetByOwnerEtKeyAsy(IdUser.Zero, Path, Ct);
+		if(Old is not null){
+			return NIL;
+		}
 		await SvcKv.SetAsy(PoKv, Ct);
 		return NIL;
 	}

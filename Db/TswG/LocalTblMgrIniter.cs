@@ -5,16 +5,16 @@ using Ngaq.Core.Model.Po.Learn_;
 using Ngaq.Core.Model.Po.Word;
 using Ngaq.Core.Infra;
 using Ngaq.Core.Model.Po;
-using System.Data;
+
 using Ngaq.Core.Models.Po;
-using Tsinswreng.CsUlid;
+
 using Tsinswreng.CsTools;
 using Ngaq.Core.Sys.Models;
 using Ngaq.Core.Word.Models.Po.Word;
-using Ngaq.Core.Model.Po.Role;
-using Ngaq.Core.Models.Sys.Po.Permission;
+
+
 using Ngaq.Core.Shared.User.Models.Po.User;
-using Ngaq.Core.Shared.User.Models;
+
 using Ngaq.Core.Shared.Word.Models.Po.Kv;
 using Ngaq.Core.Shared.Word.Models.Learn_;
 using Ngaq.Core.Shared.Base.Models.Po;
@@ -94,8 +94,8 @@ public partial class LocalTblMgrIniter{
 	}
 
 	protected ITable CfgIPoKv(ITable o){
-		o.SetCol(nameof(IPoKv.KType)).MapEnumTypeInt32<EKvType>();
-		o.SetCol(nameof(IPoKv.VType)).MapEnumTypeInt32<EKvType>();
+		o.SetCol(nameof(IPoKv.KType)).MapEnumToInt32<EKvType>();
+		o.SetCol(nameof(IPoKv.VType)).MapEnumToInt32<EKvType>();
 		o.OuterAdditionalSqls.AddRange([
 $"{MkIdx} {o.Qt("Idx_"+o.DbTblName+"_KStr")} ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(IPoKv.KStr))})"
 ,$"{MkIdx} {o.Qt("Idx_"+o.DbTblName+"_KI64")} ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(IPoKv.KI64))})"
@@ -201,7 +201,8 @@ CREATE UNIQUE INDEX {o.Qt($"Ux_{o.DbTblName}_Owner_Head_Lang")} ON {o.Qt(o.DbTbl
 			CfgBizCreateUpdateTime(o);
 			o.CodeIdName = nameof(PoWordLearn.Id);
 			o.SetCol(nameof(PoWordLearn.Id)).MapType(IdWordLearn.MkTypeMapFn());
-			o.SetCol(nameof(PoWordLearn.LearnResult)).MapEnumTypeInt32<ELearn>();
+			//o.SetCol(nameof(PoWordLearn.LearnResult)).MapEnumTypeInt32<ELearn>();
+			o.SetCol(nameof(PoWordLearn.LearnResult)).MapEnumToStr<ELearn>();
 		}
 		_Inited = true;
 		return NIL;
