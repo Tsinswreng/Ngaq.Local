@@ -372,7 +372,7 @@ public async Task<Func<
 	>> FnSlctPropEtJnWordByPropId(IDbFnCtx Ctx, CT Ct){
 		var SeekIdByPropId = await DaoWord.FnSlctRootIdByPropId(Ctx, Ct);
 		var GetJnWordByIdEtCheckOwner = await FnGetJnWordByIdEtCheckOwner(Ctx, Ct);
-		var SeekProp = await RepoProp.FnSlctById(Ctx, Ct);
+		var SeekProp = await RepoProp.FnSlctOneById(Ctx, Ct);
 		return async(User, PropId, Ct)=>{
 			var WordId = await SeekIdByPropId(PropId, Ct);
 			if(WordId is null){
@@ -392,7 +392,7 @@ public async Task<Func<
 	>> FnSlctLearnEtJnWordByLearnId(IDbFnCtx Ctx, CT Ct){
 		var SeekIdByLearnId = await DaoWord.FnSlctRootIdByLearnId(Ctx, Ct);
 		var GetJnWordByIdEtCheckOwner = await FnGetJnWordByIdEtCheckOwner(Ctx, Ct);
-		var SeekLearn = await RepoLearn.FnSlctById(Ctx, Ct);
+		var SeekLearn = await RepoLearn.FnSlctOneById(Ctx, Ct);
 		return async(User, LearnId, Ct)=>{
 			var WordId = await SeekIdByLearnId(LearnId, Ct);
 			if(WordId is null){

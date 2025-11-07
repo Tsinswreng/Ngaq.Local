@@ -28,6 +28,8 @@ using Ngaq.Core.Shared.Word.Svc;
 using Ngaq.Core.Tools;
 using System.Collections;
 using Ngaq.Core.Shared.Base.Models.Po;
+using System.Diagnostics;
+using Microsoft.Extensions.Logging;
 
 public partial class SvcWord(
 	ISvcParseWordList SvcParseWordList
@@ -39,6 +41,7 @@ public partial class SvcWord(
 	,IAppRepo<PoWordLearn, IdWordLearn> RepoLearn
 	,TxnWrapper<DbFnCtx> TxnWrapper
 	,IJsonSerializer JsonSerializer
+	,ILogger Logger
 )
 	: ISvcWord
 {
@@ -197,6 +200,7 @@ public partial class SvcWord(
 		var UpdPoWord = await RepoPoWord.FnUpdManyById(Ctx, null, Ct);
 
 		return async(UserCtx, DtoAddWords, Ct)=>{
+			var sw = Stopwatch.StartNew();
 			await using var NeoWords = new BatchListAsy<IJnWord, nil>(InsertJnWords);
 			await using var NeoProps = new BatchListAsy<PoWordProp, nil>(async(kvs, Ct)=>{
 				return await InsertPoKvs(null, kvs, Ct);
@@ -246,6 +250,8 @@ public partial class SvcWord(
 					await UpdUpd(UpdatedWord.WordInDb.Id_(), Ct);
 				}
 			}//~foreach(var UpdatedWord in DtoAddWords.UpdatedWords)
+			sw.Stop();
+			Logger.LogInformation($"SyncFromDto {sw.ElapsedMilliseconds}ms");
 			return NIL;
 		};
 	}

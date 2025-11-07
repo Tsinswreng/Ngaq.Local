@@ -82,7 +82,7 @@ AND {TP.Eq(PWordId)}
 """;
 			return Sql;
 		};
-		var GetPoWordById = await RepoWord.FnSlctById(Ctx, Ct);
+		var GetPoWordById = await RepoWord.FnSlctOneById(Ctx, Ct);
 		var Cmd_SeekKv = await SqlCmdMkr.Prepare(Ctx, Sql_SeekByFKey(TP.Qt(TP.DbTblName)), Ct);
 		var Cmd_SeekLearn = await SqlCmdMkr.Prepare(Ctx, Sql_SeekByFKey(TL.Qt(TL.DbTblName)), Ct);
 
@@ -231,11 +231,12 @@ ORDER BY {T.Fld(N.CreatedAt)} DESC
 			if(PoWordsPage.DataAsyE == null){
 				return R;
 			}
+			var syncPoWordsPage = await PoWordsPage.ToSyncPage(Ct);//先全部載入內存、否則pg報錯不支持併發查
 
 			async IAsyncEnumerable<IJnWord> fn(
-				IAsyncEnumerable<PoWord> poWords
+				IEnumerable<PoWord> poWords
 			){
-				await foreach(var PoWord in poWords){
+				foreach(var PoWord in poWords){
 					var KvPage = await PageKvByFKey(PoWord.Id, TK.PageSlctAll(), Ct);
 					var syncKvPage = await KvPage.ToSyncPage(Ct);
 					var Kvs = await _PageToList<PoWordProp>(syncKvPage, TK);
@@ -249,7 +250,7 @@ ORDER BY {T.Fld(N.CreatedAt)} DESC
 				}
 			}
 
-			R.DataAsyE = fn(PoWordsPage.DataAsyE);
+			R.DataAsyE = fn(syncPoWordsPage.Data??[]);
 
 
 #if false // Sqlite支持 但pg不支持在同一个连接上并发执行命令。
