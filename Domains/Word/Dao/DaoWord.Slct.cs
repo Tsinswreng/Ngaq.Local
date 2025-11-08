@@ -23,6 +23,8 @@ using Ngaq.Core.Shared.Base.Models.Po;
 using Ngaq.Core.Shared.Word.Models.Po.Learn;
 using Ngaq.Local.Domains.Word.Dao;
 using Ngaq.Core.Shared.Word.Models.Dto;
+using System.Collections;
+using Ngaq.Core.Shared.User.Models.Po.User;
 
 public partial class DaoSqlWord{
 	public async Task<Func<
@@ -45,7 +47,7 @@ AND {T.Eq(POwner)}
 AND {T.Eq(PHead)}
 AND {T.Eq(PLang)}
 """;
-		var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
+		var SqlCmd = await Ctx.PrepareToDispose(SqlCmdMkr, Sql, Ct);
 		return async (User,Head,Lang,Ct)=>{
 			var UserId = User.UserId;
 			var Args = ArgDict.Mk(T)
@@ -60,6 +62,45 @@ AND {T.Eq(PLang)}
 			return IdWord.FromByteArr((u8[])ans!);
 		};
 	}
+
+
+// 	public async Task<Func<
+// 		IEnumerable<IdUser>,
+// 		IEnumerable<str>,//Head
+// 		IEnumerable<str>,//Lang
+// 		CT
+// 		,Task<IList<IdWord?>>
+// 	>>
+// 	FnSlctListIdByOwnerHeadLang(IDbFnCtx Ctx,CT Ct){
+// 		var T = TblMgr.GetTbl<PoWord>(); var N = new PoWord.N();
+// 		var POwner = T.Prm(N.Owner);var PHead = T.Prm(N.Head); var PLang = T.Prm(N.Lang);
+// var fnSql = (u64 i)=>{
+// return $"""
+// SELECT {T.Fld(N.Id)} AS {T.Qt(N.Id)}
+// FROM {T.Qt(T.DbTblName)}
+// WHERE 1=1
+// AND {T.SqlIsNonDel()}
+// AND {T.Eq(POwner.Name, POwner[i])}
+// AND {T.Eq(PHead.Name, PHead[i])}
+// AND {T.Eq(PLang.Name, PLang[i])}
+// """;
+// };
+// 		var SqlCmd = await Ctx.PrepareToDispose(SqlCmdMkr, Sql, Ct);
+// 		return async (User,Head,Lang,Ct)=>{
+// 			var UserId = User.UserId;
+// 			var Args = ArgDict.Mk(T)
+// 			.AddT(POwner, UserId)
+// 			.AddT(PHead, Head)
+// 			.AddT(PLang, Lang);
+// 			var GotDict = await SqlCmd.Args(Args).IterAsyE(Ct).FirstOrDefaultAsync(Ct);
+// 			if(GotDict == null){
+// 				return null;
+// 			}
+// 			var ans = GotDict[N.Id];
+// 			return IdWord.FromByteArr((u8[])ans!);
+// 		};
+// 	}
+
 
 	public async Task<Func<
 		IdWord
@@ -412,6 +453,35 @@ AND {Tbl.Eq(PId)}
 		var Fn = await FnSlctRootIdByUpperId(Ctx, TblMgr.GetTbl<PoWordLearn>(), Ct);
 		return async(LearnId, Ct)=>{
 			return await Fn(LearnId, Ct);
+		};
+	}
+
+	public async Task<Func<
+		CT, Task<nil>
+	>> FnTextMultiSelect(IDbFnCtx Ctx, CT Ct){
+		var sqls = new List<str>();
+for(var i = 0; i < 500; i++){
+	sqls.Add($"""
+SELECT "Head", "Lang" FROM "Word" WHERE "Head" = '{i}';
+""");
+}
+var Sql = str.Join("\n", sqls);
+var Cmd = await Ctx.PrepareToDispose(SqlCmdMkr, Sql, Ct);
+		return async(Ct)=>{
+			var sw = Stopwatch.StartNew();
+			var R2d = await Cmd.All2d(Ct);
+			sw.Stop();
+			if(R2d is null){return NIL;}
+			foreach(var R1d in R2d){
+				foreach(var Dict in R1d){
+					System.Console.WriteLine(
+						str.Join(",", Dict.Values)
+					);
+				}
+			}
+			System.Console.WriteLine($"耗时 {sw.ElapsedMilliseconds} ms");
+			System.Console.WriteLine(R2d.Count);
+			return NIL;
 		};
 	}
 

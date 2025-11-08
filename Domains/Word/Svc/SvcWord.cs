@@ -127,11 +127,11 @@ public partial class SvcWord(
 		var UpdUpd = await DaoWord.FnTriggerOnRootAfterUpd(Ctx, Ct);
 
 		return async(UserCtx, DtoAddWords, Ct)=>{
-			await using var NeoWords = new BatchListAsy<IJnWord, nil>(InsertJnWords);
-			await using var NeoProps = new BatchListAsy<PoWordProp, nil>(async(kvs, Ct)=>{
+			await using var NeoWords = new BatchCollector<IJnWord, nil>(InsertJnWords);
+			await using var NeoProps = new BatchCollector<PoWordProp, nil>(async(kvs, Ct)=>{
 				return await InsertPoKvs(null, kvs, Ct);
 			});
-			await using var NeoLearns = new BatchListAsy<PoWordLearn, nil>(async(learns, Ct)=>{
+			await using var NeoLearns = new BatchCollector<PoWordLearn, nil>(async(learns, Ct)=>{
 				return await InsertPoLearns(null, learns, Ct);
 			});
 
@@ -201,16 +201,16 @@ public partial class SvcWord(
 
 		return async(UserCtx, DtoAddWords, Ct)=>{
 			var sw = Stopwatch.StartNew();
-			await using var NeoWords = new BatchListAsy<IJnWord, nil>(InsertJnWords);
-			await using var NeoProps = new BatchListAsy<PoWordProp, nil>(async(kvs, Ct)=>{
+			await using var NeoWords = new BatchCollector<IJnWord, nil>(InsertJnWords);
+			await using var NeoProps = new BatchCollector<PoWordProp, nil>(async(kvs, Ct)=>{
 				return await InsertPoKvs(null, kvs, Ct);
 			});
-			await using var NeoLearns = new BatchListAsy<PoWordLearn, nil>(async(learns, Ct)=>{
+			await using var NeoLearns = new BatchCollector<PoWordLearn, nil>(async(learns, Ct)=>{
 				return await InsertPoLearns(null, learns, Ct);
 			});
-			await using var UpdProps = new BatchListAsy<PoWordProp, nil>(UpdProp);
-			await using var UpdLearns = new BatchListAsy<PoWordLearn, nil>(UpdLearn);
-			await using var UpdPoWords = new BatchListAsy<PoWord, nil>(UpdPoWord);
+			await using var UpdProps = new BatchCollector<PoWordProp, nil>(UpdProp);
+			await using var UpdLearns = new BatchCollector<PoWordLearn, nil>(UpdLearn);
+			await using var UpdPoWords = new BatchCollector<PoWord, nil>(UpdPoWord);
 
 			foreach(var (i,OneNonExisting_) in DtoAddWords.NeoWords.Index()){
 				var OneNonExisting = OneNonExisting_.AsOrToJnWord();
@@ -273,7 +273,7 @@ public partial class SvcWord(
 			,DtoAddWordsOld DtoAddWords
 			,CT Ct
 		)=>{
-			await using var NeoLearns = new BatchListAsy<PoWordLearn, nil>(async (learns, Ct)=>{
+			await using var NeoLearns = new BatchCollector<PoWordLearn, nil>(async (learns, Ct)=>{
 				return await InsertPoLearns(null, learns, Ct);
 			});
 
@@ -503,7 +503,7 @@ public partial class SvcWord(
 			,IAsyncEnumerable<str> JsonLineIter
 			,CT Ct
 		)=>{
-			await using var Bl = new BatchListAsy<JnWord, nil>(async (words, Ct)=>{
+			await using var Bl = new BatchCollector<JnWord, nil>(async (words, Ct)=>{
 				await FnAddWords(User, words, Ct);
 				return NIL;
 			});
@@ -657,11 +657,11 @@ public partial class SvcWord(
 
 				{//刪ᵣ (OldWord比JnWord多出之內容)
 
-					await using var DelProps = new BatchListAsy<IdWordProp, nil>(async(ids, Ct)=>{
+					await using var DelProps = new BatchCollector<IdWordProp, nil>(async(ids, Ct)=>{
 						await SofeDelPropsByIds(ids, Ct);
 						return NIL;
 					});
-					await using var DelLearns = new BatchListAsy<IdWordLearn, nil>(async(ids, Ct)=>{
+					await using var DelLearns = new BatchCollector<IdWordLearn, nil>(async(ids, Ct)=>{
 						return await SofeDelLearnByIds(ids, Ct);
 					});
 					foreach(var Prop in OldDiffNeo.NeoProps??[]){

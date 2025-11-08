@@ -24,15 +24,15 @@ public partial class DaoSqlWord{
 
 		return async(JnWords, Ct)=>{
 			u64 BatchSize = 0xfff;
-			await using var PoWords = new BatchListAsy<PoWord, nil>(async(list, ct)=>{
+			await using var PoWords = new BatchCollector<PoWord, nil>(async(list, ct)=>{
 				await InsertPoWords(list,ct);
 				return NIL;
 			}, BatchSize);
-			await using var PoKvs = new BatchListAsy<PoWordProp, nil>(async(e, ct)=>{
+			await using var PoKvs = new BatchCollector<PoWordProp, nil>(async(e, ct)=>{
 				await InsertPoKvs(e, ct);
 				return NIL;
 			}, BatchSize);
-			await using var PoLearns = new BatchListAsy<PoWordLearn, nil>(async(e, ct)=>{
+			await using var PoLearns = new BatchCollector<PoWordLearn, nil>(async(e, ct)=>{
 				await InsertPoLearns(e, ct);
 				return NIL;
 			}, BatchSize);
