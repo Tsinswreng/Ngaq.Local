@@ -290,16 +290,18 @@ public async Task<Func<
 		return async (User, PageQry, Req, Ct)=>{
 			var IdPage = await PageSearchIdsByPrefix(User, PageQry, Req, Ct);
 			List<ITypedObj> Objs = [];
-			try{
-				var WordId = IdWord.FromLow64Base(Req.RawStr);
-				var Word = await CheckWordOwnerOrThrow(User, WordId, Ct);
+
+			if(IdWord.TryParse(Req.RawStr, out var WordId)){
+				var Word = await CheckWordOwnerOrThrow(User, WordId.Value, Ct);
 				if(Word is not null){
 					Objs.Add(new TypedObj{
 						Data = Word
 						,Type = typeof(JnWord)
 					});
 				}
-				var Prop_JnWord = await SeekProp(User, IdWordProp.FromLow64Base(Req.RawStr), Ct);
+			}
+			if(IdWordProp.TryParse(Req.RawStr, out var PropId)){
+				var Prop_JnWord = await SeekProp(User, PropId, Ct);
 				if(Prop_JnWord is not null){
 					Objs.Add(new TypedObj{
 						Data = new DtoJnWordEtAsset{
@@ -309,7 +311,10 @@ public async Task<Func<
 						,Type = typeof(PoWordProp)
 					});
 				}
-				var Learn_JnWord = await SeekLearn(User, IdWordLearn.FromLow64Base(Req.RawStr), Ct);
+			}
+
+			if(IdWordLearn.TryParse(Req.RawStr, out var WordLearnId)){
+				var Learn_JnWord = await SeekLearn(User, WordLearnId, Ct);
 				if(Learn_JnWord is not null){
 					Objs.Add(new TypedObj{
 						Data = new DtoJnWordEtAsset{
@@ -319,9 +324,8 @@ public async Task<Func<
 						,Type = typeof(PoWordLearn)
 					});
 				}
-			}catch (Exception) {
-				throw;
 			}
+
 			if(IdPage.DataAsyE is not null){
 				await foreach(var IdWord in IdPage.DataAsyE){
 					var Word = await CheckWordOwnerOrThrow(User, IdWord, Ct);//不應再拋異常
