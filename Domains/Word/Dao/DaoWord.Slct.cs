@@ -34,7 +34,7 @@ public partial class DaoSqlWord{
 		CT
 		,Task<IdWord?>
 	>>
-	FnSlctIdByOwnerHeadLang(IDbFnCtx Ctx,CT Ct){
+	FnSlctIdByOwnerHeadLangWithDel(IDbFnCtx Ctx,CT Ct){
 		var T = TblMgr.GetTbl<PoWord>(); var N = new PoWord.N();
 		var POwner = T.Prm(N.Owner);var PHead = T.Prm(N.Head); var PLang = T.Prm(N.Lang);
 		var Sql =
@@ -42,7 +42,6 @@ $"""
 SELECT {T.Fld(N.Id)} AS {T.Qt(N.Id)}
 FROM {T.Qt(T.DbTblName)}
 WHERE 1=1
-AND {T.SqlIsNonDel()}
 AND {T.Eq(POwner)}
 AND {T.Eq(PHead)}
 AND {T.Eq(PLang)}

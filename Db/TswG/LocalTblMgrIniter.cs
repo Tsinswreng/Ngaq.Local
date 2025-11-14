@@ -6,8 +6,6 @@ using Ngaq.Core.Model.Po.Word;
 using Ngaq.Core.Infra;
 using Ngaq.Core.Model.Po;
 
-using Ngaq.Core.Models.Po;
-
 using Tsinswreng.CsTools;
 using Ngaq.Core.Sys.Models;
 using Ngaq.Core.Word.Models.Po.Word;

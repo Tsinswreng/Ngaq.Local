@@ -13,6 +13,7 @@ using Ngaq.Local.Db.TswG;
 using Ngaq.Core.Shared.Word.Models.Po.Kv;
 using Ngaq.Core.Shared.Word.Models.Po.Word;
 using Ngaq.Core.Shared.Word.Models.Po.Learn;
+using Ngaq.Core.Shared.Base.Models.Po;
 
 public partial class DaoSqlWord(
 	ISqlCmdMkr SqlCmdMkr
@@ -36,10 +37,33 @@ public partial class DaoSqlWord(
 		IdWord
 		,CT
 		,Task<nil>
-	>> FnTriggerOnRootAfterUpd(IDbFnCtx? Ctx, CT Ct){
+	>> FnTriggerOnRootAfterUpd(IDbFnCtx Ctx, CT Ct){
 		var UpdPoWord = await RepoWord.FnUpd_BizUpdatedAt(Ctx,Ct);
 		return async(WordId, Ct)=>{
 			await UpdPoWord(WordId, Ct);
+			return NIL;
+		};
+	}
+
+
+	/// <summary>
+	/// 須確保數據同步後 刪。各節點ʹ數據ˋ未同步前只能軟刪
+	/// </summary>
+	/// <param name="Ctx"></param>
+	/// <param name="Tbl"></param>
+	/// <param name="Ct"></param>
+	/// <returns></returns>
+	async Task<Func<
+		CT, Task<nil>
+	>> FnHardDelSoftDeletedInWordDb(IDbFnCtx Ctx, ITable Tbl, CT Ct){
+		var T = Tbl;
+		var Sql = $"""
+DELETE FROM {T.Qt(T.DbTblName)}
+WHERE {T.Fld(nameof(IPoBase.DelAt))} <> 0
+""";
+		var Cmd = await Ctx.PrepareToDispose(SqlCmdMkr, Sql, Ct);
+		return async(Ct)=>{
+			await Cmd.All(Ct);
 			return NIL;
 		};
 	}

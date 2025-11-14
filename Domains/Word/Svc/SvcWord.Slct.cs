@@ -24,16 +24,16 @@ using Ngaq.Local.Domains.Word.Dao;
 using Ngaq.Core.Shared.Word;
 
 public partial class SvcWord{
-public async Task<Func<
+	public async Task<Func<
 		IUserCtx
 		,IEnumerable<IJnWord>
 		,CT
 		,Task<DuplicationGroup<IJnWord>>
-	>> FnGroupByExising(
+	>> FnGroupByExisingWithDel(
 		IDbFnCtx Ctx
 		,CT Ct
 	){
-		var SeekIdByHeadEtLang = await DaoWord.FnSlctIdByOwnerHeadLang(Ctx, Ct);
+		var SeekIdByHeadEtLang = await DaoWord.FnSlctIdByOwnerHeadLangWithDel(Ctx, Ct);
 		var SeekJnWordById = await DaoWord.FnSlctJnWordByIdWithDel(Ctx, Ct);
 		return async(UserCtx, JnWords, Ct)=>{
 			var NonExistingList = new List<IJnWord>();
@@ -67,10 +67,10 @@ public async Task<Func<
 	}
 
 
-/// <summary>
-/// 蔿 生詞表文本ᙆ待加之諸詞分類 按是否既存于庫中
-/// </summary>
-/// <returns></returns>
+	/// <summary>
+	/// 蔿 生詞表文本ᙆ待加之諸詞分類 按是否既存于庫中
+	/// </summary>
+	/// <returns></returns>
 	public async Task<Func<
 		IUserCtx
 		,IEnumerable<IJnWord>
@@ -80,7 +80,7 @@ public async Task<Func<
 		IDbFnCtx Ctx
 		,CT Ct
 	){
-		var GroupByExisting = await FnGroupByExising(Ctx, Ct);
+		var GroupByExisting = await FnGroupByExisingWithDel(Ctx, Ct);
 
 		return async(UserCtx,JnWords,Ct)=>{
 			var R = new DtoAddWordsOld();
@@ -124,7 +124,7 @@ public async Task<Func<
 	}
 
 	/// <summary>
-	/// 按是否既存于庫中 蔿 待合入之諸詞 分類
+	/// 按是否既存于庫中 蔿 待同步之諸詞 分類
 	/// </summary>
 	/// <returns></returns>
 	public async Task<Func<
@@ -134,7 +134,7 @@ public async Task<Func<
 		IDbFnCtx Ctx
 		,CT Ct
 	){
-		var GroupByExisting = await FnGroupByExising(Ctx, Ct);
+		var GroupByExisting = await FnGroupByExisingWithDel(Ctx, Ct);
 
 		return async(UserCtx,JnWords,Ct)=>{
 			var R = new DtoSyncWords();
@@ -154,6 +154,7 @@ public async Task<Func<
 			//查庫 篩出庫中既有ʹ舊詞 與 未加過之詞
 			var ExistGroup = await GroupByExisting(UserCtx, Mergeds, Ct);
 			R.NeoWords = ExistGroup.NonExistings??[];
+
 
 			// 有變動之諸新詞。
 			var ChangedNewWords = new List<IJnWord>();

@@ -8,6 +8,7 @@ using Ngaq.Core.Shared.Word.Models.Po.Word;
 public partial class DaoSqlWord{
 /// <summary>
 /// 不校驗、直接update語句㕥改
+/// 慎用 恐致謬。一般ʹ況ʸ直˪ 先軟刪舊詞後建新詞即可
 /// </summary>
 /// <param name="Ctx"></param>
 /// <param name="Ct"></param>
