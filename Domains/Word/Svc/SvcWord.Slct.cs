@@ -1,5 +1,4 @@
 namespace Ngaq.Local.Domains.Word.Svc;
-using Ngaq.Core.Infra.Core;
 using Ngaq.Core.Model.Po.Word;
 using Ngaq.Core.Infra.Errors;
 using Tsinswreng.CsPage;
@@ -22,6 +21,8 @@ using System.Collections;
 using Tsinswreng.CsSqlHelper;
 using Ngaq.Local.Domains.Word.Dao;
 using Ngaq.Core.Shared.Word;
+using Tsinswreng.CsCore;
+using Tsinswreng.CsErr;
 
 public partial class SvcWord{
 	public async Task<Func<
@@ -123,10 +124,11 @@ public partial class SvcWord{
 		};
 	}
 
-	/// <summary>
-	/// 按是否既存于庫中 蔿 待同步之諸詞 分類
-	/// </summary>
-	/// <returns></returns>
+[Doc("""
+= 按是否既存于庫中 蔿 待同步之諸詞 分類
+以(詞頭, 語言)作業務ʸʹ 詞ʹ唯一標識洏非Id
+//TODO 跨節點同步旹 蜮遇況芝 同(詞頭,語言)之二詞ʹIdˋ異
+""")]
 	public async Task<Func<
 		IUserCtx,IEnumerable<IJnWord>,CT
 		,Task<DtoSyncWords>
@@ -164,6 +166,9 @@ public partial class SvcWord{
 
 				IJnWord? NeoPart = new JnWord{Word = OldWord.Word};
 				IJnWord? ChangedPart = new JnWord{Word = OldWord.Word};
+
+				//TODO 斯處ʹSyncˋ是以Id潙基
+				// 跨節點同步旹 蜮遇況芝 同(詞頭,語言)之二詞ʹIdˋ異
 				var SycnResult = OldWord.Sync(NewWord, ref NeoPart, ref ChangedPart);
 				//var Diffed = NewWord.DiffByTime(OldWord);
 

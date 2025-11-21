@@ -29,7 +29,7 @@ public  partial class SvcParseWordList
 		var DateBlocks = Parser.Parse();
 		var metadata = Parser.Status.Metadata;
 		if (metadata == null) {
-			throw new AppErr("Metadata is null");
+			throw new Exception("Metadata is null");//TODO i18n
 		}
 		var JnWords = ParseResultMapper.Inst.Map(metadata, DateBlocks);
 		return JnWords;

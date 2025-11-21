@@ -1,5 +1,6 @@
 namespace Ngaq.Local.Db.TswG;
 using Tsinswreng.CsSqlHelper;
+
 using Ngaq.Core.Model.Po.Kv;
 using Ngaq.Core.Model.Po.Learn_;
 using Ngaq.Core.Model.Po.Word;
@@ -7,6 +8,7 @@ using Ngaq.Core.Infra;
 using Ngaq.Core.Model.Po;
 
 using Tsinswreng.CsTools;
+using Tsinswreng.CsCore;
 using Ngaq.Core.Sys.Models;
 using Ngaq.Core.Word.Models.Po.Word;
 

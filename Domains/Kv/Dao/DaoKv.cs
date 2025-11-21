@@ -115,7 +115,7 @@ AND {T.Qt(NKStr)} = {PKStr}
 			.AddT(PKStr, KStr)
 			.AddPageQry(PageQry, Lmt, Ofst);
 			var RawDicts = await SqlCmd.Args(Arg).All(Ct);
-			var PoAsy = RawDicts.Select(R=>T.DbDictToEntity<PoKv>(R)).ToListTryNoCopy();
+			var PoAsy = RawDicts.Select(R=>T.DbDictToEntity<PoKv>(R)).AsOrToList();
 			var R = Page.Mk(PageQry, PoAsy);
 			return R;
 		};

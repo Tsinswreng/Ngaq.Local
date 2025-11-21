@@ -4,6 +4,7 @@ using Ngaq.Core.Infra.Errors;
 using Ngaq.Core.Infra.Url;
 using Ngaq.Core.Tools;
 using Tsinswreng.CsCfg;
+using Tsinswreng.CsErr;
 using Tsinswreng.CsTools;
 
 namespace Ngaq.Local.ImplFrontend;

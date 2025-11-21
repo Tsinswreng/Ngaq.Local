@@ -1,5 +1,13 @@
+#if false
+同Owner下 (Head, Lang) 纔是一詞ʹ 理則ʸʹ 唯一標識、洏非Id
+(如異ʹ節點蜮在同步前皆各新增一詞芝有同ʹ(Head,Lang)、則雖同ʹ詞、猶將被予異ʹId)
+
+術語ʹ釋
+- Add/Merge (word): 取(已有ʹ詞 - 目標詞)之差集 後 入庫 (即添ʃ缺ʹ部)
+- OldWord.Sync(NeoWord): 同步。依 BizUpdatedAt 潙據 添ʃ缺 改ʃ有變
+- OldWord.Upd(NeoWord) 把 OldWord 改珹 NeoWord。
+#endif
 namespace Ngaq.Local.Domains.Word.Svc;
-using Ngaq.Core.Infra.Core;
 using Ngaq.Core.Model.Po.Kv;
 using Ngaq.Core.Model.Po.Learn_;
 using Ngaq.Core.Model.Po.Word;
@@ -29,6 +37,8 @@ using System.Collections;
 using Ngaq.Core.Shared.Base.Models.Po;
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
+using Tsinswreng.CsCore;
+using Tsinswreng.CsErr;
 
 public partial class SvcWord(
 	ISvcParseWordList SvcParseWordList
@@ -67,17 +77,17 @@ public partial class SvcWord(
 		return R;
 	}
 
-	protected IEnumerable<PoWordLearn> MkPoLearnEnume(IEnumerable<PoWordProp> NeoProps, IdWord WordId){
-		foreach(var Prop in NeoProps){
-			if(Prop.KStr == KeysProp.Inst.description){
-				var U = new PoWordLearn();
-				U.BizCreatedAt = Prop.BizCreatedAt;
-				U.LearnResult = ELearn.Add;
-				U.WordId = WordId;
-				yield return U;
-			}
-		}
-	}
+	// protected IEnumerable<PoWordLearn> MkPoLearnEnume(IEnumerable<PoWordProp> NeoProps, IdWord WordId){
+	// 	foreach(var Prop in NeoProps){
+	// 		if(Prop.KStr == KeysProp.Inst.description){
+	// 			var U = new PoWordLearn();
+	// 			U.BizCreatedAt = Prop.BizCreatedAt;
+	// 			U.LearnResult = ELearn.Add;
+	// 			U.WordId = WordId;
+	// 			yield return U;
+	// 		}
+	// 	}
+	// }
 
 	/// <summary>
 	/// 若JnWord已被軟刪則軟刪、否則添。用于匯入遠端ʸ來ʹ詞
@@ -177,87 +187,11 @@ public partial class SvcWord(
 
 
 
-	/// <summary>
-	/// 把DtoAddWords 寫入數據庫。不類[從文本生詞表導入單詞]之新增ᵣ [添加記錄]
-	/// </summary>
-	[Obsolete("有蠹 實非sync 只是Merge")]
-	public async Task<Func<
-		IUserCtx
-		,DtoSyncWordsOld2
-		,CT
-		,Task<nil>
-	>> FnSyncFromDtoOld(
-		IDbFnCtx Ctx, CfgMerge Cfg
-		,CT Ct
-	){
-		var InsertJnWords = await DaoWord.FnInsertJnWords(Ctx, Ct);
-		var InsertPoKvs = await DaoWord.FnInsertPoKvs(Ctx, Ct);
-		var InsertPoLearns = await DaoWord.FnInsertPoLearns(Ctx, Ct);
-		var UpdUpd = await DaoWord.FnTriggerOnRootAfterUpd(Ctx, Ct);
-
-		var UpdProp = await RepoProp.FnUpdManyById(Ctx, null, Ct);
-		var UpdLearn = await RepoLearn.FnUpdManyById(Ctx, null, Ct);
-		var UpdPoWord = await RepoPoWord.FnUpdManyById(Ctx, null, Ct);
-
-		return async(UserCtx, DtoAddWords, Ct)=>{
-			var sw = Stopwatch.StartNew();
-			await using var NeoWords = new BatchCollector<IJnWord, nil>(InsertJnWords);
-			await using var NeoProps = new BatchCollector<PoWordProp, nil>(async(kvs, Ct)=>{
-				return await InsertPoKvs(null, kvs, Ct);
-			});
-			await using var NeoLearns = new BatchCollector<PoWordLearn, nil>(async(learns, Ct)=>{
-				return await InsertPoLearns(null, learns, Ct);
-			});
-			await using var UpdProps = new BatchCollector<PoWordProp, nil>(UpdProp);
-			await using var UpdLearns = new BatchCollector<PoWordLearn, nil>(UpdLearn);
-			await using var UpdPoWords = new BatchCollector<PoWord, nil>(UpdPoWord);
-
-			foreach(var (i,OneNonExisting_) in DtoAddWords.NeoWords.Index()){
-				var OneNonExisting = OneNonExisting_.AsOrToJnWord();
-				OneNonExisting.StoredAt = Tempus.Now();
-				//var NeoPoLearns = MkPoLearns(OneNonExisting.Props, OneNonExisting.Id);
-				await NeoWords.Add(OneNonExisting, Ct);
-				//await NeoLearns.AddMany(NeoPoLearns, null, Ct);
-			}
-
-
-			foreach(var UpdatedWord in DtoAddWords.UpdatedWords){
-				{// 有變動之諸詞 處理 NeoPart
-
-					if(UpdatedWord.NeoPart is not null
-						&& !(UpdatedWord.NeoPart.Props.Count == 0 && UpdatedWord.NeoPart.Learns.Count == 0)
-					){
-						var NeoPart = UpdatedWord.NeoPart.AsOrToJnWord();
-						NeoPart.Id = UpdatedWord.WordInDb.Id_();
-						NeoPart.EnsureForeignId();
-
-						var WordId = NeoPart.Id_();
-						await NeoProps.AddRange(NeoPart.Props, null, Ct);
-						await NeoLearns.AddRange(NeoPart.Learns, null, Ct);
-					}
-				}
-				{// 有變動之諸詞 處理 ChangedPart
-
-					if(UpdatedWord.ChangedPart is not null){
-						var ChangedPart = UpdatedWord.ChangedPart.AsOrToJnWord();
-						ChangedPart.Id = UpdatedWord.WordInDb.Id_();
-						await UpdLearns.AddRange(ChangedPart.Learns, null, Ct);
-						await UpdProps.AddRange(ChangedPart.Props, null, Ct);
-						await UpdPoWords.Add(ChangedPart.Word, Ct);
-					}
-				}
-				if(Cfg.AutoUpdBizUpdatedAt){
-					await UpdUpd(UpdatedWord.WordInDb.Id_(), Ct);
-				}
-			}//~foreach(var UpdatedWord in DtoAddWords.UpdatedWords)
-			sw.Stop();
-			Logger.LogInformation($"SyncFromDto {sw.ElapsedMilliseconds}ms");
-			return NIL;
-		};
-	}
-
-
-
+[Doc("""
+把DtoSyncWords 寫入數據庫。不類[從文本生詞表導入單詞]之新增ᵣ [添加記錄]
+//TODO 內ʹ JnWord.Sync(Word)ˋ 是以 Word.Id 潙基準 洏非(詞頭,語言)
+若跨節點同步旹 恐遇況芝同(詞頭,語言)ʹ二詞ʹIdˋ異
+""")]
 	public async Task<Func<
 		IUserCtx,DtoSyncWords
 		,CT,Task<nil>
@@ -287,6 +221,7 @@ public partial class SvcWord(
 			await using var UpdLearns = new BatchCollector<PoWordLearn, nil>(UpdLearn);
 			await using var UpdPoWords = new BatchCollector<PoWord, nil>(UpdPoWord);
 
+			//添ʃ缺
 			foreach(var (i,OneNonExisting_) in DtoAddWords.NeoWords.Index()){
 				var OneNonExisting = OneNonExisting_.AsOrToJnWord();
 				OneNonExisting.StoredAt = Tempus.Now();
@@ -294,6 +229,7 @@ public partial class SvcWord(
 				await NeoWords.Add(OneNonExisting, Ct);
 				//await NeoLearns.AddMany(NeoPoLearns, null, Ct);
 			}
+			//~添ʃ缺
 
 			foreach(var UpdatedWord in DtoAddWords.UpdatedWords){
 				var dtoSync = UpdatedWord.DtoSyncTwoWords;
@@ -319,13 +255,12 @@ public partial class SvcWord(
 	}
 
 
-
 	public async Task<Func<
 		IUserCtx
 		,DtoAddWordsOld
 		,CT
 		,Task<nil>
-	>> FnAddOrUpdWordsFromTxtByDto(
+	>> FnMergeWordsFromTxtByDto(
 		IDbFnCtx Ctx
 		,CT Ct
 	){
@@ -363,7 +298,6 @@ public partial class SvcWord(
 	}
 
 
-
 	/// <summary>
 	/// 專用于添詞芝從文本詞表
 	/// </summary>
@@ -375,12 +309,12 @@ public partial class SvcWord(
 		,IEnumerable<JnWord>
 		,CT
 		,Task<DtoAddWordsOld>
-	>> FnAddOrUpdWordsFromTxt(
+	>> FnMergeWordsFromTxt(
 		IDbFnCtx Ctx
 		,CT Ct
 	){
 		var ClassifyWordsToAdd = await FnClassifyWordsToAddOld(Ctx, Ct);
-		var AddOrUpdateWordsByDto = await FnAddOrUpdWordsFromTxtByDto(Ctx,Ct);
+		var AddOrUpdateWordsByDto = await FnMergeWordsFromTxtByDto(Ctx,Ct);
 		var Fn = async(
 			IUserCtx UserCtx
 			,IEnumerable<JnWord> JnWords
@@ -403,7 +337,7 @@ public partial class SvcWord(
 		,IEnumerable<IJnWord>
 		,CT
 		,Task<DtoAddWordsOld>
-	>> FnAddEtMergeWordsOld(
+	>> FnMergeWordsOld(
 		IDbFnCtx Ctx
 		,CT Ct
 	){
@@ -418,6 +352,9 @@ public partial class SvcWord(
 	}
 
 
+[Doc("""
+
+""")]
 	public async Task<Func<
 		IUserCtx
 		,IEnumerable<IJnWord>
@@ -455,7 +392,7 @@ public partial class SvcWord(
 	){
 		var CheckWordOwner = await FnGetJnWordByIdEtCheckOwner(Ctx, Ct);
 		var InsertPoLearns = await DaoWord.FnInsertPoLearns(Ctx, Ct);
-		//var UpdUpd = await DaoWord.FnTriggerOnRootAfterUpd(Ctx,Ct);
+		var UpdUpd = await DaoWord.FnTriggerOnRootAfterUpd(Ctx,Ct);
 		var Fn = async(
 			IUserCtx UserCtx
 			,IEnumerable<WordId_PoLearns> ListOfWordId_PoLearns
@@ -469,55 +406,56 @@ public partial class SvcWord(
 					return x;
 				});
 				await InsertPoLearns(IdWord, PoLearns, Ct);
-				//await UpdUpd(IdWord, Ct);
+				await UpdUpd(IdWord, Ct);
 			}
 			return NIL;
 		};
 		return Fn;
 	}
 
-
-	// public async Task<Func<
-	// 	IUserCtx
-	// 	,IEnumerable<IdWord>
-	// 	,CT
-	// 	,Task<nil>
-	// >> FnDeleteJnWordsByIds(
-	// 	IDbFnCtx Ctx, CT Ct
-	// ){
-	// 	var CheckOwner = await FnCheckWordOwnerOrThrow(Ctx, Ct);
-
-	// 	var DelPoWordById = await RepoPoWord.FnDeleteManyByKeys<IdWord>(
-	// 		Ctx, nameof(PoWord.Id), 1000, Ct
-	// 	);
-	// 	var DelPoKvByWordIds = await RepoKv.FnDeleteManyByKeys<IdWord>(
-	// 		Ctx, nameof(PoWordProp.WordId), 1000, Ct
-	// 	);
-	// 	var DelPoLearnByWordIds = await RepoLearn.FnDeleteManyByKeys<IdWord>(
-	// 		Ctx, nameof(PoWordLearn.WordId), 1000, Ct
-	// 	);
-	// 	var Fn = async(
-	// 		IUserCtx UserCtx
-	// 		,IEnumerable<IdWord> Ids
-	// 		,CT Ct
-	// 	)=>{
-	// 		Ids = Ids.Select(Id=>{
-	// 			_ = CheckOwner(UserCtx, Id, Ct).Result;
-	// 			return Id;
-	// 		});
-	// 		await DelPoWordById(Ids, Ct);
-	// 		await DelPoKvByWordIds(Ids, Ct);
-	// 		await DelPoLearnByWordIds(Ids, Ct);
-	// 		return NIL;
-	// 	};
-	// 	return Fn;
-	// }
-
+//硬刪
+#if false
 	public async Task<Func<
 		IUserCtx
 		,IEnumerable<IdWord>
 		,CT
 		,Task<nil>
+	>> FnDeleteJnWordsByIds(
+		IDbFnCtx Ctx, CT Ct
+	){
+		var CheckOwner = await FnGetJnWordByIdEtCheckOwner(Ctx, Ct);
+
+		var DelPoWordById = await RepoPoWord.FnDeleteManyByKeys<IdWord>(
+			Ctx, nameof(PoWord.Id), 1000, Ct
+		);
+		var DelPoKvByWordIds = await RepoKv.FnDeleteManyByKeys<IdWord>(
+			Ctx, nameof(PoWordProp.WordId), 1000, Ct
+		);
+		var DelPoLearnByWordIds = await RepoLearn.FnDeleteManyByKeys<IdWord>(
+			Ctx, nameof(PoWordLearn.WordId), 1000, Ct
+		);
+		var Fn = async(
+			IUserCtx UserCtx
+			,IEnumerable<IdWord> Ids
+			,CT Ct
+		)=>{
+			Ids = Ids.Select(Id=>{
+				_ = CheckOwner(UserCtx, Id, Ct).Result;
+				return Id;
+			});
+			await DelPoWordById(Ids, Ct);
+			await DelPoKvByWordIds(Ids, Ct);
+			await DelPoLearnByWordIds(Ids, Ct);
+			return NIL;
+		};
+		return Fn;
+	}
+
+#endif
+	public async Task<Func<
+		IUserCtx
+		,IEnumerable<IdWord>
+		,CT,Task<nil>
 	>> FnSoftDelJnWordsByIds(
 		IDbFnCtx Ctx ,CT Ct
 	){
@@ -526,16 +464,12 @@ public partial class SvcWord(
 		var DelPoKvByWordIds = await RepoProp.FnSoftDelManyByKeys<IdWord>(Ctx, nameof(PoWordProp.WordId), 1000, Ct);
 		var DelPoLearnByWordIds = await RepoLearn.FnSoftDelManyByKeys<IdWord>(Ctx, nameof(PoWordLearn.WordId), 1000, Ct);
 		var UpdUpd = await DaoWord.FnTriggerOnRootAfterUpd(Ctx,Ct);
-		var Fn = async(
-			IUserCtx UserCtx
-			,IEnumerable<IdWord> Ids
-			,CT Ct
-		)=>{
+		return async(UserCtx,Ids,Ct)=>{
 			// 多次遍歷IEnumerable<T> 恐不安全
 			Ids = Ids.Select(Id=>{
 				_ = CheckOwner(UserCtx, Id, Ct).Result;
 				return Id;
-			}).ToListTryNoCopy();
+			}).AsOrToList();
 			foreach(var Id in Ids){
 				await UpdUpd(Id, Ct);
 			}
@@ -544,7 +478,6 @@ public partial class SvcWord(
 			await DelPoLearnByWordIds(Ids, Ct);
 			return NIL;
 		};
-		return Fn;
 	}
 
 /// <summary>
@@ -557,11 +490,11 @@ public partial class SvcWord(
 		,IAsyncEnumerable<str>
 		,CT
 		,Task<nil>
-	>> FnAddWordsByJsonLineIter(
+	>> FnMergeWordsByJsonLineIter(
 		IDbFnCtx Ctx
 		,CT Ct
 	){
-		var FnAddWords = await FnAddEtMergeWordsOld(Ctx, Ct);
+		var FnAddWords = await FnMergeWordsOld(Ctx, Ct);
 		var R = async (
 			IUserCtx User
 			,IAsyncEnumerable<str> JsonLineIter
@@ -601,7 +534,7 @@ public partial class SvcWord(
 		var GetJnWordByIdEtCheckOwner = await FnGetJnWordByIdEtCheckOwner(Ctx, Ct);
 		var UpdWordHeadLang = await DaoWord.FnUpdPoWordHeadLang(Ctx, Ct);
 		var SlctIdByOwnerHeadLang = await DaoWord.FnSlctIdByOwnerHeadLangWithDel(Ctx, Ct);
-		var MergeWordsIntoDb = await FnAddEtMergeWordsOld(Ctx, Ct);
+		var MergeWordsIntoDb = await FnMergeWordsOld(Ctx, Ct);
 		var SoftDelJnWordById = await FnSoftDelJnWordsByIds(Ctx,Ct);
 		var UpdPropForeignWordIdById = await RepoProp.FnUpdOneColById(Ctx, nameof(PoWordProp.WordId), Ct);
 		var UpdLearnForeignWordIdById = await RepoLearn.FnUpdOneColById(Ctx, nameof(PoWordLearn.WordId), Ct);
@@ -649,10 +582,10 @@ public partial class SvcWord(
 		,str//lang
 		,CT
 		,Task<IdWord?> //新(詞頭,語言)對應之id
-	>> FnUpdWordHeadLang(IDbFnCtx Ctx, CT Ct){
+	>> FnSoftUpdWordHeadLang(IDbFnCtx Ctx, CT Ct){
 		var GetJnWordByIdEtCheckOwner = await FnGetJnWordByIdEtCheckOwner(Ctx, Ct);
 		var SlctIdByOwnerHeadLang = await DaoWord.FnSlctIdByOwnerHeadLangWithDel(Ctx, Ct);
-		var MergeWordsIntoDb = await FnAddEtMergeWordsOld(Ctx, Ct);
+		var MergeWordsIntoDb = await FnMergeWordsOld(Ctx, Ct);
 		var SoftDelJnWordById = await FnSoftDelJnWordsByIds(Ctx,Ct);
 		var UpdUpd = await DaoWord.FnTriggerOnRootAfterUpd(Ctx,Ct);
 
@@ -706,7 +639,7 @@ public partial class SvcWord(
 	>> FnUpdJnWord(IDbFnCtx Ctx, CT Ct){
 		var CfgMerge = new CfgMerge{AutoUpdBizUpdatedAt=true};
 		var GetJnWordByIdEtCheckOwner = await FnGetJnWordByIdEtCheckOwner(Ctx, Ct);
-		var UpdWordHeadLang = await FnUpdWordHeadLang(Ctx, Ct);
+		var UpdWordHeadLang = await FnSoftUpdWordHeadLang(Ctx, Ct);
 		var SyncFromDto = await FnSyncFromDto(Ctx, CfgMerge, Ct);
 		var MergeWordsIntoDb = await FnSyncWords(Ctx, CfgMerge, Ct);
 

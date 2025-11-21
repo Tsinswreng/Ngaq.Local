@@ -50,7 +50,7 @@ public partial class SvcWord{
 	) {
 		var Ctx = new DbFnCtx{};
 		Ctx.Txn = await TxnGetter.GetTxnAsy(Ctx, Ct);
-		var AddOrUpdateWords = await FnAddOrUpdWordsFromTxt(Ctx, Ct);
+		var AddOrUpdateWords = await FnMergeWordsFromTxt(Ctx, Ct);
 		await TxnRunner.RunTxn(Ctx.Txn, async(Ct)=>{
 			var BoWords = await SvcParseWordList.ParseWordsFromFilePath(Path_Encode);
 			await AddOrUpdateWords(UserCtx,BoWords,Ct);
@@ -68,7 +68,7 @@ public partial class SvcWord{
 	) {
 		var Ctx = new DbFnCtx{};
 		Ctx.Txn = await TxnGetter.GetTxnAsy(Ctx, Ct);
-		var AddOrUpdateWords = await FnAddOrUpdWordsFromTxt(Ctx, Ct);
+		var AddOrUpdateWords = await FnMergeWordsFromTxt(Ctx, Ct);
 		await TxnRunner.RunTxn(Ctx.Txn, async(Ct)=>{
 			var BoWords = await SvcParseWordList.ParseWordsFromText(Text,Ct);
 			await AddOrUpdateWords(UserCtx,BoWords,Ct);
@@ -84,7 +84,7 @@ public partial class SvcWord{
 		,IEnumerable<IJnWord> JnWords
 		,CT Ct
 	){
-		return await TxnWrapper.Wrap(FnAddEtMergeWordsOld, UserCtx, JnWords, Ct);
+		return await TxnWrapper.Wrap(FnMergeWordsOld, UserCtx, JnWords, Ct);
 	}
 
 	[Impl]
@@ -144,7 +144,7 @@ public partial class SvcWord{
 		,IAsyncEnumerable<str> JsonLineIter
 		,CT Ct
 	){
-		return await TxnWrapper.Wrap(FnAddWordsByJsonLineIter, User, JsonLineIter, Ct);
+		return await TxnWrapper.Wrap(FnMergeWordsByJsonLineIter, User, JsonLineIter, Ct);
 	}
 
 	[Impl]

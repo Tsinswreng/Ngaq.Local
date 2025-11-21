@@ -14,6 +14,7 @@ using Ngaq.Core.Shared.Word.Models.Po.Kv;
 using Ngaq.Core.Shared.Word.Models.Po.Word;
 using Ngaq.Core.Shared.Word.Models.Po.Learn;
 using Ngaq.Core.Shared.Base.Models.Po;
+using Tsinswreng.CsCore;
 
 public partial class DaoSqlWord(
 	ISqlCmdMkr SqlCmdMkr
@@ -81,7 +82,7 @@ WHERE {T.Fld(nameof(IPoBase.DelAt))} <> 0
 		}
 		return Page.Data.Select(
 			D=>Tbl.AssignEntity(D, new TPo())
-		).ToListTryNoCopy();
+		).AsOrToList();
 	}
 
 
