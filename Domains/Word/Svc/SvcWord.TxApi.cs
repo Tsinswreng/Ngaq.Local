@@ -183,4 +183,15 @@ public partial class SvcWord{
 		return await TxnWrapper.Wrap(FnSyncFromTextWithBlob, User, TextWithBlob, Ct);
 	}
 
+
+	public async Task<RespScltWordsOfLearnResultByTimeInterval> ScltAddedWordsByTimeInterval(
+		ReqScltWordsOfLearnResultByTimeInterval Req
+		,CT Ct
+	){
+		//return await TxnWrapper.Wrap(FnScltAddedWordsByTimeInterval, Req, Ct);
+		var Ctx = new DbFnCtx();
+		var Fn = await FnScltAddedWordsByTimeInterval(Ctx, Ct);
+		return await Fn(Req, Ct);
+	}
+
 }

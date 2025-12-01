@@ -51,6 +51,8 @@ public class SvcTokenStorage:ISvcTokenStorage{
 				,new PoKv{
 					Owner = IdUser.Zero,
 				}.SetStrI64(KeysClientKv.RefreshTokenExpireAt, Req.RefreshTokenExpireAt)
+				,new PoKv{Owner = IdUser.Zero}
+				.SetStrStr(KeysClientKv.CurLoginUserId, Req.LoginUserId+"")
 			],Ct
 		);
 		return NIL;

@@ -25,6 +25,8 @@ using Ngaq.Local.Domains.Word.Dao;
 using Ngaq.Core.Shared.Word.Models.Dto;
 using System.Collections;
 using Ngaq.Core.Shared.User.Models.Po.User;
+using Ngaq.Core.Shared.Base.Models.Req;
+using Ngaq.Core.Shared.Base.Models.Resp;
 
 public partial class DaoSqlWord{
 	public async Task<Func<
@@ -481,6 +483,81 @@ var Cmd = await Ctx.PrepareToDispose(SqlCmdMkr, Sql, Ct);
 			System.Console.WriteLine($"耗时 {sw.ElapsedMilliseconds} ms");
 			System.Console.WriteLine(R2d.Count);
 			return NIL;
+		};
+	}
+
+
+
+
+	public async Task<Func<
+		ReqScltWordsOfLearnResultByTimeInterval
+		,CT, Task<RespScltWordsOfLearnResultByTimeInterval>
+	>> FnScltAddedWordsByTimeInterval(IDbFnCtx Ctx, CT Ct){
+var T = TblMgr.GetTbl<PoWordLearn>();
+var NWordId = nameof(PoWordLearn.WordId);var NLearnResult = nameof(PoWordLearn.LearnResult); var NBizCreatedAt = nameof(PoWordLearn.BizCreatedAt);
+var NStartTime = "StartTime"; var NEndTime = "EndTime"; var NNewWords = "NewWords";
+var PTimeStart = T.Prm("TimeStart");var PTimeEnd = T.Prm("TimeEnd"); var PTimeInterval = T.Prm("TimeInterval");
+var PLearnResult = T.Prm("LearnResult");
+
+var Sql = $"""
+WITH RECURSIVE ts_range AS (
+	-- 1. 先把时间轴切出来
+	SELECT
+		{PTimeStart} AS start_ts,
+		{PTimeStart} + {PTimeInterval} AS end_ts
+	UNION ALL
+	SELECT
+		end_ts,
+		end_ts + {PTimeInterval}
+	FROM ts_range
+	WHERE end_ts < {PTimeEnd}
+),
+first_ AS (
+	-- 2. 每个单词第一次被 $LearnResult 的时间
+	SELECT
+		WordId,
+		MIN({T.Fld(NBizCreatedAt)}) AS first_ts
+	FROM {T.Qt(T.DbTblName)}
+	WHERE {T.Fld(NLearnResult)} = {PLearnResult}
+	AND {T.Fld(NBizCreatedAt)} >= {PTimeStart}          -- 只关心 tFrom 之后
+	GROUP BY {T.Fld(NWordId)}
+)
+-- 3. 把单词落到对应区间里计数
+SELECT
+	r.start_ts as {T.Qt(NStartTime)},
+	r.end_ts as {T.Qt(NEndTime)},
+	COUNT(f.{T.Fld(NWordId)}) AS {T.Qt(NNewWords)}
+FROM ts_range r
+LEFT JOIN first_ f
+	ON f.first_ts >= r.start_ts
+	AND f.first_ts <  r.end_ts
+GROUP BY r.start_ts, r.end_ts
+ORDER BY r.start_ts --DESC
+{T.SqlMkr.ParamLimOfst(out var Lmt, out var Ofst)}
+;
+""";
+var Cmd = await Ctx.PrepareToDispose(SqlCmdMkr, Sql, Ct);
+		return async(Req, Ct)=>{
+			var Arg = ArgDict.Mk(T)
+			.AddT(PTimeStart, Req.TimeStart)
+			.AddT(PTimeEnd, Req.TimeEnd)
+			.AddT(PTimeInterval, Req.TimeInterval)
+			.AddT(PLearnResult, Req.LearnResult)
+			.AddPageQry(Req.PageQry, Lmt, Ofst);
+			var RawDicts = Cmd.WithCtx(Ctx).Args(Arg).IterAsyE(Ct);
+			var Intervals = RawDicts.Select(x=>{
+				return new TimeIntervalCnt{
+					TimeStart = new Tempus(Convert.ToInt64(x[NStartTime])),
+					TimeEnd = new Tempus(Convert.ToInt64(x[NEndTime])),
+					Cnt = Convert.ToInt64(x[NNewWords])
+				};
+			});
+			//Req.PageQry,
+			var RPage = PageAsyE<TimeIntervalCnt>.Mk(Req.PageQry, Intervals, false);
+			var R = new RespScltWordsOfLearnResultByTimeInterval{
+				IntervalPage = RPage
+			};
+			return R;
 		};
 	}
 

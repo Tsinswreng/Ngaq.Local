@@ -4,12 +4,13 @@ using Ngaq.Core.Infra.Errors;
 using Ngaq.Core.Infra.Url;
 using Ngaq.Core.Tools;
 using Tsinswreng.CsCfg;
+using Tsinswreng.CsCore;
 using Tsinswreng.CsErr;
 using Tsinswreng.CsTools;
 
 namespace Ngaq.Local.ImplFrontend;
 
-public  partial class SvcImg:IImgGetter{
+public partial class SvcImg:IImgGetter{
 
 	public IList<str> GalleryDirs{get;set;} = [];
 	public IList<str> FilePaths{get;set;} = new List<str>();
@@ -20,8 +21,17 @@ public  partial class SvcImg:IImgGetter{
 
 //TODO 若此中拋異常且無catch則初始化DI旹則崩 宜傳異常置前端
 	public SvcImg(){
+
+	}
+
+	protected bool Inited = false;
+
+	public void EnsureInit(){
+		if(Inited){
+			return;
+		}
 try{
-var CfgDir = ItemsClientCfg.GalleryDirs.GetFrom(CfgAccessor)??[];
+var CfgDir = ItemsClientCfg.Background.GalleryDirs.GetFrom(CfgAccessor)??[];
 		foreach(var _Dir in CfgDir){
 			if(_Dir is str s && !str.IsNullOrEmpty(s)){
 				var Dir = s;
@@ -41,6 +51,7 @@ var CfgDir = ItemsClientCfg.GalleryDirs.GetFrom(CfgAccessor)??[];
 catch (System.Exception e){
 	ItemsErr.Word.BackgroundImageServiceFailedToInit.ToErr().AddDebugArgs(e);
 }
+		Inited = true;
 	}
 
 	protected str? NextFilePath(){
@@ -69,7 +80,10 @@ catch (System.Exception e){
 		return R;
 	}
 
-	public virtual IEnumerable<ITypedObj> GetN(u64 n){
+	[Impl]
+	public IEnumerable<ITypedObj> GetN(u64 n){
+
+		EnsureInit();
 		for(u64 i=0;i<n;i++){
 			var FilePath = NextFilePath();
 			yield return FilePathToTypedObj(FilePath);

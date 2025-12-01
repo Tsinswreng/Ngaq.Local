@@ -508,4 +508,12 @@ public partial class SvcWord{
 		return output.ToArray();
 	}
 
+
+	public async Task<Func<
+		ReqScltWordsOfLearnResultByTimeInterval
+		,CT, Task<RespScltWordsOfLearnResultByTimeInterval>
+	>> FnScltAddedWordsByTimeInterval(IDbFnCtx Ctx, CT Ct){
+		return await DaoWord.FnScltAddedWordsByTimeInterval(Ctx, Ct);
+	}
+
 }
