@@ -7,7 +7,8 @@
 		<Nullable>enable</Nullable>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-		<PublishAot>true</PublishAot>
+		<!-- 如于此開Aot則publish旹報錯 无法推断属性“SelfContained”的运行时标识符。显式指定 rid。 -->
+		<!-- <PublishAot>true</PublishAot> -->
 		<NoWarn>CS1998;CS8669</NoWarn>
 	</PropertyGroup>
 

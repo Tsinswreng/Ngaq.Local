@@ -273,18 +273,18 @@ ORDER BY {T.Fld(N.CreatedAt)} DESC
 			if(PoWordsPage.DataAsyE == null){
 				return R;
 			}
-			var syncPoWordsPage = await PoWordsPage.ToSyncPage(Ct);//先全部載入內存、否則pg報錯不支持併發查
+			var syncPoWordsPage = await PoWordsPage.ToListPage(Ct);//先全部載入內存、否則pg報錯不支持併發查
 
 			async IAsyncEnumerable<IJnWord> fn(
 				IEnumerable<PoWord> poWords
 			){
 				foreach(var PoWord in poWords){
 					var KvPage = await PageKvByFKey(PoWord.Id, TK.PageSlctAll(), Ct);
-					var syncKvPage = await KvPage.ToSyncPage(Ct);
+					var syncKvPage = await KvPage.ToListPage(Ct);
 					var Kvs = await _PageToList<PoWordProp>(syncKvPage, TK);
 
 					var LearnPage = await PageLearnByFKey(PoWord.Id, TL.PageSlctAll(), Ct);
-					var syncLearnPage = await LearnPage.ToSyncPage(Ct);
+					var syncLearnPage = await LearnPage.ToListPage(Ct);
 					var Learns = await _PageToList<PoWordLearn>(syncLearnPage, TL);
 
 					var ua = new JnWord(PoWord, Kvs, Learns);
