@@ -22,9 +22,13 @@ using Ngaq.Core.Shared.Kv.Models;
 using Ngaq.Core.Shared.Word.Models.Po.Word;
 using Ngaq.Core.Shared.User.Models.Po;
 using Ngaq.Core.Shared.Word.Models.Po.Learn;
+using Ngaq.Core.Shared.StudyPlan.Models.Po.StudyPlan;
+using Ngaq.Core.Shared.StudyPlan.Models.Po.WeightArg;
+using Ngaq.Core.Shared.StudyPlan.Models.Po.WeightCalculator;
 
+//direct to latest
 public partial class LocalTblMgrIniter{
-	const str MkIdx = "CREATE INDEX"; //不建議加 "IF NOT EXISTS" 以免掩蓋錯誤
+	public const str MkIdx = "CREATE INDEX"; //不建議加 "IF NOT EXISTS" 以免掩蓋錯誤
 	public ITblMgr Mgr{get;set;}
 	public LocalTblMgrIniter(ITblMgr Mgr){
 		this.Mgr = Mgr;
@@ -57,20 +61,20 @@ public partial class LocalTblMgrIniter{
 
 	protected bool _Inited{get;set;} = false;
 
-	protected nil CfgBizTimeVer(ITable Tbl){
+	public static nil CfgBizTimeVer(ITable Tbl){
 		var o = Tbl;
 		o.SetCol(nameof(I_BizTimeVer.BizTimeVer)).MapType(MapTempus());
 		return NIL;
 	}
 
-	public ITable CfgBizCreateUpdateTime(ITable Tbl){
+	public static ITable CfgBizCreateUpdateTime(ITable Tbl){
 		var o = Tbl;
 		o.SetCol(nameof(IBizCreateUpdateTime.BizCreatedAt)).MapType(MapTempus());
 		o.SetCol(nameof(IBizCreateUpdateTime.BizUpdatedAt)).MapType(MapTempusN());
 		return o;
 	}
 
-	public ITable CfgPoBase(ITable Tbl){
+	public static ITable CfgPoBase(ITable Tbl){
 		var o = Tbl;
 		o.CodeIdName = nameof(I_Id<nil>.Id);
 		o.SetCol(nameof(I_Id<nil>.Id)).AdditionalSqls(["PRIMARY KEY"]);
@@ -93,7 +97,7 @@ public partial class LocalTblMgrIniter{
 		return o;
 	}
 
-	protected ITable CfgIPoKv(ITable o){
+	public static ITable CfgIPoKv(ITable o){
 		o.SetCol(nameof(IPoKv.KType)).MapEnumToInt32<EKvType>();
 		o.SetCol(nameof(IPoKv.VType)).MapEnumToInt32<EKvType>();
 		o.OuterAdditionalSqls.AddRange([
@@ -103,11 +107,11 @@ $"{MkIdx} {o.Qt("Idx_"+o.DbTblName+"_KStr")} ON {o.Qt(o.DbTblName)} ({o.Fld(name
 		return o;
 	}
 
-	public ITable Mk<T>(str DbTblName){
+	public static ITable Mk<T>(str DbTblName){
 		return Table.FnMkTbl<T>(CoreDictMapper.Inst)(DbTblName);
 	}
 
-	protected ITable CfgI_WordId<TPo>(ITable Tbl){
+	public static ITable CfgI_WordId<TPo>(ITable Tbl){
 		var o = Tbl;
 		o.SetCol(nameof(PoWordProp.WordId)).MapType(IdWord.MkTypeMapFn());
 		o.OuterAdditionalSqls.AddRange([
@@ -121,7 +125,85 @@ ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(I_WordId.WordId))})
 
 	public nil Init(){
 		Mgr.AddTbl(new SchemaHistoryTblMkr().MkTbl());
+		InitKv(Mgr);
+		InitWord(Mgr);
+		InitStudyPlan(Mgr);
+		_Inited = true;
+		return NIL;
+	}
 
+	public static ITblMgr InitStudyPlan(ITblMgr Mgr){
+		var Tbl_Wc = Mk<PoWeightCalculator>("WeightCalculator");
+		Mgr.AddTbl(Tbl_Wc);
+		{
+			var o = Tbl_Wc;
+			CfgPoBase(o);
+			o.SetCol(nameof(PoWeightCalculator.Id)).MapType(IdWeightCalculator.MkTypeMapFn());
+			o.SetCol(nameof(PoWeightCalculator.Type)).MapEnumToStr<EWeightCalculatorType>();
+			o.OuterAdditionalSqls.AddRange([
+$"""
+CREATE UNIQUE INDEX {o.Qt($"Ux_{o.DbTblName}_UniqueName")}
+ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(PoWeightCalculator.UniqueName))})
+WHERE {o.SqlIsNonDel()}
+AND {o.Fld(nameof(PoWeightCalculator.UniqueName))} IS NOT NULL
+AND {o.Fld(nameof(PoWeightCalculator.UniqueName))} <> ''
+""",
+$"""
+CREATE INDEX {o.Qt($"Idx_{o.DbTblName}_{nameof(PoWeightCalculator.Type)}")}
+ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(PoWeightCalculator.Type))})
+"""
+			]);
+		}
+
+		var Tbl_Wa = Mk<PoWeightArg>("WeightArg");
+		Mgr.AddTbl(Tbl_Wa);
+		{
+			var o = Tbl_Wa;
+			CfgPoBase(o);
+			o.SetCol(nameof(PoWeightArg.Id)).MapType(IdWeightArg.MkTypeMapFn());
+			o.SetCol(nameof(PoWeightArg.Type)).MapEnumToStr<EWeightArgType>();
+			o.OuterAdditionalSqls.AddRange([
+$"""
+CREATE UNIQUE INDEX {o.Qt($"Ux_{o.DbTblName}_UniqueName")}
+ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(PoWeightArg.UniqueName))})
+WHERE {o.SqlIsNonDel()}
+AND {o.Fld(nameof(PoWeightArg.UniqueName))} IS NOT NULL
+AND {o.Fld(nameof(PoWeightArg.UniqueName))} <> ''
+""",
+$"""
+CREATE INDEX {o.Qt($"Idx_{o.DbTblName}_{nameof(PoWeightArg.WeightCalculatorName)}")}
+ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(PoWeightArg.WeightCalculatorName))})
+"""
+			]);
+		}
+
+		var Tbl_Sp = Mk<PoStudyPlan>("StudyPlan");
+		Mgr.AddTbl(Tbl_Sp);
+		{
+			var o = Tbl_Sp;
+			CfgPoBase(o);
+			o.SetCol(nameof(PoStudyPlan.Id)).MapType(IdStudyPlan.MkTypeMapFn());
+			o.SetCol(nameof(PoStudyPlan.WeightCalculatorId)).MapType(IdWeightCalculator.MkTypeMapFn());
+			o.SetCol(nameof(PoStudyPlan.WeightArgId)).MapType(IdWeightArg.MkTypeMapFn());
+			o.OuterAdditionalSqls.AddRange([
+$"""
+CREATE UNIQUE INDEX {o.Qt($"Ux_{o.DbTblName}_UniqueName")}
+ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(PoStudyPlan.UniqueName))})
+WHERE {o.SqlIsNonDel()}
+AND {o.Fld(nameof(PoStudyPlan.UniqueName))} IS NOT NULL
+AND {o.Fld(nameof(PoStudyPlan.UniqueName))} <> ''
+""",
+$"""
+CREATE INDEX {o.Qt($"Idx_{o.DbTblName}_{nameof(PoStudyPlan.WeightCalculatorId)}")}
+ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(PoStudyPlan.WeightCalculatorId))})
+"""
+			]);
+		}
+
+		return Mgr;
+	}
+
+	public static ITblMgr InitKv(ITblMgr Mgr){
 		var Tbl_Cfg = Mk<PoKv>("Kv");
 		Mgr.AddTbl(Tbl_Cfg);
 		{
@@ -148,10 +230,11 @@ ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoKv.Owner))},{o.Fld(nameof(PoKv.KI64))})
 WHERE {o.SqlIsNonDel()}
 AND {o.Fld(nameof(PoKv.KType))} = {o.UpperToRaw(EKvType.I64)}
 """
-
 			]);
 		}
-
+		return Mgr;
+	}
+	public static ITblMgr InitWord(ITblMgr Mgr){
 		var Tbl_Word = Mk<PoWord>("Word");
 		Mgr.AddTbl(Tbl_Word);
 		{
@@ -204,9 +287,7 @@ CREATE UNIQUE INDEX {o.Qt($"Ux_{o.DbTblName}_Owner_Head_Lang")} ON {o.Qt(o.DbTbl
 			//o.SetCol(nameof(PoWordLearn.LearnResult)).MapEnumTypeInt32<ELearn>();
 			o.SetCol(nameof(PoWordLearn.LearnResult)).MapEnumToStr<ELearn>();
 		}
-		_Inited = true;
-		return NIL;
-
+		return Mgr;
 	}
 
 }

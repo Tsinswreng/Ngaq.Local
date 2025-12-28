@@ -751,4 +751,12 @@ public partial class SvcWord(
 			return NIL;
 		};
 	}
+
+	void test(){
+		string a = null;
+		string? b= null;
+
+		System.Console.WriteLine(a);
+		System.Console.WriteLine(b);
+	}
 }

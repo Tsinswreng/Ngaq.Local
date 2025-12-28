@@ -101,6 +101,7 @@ z.AddScoped<DaoSqlWord, DaoSqlWord>();
 z.AddScoped<DaoKv, DaoKv>();
 z.AddScoped<ISvcParseWordList, SvcParseWordList>();
 z.AddScoped<ISvcWord, SvcWord>();
+z.AddScoped<ISvcDictionary, SvcDictionary>();
 z.AddScoped<ISvcKv, SvcKv>();
 z.AddScoped<IImgGetter, SvcImg>();
 z.AddScoped<TxnWrapper<DbFnCtx>>();

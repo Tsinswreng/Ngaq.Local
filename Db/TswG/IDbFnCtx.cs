@@ -13,11 +13,11 @@ public partial class DbFnCtx : BaseDbFnCtx, IDbFnCtx{
 }
 
 
-public  partial interface ITxnDbFnCtxMkr{
+public partial interface ITxnDbFnCtxMkr{
 	Task<IDbFnCtx> MkDbFnCtxAsy(CT Ct);
 }
 
-public  partial class TxnDbFnCtxMkr(
+public partial class TxnDbFnCtxMkr(
 	I_GetTxnAsy GetTxn
 )
 	: ITxnDbFnCtxMkr

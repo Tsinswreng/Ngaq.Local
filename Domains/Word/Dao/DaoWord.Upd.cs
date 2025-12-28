@@ -40,7 +40,7 @@ return async(UserCtx, IdWord, Head, Lang, Ct)=>{
 	.AddRaw(PHead, Head)
 	.AddRaw(PLang, Lang)
 	;
-	await SqlCmd.WithCtx(Ctx).Args(Arg).All(Ct);
+	await SqlCmd.AttachCtxTxn(Ctx).Args(Arg).All(Ct);
 	await UpdUpd(IdWord, Ct);
 	return NIL;
 };

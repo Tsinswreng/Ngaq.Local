@@ -4,11 +4,11 @@ using System.Text;
 using Ngaq.Core.Shared.Word.Models;
 using Ngaq.Core.Infra.Errors;
 using Ngaq.Core.Service.Parser;
-using Ngaq.Core.Stream;
+using Ngaq.Core.Iter;
 using Ngaq.Core.Tools.Io;
 using Ngaq.Core.Shared.Word.Svc;
 
-public  partial class SvcParseWordList
+public partial class SvcParseWordList
 	: ISvcParseWordList
 {
 	public async Task<nil> AddWordsFromUrlAsy(
@@ -19,7 +19,7 @@ public  partial class SvcParseWordList
 	}
 
 	public async Task<IEnumerable<JnWord>> ParseWordsByIterEtEncodingAsy(
-		IIter<u8> Iter
+		IIterable<u8> Iter
 		,Encoding Encoding
 		,CT Ct = default
 	){
@@ -40,7 +40,7 @@ public  partial class SvcParseWordList
 		Path_Encode Path_Encode
 		, CT ct = default
 	) {
-		IIter<u8> ByteReader = new ByteReader(Path_Encode.Path);
+		IIterable<u8> ByteReader = new ByteReader(Path_Encode.Path);
 		return await ParseWordsByIterEtEncodingAsy(ByteReader, Path_Encode.Encoding);
 	}
 
