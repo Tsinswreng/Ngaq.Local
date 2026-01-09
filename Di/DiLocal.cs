@@ -59,6 +59,10 @@ z.AddScoped<IDbFnCtxMkr<DbFnCtx> ,DbFnCtxMkr<DbFnCtx>>();
 z.AddScoped<TxnWrapper<DbFnCtx>>();
 //數據庫初始化器
 z.AddTransient<DbIniter>();
+z.AddSingleton<IMigrationMgr>(sp=>new MigrationMgr(
+	TblMgr: sp.GetRequiredService<ITblMgr>()
+	,SqlCmdMkr: sp.GetRequiredService<ISqlCmdMkr>()
+));
 return z;
 	}
 

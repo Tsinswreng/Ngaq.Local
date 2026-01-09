@@ -11,4 +11,6 @@ public static class ExtnITable{
 		var FieldExpr = z.Fld(z.SoftDelCol.CodeColName);
 		return $"({FieldExpr} = 0)";
 	}
+
+	
 }

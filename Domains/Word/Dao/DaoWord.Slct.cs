@@ -219,22 +219,31 @@ AND {T.Eq(PWordId)}
 	){
 		var T = TblMgr.GetTbl<PoWord>();
 		var N = new PoWord.N();
-		var POwner = T.Prm(N.Owner);
-		var Sql =
-$"""
-SELECT * FROM {T.Qt(T.DbTblName)}
-WHERE 1=1
-{SqlFilterDel(T, CfgQry.IncludeDeleted)}
-AND {T.Eq(POwner)}
-ORDER BY {T.Fld(N.CreatedAt)} DESC
-{T.SqlMkr.ParamLimOfst(out var PLmt, out var POfst)}
-""";
+		//var POwner = T.Prm(N.Owner);
+var Sql = T.Splicer().Select("*").From()
+	.Where()
+	.Raw(SqlFilterDel(T, CfgQry.IncludeDeleted))
+	.And(x=>x.Owner, "=", out var POwner)
+	.OrderByDesc(x=>x.BizCreatedAt)
+	.LimOfst(out var PLim, out var POfst)
+	.ToSqlStr()
+;
+
+// 		var Sql =
+// $"""
+// SELECT * FROM {T.Qt(T.DbTblName)}
+// WHERE 1=1
+// {SqlFilterDel(T, CfgQry.IncludeDeleted)}
+// AND {T.Eq(POwner)}
+// ORDER BY {T.Fld(N.CreatedAt)} DESC
+// {T.SqlMkr.ParamLimOfst(out var PLmt, out var POfst)}
+// """;
 		var SqlCmd = await Ctx.PrepareToDispose(SqlCmdMkr, Sql, Ct);
 		var FnCnt = await RepoWord.FnCount(Ctx, Ct);
 		return async(UserCtx, PageQry ,Ct)=>{
 			var Arg = ArgDict.Mk(T)
 			.AddT(POwner, UserCtx.UserId)
-			.AddPageQry(PageQry, PLmt, POfst);
+			.AddPageQry(PageQry, PLim, POfst);
 
 			var RawDbDicts = SqlCmd.Args(Arg).IterAsyE(Ct);
 			var PoWords = RawDbDicts.Select(
@@ -338,6 +347,14 @@ str NId = nameof(PoWord.Id)
 ;
 var PTempus = T.Prm("Tempus");var POwner = T.Prm("Owner");
 
+/*
+T.Qry().Select(x=>x.Id, "Id")
+.AndBlock(x=>
+	x.And(x=>x.BizUpdatedAt, ">", out var PTempus)
+	.Or(x=>x.StoredAt, ">", PTempus)
+).LimOfst(out var Lmt, out var Ofst)
+;
+ */
 var Sql =
 $"""
 SELECT {T.Fld(NId)} AS {T.Qt(NId)}
@@ -365,10 +382,6 @@ AND (
 		};
 	}
 
-	void _(){
-
-	}
-
 	public async Task<Func<
 		IUserCtx
 		,IPageQry
@@ -379,11 +392,21 @@ AND (
 var T = TblMgr.GetTbl<PoWord>();
 var N = new PoWord.N();
 var PPrefix = T.Prm("Prefix"); var POwner = T.Prm(N.Owner); var PLang = T.Prm(N.Lang);
+/*
+T.Select(x=>x.Id)
+.And(x=>x.Head, $"LIKE {PPrefix} || '%' ")
+.And(x=>x.Owner, $"={POwner}")
+//also: //.And(x=>x.Owner, "=", out var POwner)
+.OrderBy(x=>x.Head)
+.LimOfst(out var PLim, out var POfst2)
+ */
+
+;
 var Sql =
 $"""
 SELECT {N.Id} FROM {T.DbTblName}
 WHERE 1=1
-AND {T.Fld(N.Head)} LIKE {PPrefix} || '%'
+AND {T.Fld(x=>x.Head)} LIKE {PPrefix} || '%'
 AND {T.Eq(POwner)}
 ORDER BY {T.Fld(N.Head)} ASC
 {T.SqlMkr.ParamLimOfst(out var PLmt, out var POfst)}
@@ -415,6 +438,7 @@ ORDER BY {T.Fld(N.Head)} ASC
 	>> FnSlctRootIdByUpperId(IDbFnCtx? Ctx, ITable Tbl, CT Ct){
 var NWordId = nameof(I_WordId.WordId); var NId = nameof(I_Id<nil>.Id);
 var PId = Tbl.Prm(NId);
+
 var Sql =
 $"""
 SELECT {Tbl.Fld(NWordId)} AS {Tbl.Qt(NWordId)} FROM {Tbl.DbTblName}
@@ -562,3 +586,5 @@ var Cmd = await Ctx.PrepareToDispose(SqlCmdMkr, Sql, Ct);
 	}
 
 }
+
+

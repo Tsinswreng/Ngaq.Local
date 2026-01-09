@@ -107,7 +107,7 @@ $"{MkIdx} {o.Qt("Idx_"+o.DbTblName+"_KStr")} ON {o.Qt(o.DbTblName)} ({o.Fld(name
 		return o;
 	}
 
-	public static ITable Mk<T>(str DbTblName){
+	public static ITable<T> Mk<T>(str DbTblName){
 		return Table.FnMkTbl<T>(CoreDictMapper.Inst)(DbTblName);
 	}
 
@@ -133,6 +133,8 @@ ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(I_WordId.WordId))})
 	}
 
 	public static ITblMgr InitStudyPlan(ITblMgr Mgr){
+		//TODO
+		return Mgr;
 		var Tbl_Wc = Mk<PoWeightCalculator>("WeightCalculator");
 		Mgr.AddTbl(Tbl_Wc);
 		{

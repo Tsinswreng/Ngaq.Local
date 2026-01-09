@@ -12,17 +12,19 @@ using Ngaq.Core.Shared.User.Models.Po.User;
 
 
 /// <summary>
+/// 客戶端程序啓動旹初始化數據庫
+/// 未建庫則建庫、庫ʹ版本落後則珩遷移
 /// note: 建庫前勿用預編譯sql
 /// TODO 使通用化
 /// </summary>
 public partial class DbIniter{
-
 	public ISqlCmdMkr SqlCmdMkr;
 	public ITxnRunner TxnRunner;
 	public I_GetTxnAsy TxnGetter;
 	public ITblMgr TblMgr;
-	public IAppRepo<SchemaHistory, i64> RepoSchemaHistory;
+	public IRepo<SchemaHistory, i64> RepoSchemaHistory;
 	public ISvcKv SvcKv;
+	public IMigrationMgr MigrationMgr;
 	public DbIniter(
 		ISqlCmdMkr SqlCmdMkr
 		,ITxnRunner TxnRunner
@@ -30,6 +32,7 @@ public partial class DbIniter{
 		,ITblMgr TblMgr
 		,IAppRepo<SchemaHistory, i64> RepoSchemaHistory
 		,ISvcKv SvcKv
+		,IMigrationMgr MigrationMgr
 	){
 		if(RepoSchemaHistory is not SqlRepo<SchemaHistory, i64> SqlRepoSchemaHistory){
 			throw new ArgumentException("RepoSchemaHistory must be SqlRepo<SchemaHistory, i64>");
@@ -41,10 +44,14 @@ public partial class DbIniter{
 		this.TxnRunner = TxnRunner;
 		this.TxnGetter = TxnGetter;
 		this.SqlCmdMkr = SqlCmdMkr;
-		this.Sql = TblMgr.SqlMkSchema();
-
+		this.MigrationMgr = MigrationMgr;
+		this.SqlMkSchema = TblMgr.SqlMkSchema();
 	}
 
+	/// <summary>
+	/// 未建庫旹一步到位建庫ʃ用ʹSql
+	/// </summary>
+	public str SqlMkSchema{get;set;} ="";
 	public long CreatedAt{get;set;} = 1749888405026;
 
 
@@ -60,11 +67,18 @@ public partial class DbIniter{
 		return Fn;
 	}
 
+	/// <summary>
+	/// 未建庫旹一步到位建庫ʃ用ʹSql
+	/// </summary>
+	/// <param name="DbFnCtx"></param>
+	/// <param name="Ct"></param>
+	/// <returns></returns>
+	/// <exception cref="Exception"></exception>
 	public async Task<Func<
 		CT
 		,Task<nil>
 	>> FnMkSchema(IDbFnCtx DbFnCtx, CT Ct){
-		var Cmd = await SqlCmdMkr.MkCmd(DbFnCtx, Sql, Ct);//勿 Prepare、表未建好旹預無法編譯
+		var Cmd = await SqlCmdMkr.MkCmd(DbFnCtx, SqlMkSchema, Ct);//勿 Prepare、表未建好旹預無法編譯
 		var Fn = async(CT Ct)=>{
 			try{
 				await Cmd.IterAsyE(Ct).FirstOrDefaultAsync(Ct);
@@ -73,13 +87,20 @@ public partial class DbIniter{
 			catch (System.Exception e){
 				throw new Exception(
 					"MkSchema failed\nSql:\n"
-					+Sql+"\n"
+					+SqlMkSchema+"\n"
 					,e
 				);
 
 			}
 		};
 		return Fn;
+	}
+
+	void test(){
+		var a = new List<str>();
+		foreach(var (i,s) in a.Index()){
+
+		}
 	}
 
 	public async Task<Func<

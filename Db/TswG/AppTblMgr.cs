@@ -6,5 +6,3 @@ protected static LocalTblMgr? _Inst = null;
 public static LocalTblMgr Inst => _Inst??= new LocalTblMgr();
 
 }
-
-

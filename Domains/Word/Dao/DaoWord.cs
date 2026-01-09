@@ -85,6 +85,14 @@ WHERE {T.Fld(nameof(IPoBase.DelAt))} <> 0
 		).AsOrToList();
 	}
 
+// 	public void Try(){
+// var TW = TblMgr.GetTbl<PoWord>();
+// var TP = TblMgr.GetTbl<PoWordProp>();
+// TW.Qry()
+// .LeftJoin(TW, (l,r)=>l.Id)
+// ;
+// 	}
+
 
 
 	public obj? IdUpperToRaw<TPo>(obj UpperId){

@@ -14,8 +14,9 @@ public class MigrationMgrIniter{
 		this.MigrationMgr = Sp.GetRequiredService<MigrationMgr>();
 		this.SqlCmdMkr = Sp.GetRequiredService<ISqlCmdMkr>();
 		this.MkrTxn = Sp.GetRequiredService<I_GetTxnAsy>();
+		Init();
 	}
-	public void Init(){
+	void Init(){
 		MigrationMgr
 		.AddMigration(ToMigration(new MInit(Sp)))
 		.AddMigration(ToMigration(new M2025_1224_134729(Sp)))
