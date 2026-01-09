@@ -63,24 +63,24 @@ public partial class LocalTblMgrIniter{
 
 	public static nil CfgBizTimeVer(ITable Tbl){
 		var o = Tbl;
-		o.SetCol(nameof(I_BizTimeVer.BizTimeVer)).MapType(MapTempus());
+		o.Col(nameof(I_BizTimeVer.BizTimeVer)).MapType(MapTempus());
 		return NIL;
 	}
 
 	public static ITable CfgBizCreateUpdateTime(ITable Tbl){
 		var o = Tbl;
-		o.SetCol(nameof(IBizCreateUpdateTime.BizCreatedAt)).MapType(MapTempus());
-		o.SetCol(nameof(IBizCreateUpdateTime.BizUpdatedAt)).MapType(MapTempusN());
+		o.Col(nameof(IBizCreateUpdateTime.BizCreatedAt)).MapType(MapTempus());
+		o.Col(nameof(IBizCreateUpdateTime.BizUpdatedAt)).MapType(MapTempusN());
 		return o;
 	}
 
 	public static ITable CfgPoBase(ITable Tbl){
 		var o = Tbl;
 		o.CodeIdName = nameof(I_Id<nil>.Id);
-		o.SetCol(nameof(I_Id<nil>.Id)).AdditionalSqls(["PRIMARY KEY"]);
-		o.SetCol(nameof(IPoBase.DbCreatedAt)).MapType(MapTempus());
-		o.SetCol(nameof(IPoBase.DbUpdatedAt)).MapType(MapTempus());
-		o.SetCol(nameof(IPoBase.DelAt)).MapType(MapDelId());
+		o.Col(nameof(I_Id<nil>.Id)).AdditionalSqls(["PRIMARY KEY"]);
+		o.Col(nameof(IPoBase.DbCreatedAt)).MapType(MapTempus());
+		o.Col(nameof(IPoBase.DbUpdatedAt)).MapType(MapTempus());
+		o.Col(nameof(IPoBase.DelAt)).MapType(MapDelId());
 
 		// o.SetCol(nameof(IPoBase.CreatedBy)).MapType(IdUser.MkTypeMapFnNullable());
 		// o.SetCol(nameof(IPoBase.LastUpdatedBy)).MapType(IdUser.MkTypeMapFnNullable());
@@ -98,8 +98,8 @@ public partial class LocalTblMgrIniter{
 	}
 
 	public static ITable CfgIPoKv(ITable o){
-		o.SetCol(nameof(IPoKv.KType)).MapEnumToInt32<EKvType>();
-		o.SetCol(nameof(IPoKv.VType)).MapEnumToInt32<EKvType>();
+		o.Col(nameof(IPoKv.KType)).MapEnumToInt32<EKvType>();
+		o.Col(nameof(IPoKv.VType)).MapEnumToInt32<EKvType>();
 		o.OuterAdditionalSqls.AddRange([
 $"{MkIdx} {o.Qt("Idx_"+o.DbTblName+"_KStr")} ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(IPoKv.KStr))})"
 ,$"{MkIdx} {o.Qt("Idx_"+o.DbTblName+"_KI64")} ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(IPoKv.KI64))})"
@@ -113,7 +113,7 @@ $"{MkIdx} {o.Qt("Idx_"+o.DbTblName+"_KStr")} ON {o.Qt(o.DbTblName)} ({o.Fld(name
 
 	public static ITable CfgI_WordId<TPo>(ITable Tbl){
 		var o = Tbl;
-		o.SetCol(nameof(PoWordProp.WordId)).MapType(IdWord.MkTypeMapFn());
+		o.Col(nameof(PoWordProp.WordId)).MapType(IdWord.MkTypeMapFn());
 		o.OuterAdditionalSqls.AddRange([
 $"""
 {MkIdx} {o.Qt("Idx_"+o.DbTblName+"_WordId")}
@@ -140,8 +140,8 @@ ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(I_WordId.WordId))})
 		{
 			var o = Tbl_Wc;
 			CfgPoBase(o);
-			o.SetCol(nameof(PoWeightCalculator.Id)).MapType(IdWeightCalculator.MkTypeMapFn());
-			o.SetCol(nameof(PoWeightCalculator.Type)).MapEnumToStr<EWeightCalculatorType>();
+			o.Col(nameof(PoWeightCalculator.Id)).MapType(IdWeightCalculator.MkTypeMapFn());
+			o.Col(nameof(PoWeightCalculator.Type)).MapEnumToStr<EWeightCalculatorType>();
 			o.OuterAdditionalSqls.AddRange([
 $"""
 CREATE UNIQUE INDEX {o.Qt($"Ux_{o.DbTblName}_UniqueName")}
@@ -162,8 +162,8 @@ ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(PoWeightCalculator.Type))})
 		{
 			var o = Tbl_Wa;
 			CfgPoBase(o);
-			o.SetCol(nameof(PoWeightArg.Id)).MapType(IdWeightArg.MkTypeMapFn());
-			o.SetCol(nameof(PoWeightArg.Type)).MapEnumToStr<EWeightArgType>();
+			o.Col(nameof(PoWeightArg.Id)).MapType(IdWeightArg.MkTypeMapFn());
+			o.Col(nameof(PoWeightArg.Type)).MapEnumToStr<EWeightArgType>();
 			o.OuterAdditionalSqls.AddRange([
 $"""
 CREATE UNIQUE INDEX {o.Qt($"Ux_{o.DbTblName}_UniqueName")}
@@ -184,9 +184,9 @@ ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(PoWeightArg.WeightCalculatorName))})
 		{
 			var o = Tbl_Sp;
 			CfgPoBase(o);
-			o.SetCol(nameof(PoStudyPlan.Id)).MapType(IdStudyPlan.MkTypeMapFn());
-			o.SetCol(nameof(PoStudyPlan.WeightCalculatorId)).MapType(IdWeightCalculator.MkTypeMapFn());
-			o.SetCol(nameof(PoStudyPlan.WeightArgId)).MapType(IdWeightArg.MkTypeMapFn());
+			o.Col(nameof(PoStudyPlan.Id)).MapType(IdStudyPlan.MkTypeMapFn());
+			o.Col(nameof(PoStudyPlan.WeightCalculatorId)).MapType(IdWeightCalculator.MkTypeMapFn());
+			o.Col(nameof(PoStudyPlan.WeightArgId)).MapType(IdWeightArg.MkTypeMapFn());
 			o.OuterAdditionalSqls.AddRange([
 $"""
 CREATE UNIQUE INDEX {o.Qt($"Ux_{o.DbTblName}_UniqueName")}
@@ -212,23 +212,23 @@ ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(PoStudyPlan.WeightCalculatorId))})
 			var o = Tbl_Cfg;
 			CfgPoBase(o);
 			CfgIPoKv(o);
-			o.SetCol(nameof(PoKv.Id)).MapType(IdKv.MkTypeMapFn());
-			o.SetCol(nameof(PoKv.Owner)).MapType(IdUser.MkTypeMapFn());
+			o.Col(x=>x.Id).MapType(IdKv.MkTypeMapFn());
+			o.Col(x=>x.Owner).MapType(IdUser.MkTypeMapFn());
 
 			o.OuterAdditionalSqls.AddRange([
 $"""
 {MkIdx} {o.Qt($"Idx_{o.DbTblName}_{nameof(PoKv.Owner)}")}
-ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoKv.Owner))})
+ON {o.Qt(o.DbTblName)}({o.Fld(x=>x.Owner)})
 """
 ,$"""
 CREATE UNIQUE INDEX {o.Qt($"Ux_{o.DbTblName}_{nameof(PoKv.Owner)}_{nameof(PoKv.KStr)}")}
-ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoKv.Owner))},{o.Fld(nameof(PoKv.KStr))})
+ON {o.Qt(o.DbTblName)}({o.Fld(x=>x.Owner)},{o.Fld(x=>x.KStr)})
 WHERE {o.SqlIsNonDel()}
 AND {o.Fld(nameof(PoKv.KType))} = {o.UpperToRaw(EKvType.Str)}
 """
 ,$"""
 CREATE UNIQUE INDEX {o.Qt($"Ux_{o.DbTblName}_{nameof(PoKv.Owner)}_{nameof(PoKv.KI64)}")}
-ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoKv.Owner))},{o.Fld(nameof(PoKv.KI64))})
+ON {o.Qt(o.DbTblName)}({o.Fld(x=>x.Owner)},{o.Fld(x=>x.KI64)})
 WHERE {o.SqlIsNonDel()}
 AND {o.Fld(nameof(PoKv.KType))} = {o.UpperToRaw(EKvType.I64)}
 """
@@ -243,23 +243,23 @@ AND {o.Fld(nameof(PoKv.KType))} = {o.UpperToRaw(EKvType.I64)}
 			var o = Tbl_Word;
 			CfgPoBase(o);
 			CfgBizCreateUpdateTime(o);
-			o.SetCol(nameof(PoWord.Id)).MapType(IdWord.MkTypeMapFn());
-			o.SetCol(nameof(PoWord.Owner)).MapType(MapIdUser());
-			o.SetCol(nameof(PoWord.StoredAt)).MapType(MapTempus());
+			o.Col(x=>x.Id).MapType(IdWord.MkTypeMapFn());
+			o.Col(x=>x.Owner).MapType(MapIdUser());
+			o.Col(x=>x.StoredAt).MapType(MapTempus());
 			// o.InnerAdditionalSqls.AddRange([
 
 			// ]);
 			o.OuterAdditionalSqls.AddRange([
-$"{MkIdx} {o.Qt($"Idx_{o.DbTblName}_Head_Lang")} ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoWord.Head))}, {o.Fld(nameof(PoWord.Lang))})"
-,$"{MkIdx} {o.Qt($"Idx_{o.DbTblName}_CreatedAt")} ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoWord.BizCreatedAt))})"
-,$"{MkIdx} {o.Qt($"Idx_{o.DbTblName}_UpdatedAt")} ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoWord.BizUpdatedAt))})"
-,$"{MkIdx} {o.Qt($"Idx_{o.DbTblName}_StoragedAt")} ON {o.Qt(o.DbTblName)}({o.Fld(nameof(PoWord.BizUpdatedAt))})"
+$"{MkIdx} {o.Qt($"Idx_{o.DbTblName}_Head_Lang")} ON {o.Qt(o.DbTblName)}({o.Fld(x=>x.Head)}, {o.Fld(x=>x.Lang)})"
+,$"{MkIdx} {o.Qt($"Idx_{o.DbTblName}_CreatedAt")} ON {o.Qt(o.DbTblName)}({o.Fld(x=>x.BizCreatedAt)})"
+,$"{MkIdx} {o.Qt($"Idx_{o.DbTblName}_UpdatedAt")} ON {o.Qt(o.DbTblName)}({o.Fld(x=>x.BizUpdatedAt)})"
+,$"{MkIdx} {o.Qt($"Idx_{o.DbTblName}_StoragedAt")} ON {o.Qt(o.DbTblName)}({o.Fld(x=>x.BizUpdatedAt)})"
 ,
 $"""
 CREATE UNIQUE INDEX {o.Qt($"Ux_{o.DbTblName}_Owner_Head_Lang")} ON {o.Qt(o.DbTblName)} (
-{o.Fld(nameof(PoWord.Owner))}
-,{o.Fld(nameof(PoWord.Head))}
-,{o.Fld(nameof(PoWord.Lang))}
+{o.Fld(x=>x.Owner)}
+,{o.Fld(x=>x.Head)}
+,{o.Fld(x=>x.Lang)}
 ) WHERE {o.SqlIsNonDel()}
 """
 			]);
@@ -273,7 +273,7 @@ CREATE UNIQUE INDEX {o.Qt($"Ux_{o.DbTblName}_Owner_Head_Lang")} ON {o.Qt(o.DbTbl
 			CfgI_WordId<PoWordProp>(o);
 			CfgIPoKv(o);
 			CfgBizCreateUpdateTime(o);
-			o.SetCol(nameof(PoWordProp.Id)).MapType(IdWordProp.MkTypeMapFn());
+			o.Col(x=>x.Id).MapType(IdWordProp.MkTypeMapFn());
 
 		}
 
@@ -285,9 +285,9 @@ CREATE UNIQUE INDEX {o.Qt($"Ux_{o.DbTblName}_Owner_Head_Lang")} ON {o.Qt(o.DbTbl
 			CfgI_WordId<PoWordLearn>(o);
 			CfgBizCreateUpdateTime(o);
 			o.CodeIdName = nameof(PoWordLearn.Id);
-			o.SetCol(nameof(PoWordLearn.Id)).MapType(IdWordLearn.MkTypeMapFn());
+			o.Col(x=>x.Id).MapType(IdWordLearn.MkTypeMapFn());
 			//o.SetCol(nameof(PoWordLearn.LearnResult)).MapEnumTypeInt32<ELearn>();
-			o.SetCol(nameof(PoWordLearn.LearnResult)).MapEnumToStr<ELearn>();
+			o.Col(x=>x.Id).MapEnumToStr<ELearn>();
 		}
 		return Mgr;
 	}
