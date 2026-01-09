@@ -38,16 +38,22 @@ public partial class DaoSqlWord{
 	>>
 	FnSlctIdByOwnerHeadLangWithDel(IDbFnCtx Ctx,CT Ct){
 		var T = TblMgr.GetTbl<PoWord>(); var N = new PoWord.N();
-		var POwner = T.Prm(N.Owner);var PHead = T.Prm(N.Head); var PLang = T.Prm(N.Lang);
-		var Sql =
-$"""
-SELECT {T.Fld(N.Id)} AS {T.Qt(N.Id)}
-FROM {T.Qt(T.DbTblName)}
-WHERE 1=1
-AND {T.Eq(POwner)}
-AND {T.Eq(PHead)}
-AND {T.Eq(PLang)}
-""";
+//		var POwner = T.Prm(N.Owner);var PHead = T.Prm(N.Head); var PLang = T.Prm(N.Lang);
+var Sql = T.Splicer().Select(x=>x.Id).From().WhereT()
+.AndEq(x=>x.Owner, out var POwner)
+.AndEq(x=>x.Head, out var PHead)
+.AndEq(x=>x.Lang, out var PLang)
+.ToSqlStr()
+;
+// 		var Sql =
+// $"""
+// SELECT {T.Fld(N.Id)} AS {T.Qt(N.Id)}
+// FROM {T.Qt(T.DbTblName)}
+// WHERE 1=1
+// AND {T.Eq(POwner)}
+// AND {T.Eq(PHead)}
+// AND {T.Eq(PLang)}
+// """;
 		var SqlCmd = await Ctx.PrepareToDispose(SqlCmdMkr, Sql, Ct);
 		return async (User,Head,Lang,Ct)=>{
 			var UserId = User.UserId;
@@ -221,7 +227,7 @@ AND {T.Eq(PWordId)}
 		var N = new PoWord.N();
 		//var POwner = T.Prm(N.Owner);
 var Sql = T.Splicer().Select("*").From()
-	.Where()
+	.WhereT()
 	.Raw(SqlFilterDel(T, CfgQry.IncludeDeleted))
 	.And(x=>x.Owner, "=", out var POwner)
 	.OrderByDesc(x=>x.BizCreatedAt)
@@ -342,33 +348,34 @@ var Sql = T.Splicer().Select("*").From()
 		,Task<IPageAsyE<IdWord>>
 	>> FnPageChangedWordIdsWithDelWordsAfterTime(IDbFnCtx Ctx, CT Ct){
 var T = TblMgr.GetTbl<PoWord>();
-str NId = nameof(PoWord.Id)
-	,NUpdateAt = nameof(PoWord.BizUpdatedAt),NStoredAt = nameof(PoWord.StoredAt)
-;
-var PTempus = T.Prm("Tempus");var POwner = T.Prm("Owner");
 
-/*
-T.Qry().Select(x=>x.Id, "Id")
-.AndBlock(x=>
-	x.And(x=>x.BizUpdatedAt, ">", out var PTempus)
-	.Or(x=>x.StoredAt, ">", PTempus)
-).LimOfst(out var Lmt, out var Ofst)
-;
- */
-var Sql =
-$"""
-SELECT {T.Fld(NId)} AS {T.Qt(NId)}
-FROM {T.Qt(T.DbTblName)}
-WHERE 1=1
-AND {T.Eq(POwner)}
-AND (
-	{T.Fld(NUpdateAt)} > {PTempus}
-	OR {T.Fld(NStoredAt)} > {PTempus}
-)
-{T.SqlMkr.ParamLimOfst(out var Lmt, out var Ofst)}
-""";//考慮同步後 一方ʃ新增、此旹無UpdatedAt 只有CreatedAt
-		var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
-		Ctx?.AddToDispose(SqlCmd);
+IParam PTempus=null!;
+var Sql = T.Splicer()
+.Select(x=>x.Id).From().WhereT()
+.And(x=>x.Owner, "=", out var POwner)
+.And().Paren(b=>
+	b.Bool(x=>x.BizUpdatedAt, ">", out var PTempus)
+	.Or().Bool(x=>x.StoredAt, ">", PTempus)
+).LimOfst(out var Lmt, out var Ofst).ToSqlStr();
+
+
+str NId = nameof(PoWord.Id);
+
+//str NId = nameof(PoWord.Id)	,NUpdateAt = nameof(PoWord.BizUpdatedAt),NStoredAt = nameof(PoWord.StoredAt);
+//var PTempus = T.Prm("Tempus");var POwner = T.Prm("Owner");
+// var Sql =
+// $"""
+// SELECT {T.Fld(NId)} AS {T.Qt(NId)}
+// FROM {T.Qt(T.DbTblName)}
+// WHERE 1=1
+// AND {T.Eq(POwner)}
+// AND (
+// 	{T.Fld(NUpdateAt)} > {PTempus}
+// 	OR {T.Fld(NStoredAt)} > {PTempus}
+// )
+// {T.SqlMkr.ParamLimOfst(out var Lmt, out var Ofst)}
+// """;//考慮同步後 一方ʃ新增、此旹無UpdatedAt 只有CreatedAt
+		var SqlCmd = await Ctx.PrepareToDispose(SqlCmdMkr, Sql, Ct);
 		return async(UserCtx, PageQry, Tempus, Ct)=>{
 			var RawDictAsy = SqlCmd.AttachCtxTxn(Ctx).Args(ArgDict.Mk(T)
 				.AddT(PTempus, Tempus)
