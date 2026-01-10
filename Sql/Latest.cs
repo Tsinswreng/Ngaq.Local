@@ -20,7 +20,7 @@ using Ngaq.Core.Shared.User.Models.Po.User;
 public partial class DbIniter{
 	public ISqlCmdMkr SqlCmdMkr;
 	public ITxnRunner TxnRunner;
-	public I_GetTxnAsy TxnGetter;
+	public IMkrTxn TxnGetter;
 	public ITblMgr TblMgr;
 	public IRepo<SchemaHistory, i64> RepoSchemaHistory;
 	public ISvcKv SvcKv;
@@ -28,7 +28,7 @@ public partial class DbIniter{
 	public DbIniter(
 		ISqlCmdMkr SqlCmdMkr
 		,ITxnRunner TxnRunner
-		,I_GetTxnAsy TxnGetter
+		,IMkrTxn TxnGetter
 		,ITblMgr TblMgr
 		,IAppRepo<SchemaHistory, i64> RepoSchemaHistory
 		,ISvcKv SvcKv
@@ -129,7 +129,7 @@ public partial class DbIniter{
 
 	public async Task<nil> Init(CT Ct) {
 		var Ctx = new DbFnCtx{};
-		Ctx.Txn = await TxnGetter.GetTxnAsy(Ctx, Ct);
+		Ctx.Txn = await TxnGetter.MkTxnAsy(Ctx, Ct);
 		var Init = await FnInit(Ctx, Ct);
 		await TxnRunner.RunTxn(Ctx.Txn, Init, Ct);
 		await InitKv(Ct);

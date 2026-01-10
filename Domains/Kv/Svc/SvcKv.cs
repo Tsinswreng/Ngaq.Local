@@ -16,7 +16,7 @@ using Tsinswreng.CsSqlHelper;
 using Z = SvcKv;
 public partial class SvcKv(
 	DaoKv DaoKv
-	,TxnWrapper<DbFnCtx> TxnWrapper
+	,TxnWrapper TxnWrapper
 	,IAppRepo<PoKv, IdKv> RepoKv
 )
 	:ISvcKv

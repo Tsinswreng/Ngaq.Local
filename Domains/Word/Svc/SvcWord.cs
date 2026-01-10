@@ -44,11 +44,11 @@ public partial class SvcWord(
 	ISvcParseWordList SvcParseWordList
 	,ITxnRunner TxnRunner
 	,DaoSqlWord DaoWord
-	,I_GetTxnAsy TxnGetter
+	,IMkrTxn TxnGetter
 	,IAppRepo<PoWord, IdWord> RepoPoWord
 	,IAppRepo<PoWordProp, IdWordProp> RepoProp
 	,IAppRepo<PoWordLearn, IdWordLearn> RepoLearn
-	,TxnWrapper<DbFnCtx> TxnWrapper
+	,TxnWrapper TxnWrapper
 	,IJsonSerializer JsonSerializer
 	,ILogger Logger
 )

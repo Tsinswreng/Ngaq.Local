@@ -14,6 +14,7 @@ using Ngaq.Core.Shared.Word.Models;
 using Ngaq.Core.Word.Svc;
 using Ngaq.Core.Shared.Word.Models.Dto;
 using Ngaq.Core.Tools;
+using Tsinswreng.CsSqlHelper;
 
 public partial class SvcWord{
 #region API
@@ -49,7 +50,7 @@ public partial class SvcWord{
 		,CT Ct
 	) {
 		var Ctx = new DbFnCtx{};
-		Ctx.Txn = await TxnGetter.GetTxnAsy(Ctx, Ct);
+		Ctx.Txn = await TxnGetter.MkTxnAsy(Ctx, Ct);
 		var AddOrUpdateWords = await FnMergeWordsFromTxt(Ctx, Ct);
 		await TxnRunner.RunTxn(Ctx.Txn, async(Ct)=>{
 			var BoWords = await SvcParseWordList.ParseWordsFromFilePath(Path_Encode);
@@ -67,7 +68,7 @@ public partial class SvcWord{
 		,CT Ct
 	) {
 		var Ctx = new DbFnCtx{};
-		Ctx.Txn = await TxnGetter.GetTxnAsy(Ctx, Ct);
+		Ctx.Txn = await TxnGetter.MkTxnAsy(Ctx, Ct);
 		var AddOrUpdateWords = await FnMergeWordsFromTxt(Ctx, Ct);
 		await TxnRunner.RunTxn(Ctx.Txn, async(Ct)=>{
 			var BoWords = await SvcParseWordList.ParseWordsFromText(Text,Ct);
@@ -112,7 +113,7 @@ public partial class SvcWord{
 		,CT Ct
 	){
 		var Ctx = new DbFnCtx{};
-		Ctx.Txn = await TxnGetter.GetTxnAsy(Ctx, Ct);
+		Ctx.Txn = await TxnGetter.MkTxnAsy(Ctx, Ct);
 		var AddWordId_PoLearnss = await FnAddWordId_PoLearnss(Ctx, Ct);
 		return await TxnRunner.RunTxn(Ctx.Txn, async(Ct)=>{
 			var WordId_PoLearns = WordId_LearnRecordss.Select(WordId_LearnRecords=>{

@@ -3,8 +3,8 @@ using Ngaq.Local.Db;
 using Tsinswreng.CsSqlHelper;
 
 public partial class DbFnCtxMkr<TDbFnCtx>
-	:BaseDbFnCtxMkr<TDbFnCtx>
-	where TDbFnCtx: IBaseDbFnCtx, new()
+	:MkrDbFnCtx<TDbFnCtx>
+	where TDbFnCtx: Tsinswreng.CsSqlHelper.IDbFnCtx, new()
 {
-	public DbFnCtxMkr(I_GetTxnAsy GetTxn):base(GetTxn){}
+	public DbFnCtxMkr(IMkrTxn GetTxn):base(GetTxn){}
 }

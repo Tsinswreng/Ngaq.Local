@@ -6,6 +6,7 @@ using Ngaq.Core.Shared.Word.Models.Po.Kv;
 using Ngaq.Core.Shared.Word.Models;
 using Ngaq.Core.Shared.Word.Models.Po.Word;
 using Ngaq.Core.Shared.Word.Models.Po.Learn;
+using Tsinswreng.CsSqlHelper;
 
 public partial class DaoSqlWord{
 
@@ -15,7 +16,7 @@ public partial class DaoSqlWord{
 		,CT
 		,Task<nil>
 	>> FnInsertJnWords(
-		IDbFnCtx? Ctx
+		IDbFnCtx Ctx
 		,CT ct
 	) {
 		var InsertPoWords = await RepoWord.FnInsertMany(Ctx, ct);
@@ -59,7 +60,7 @@ public partial class DaoSqlWord{
 		,CT
 		,Task<nil>
 	>> FnInsertPoKvs(
-		IDbFnCtx? Ctx
+		IDbFnCtx Ctx
 		,CT Ct
 	){
 		var UpdUpd = await FnTriggerOnRootAfterUpd(Ctx,Ct);
@@ -79,7 +80,7 @@ public partial class DaoSqlWord{
 		,CT
 		,Task<nil>
 	>> FnInsertPoLearns(
-		IDbFnCtx? Ctx
+		IDbFnCtx Ctx
 		,CT Ct
 	){
 		var UpdUpd = await FnTriggerOnRootAfterUpd(Ctx, Ct);

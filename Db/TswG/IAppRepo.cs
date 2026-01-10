@@ -21,6 +21,6 @@ public partial interface IAppRepo<
 		TId
 		,CT
 		,Task<nil>
-	>> FnUpd_BizUpdatedAt(IDbFnCtx? Ctx, CT Ct);
+	>> FnUpd_BizUpdatedAt(IDbFnCtx Ctx, CT Ct);
 
 }

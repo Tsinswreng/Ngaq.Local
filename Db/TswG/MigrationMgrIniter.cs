@@ -8,12 +8,12 @@ public class MigrationMgrIniter{
 	public IServiceProvider Sp{get;set;}
 	public IMigrationMgr MigrationMgr{get;set;}
 	public ISqlCmdMkr SqlCmdMkr;
-	public I_GetTxnAsy MkrTxn;
+	public IMkrTxn MkrTxn;
 	public MigrationMgrIniter(IServiceProvider Sp){
 		this.Sp = Sp;
 		this.MigrationMgr = Sp.GetRequiredService<MigrationMgr>();
 		this.SqlCmdMkr = Sp.GetRequiredService<ISqlCmdMkr>();
-		this.MkrTxn = Sp.GetRequiredService<I_GetTxnAsy>();
+		this.MkrTxn = Sp.GetRequiredService<IMkrTxn>();
 		Init();
 	}
 	void Init(){

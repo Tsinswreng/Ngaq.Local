@@ -287,7 +287,7 @@ CREATE UNIQUE INDEX {o.Qt($"Ux_{o.DbTblName}_Owner_Head_Lang")} ON {o.Qt(o.DbTbl
 			o.CodeIdName = nameof(PoWordLearn.Id);
 			o.Col(x=>x.Id).MapType(IdWordLearn.MkTypeMapFn());
 			//o.SetCol(nameof(PoWordLearn.LearnResult)).MapEnumTypeInt32<ELearn>();
-			o.Col(x=>x.Id).MapEnumToStr<ELearn>();
+			o.Col(x=>x.LearnResult).MapEnumToStr<ELearn>();
 		}
 		return Mgr;
 	}

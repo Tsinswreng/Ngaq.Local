@@ -21,7 +21,7 @@ public static class ExtnIServiceProvider{
 
 /// <summary>
 /// 注意: 需手動初始化 IServiceProvider
-/// </summary>
+/// </summary>//TODO 斯類中未區分 初安裝應用後初啓動之初始化 與 既安裝後 啓動之初始化
 public class AppIniter{
 	protected static AppIniter? _Inst = null;
 	public static AppIniter Inst => _Inst??= new AppIniter();

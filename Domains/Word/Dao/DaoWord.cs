@@ -24,6 +24,8 @@ public partial class DaoSqlWord(
 	,IAppRepo<PoWordLearn, IdWordLearn> RepoLearn
 ){
 
+	protected ITable<PoWord> T => TblMgr.GetTbl<PoWord>();
+
 	/// <summary>
 	/// <delete>
 	/// /// 予Svc層調用、不在Dao層調用。

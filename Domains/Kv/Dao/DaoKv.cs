@@ -23,7 +23,9 @@ public partial class DaoKv(
 
 	ISqlCmdMkr SqlCmdMkr = SqlCmdMkr;
 
-	protected ITable T{
+	//ITable<PoKv> T{get=>TblMgr.GetTbl<PoKv>();}
+
+	protected ITable<PoKv> T{
 		get{return TblMgr.GetTbl<PoKv>();}
 	}
 
@@ -54,14 +56,12 @@ public partial class DaoKv(
 		,obj
 		,CT, Task<PoKv?>
 	>> FnGetByOwnerEtKey(IDbFnCtx Ctx, str KeyCol, CT Ct){
-var T = TblMgr.GetTbl<PoKv>(); var POwner = T.Prm(nameof(PoKv.Owner)); var PKeyCol = T.Prm(KeyCol);
-var Sql =$"""
-SELECT * FROM {T.Qt(T.DbTblName)}
-WHERE 1=1
-AND {T.SqlIsNonDel()}
-AND {T.Eq(POwner)}
-AND {T.Eq(PKeyCol)}
-""";
+var PKeyCol = T.Prm(KeyCol);
+var Sql = T.SqlSplicer().Select("*").From().WhereT()
+.And(T.SqlIsNonDel())
+.AndEq(x=>x.Owner, out var POwner)
+.And($"{T.Fld(PKeyCol)} = {PKeyCol}").ToSqlStr();
+;
 		var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
 		Ctx?.AddToDispose(SqlCmd);
 		return async(Id, Key, Ct)=>{

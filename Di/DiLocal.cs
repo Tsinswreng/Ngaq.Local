@@ -52,11 +52,11 @@ z.AddScoped<ISqlCmdMkr, SqliteCmdMkr>();
 //數據庫諸表ˇ司者
 z.AddSingleton<ITblMgr>(LocalTblMgr.Inst);
 //事務ˇ建者
-z.AddScoped<I_GetTxnAsy, SqliteCmdMkr>();
+z.AddScoped<IMkrTxn, SqliteCmdMkr>();
 //事務ˇ珩者
 z.AddScoped<ITxnRunner, AdoTxnRunner>();
-z.AddScoped<IDbFnCtxMkr<DbFnCtx> ,DbFnCtxMkr<DbFnCtx>>();
-z.AddScoped<TxnWrapper<DbFnCtx>>();
+z.AddScoped<IMkrDbFnCtx ,MkrDbFnCtx>();
+z.AddScoped<TxnWrapper>();
 //數據庫初始化器
 z.AddTransient<DbIniter>();
 z.AddSingleton<IMigrationMgr>(sp=>new MigrationMgr(
@@ -108,7 +108,6 @@ z.AddScoped<ISvcWord, SvcWord>();
 z.AddScoped<ISvcDictionary, SvcDictionary>();
 z.AddScoped<ISvcKv, SvcKv>();
 z.AddScoped<IImgGetter, SvcImg>();
-z.AddScoped<TxnWrapper<DbFnCtx>>();
 return z;
 	}
 

@@ -22,16 +22,22 @@ public partial class DaoSqlWord{
 		,Task<nil>
 	>> FnUpdPoWordHeadLang(IDbFnCtx Ctx, CT Ct){
 		var UpdUpd = await FnTriggerOnRootAfterUpd(Ctx,Ct);
-var T = TblMgr.GetTbl<PoWord>();
-var N = new PoWord.N();
-var PId = T.Prm(N.Id); var PHead = T.Prm(N.Head); var PLang = T.Prm(N.Lang);
-var Sql =
-$"""
-UPDATE {T.DbTblName}
-SET {T.Fld(N.Head)} = {PHead}
-,{T.Fld(N.Lang)} = {PLang}
-WHERE {T.Fld(N.Id)} = {PId}
-""";
+// var T = TblMgr.GetTbl<PoWord>();
+// var N = new PoWord.N();
+// var PId = T.Prm(N.Id); var PHead = T.Prm(N.Head); var PLang = T.Prm(N.Lang);
+// var Sql =
+// $"""
+// UPDATE {T.DbTblName}
+// SET {T.Fld(N.Head)} = {PHead}
+// ,{T.Fld(N.Lang)} = {PLang}
+// WHERE {T.Fld(N.Id)} = {PId}
+// """;
+var Sql = T.SqlSplicer().UpdateSet()
+.Eq(x=>x.Head, out var PHead)
+.C().Eq(x=>x.Lang, out var PLang)
+.WhereT().AndEq(x=>x.Id, out var PId).ToSqlStr();
+;
+
 var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
 Ctx?.AddToDispose(SqlCmd);
 return async(UserCtx, IdWord, Head, Lang, Ct)=>{

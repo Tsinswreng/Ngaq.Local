@@ -39,7 +39,7 @@ public partial class DaoSqlWord{
 	FnSlctIdByOwnerHeadLangWithDel(IDbFnCtx Ctx,CT Ct){
 		var T = TblMgr.GetTbl<PoWord>(); var N = new PoWord.N();
 //		var POwner = T.Prm(N.Owner);var PHead = T.Prm(N.Head); var PLang = T.Prm(N.Lang);
-var Sql = T.Splicer().Select(x=>x.Id).From().WhereT()
+var Sql = T.SqlSplicer().Select(x=>x.Id).From().WhereT()
 .AndEq(x=>x.Owner, out var POwner)
 .AndEq(x=>x.Head, out var PHead)
 .AndEq(x=>x.Lang, out var PLang)
@@ -226,7 +226,7 @@ AND {T.Eq(PWordId)}
 		var T = TblMgr.GetTbl<PoWord>();
 		var N = new PoWord.N();
 		//var POwner = T.Prm(N.Owner);
-var Sql = T.Splicer().Select("*").From()
+var Sql = T.SqlSplicer().Select("*").From()
 	.WhereT()
 	.Raw(SqlFilterDel(T, CfgQry.IncludeDeleted))
 	.And(x=>x.Owner, "=", out var POwner)
@@ -350,7 +350,7 @@ var Sql = T.Splicer().Select("*").From()
 var T = TblMgr.GetTbl<PoWord>();
 
 IParam PTempus=null!;
-var Sql = T.Splicer()
+var Sql = T.SqlSplicer()
 .Select(x=>x.Id).From().WhereT()
 .And(x=>x.Owner, "=", out var POwner)
 .And().Paren(b=>
