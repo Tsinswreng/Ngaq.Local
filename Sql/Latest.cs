@@ -62,7 +62,7 @@ public partial class DbIniter{
 		var Sql = "SELECT * FROM sqlite_master";
 		var Cmd = await SqlCmdMkr.MkCmd(DbFnCtx, Sql, Ct);
 		var Fn = async(CT Ct)=>{
-			return Cmd.IterAsyE(Ct);
+			return Cmd.AsyE1d(Ct);
 		};
 		return Fn;
 	}
@@ -81,7 +81,7 @@ public partial class DbIniter{
 		var Cmd = await SqlCmdMkr.MkCmd(DbFnCtx, SqlMkSchema, Ct);//勿 Prepare、表未建好旹預無法編譯
 		var Fn = async(CT Ct)=>{
 			try{
-				await Cmd.IterAsyE(Ct).FirstOrDefaultAsync(Ct);
+				await Cmd.AsyE1d(Ct).FirstOrDefaultAsync(Ct);
 				return NIL;
 			}
 			catch (System.Exception e){
@@ -141,11 +141,11 @@ public partial class DbIniter{
 		var PoKv = new PoKv();
 		var Path = KeysClientKv.ClientId;
 		PoKv.SetStrStr(Path, ClientId+"");
-		var Old = await SvcKv.GetByOwnerEtKeyAsy(IdUser.Zero, Path, Ct);
+		var Old = await SvcKv.GetByOwnerEtKey(IdUser.Zero, Path, Ct);
 		if(Old is not null){
 			return NIL;
 		}
-		await SvcKv.SetAsy(PoKv, Ct);
+		await SvcKv.Set(PoKv, Ct);
 		return NIL;
 	}
 }

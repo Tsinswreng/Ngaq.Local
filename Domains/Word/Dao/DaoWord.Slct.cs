@@ -61,7 +61,7 @@ var Sql = T.SqlSplicer().Select(x=>x.Id).From().WhereT()
 			.AddT(POwner, UserId)
 			.AddT(PHead, Head)
 			.AddT(PLang, Lang);
-			var GotDict = await SqlCmd.Args(Args).IterAsyE(Ct).FirstOrDefaultAsync(Ct);
+			var GotDict = await SqlCmd.Args(Args).AsyE1d(Ct).FirstOrDefaultAsync(Ct);
 			if(GotDict == null){
 				return null;
 			}
@@ -146,12 +146,12 @@ AND {TP.Eq(PWordId)}
 			var Arg = new Str_Any{
 				[nameof(PoWordProp.WordId)] = Id
 			};
-			var RawPropDicts = (await Cmd_SeekKv.RawArgs(TP.ToDbDict(Arg)).All(Ct))
+			var RawPropDicts = (await Cmd_SeekKv.RawArgs(TP.ToDbDict(Arg)).All1d(Ct))
 				.Select(dbDict=>TP.DbDictToEntity<PoWordProp>(dbDict))
 				.ToList()
 			;
 
-			var RawLearnDicts = (await Cmd_SeekLearn.RawArgs(TL.ToDbDict(Arg)).All(Ct))
+			var RawLearnDicts = (await Cmd_SeekLearn.RawArgs(TL.ToDbDict(Arg)).All1d(Ct))
 				.Select(dbDict=>TL.DbDictToEntity<PoWordLearn>(dbDict))
 				.ToList()
 			;
@@ -201,7 +201,7 @@ AND {T.Eq(PWordId)}
 			var Arg = ArgDict.Mk(T)
 			.AddT(PWordId, IdWord)
 			.AddPageQry(PageQry, PLmt, POfst);
-			var DbDict = Ctx.RunCmd(SqlCmd, Arg).IterAsyE(Ct);
+			var DbDict = Ctx.RunCmd(SqlCmd, Arg).AsyE1d(Ct);
 			u64 Cnt = 0;
 			//if(PageQry.HasTotalCount){Cnt = await FnCnt(Ct);}
 			IPageAsyE<IStr_Any> R = new PageAsyE<IStr_Any>{
@@ -251,7 +251,7 @@ var Sql = T.SqlSplicer().Select("*").From()
 			.AddT(POwner, UserCtx.UserId)
 			.AddPageQry(PageQry, PLim, POfst);
 
-			var RawDbDicts = SqlCmd.Args(Arg).IterAsyE(Ct);
+			var RawDbDicts = SqlCmd.Args(Arg).AsyE1d(Ct);
 			var PoWords = RawDbDicts.Select(
 				(Raw)=>T.DbDictToEntity<PoWord>(Raw)
 			);
@@ -381,7 +381,7 @@ str NId = nameof(PoWord.Id);
 				.AddT(PTempus, Tempus)
 				.AddT(POwner, UserCtx.UserId)
 				.AddPageQry(PageQry, Lmt, Ofst)
-			).IterAsyE(Ct);
+			).AsyE1d(Ct);
 			var WordIds = RawDictAsy.Select(x => T.RawToUpper<IdWord>(x[NId], NId));
 			var R = PageAsyE<IdWord>.Mk(PageQry, WordIds);
 			R.HasTotCnt = false;
@@ -427,7 +427,7 @@ ORDER BY {T.Fld(N.Head)} ASC
 			.AddT(POwner, User.UserId)
 			.AddPageQry(PageQry, PLmt, POfst)
 			;
-			var RawDicts = SqlCmd.AttachCtxTxn(Ctx).Args(Arg).IterAsyE(Ct);
+			var RawDicts = SqlCmd.AttachCtxTxn(Ctx).Args(Arg).AsyE1d(Ct);
 			var WordIds = RawDicts.Select(d=>{
 				var Id = d[N.Id];
 				return T.RawToUpper<IdWord>(Id, N.Id);
@@ -457,7 +457,7 @@ AND {Tbl.Eq(PId)}
 		return async (Id, Ct)=>{
 			var Arg = ArgDict.Mk()
 			.AddRaw(PId, Tbl.UpperToRaw(Id, NId));
-			var RawDicts = await SqlCmd.AttachCtxTxn(Ctx).Args(Arg).All(Ct);
+			var RawDicts = await SqlCmd.AttachCtxTxn(Ctx).Args(Arg).All1d(Ct);
 			if(RawDicts.Count == 0){
 				return null;
 			}
@@ -575,7 +575,7 @@ var Cmd = await Ctx.PrepareToDispose(SqlCmdMkr, Sql, Ct);
 			.AddT(PTimeInterval, Req.TimeInterval)
 			.AddT(PLearnResult, Req.LearnResult)
 			.AddPageQry(Req.PageQry, Lmt, Ofst);
-			var RawDicts = Cmd.AttachCtxTxn(Ctx).Args(Arg).IterAsyE(Ct);
+			var RawDicts = Cmd.AttachCtxTxn(Ctx).Args(Arg).AsyE1d(Ct);
 			var Intervals = RawDicts.Select(x=>{
 				return new TimeIntervalCnt{
 					TimeStart = new Tempus(Convert.ToInt64(x[NStartTime])),

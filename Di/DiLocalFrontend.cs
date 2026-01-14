@@ -6,7 +6,7 @@ using Ngaq.Core.Frontend.User.Svc;
 using Ngaq.Core.Infra.Url;
 using Ngaq.Core.Shared.Encryption.Svc;
 using Ngaq.Core.Shared.User.UserCtx;
-using Ngaq.Local.Domains.Encryption;
+using Ngaq.Local.Frontend.Encryption;
 using Ngaq.Local.Frontend.User.Svc;
 using Ngaq.Local.Infra;
 

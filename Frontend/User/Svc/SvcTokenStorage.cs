@@ -22,7 +22,7 @@ public class SvcTokenStorage:ISvcTokenStorage{
 	[Impl]
 	public async Task<str?> GetRefreshToken(CT Ct){
 		//TODO 先直接存明文 後汶改加密
-		var kv = await SvcKv.GetByOwnerEtKeyAsy(
+		var kv = await SvcKv.GetByOwnerEtKey(
 			IdUser.Zero, KeysClientKv.RefreshToken, Ct
 		);
 		return kv?.GetVStr();
@@ -32,7 +32,7 @@ public class SvcTokenStorage:ISvcTokenStorage{
 	[Impl]
 	public async Task<nil> SetRefreshToken(str Token, CT Ct){
 		//TODO 先直接存明文 後汶改加密
-		await SvcKv.SetAsy(
+		await SvcKv.Set(
 			new PoKv{
 				Owner = IdUser.Zero,
 			}.SetStrStr(KeysClientKv.RefreshToken, Token)
@@ -43,7 +43,7 @@ public class SvcTokenStorage:ISvcTokenStorage{
 
 	[Impl]
 	public async Task<nil> SetRefreshToken(ReqSetRefreshToken Req, CT Ct){
-		await SvcKv.SetManyAsy(
+		await SvcKv.SetMany(
 			[
 				new PoKv{
 					Owner = IdUser.Zero,

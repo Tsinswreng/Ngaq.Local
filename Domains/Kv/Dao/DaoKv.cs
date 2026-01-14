@@ -114,7 +114,7 @@ AND {T.Qt(NKStr)} = {PKStr}
 			.AddT(POwner, User.UserId)
 			.AddT(PKStr, KStr)
 			.AddPageQry(PageQry, Lmt, Ofst);
-			var RawDicts = await SqlCmd.Args(Arg).All(Ct);
+			var RawDicts = await SqlCmd.Args(Arg).All1d(Ct);
 			var PoAsy = RawDicts.Select(R=>T.DbDictToEntity<PoKv>(R)).AsOrToList();
 			var R = Page.Mk(PageQry, PoAsy);
 			return R;
@@ -144,7 +144,7 @@ var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
 			var Args = ArgDict.Mk()
 			.AddRaw(POwner, T.UpperToRaw(User.UserId))
 			.AddRaw(PKStr, KStr).AddRaw(PVStr, VStr);
-			await SqlCmd.Args(Args).IterAsyE(Ct).FirstOrDefaultAsync(Ct);
+			await SqlCmd.Args(Args).AsyE1d(Ct).FirstOrDefaultAsync(Ct);
 			return NIL;
 		};
 		return Fn;
@@ -172,7 +172,7 @@ var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
 			var Args = ArgDict.Mk()
 			.AddRaw(POwner, T.UpperToRaw(User.UserId))
 			.AddRaw(PKStr, KStr).AddRaw(PI64, VI64);
-			await SqlCmd.Args(Args).IterAsyE(Ct).FirstOrDefaultAsync(Ct);
+			await SqlCmd.Args(Args).AsyE1d(Ct).FirstOrDefaultAsync(Ct);
 			return NIL;
 		};
 		return Fn;

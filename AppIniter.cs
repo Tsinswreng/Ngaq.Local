@@ -40,14 +40,14 @@ public class AppIniter{
 	async Task<IdClient> InitClientId(CT Ct){
 		var SvcKv = Sp.GetRSvc<ISvcKv>();
 		var Key = KeysClientKv.ClientId;
-		var CliendIdKv = await SvcKv.GetByOwnerEtKeyAsy(
+		var CliendIdKv = await SvcKv.GetByOwnerEtKey(
 			IdUser.Zero, Key, Ct
 		);
 
 
 		if(CliendIdKv is null){
 			var Id = new IdClient();
-			await SvcKv.SetAsy(new PoKv{
+			await SvcKv.Set(new PoKv{
 				Owner = IdUser.Zero
 			}.SetStrStr(Key, Id+""), Ct);
 			return Id;
@@ -62,10 +62,10 @@ public class AppIniter{
 		var userCtxMgr = Sp.GetRSvc<IFrontendUserCtxMgr>();
 		var SvcKv = Sp.GetRSvc<ISvcKv>();
 
-		var CurLocalUserKv = await SvcKv.GetByOwnerEtKeyAsy(IdUser.Zero,KeysClientKv.CurLocalUserId,Ct);
-		var CurLoginUserKv = await SvcKv.GetByOwnerEtKeyAsy(IdUser.Zero,KeysClientKv.CurLoginUserId,Ct);
-		var RefreshToken = await SvcKv.GetByOwnerEtKeyAsy(IdUser.Zero, KeysClientKv.RefreshToken, Ct);
-		var RefreshTokenExpireAt = await SvcKv.GetByOwnerEtKeyAsy(IdUser.Zero, KeysClientKv.RefreshTokenExpireAt, Ct);
+		var CurLocalUserKv = await SvcKv.GetByOwnerEtKey(IdUser.Zero,KeysClientKv.CurLocalUserId,Ct);
+		var CurLoginUserKv = await SvcKv.GetByOwnerEtKey(IdUser.Zero,KeysClientKv.CurLoginUserId,Ct);
+		var RefreshToken = await SvcKv.GetByOwnerEtKey(IdUser.Zero, KeysClientKv.RefreshToken, Ct);
+		var RefreshTokenExpireAt = await SvcKv.GetByOwnerEtKey(IdUser.Zero, KeysClientKv.RefreshTokenExpireAt, Ct);
 		var UserCtx = userCtxMgr.GetUserCtx();
 		if(RefreshToken is not null){//TODO 判段是否過期
 			UserCtx.RefreshToken = RefreshToken.GetVStr();
@@ -90,7 +90,7 @@ public class AppIniter{
 			UserCtx.UserId = LocalUserId;
 			UserCtx.LocalUserId = LocalUserId;
 			kv.SetStrStr(KeysClientKv.CurLocalUserId, userCtxMgr.GetUserCtx().UserId.ToString());
-			await SvcKv.SetAsy(
+			await SvcKv.Set(
 				kv, Ct
 			);
 		}

@@ -45,7 +45,7 @@ public partial class DaoSqlWeightArgs(
             """;
 		var Cmd = await Ctx.PrepareToDispose(SqlCmdMkr, Sql, Ct);
 		return async (Ct) => {
-			await Cmd.All(Ct);
+			await Cmd.All1d(Ct);
 			return NIL;
 		};
 	}

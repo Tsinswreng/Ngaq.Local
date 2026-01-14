@@ -1,4 +1,4 @@
-namespace Ngaq.Local.Domains.Encryption;
+namespace Ngaq.Local.Frontend.Encryption;
 
 using Ngaq.Core.Shared.Encryption.Svc;
 using Ngaq.Core.Shared.Kv.Models;

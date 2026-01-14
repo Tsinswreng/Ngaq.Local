@@ -25,6 +25,9 @@ public partial class DaoSqlWord(
 ){
 
 	protected ITable<PoWord> T => TblMgr.GetTbl<PoWord>();
+	protected ITable<PoWord> TW => TblMgr.GetTbl<PoWord>();
+	protected ITable<PoWordProp> TP => TblMgr.GetTbl<PoWordProp>();
+	protected ITable<PoWordLearn> TL => TblMgr.GetTbl<PoWordLearn>();
 
 	/// <summary>
 	/// <delete>
@@ -66,7 +69,7 @@ WHERE {T.Fld(nameof(IPoBase.DelAt))} <> 0
 """;
 		var Cmd = await Ctx.PrepareToDispose(SqlCmdMkr, Sql, Ct);
 		return async(Ct)=>{
-			await Cmd.All(Ct);
+			await Cmd.All1d(Ct);
 			return NIL;
 		};
 	}

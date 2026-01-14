@@ -3,14 +3,11 @@ namespace Ngaq.Local.Domains.Kv.Svc;
 using Ngaq.Core.Shared.Kv.Models;
 using Ngaq.Core.Shared.Kv.Svc;
 using Ngaq.Core.Shared.User.Models.Po.User;
-using Ngaq.Core.Shared.User.Svc;
-using Ngaq.Core.Shared.User.UserCtx;
 using Ngaq.Core.Shared.Word.Models.Po.Kv;
 using Ngaq.Core.Sys.Models;
 using Ngaq.Local.Db.TswG;
 using Ngaq.Local.Domains.Kv.Dao;
 using Tsinswreng.CsCore;
-using Tsinswreng.CsPage;
 using Tsinswreng.CsSqlHelper;
 
 using Z = SvcKv;
@@ -25,16 +22,16 @@ public partial class SvcKv(
 	IAppRepo<PoKv, IdKv> RepoCfg = RepoKv;
 	//public const str PathSep = "/";
 
-	public Task<PoKv?> GetByOwnerEtKeyAsy(IdUser Owner, obj Key, CT Ct){
+	public Task<PoKv?> GetByOwnerEtKey(IdUser Owner, obj Key, CT Ct){
 		return TxnWrapper.Wrap(FnGetByOwnerEtKey, Owner, Key, Ct);
 	}
 
-	public Task<nil> SetAsy(PoKv Po, CT Ct){
-		return TxnWrapper.Wrap(FnAddOrUpd, Po, Ct);
+	public Task<nil> Set(PoKv Po, CT Ct){
+		return TxnWrapper.Wrap(FnSet, Po, Ct);
 	}
 
-	public Task<nil> SetManyAsy(IEnumerable<PoKv> Pos, CT Ct){
-		return TxnWrapper.Wrap(FnAddOrUpdMany, Pos, Ct);
+	public Task<nil> SetMany(IEnumerable<PoKv> Pos, CT Ct){
+		return TxnWrapper.Wrap(FnSetMany, Pos, Ct);
 	}
 
 
@@ -59,7 +56,7 @@ public partial class SvcKv(
 	public async Task<Func<
 		PoKv
 		,CT, Task<nil>
-	>> FnAddOrUpd(IDbFnCtx Ctx, CT Ct){
+	>> FnSet(IDbFnCtx Ctx, CT Ct){
 		var GetByOwnerEtKey = await FnGetByOwnerEtKey(Ctx, Ct);
 		var UpdById = await DaoKv.FnUpdById(Ctx, Ct);
 		var InsertMany = await RepoCfg.FnInsertMany(Ctx, Ct);
@@ -85,7 +82,7 @@ public partial class SvcKv(
 	public async Task<Func<
 		IEnumerable<PoKv>
 		,CT, Task<nil>
-	>> FnAddOrUpdMany(IDbFnCtx Ctx, CT Ct){
+	>> FnSetMany(IDbFnCtx Ctx, CT Ct){
 		var GetByOwnerEtKey = await FnGetByOwnerEtKey(Ctx, Ct);
 		var UpdManyById = await DaoKv.FnUpdManyById(Ctx, Ct);
 		var InsertMany = await RepoCfg.FnInsertMany(Ctx, Ct);
@@ -105,137 +102,6 @@ public partial class SvcKv(
 			await InsertMany(NonExistings, Ct);
 			return NIL;
 		};
-	}
-
-
-
-
-
-
-	[Obsolete]
-	[Impl(typeof(ISvcKv))]
-	public async Task<PoKv?> GetByKStr(IUserCtx UserCtx, str Key, CT Ct){
-		return await TxnWrapper.Wrap(FnGetOneByKStr, UserCtx, Key, Ct);
-		//return await TxnWrapper.Wrap(new ClsGetOneByKStr(this), UserCtx, Key, Ct);
-	}
-	[Obsolete]
-	[Impl(typeof(ISvcKv))]
-	public async Task<nil> SetVStrByKStr(IUserCtx UserCtx, str Key, str Value, CT Ct){
-		return await TxnWrapper.Wrap(FnAddOrSetVStrByKStr, UserCtx, Key, Value, Ct);
-	}
-	[Obsolete]
-	[Impl(typeof(ISvcKv))]
-	public async Task<nil> SetVI64ByKStr(IUserCtx UserCtx, str Key, i64 Value, CT Ct){
-		return await TxnWrapper.Wrap(FnAddOrSetVI64ByKStr, UserCtx, Key, Value, Ct);
-	}
-
-
-	[Obsolete]
-	public async Task<Func<
-		IUserCtx
-		,str
-		,CT
-		,Task<PoKv?>
-	>> FnGetOneByKStr(IDbFnCtx Ctx, CT Ct){
-		var PageQry = new PageQry{PageIdx = 0, PageSize = 1, WantTotCnt = false};
-		var PageByKStr = await DaoKv.FnPageByKStr(Ctx, Ct);
-		var Fn = async(IUserCtx UserCtx, str Key, CT Ct)=>{
-			var Page = await PageByKStr(UserCtx, Key, PageQry, Ct);
-			if(Page.Data != null){
-				var R = Page.Data.FirstOrDefault();
-				return R;
-			}
-			return null;
-		};
-		return Fn;
-	}
-
-	[Obsolete]
-	public async Task<Func<
-		IUserCtx
-		,PoKv
-		,CT, Task<nil>
-	>> FnUpdByKey(IDbFnCtx Ctx, CT Ct){
-		var UpdById = await DaoKv.FnUpdById(Ctx, Ct);
-		return async(User, Po, Ct)=>{
-
-			return NIL;
-		};
-	}
-
-	[Obsolete]
-	public async Task<Func<
-		IUserCtx
-		,PoKv
-		,CT
-		,Task<nil>
-	>> FnAdd(IDbFnCtx Ctx, CT Ct){
-		var InsertMany = await RepoCfg.FnInsertMany(Ctx, Ct);
-		var Fn = async(IUserCtx UserCtx, PoKv PoCfg, CT Ct)=>{
-			PoCfg.Owner = UserCtx.UserId;
-			await InsertMany([PoCfg], Ct);
-			return NIL;
-		};
-		return Fn;
-	}
-
-
-	[Obsolete]
-	public async Task<Func<
-		IUserCtx
-		,str
-		,str
-		,CT
-		,Task<nil>
-	>> FnAddOrSetVStrByKStr(IDbFnCtx Ctx, CT Ct){
-		var GetOneByKStr = await FnGetOneByKStr(Ctx, Ct);
-		var Add = await FnAdd(Ctx, Ct);
-		var SetVStrByKStr = await DaoKv.FnSetVStrByKStr(Ctx, Ct);
-		var Fn = async(IUserCtx UserCtx, str Key, str Value, CT Ct)=>{
-			var Existing = await GetOneByKStr(UserCtx, Key, Ct);
-			if(Existing != null){
-				await SetVStrByKStr(UserCtx, Key, Value, Ct);
-			}else{
-				var ToAdd = new PoKv{
-					Owner = UserCtx.UserId,
-					KStr = Key,
-					VType = EKvType.Str,
-					VStr = Value,
-				};
-				await Add(UserCtx, ToAdd, Ct);
-			}
-			return NIL;
-		};
-		return Fn;
-	}
-
-	[Obsolete]
-	public async Task<Func<
-		IUserCtx
-		,str
-		,i64
-		,CT
-		,Task<nil>
-	>> FnAddOrSetVI64ByKStr(IDbFnCtx Ctx, CT Ct){
-		var GetOneByKStr = await FnGetOneByKStr(Ctx, Ct);
-		var Add = await FnAdd(Ctx, Ct);
-		var SetVI64ByKStr = await DaoKv.FnSetVI64ByKStr(Ctx, Ct);
-		var Fn = async(IUserCtx UserCtx, str Key, i64 Value, CT Ct)=>{
-			var Existing = await GetOneByKStr(UserCtx, Key, Ct);
-			if(Existing != null){
-				await SetVI64ByKStr(UserCtx, Key, Value, Ct);
-			}else{
-				var ToAdd = new PoKv{
-					Owner = UserCtx.UserId,
-					KStr = Key,
-					VType = EKvType.I64,
-					VI64 = Value,
-				};
-				await Add(UserCtx, ToAdd, Ct);
-			}
-			return NIL;
-		};
-		return Fn;
 	}
 
 #if false
