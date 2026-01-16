@@ -6,10 +6,14 @@ using Ngaq.Core.Shared.StudyPlan.Models.Po.PreFilter;
 using Ngaq.Core.Shared.StudyPlan.Models.Po.StudyPlan;
 using Ngaq.Core.Shared.StudyPlan.Models.Po.WeightArg;
 using Ngaq.Core.Shared.StudyPlan.Models.Po.WeightCalculator;
+using Ngaq.Core.Shared.StudyPlan.Models.PreFilter;
 using Ngaq.Core.Shared.User.UserCtx;
 using Ngaq.Core.Shared.Word.Models.Po.Kv;
+using Ngaq.Core.Tools;
 using Ngaq.Local.Db.TswG;
+using System.Text;
 using Tsinswreng.CsSqlHelper;
+using Tsinswreng.CsTools;
 
 namespace Ngaq.Local.Domains.StudyPlan.Svc;
 
@@ -94,15 +98,41 @@ public class SvcStudyPlan{
 		var fnStudyPlan = await RepoStudyPlan.FnSlctOneById(Ctx, Ct);
 
 		return async (UserCtx, StudyPlanId, Ct)=>{
-			throw new NotImplementedException();
-			// var studyPlan = await fnStudyPlan(StudyPlanId, Ct);
-			// if(studyPlan == null){
-			// 	return null;
-			// }
-			// var R = new BoStudyPlan();
-			// R.PreFilter = await fnPreFilter(studyPlan.PreFilterId, Ct);
+			var studyPlan = await fnStudyPlan(StudyPlanId, Ct);
+			if(studyPlan == null){
+				return null;
+			}
+			var R = new BoStudyPlan();
+			R.PoStudyPlan = studyPlan;
 
+			// Get PreFilter
+			if(!studyPlan.PreFilterId.IsNullOrDefault()){
+				var poPreFilter = await fnPreFilter(studyPlan.PreFilterId, Ct);
+				if(poPreFilter != null && poPreFilter.Data != null){
+					var json = Encoding.UTF8.GetString(poPreFilter.Data);
+					R.PreFilter = JSON.parse<PreFilter>(json);
+				}
+				R.PoPreFilter = poPreFilter;
+			}
 
+			// Get WeightArg
+			if(!studyPlan.WeightArgId.IsNullOrDefault()){
+				var poWeightArg = await fnWeightArg(studyPlan.WeightArgId, Ct);
+				R.PoWeightArg = poWeightArg;
+				if(poWeightArg != null && poWeightArg.Data != null){
+					var json = Encoding.UTF8.GetString(poWeightArg.Data);
+					var dict = ToolJson.JsonStrToDict(json);
+					R.WeightArg = new JsonNode(dict);
+				}
+			}
+
+			// Get WeightCalculator
+			if(!studyPlan.WeightCalculatorId.IsNullOrDefault()){
+				R.PoWeightCalculator = await fnWeightCalculator(studyPlan.WeightCalculatorId, Ct);
+				// TODO: Create WeightCalctr from PoWeightCalculator if needed
+			}
+
+			return R;
 		};
 	}
 

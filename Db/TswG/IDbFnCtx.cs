@@ -14,7 +14,7 @@ using Tsinswreng.CsSqlHelper;
 
 
 public partial interface ITxnDbFnCtxMkr{
-	Task<IDbFnCtx> MkDbFnCtxAsy(CT Ct);
+	Task<IDbFnCtx> MkDbFnCtx(CT Ct);
 }
 
 public partial class TxnDbFnCtxMkr(
@@ -22,10 +22,10 @@ public partial class TxnDbFnCtxMkr(
 )
 	: ITxnDbFnCtxMkr
 {
-	public async Task<IDbFnCtx> MkDbFnCtxAsy(CT Ct){
+	public async Task<IDbFnCtx> MkDbFnCtx(CT Ct){
 		var R = new DbFnCtx(){
 		};
-		R.Txn = await GetTxn.MkTxnAsy(R, Ct);
+		R.Txn = await GetTxn.MkTxn(R, Ct);
 		return R;
 	}
 }

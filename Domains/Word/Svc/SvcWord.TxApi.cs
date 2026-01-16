@@ -50,7 +50,7 @@ public partial class SvcWord{
 		,CT Ct
 	) {
 		var Ctx = new DbFnCtx{};
-		Ctx.Txn = await TxnGetter.MkTxnAsy(Ctx, Ct);
+		Ctx.Txn = await TxnGetter.MkTxn(Ctx, Ct);
 		var AddOrUpdateWords = await FnMergeWordsFromTxt(Ctx, Ct);
 		await TxnRunner.RunTxn(Ctx.Txn, async(Ct)=>{
 			var BoWords = await SvcParseWordList.ParseWordsFromFilePath(Path_Encode);
@@ -68,7 +68,7 @@ public partial class SvcWord{
 		,CT Ct
 	) {
 		var Ctx = new DbFnCtx{};
-		Ctx.Txn = await TxnGetter.MkTxnAsy(Ctx, Ct);
+		Ctx.Txn = await TxnGetter.MkTxn(Ctx, Ct);
 		var AddOrUpdateWords = await FnMergeWordsFromTxt(Ctx, Ct);
 		await TxnRunner.RunTxn(Ctx.Txn, async(Ct)=>{
 			var BoWords = await SvcParseWordList.ParseWordsFromText(Text,Ct);
@@ -113,7 +113,7 @@ public partial class SvcWord{
 		,CT Ct
 	){
 		var Ctx = new DbFnCtx{};
-		Ctx.Txn = await TxnGetter.MkTxnAsy(Ctx, Ct);
+		Ctx.Txn = await TxnGetter.MkTxn(Ctx, Ct);
 		var AddWordId_PoLearnss = await FnAddWordId_PoLearnss(Ctx, Ct);
 		return await TxnRunner.RunTxn(Ctx.Txn, async(Ct)=>{
 			var WordId_PoLearns = WordId_LearnRecordss.Select(WordId_LearnRecords=>{

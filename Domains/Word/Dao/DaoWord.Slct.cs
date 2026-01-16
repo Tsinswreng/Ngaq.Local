@@ -235,15 +235,6 @@ var Sql = T.SqlSplicer().Select("*").From()
 	.ToSqlStr()
 ;
 
-// 		var Sql =
-// $"""
-// SELECT * FROM {T.Qt(T.DbTblName)}
-// WHERE 1=1
-// {SqlFilterDel(T, CfgQry.IncludeDeleted)}
-// AND {T.Eq(POwner)}
-// ORDER BY {T.Fld(N.CreatedAt)} DESC
-// {T.SqlMkr.ParamLimOfst(out var PLmt, out var POfst)}
-// """;
 		var SqlCmd = await Ctx.PrepareToDispose(SqlCmdMkr, Sql, Ct);
 		var FnCnt = await RepoWord.FnCount(Ctx, Ct);
 		return async(UserCtx, PageQry ,Ct)=>{
@@ -265,7 +256,110 @@ var Sql = T.SqlSplicer().Select("*").From()
 		};
 	}
 
+
+#if false
+
 	//N+1 查詢問題
+	// 使用 JOIN 的优化版本，避免 N+1 查询
+	public async Task<Func<
+		IUserCtx
+		,IPageQry
+		,CT
+		,Task<IPageAsyE<IJnWord>>
+	>> FnPageWords2(
+		IDbFnCtx Ctx
+		,CfgQry CfgQry
+		,CT Ct
+	){
+		var TW = TblMgr.GetTbl<PoWord>();
+		var TP = TblMgr.GetTbl<PoWordProp>();
+		var TL = TblMgr.GetTbl<PoWordLearn>();
+		var N = new PoWord.N();
+
+		// 使用 CTE 先分页获取 Word IDs，然后 JOIN 获取完整数据
+
+var sql = T.SqlSplicer().
+With("PaginatedWords").As().PL()
+	.Select(x=>x.Id).From().WhereT()
+	.Raw(SqlFilterDel(TW, CfgQry.IncludeDeleted))
+	.AndEq(x=>x.Owner, out var POwner)
+	.OrderByDesc(x=>x.BizCreatedAt)
+	.LimOfst(out var PLim, out var POfst)
+.PR()
+;
+		var Sql = $@"
+WITH PaginatedWords AS (
+    SELECT W.Id
+    FROM {TW.Qt(TW.DbTblName)} W
+    WHERE 1=1
+    {SqlFilterDel(TW, CfgQry.IncludeDeleted)}
+    AND W.Owner = @{TW.Prm(N.Owner).Name}
+    ORDER BY W.{TW.Fld(x=>x.BizCreatedAt)} DESC
+    {TW.SqlMkr.ParamLimOfst(out var PLim, out var POfst)}
+)
+SELECT
+    W.*,
+    P.Id as P_Id, P.WordId as P_WordId, P.KeyStr as P_KeyStr, P.ValueStr as P_ValueStr, P.BizCreatedAt as P_BizCreatedAt, P.BizUpdatedAt as P_BizUpdatedAt,
+    L.Id as L_Id, L.WordId as L_WordId, L.LearnResult as L_LearnResult, L.BizCreatedAt as L_BizCreatedAt, L.BizUpdatedAt as L_BizUpdatedAt, L.Score as L_Score
+FROM PaginatedWords PW
+JOIN {TW.Qt(TW.DbTblName)} W ON PW.Id = W.Id
+LEFT JOIN {TP.Qt(TP.DbTblName)} P ON W.Id = P.WordId
+LEFT JOIN {TL.Qt(TL.DbTblName)} L ON W.Id = L.WordId
+ORDER BY W.{TW.Fld(x=>x.BizCreatedAt)} DESC, P.Id, L.Id
+";
+
+		var SqlCmd = await Ctx.PrepareToDispose(SqlCmdMkr, Sql, Ct);
+		var FnCnt = await RepoWord.FnCount(Ctx, Ct);
+
+		return async(UserCtx, PageQry, Ct)=>{
+			var Arg = ArgDict.Mk(TW)
+				.AddT(TW.Prm(N.Owner), UserCtx.UserId)
+				.AddPageQry(PageQry, PLim, POfst);
+
+			var RawRows = await SqlCmd.Args(Arg).All2d(Ct);
+			var Cnt = PageQry.WantTotCnt ? await FnCnt(Ct) : 0;
+
+			// 在内存中分组数据
+			var WordGroups = RawRows.GroupBy(row => row[0][N.Id]); // 按 Word.Id 分组
+
+			async IAsyncEnumerable<IJnWord> fn(){
+				foreach(var group in WordGroups){
+					var wordRows = group.ToList();
+					var firstRow = wordRows[0];
+
+					// 解析 Word
+					var wordDict = firstRow[0];
+					var PoWord = TW.DbDictToEntity<PoWord>(wordDict);
+
+					// 解析 Props
+					var props = wordRows
+						.Where(row => row.Count > 1 && row[1] != null && row[1].ContainsKey("P_Id"))
+						.Select(row => {
+							var propDict = row[1];
+							return TP.DbDictToEntity<PoWordProp>(TP.DbDictFromCustom(propDict, "P_"));
+						})
+						.ToList();
+
+					// 解析 Learns
+					var learns = wordRows
+						.Where(row => row.Count > 2 && row[2] != null && row[2].ContainsKey("L_Id"))
+						.Select(row => {
+							var learnDict = row[2];
+							return TL.DbDictToEntity<PoWordLearn>(TL.DbDictFromCustom(learnDict, "L_"));
+						})
+						.ToList();
+
+					var jnWord = new JnWord(PoWord, props, learns);
+					yield return jnWord;
+				}
+			}
+
+			var R = PageAsyE<IJnWord>.Mk(PageQry, fn(), false, Cnt);
+			return R;
+		};
+	}
+
+#endif
 	public async Task<Func<
 		IUserCtx
 		,IPageQry
@@ -332,6 +426,54 @@ var Sql = T.SqlSplicer().Select("*").From()
 			return R;
 		};
 	}
+
+
+	public async Task<Func<
+		IUserCtx
+		,IPageQry
+		,CT
+		,Task<IPageAsyE<IJnWord>>
+	>> FnPageWords2(
+		IDbFnCtx Ctx
+		,CfgQry CfgQry
+		,CT Ct
+	){
+		var PagePoWords = await FnPagePoWords(Ctx, CfgQry, Ct);
+		var PageKvByFKey = await FnPageByFKey(Ctx, TP, CfgQry, Ct);
+		var PageLearnByFKey = await FnPageByFKey(Ctx, TL, CfgQry, Ct);
+
+		return async(UserCtx, PageQry, Ct)=>{
+			var PoWordsPage = await PagePoWords(UserCtx, PageQry, Ct);
+			var R = PageAsyE<IJnWord>.Mk(PageQry, null, true, PoWordsPage.TotCnt);
+			if(PoWordsPage.DataAsyE == null){
+				return R;
+			}
+			var syncPoWordsPage = await PoWordsPage.ToListPage(Ct);//先全部載入內存、否則pg報錯不支持併發查
+
+			async IAsyncEnumerable<IJnWord> fn(
+				IEnumerable<PoWord> poWords
+			){
+				foreach(var PoWord in poWords){
+					var KvPage = await PageKvByFKey(PoWord.Id, TP.PageSlctAll(), Ct);
+					var syncKvPage = await KvPage.ToListPage(Ct);
+					var Kvs = await _PageToList<PoWordProp>(syncKvPage, TP);
+
+					var LearnPage = await PageLearnByFKey(PoWord.Id, TL.PageSlctAll(), Ct);
+					var syncLearnPage = await LearnPage.ToListPage(Ct);
+					var Learns = await _PageToList<PoWordLearn>(syncLearnPage, TL);
+
+					var ua = new JnWord(PoWord, Kvs, Learns);
+					yield return ua;
+				}
+			}
+
+			R.DataAsyE = fn(syncPoWordsPage.Data??[]);
+			// Sqlite支持 但pg不支持在同一个连接上并发执行命令。
+			return R;
+		};
+	}
+
+
 
 
 /// <summary>
@@ -593,5 +735,3 @@ var Cmd = await Ctx.PrepareToDispose(SqlCmdMkr, Sql, Ct);
 	}
 
 }
-
-
