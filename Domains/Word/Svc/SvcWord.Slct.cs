@@ -194,7 +194,7 @@ public partial class SvcWord{
 	){
 		return await DaoWord.FnPageWords(
 			Ctx
-			,new CfgQry{
+			,new OptQry{
 				IncludeDeleted = false
 			}
 			,Ct
@@ -212,7 +212,7 @@ public partial class SvcWord{
 	){
 		return await DaoWord.FnPageWords(
 			Ctx
-			,new CfgQry{
+			,new OptQry{
 				IncludeDeleted = true
 			}
 			,Ct
