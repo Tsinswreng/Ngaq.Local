@@ -257,6 +257,39 @@ AND {T.Fld(PWordId)} IN ({str.Join(",", numParams)})
 	}
 
 
+	public async Task<Func<
+		IList<IdWord>
+		,CT
+		,Task<IAsyncEnumerable<IStr_Any>>
+	>> FnScltAllByWordIds(
+		IDbFnCtx Ctx
+		,ITable Tbl
+		,OptQry OptQry
+		,CT Ct
+	){
+		var T = Tbl;
+		var TW = TblMgr.GetTbl<PoWord>();
+		var PWordId = T.Prm(nameof(I_WordId.WordId));
+		var FilterDel = SqlFilterDel(T, OptQry.IncludeDeleted);
+		var numParams = T.NumParams(OptQry.InParamCnt);
+		var Sql =
+$"""
+SELECT * FROM {Tbl.Qt(Tbl.DbTblName)}
+WHERE 1=1
+{FilterDel}
+AND {T.Fld(PWordId)} IN ({str.Join(",", numParams)})
+""";
+		var SqlCmd = await Ctx.PrepareToDispose(SqlCmdMkr, Sql, Ct);
+		return async(IdWords ,Ct)=>{
+			var Arg = ArgDict.Mk(T)
+			.AddManyT(numParams, IdWords, Alt: null);
+			var DbDict = Ctx.RunCmd(SqlCmd, Arg).AsyE1d(Ct);
+			return DbDict;
+		};
+	}
+
+
+
 
 	public async Task<Func<
 		IUserCtx
@@ -377,10 +410,10 @@ var Sql = T.SqlSplicer().Select("*").From()
 		,Task<IPageAsyE<IJnWord>>
 	>> FnPageWords(
 		IDbFnCtx Ctx
-		,OptQry CfgQry
+		,OptQry OptQry
 		,CT Ct
 	){
-		var PagePoWords = await FnPagePoWords(Ctx, CfgQry, Ct);
+		var PagePoWords = await FnPagePoWords(Ctx, OptQry, Ct);
 
 		return async(UserCtx, PageQry, Ct)=>{
 			var PoWordsPage = await PagePoWords(UserCtx, PageQry, Ct);
@@ -396,19 +429,20 @@ var Sql = T.SqlSplicer().Select("*").From()
 				await using var batch = new BatchCollector<PoWord, IList<IJnWord>>(async(PoWords, Ct)=>{
 					var Ids = PoWords.Select(x=>x.Id).ToList();
 					var mkFn = async(ITable T,CT Ct)=>{
-						return await FnPageByWordId(Ctx, T, new OptQry{
+						return await FnScltAllByWordIds(Ctx, T, new OptQry{
 							InParamCnt = (u64)Ids.Count(),
-							IncludeDeleted = CfgQry.IncludeDeleted
+							IncludeDeleted = OptQry.IncludeDeleted
 						}, Ct);
 					};
+
 					var fnPropPage = await mkFn(TP, Ct);
-					var propPage = await fnPropPage(Ids, TP.PageSlctAll(), Ct);
-					var propDicts = await propPage.DataAsyE.OrEmpty().ToListAsync(Ct);
+					var propPage = await fnPropPage(Ids, Ct);
+					var propDicts = await propPage.ToListAsync(Ct);
 					var props = propDicts.Select(x=>TP.DbDictToEntity<PoWordProp>(x));
 
 					var fnLearnPage = await mkFn(TL, Ct);
-					var learnPage = await fnLearnPage(Ids, TL.PageSlctAll(), Ct);
-					var learnDicts = await learnPage.DataAsyE.OrEmpty().ToListAsync(Ct);
+					var learnPage = await fnLearnPage(Ids, Ct);
+					var learnDicts = await learnPage.ToListAsync(Ct);
 					var learns = learnDicts.Select(x=>TL.DbDictToEntity<PoWordLearn>(x));
 
 					var propsById = props.GroupBy(p=>p.WordId).ToDictionary(g=>g.Key, g=>g.ToList());
