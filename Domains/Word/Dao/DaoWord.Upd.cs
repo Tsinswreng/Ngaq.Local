@@ -5,7 +5,7 @@ using Ngaq.Local.Db.TswG;
 using Ngaq.Core.Shared.User.UserCtx;
 using Ngaq.Core.Shared.Word.Models.Po.Word;
 
-public partial class DaoSqlWord{
+public partial class DaoWord{
 /// <summary>
 /// 不校驗、直接update語句㕥改
 /// 慎用 恐致謬。一般ʹ況ʸ直˪ 先軟刪舊詞後建新詞即可

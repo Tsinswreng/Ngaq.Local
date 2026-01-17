@@ -29,7 +29,7 @@ using Ngaq.Core.Shared.Base.Models.Req;
 using Ngaq.Core.Shared.Base.Models.Resp;
 using Tsinswreng.CsCore;
 
-public partial class DaoSqlWord{
+public partial class DaoWord{
 	public async Task<Func<
 		IUserCtx,
 		str,//Head
@@ -307,7 +307,7 @@ var Sql = T.SqlSplicer().Select("*").From()
 		,IPageQry
 		,CT
 		,Task<IPageAsyE<IJnWord>>
-	>> FnPageWords(
+	>> FnPageWordsOld(
 		IDbFnCtx Ctx
 		,OptQry CfgQry
 		,CT Ct
@@ -375,15 +375,12 @@ var Sql = T.SqlSplicer().Select("*").From()
 		,IPageQry
 		,CT
 		,Task<IPageAsyE<IJnWord>>
-	>> FnPageWords2(
+	>> FnPageWords(
 		IDbFnCtx Ctx
 		,OptQry CfgQry
 		,CT Ct
 	){
-
 		var PagePoWords = await FnPagePoWords(Ctx, CfgQry, Ct);
-		var PageKvByFKey = await FnPageByWordIdOld(Ctx, TP, CfgQry, Ct);
-		var PageLearnByFKey = await FnPageByWordIdOld(Ctx, TL, CfgQry, Ct);
 
 		return async(UserCtx, PageQry, Ct)=>{
 			var PoWordsPage = await PagePoWords(UserCtx, PageQry, Ct);
@@ -409,19 +406,34 @@ var Sql = T.SqlSplicer().Select("*").From()
 					var propDicts = await propPage.DataAsyE.OrEmpty().ToListAsync(Ct);
 					var props = propDicts.Select(x=>TP.DbDictToEntity<PoWordProp>(x));
 
+					var fnLearnPage = await mkFn(TL, Ct);
+					var learnPage = await fnLearnPage(Ids, TL.PageSlctAll(), Ct);
+					var learnDicts = await learnPage.DataAsyE.OrEmpty().ToListAsync(Ct);
+					var learns = learnDicts.Select(x=>TL.DbDictToEntity<PoWordLearn>(x));
 
+					var propsById = props.GroupBy(p=>p.WordId).ToDictionary(g=>g.Key, g=>g.ToList());
+					var learnsById = learns.GroupBy(l=>l.WordId).ToDictionary(g=>g.Key, g=>g.ToList());
+
+					var result = new List<IJnWord>();
+					foreach(var poWord in PoWords){
+						var p = propsById.GetValueOrDefault(poWord.Id, new List<PoWordProp>());
+						var l = learnsById.GetValueOrDefault(poWord.Id, new List<PoWordLearn>());
+						result.Add(new JnWord(poWord, p, l));
+					}
+					return result;
 				});
-				foreach(var PoWord in poWords){
-					var KvPage = await PageKvByFKey(PoWord.Id, TP.PageSlctAll(), Ct);
-					var syncKvPage = await KvPage.ToListPage(Ct);
-					var Kvs = await _PageToList<PoWordProp>(syncKvPage, TP);
-
-					var LearnPage = await PageLearnByFKey(PoWord.Id, TL.PageSlctAll(), Ct);
-					var syncLearnPage = await LearnPage.ToListPage(Ct);
-					var Learns = await _PageToList<PoWordLearn>(syncLearnPage, TL);
-
-					var ua = new JnWord(PoWord, Kvs, Learns);
-					yield return ua;
+				await foreach(var list in batch.AddRangeAsyE(poWords, Ct)){
+					if(list != null){
+						foreach(var jn in list){
+							yield return jn;
+						}
+					}
+				}
+				var lastList = await batch.End(Ct);
+				if(lastList != null){
+					foreach(var jn in lastList){
+						yield return jn;
+					}
 				}
 			}
 

@@ -43,7 +43,7 @@ using Tsinswreng.CsErr;
 public partial class SvcWord(
 	ISvcParseWordList SvcParseWordList
 	,ITxnRunner TxnRunner
-	,DaoSqlWord DaoWord
+	,DaoWord DaoWord
 	,IMkrTxn TxnGetter
 	,IAppRepo<PoWord, IdWord> RepoPoWord
 	,IAppRepo<PoWordProp, IdWordProp> RepoProp

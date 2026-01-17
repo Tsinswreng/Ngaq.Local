@@ -8,7 +8,7 @@ using Ngaq.Core.Shared.Word.Models.Po.Word;
 using Ngaq.Core.Shared.Word.Models.Po.Learn;
 using Tsinswreng.CsSqlHelper;
 
-public partial class DaoSqlWord{
+public partial class DaoWord{
 
 
 	public async Task<Func<

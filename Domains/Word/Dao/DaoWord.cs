@@ -16,7 +16,7 @@ using Ngaq.Core.Shared.Word.Models.Po.Learn;
 using Ngaq.Core.Shared.Base.Models.Po;
 using Tsinswreng.CsCore;
 
-public partial class DaoSqlWord(
+public partial class DaoWord(
 	ISqlCmdMkr SqlCmdMkr
 	,ITblMgr TblMgr
 	,IAppRepo<PoWord, IdWord> RepoWord
