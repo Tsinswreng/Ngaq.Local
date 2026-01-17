@@ -428,6 +428,24 @@ var Sql = T.SqlSplicer().Select("*").From()
 			){
 				await using var batch = new BatchCollector<PoWord, IList<IJnWord>>(async(PoWords, Ct)=>{
 					var Ids = PoWords.Select(x=>x.Id).ToList();
+					// async Task<IList<TEntity>> rela<TEntity, TField>(
+					// 	ITable Tbl
+					// 	,str CodeCol
+					// 	,Func<TEntity, TField> KeySelector
+					// 	,IList<TField> Vals
+					// 	,CT Ct
+					// )where TEntity: class, new(){
+					// 	if(RepoWord is not SqlRepo<PoWord, IdWord> repoWord){
+					// 		throw new Exception();
+					// 	}
+					// 	var fn = await repoWord.FnScltAllByFieldInVals<TEntity, TField>(
+					// 		Ctx, Tbl, CodeCol, null, Ct
+					// 	);
+					// 	var dicts = await(await fn(Vals, Ct)).ToListAsync(Ct);
+					// 	var entityByField = dicts.GroupBy(KeySelector).ToDictionary(g=>g.Key, g=>g.ToList());
+					// 	//IList<TEntity> R = Vals.Select(x=>entityByField.GetValueOrDefault(x, new List<TEntity>())).ToList();
+					// }
+
 					var mkFn = async(ITable T,CT Ct)=>{
 						return await FnScltAllByWordIds(Ctx, T, new OptQry{
 							InParamCnt = (u64)Ids.Count(),
@@ -476,6 +494,66 @@ var Sql = T.SqlSplicer().Select("*").From()
 			return R;
 		};
 	}
+
+
+
+	public async Task<Func<
+		IUserCtx
+		,IPageQry
+		,CT
+		,Task<IPageAsyE<IJnWord>>
+	>> FnPageWordsOld3(
+		IDbFnCtx Ctx
+		,OptQry OptQry
+		,CT Ct
+	){
+		// 1. 原有主表分页查询逻辑 不变
+		var PagePoWords = await FnPagePoWords(Ctx, OptQry, Ct);
+		if(RepoWord is not SqlRepo<PoWord, IdWord> repoWord){
+			throw new Exception();
+		}
+
+		return async(UserCtx, PageQry, Ct)=>{
+			var PoWordsPage = await PagePoWords(UserCtx, PageQry, Ct);
+			var R = PageAsyE<IJnWord>.Mk(PageQry, null, true, PoWordsPage.TotCnt);
+			if(PoWordsPage.DataAsyE == null) return R;
+
+			// 2. 原有同步加载主表数据 不变
+			var syncPoWordsPage = await PoWordsPage.ToListPage(Ct);
+			var mainPoWords = syncPoWordsPage.Data ?? [];
+			var mainIds = repoWord.ExtractMainIds(mainPoWords, x => x.Id);
+			if (!mainIds.Any()) return R;
+
+			// 3. 批量查询关联表 + 分组 → 一行搞定！替代原有的mkFn+查询+转实体+分组 全部逻辑
+			var fkField = nameof(PoWordProp.WordId);
+			var optQry2 = new OptQry{
+				InParamCnt = (u64)mainIds.Count(),
+				IncludeDeleted = OptQry.IncludeDeleted
+			};
+			var propDict = await repoWord.BatchQueryJoinDataAndGroupByFk<PoWordProp, IdWord>(
+				Ctx, TP, optQry2, mainIds, x=>x.WordId, fkField, Ct
+			);
+			var learnDict = await repoWord.BatchQueryJoinDataAndGroupByFk<PoWordLearn, IdWord>(
+				Ctx, TL, optQry2, mainIds, x=>x.WordId, fkField, Ct
+			);
+
+			// 4. 组装聚合对象 + 异步枚举返回 → 一行搞定！替代原有的BatchCollector+yield全部逻辑
+			var jnWordAsyncEnum = repoWord.BatchMakeJoinResult<PoWord, IdWord, IJnWord>(mainPoWords, async (poWord) =>
+			{
+				// ✅ 唯一的「业务代码」：聚合对象的构造逻辑，极简！
+				var props = propDict.GetValueOrDefault(poWord.Id, new List<PoWordProp>());
+				var learns = learnDict.GetValueOrDefault(poWord.Id, new List<PoWordLearn>());
+				return new JnWord(poWord, props, learns);
+			}, Ct);
+
+			// 5. 返回结果 不变
+			R.DataAsyE = jnWordAsyncEnum;
+			return R;
+		};
+	}
+
+
+
 
 
 /// <summary>
