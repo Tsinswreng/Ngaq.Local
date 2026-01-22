@@ -91,7 +91,8 @@ public partial class LocalTblMgrIniter{
 				return new IdDel().Value;
 			},FnRestore = (o)=>{
 				return null;
-			}
+			},FnSqlIsDel = ()=>Tbl.Fld<IPoBase>(x=>x.DelAt)+"=0"
+			,FnSqlIsNonDel = ()=>Tbl.Fld<IPoBase>(x=>x.DelAt)+"<>0"
 		};
 
 		return o;

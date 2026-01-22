@@ -28,6 +28,7 @@ using Ngaq.Core.Shared.User.Models.Po.User;
 using Ngaq.Core.Shared.Base.Models.Req;
 using Ngaq.Core.Shared.Base.Models.Resp;
 using Tsinswreng.CsCore;
+using System.Threading.Tasks;
 
 public partial class DaoWord{
 	public async Task<Func<
@@ -267,6 +268,7 @@ AND {T.Fld(PWordId)} IN ({str.Join(",", numParams)})
 		,OptQry OptQry
 		,CT Ct
 	){
+
 		var T = Tbl;
 		var TW = TblMgr.GetTbl<PoWord>();
 		var PWordId = T.Prm(nameof(I_WordId.WordId));
@@ -428,48 +430,32 @@ var Sql = T.SqlSplicer().Select("*").From()
 			){
 				await using var batch = new BatchCollector<PoWord, IList<IJnWord>>(async(PoWords, Ct)=>{
 					var Ids = PoWords.Select(x=>x.Id).ToList();
-					// async Task<IList<TEntity>> rela<TEntity, TField>(
-					// 	ITable Tbl
-					// 	,str CodeCol
-					// 	,Func<TEntity, TField> KeySelector
-					// 	,IList<TField> Vals
-					// 	,CT Ct
-					// )where TEntity: class, new(){
-					// 	if(RepoWord is not SqlRepo<PoWord, IdWord> repoWord){
-					// 		throw new Exception();
-					// 	}
-					// 	var fn = await repoWord.FnScltAllByFieldInVals<TEntity, TField>(
-					// 		Ctx, Tbl, CodeCol, null, Ct
-					// 	);
-					// 	var dicts = await(await fn(Vals, Ct)).ToListAsync(Ct);
-					// 	var entityByField = dicts.GroupBy(KeySelector).ToDictionary(g=>g.Key, g=>g.ToList());
-					// 	//IList<TEntity> R = Vals.Select(x=>entityByField.GetValueOrDefault(x, new List<TEntity>())).ToList();
-					// }
-
 					var mkFn = async(ITable T,CT Ct)=>{
 						return await FnScltAllByWordIds(Ctx, T, new OptQry{
 							InParamCnt = (u64)Ids.Count(),
 							IncludeDeleted = OptQry.IncludeDeleted
 						}, Ct);
 					};
+					async Task<IDictionary<TId, IList<TPo>>> mkPosById<TPo, TId>(
+						ITable Tbl
+						,Func<TPo, TId> Memb
+					)where TPo:new()
+					{
+						var fn = await mkFn(Tbl, Ct);
+						var poPage = await fn(Ids, Ct);
+						var dicts = await poPage.ToListAsync(Ct);
+						var pos = dicts.Select(x=>Tbl.DbDictToEntity<TPo>(x));
+						var posById = pos.GroupBy(Memb).ToDictionary(g=>g.Key, g=>(IList<TPo>)g.ToList());
+						return posById;
+					}
 
-					var fnPropPage = await mkFn(TP, Ct);
-					var propPage = await fnPropPage(Ids, Ct);
-					var propDicts = await propPage.ToListAsync(Ct);
-					var props = propDicts.Select(x=>TP.DbDictToEntity<PoWordProp>(x));
-
-					var fnLearnPage = await mkFn(TL, Ct);
-					var learnPage = await fnLearnPage(Ids, Ct);
-					var learnDicts = await learnPage.ToListAsync(Ct);
-					var learns = learnDicts.Select(x=>TL.DbDictToEntity<PoWordLearn>(x));
-
-					var propsById = props.GroupBy(p=>p.WordId).ToDictionary(g=>g.Key, g=>g.ToList());
-					var learnsById = learns.GroupBy(l=>l.WordId).ToDictionary(g=>g.Key, g=>g.ToList());
+					var propsById = await mkPosById<PoWordProp, IdWord>(TP, x=>x.WordId);
+					var learnsById = await mkPosById<PoWordLearn, IdWord>(TL, x=>x.WordId);
 
 					var result = new List<IJnWord>();
 					foreach(var poWord in PoWords){
-						var p = propsById.GetValueOrDefault(poWord.Id, new List<PoWordProp>());
-						var l = learnsById.GetValueOrDefault(poWord.Id, new List<PoWordLearn>());
+						var p = propsById.GetValueOrDefault(poWord.Id, []);
+						var l = learnsById.GetValueOrDefault(poWord.Id, []);
 						result.Add(new JnWord(poWord, p, l));
 					}
 					return result;
