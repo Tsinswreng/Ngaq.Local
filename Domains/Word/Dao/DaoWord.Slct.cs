@@ -420,7 +420,6 @@ var Sql = T.SqlSplicer().Select("*").From()
 		if(RepoWord is not SqlRepo<PoWord, IdWord> repoWord){
 			throw new Exception();//TODO
 		}
-
 		return async(UserCtx, PageQry, Ct)=>{
 			var PoWordsPage = await PagePoWords(UserCtx, PageQry, Ct);
 			var R = PageAsyE<IJnWord>.Mk(PageQry, null, true, PoWordsPage.TotCnt);
@@ -428,42 +427,25 @@ var Sql = T.SqlSplicer().Select("*").From()
 				return R;
 			}
 			var syncPoWordsPage = await PoWordsPage.ToListPage(Ct);//先全部載入內存、否則pg報錯不支持併發查
+			await using var batch = new BatchCollector<PoWord, IList<IJnWord>>(async(PoWords, Ct)=>{
+				var Ids = PoWords.Select(x=>x.Id).ToList();
+				// = await repoWord.FnIncludeEntitysByKeys<>
+				var NWordId = nameof(I_WordId.WordId);
+				var optQry2 = OptQry with { InParamCnt = (u64)Ids.Count };
+				var propsById = await repoWord.IncludeEntitysByKeys(Ctx, NWordId, optQry2, Ids, x=>x.WordId , TP, Ct);
+				var learnsById = await repoWord.IncludeEntitysByKeys(Ctx, NWordId, optQry2, Ids, x=>x.WordId , TL, Ct);
 
-			async IAsyncEnumerable<IJnWord> fn(
-				IEnumerable<PoWord> poWords
-			){
-				await using var batch = new BatchCollector<PoWord, IList<IJnWord>>(async(PoWords, Ct)=>{
-					var Ids = PoWords.Select(x=>x.Id).ToList();
-					// = await repoWord.FnIncludeEntitysByKeys<>
-					var NWordId = nameof(I_WordId.WordId);
-					var optQry2 = OptQry with { InParamCnt = (u64)Ids.Count };
-					var propsById = await repoWord.IncludeEntitysByKeys(Ctx, NWordId, optQry2, Ids, x=>x.WordId , TP, Ct);
-					var learnsById = await repoWord.IncludeEntitysByKeys(Ctx, NWordId, optQry2, Ids, x=>x.WordId , TL, Ct);
-					var result = new List<IJnWord>();
-					foreach(var poWord in PoWords){
-						var p = propsById.GetValueOrDefault(poWord.Id, []);
-						var l = learnsById.GetValueOrDefault(poWord.Id, []);
-						result.Add(new JnWord(poWord, p, l));
-					}
-					return result;
-				});
-				await foreach(var list in batch.AddRangeAsyE(poWords, Ct)){
-					if(list != null){
-						foreach(var jn in list){
-							yield return jn;
-						}
-					}
+				var result = new List<IJnWord>();
+				foreach(var poWord in PoWords){
+					var p = propsById.GetValueOrDefault(poWord.Id, []);
+					var l = learnsById.GetValueOrDefault(poWord.Id, []);
+					result.Add(new JnWord(poWord, p, l));
 				}
-				var lastList = await batch.End(Ct);
-				if(lastList != null){
-					foreach(var jn in lastList){
-						yield return jn;
-					}
-				}
-			}
-
-			R.DataAsyE = fn(syncPoWordsPage.Data??[]);
-
+				return result;
+			});
+			var poWords = syncPoWordsPage.Data??[];
+			var s2d =  batch.AddToEnd(poWords, Ct);
+			R.DataAsyE = s2d.Flat();
 			return R;
 		};
 	}
