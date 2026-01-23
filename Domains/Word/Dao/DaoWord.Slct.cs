@@ -437,9 +437,8 @@ var Sql = T.SqlSplicer().Select("*").From()
 					// = await repoWord.FnIncludeEntitysByKeys<>
 					var NWordId = nameof(I_WordId.WordId);
 					var optQry2 = OptQry with { InParamCnt = (u64)Ids.Count };
-					var propsById = await repoWord.IncludeEntitysByKeys<PoWordProp, IdWord>(Ctx, NWordId, optQry2, Ids, x=>x.WordId , TP, Ct);
-					var learnsById = await repoWord.IncludeEntitysByKeys<PoWordLearn, IdWord>(Ctx, NWordId, optQry2, Ids, x=>x.WordId , TL, Ct);
-
+					var propsById = await repoWord.IncludeEntitysByKeys(Ctx, NWordId, optQry2, Ids, x=>x.WordId , TP, Ct);
+					var learnsById = await repoWord.IncludeEntitysByKeys(Ctx, NWordId, optQry2, Ids, x=>x.WordId , TL, Ct);
 					var result = new List<IJnWord>();
 					foreach(var poWord in PoWords){
 						var p = propsById.GetValueOrDefault(poWord.Id, []);
