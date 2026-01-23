@@ -29,6 +29,7 @@ using Ngaq.Core.Shared.Base.Models.Req;
 using Ngaq.Core.Shared.Base.Models.Resp;
 using Tsinswreng.CsCore;
 using System.Threading.Tasks;
+using Acornima.Ast;
 
 public partial class DaoWord{
 	public async Task<Func<
@@ -231,7 +232,7 @@ AND {T.Eq(PWordId)}
 		var TW = TblMgr.GetTbl<PoWord>();
 		var PWordId = T.Prm(nameof(I_WordId.WordId));
 		var FilterDel = SqlFilterDel(T, OptQry.IncludeDeleted);
-		var numParams = T.NumParams(OptQry.InParamCnt);
+		var numParams = T.NumParamsEndStart(OptQry.InParamCnt);
 		var Sql =
 $"""
 SELECT * FROM {Tbl.Qt(Tbl.DbTblName)}
@@ -273,7 +274,7 @@ AND {T.Fld(PWordId)} IN ({str.Join(",", numParams)})
 		var TW = TblMgr.GetTbl<PoWord>();
 		var PWordId = T.Prm(nameof(I_WordId.WordId));
 		var FilterDel = SqlFilterDel(T, OptQry.IncludeDeleted);
-		var numParams = T.NumParams(OptQry.InParamCnt);
+		var numParams = T.NumParamsEndStart(OptQry.InParamCnt);
 		var Sql =
 $"""
 SELECT * FROM {Tbl.Qt(Tbl.DbTblName)}
@@ -416,6 +417,9 @@ var Sql = T.SqlSplicer().Select("*").From()
 		,CT Ct
 	){
 		var PagePoWords = await FnPagePoWords(Ctx, OptQry, Ct);
+		if(RepoWord is not SqlRepo<PoWord, IdWord> repoWord){
+			throw new Exception();//TODO
+		}
 
 		return async(UserCtx, PageQry, Ct)=>{
 			var PoWordsPage = await PagePoWords(UserCtx, PageQry, Ct);
@@ -430,27 +434,11 @@ var Sql = T.SqlSplicer().Select("*").From()
 			){
 				await using var batch = new BatchCollector<PoWord, IList<IJnWord>>(async(PoWords, Ct)=>{
 					var Ids = PoWords.Select(x=>x.Id).ToList();
-					var mkFn = async(ITable T,CT Ct)=>{
-						return await FnScltAllByWordIds(Ctx, T, new OptQry{
-							InParamCnt = (u64)Ids.Count(),
-							IncludeDeleted = OptQry.IncludeDeleted
-						}, Ct);
-					};
-					async Task<IDictionary<TId, IList<TPo>>> mkPosById<TPo, TId>(
-						ITable Tbl
-						,Func<TPo, TId> Memb
-					)where TPo:new()
-					{
-						var fn = await mkFn(Tbl, Ct);
-						var poPage = await fn(Ids, Ct);
-						var dicts = await poPage.ToListAsync(Ct);
-						var pos = dicts.Select(x=>Tbl.DbDictToEntity<TPo>(x));
-						var posById = pos.GroupBy(Memb).ToDictionary(g=>g.Key, g=>(IList<TPo>)g.ToList());
-						return posById;
-					}
-
-					var propsById = await mkPosById<PoWordProp, IdWord>(TP, x=>x.WordId);
-					var learnsById = await mkPosById<PoWordLearn, IdWord>(TL, x=>x.WordId);
+					// = await repoWord.FnIncludeEntitysByKeys<>
+					var NWordId = nameof(I_WordId.WordId);
+					var optQry2 = OptQry with { InParamCnt = (u64)Ids.Count };
+					var propsById = await repoWord.IncludeEntitysByKeys<PoWordProp, IdWord>(Ctx, NWordId, optQry2, Ids, x=>x.WordId , TP, Ct);
+					var learnsById = await repoWord.IncludeEntitysByKeys<PoWordLearn, IdWord>(Ctx, NWordId, optQry2, Ids, x=>x.WordId , TL, Ct);
 
 					var result = new List<IJnWord>();
 					foreach(var poWord in PoWords){
