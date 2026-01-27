@@ -1,4 +1,5 @@
 namespace Ngaq.Local.Word.Dao;
+
 using Ngaq.Core.Infra;
 using Ngaq.Core.Model.Po;
 using Ngaq.Core.Model.Po.Kv;
@@ -31,7 +32,133 @@ using Tsinswreng.CsCore;
 using System.Threading.Tasks;
 using Acornima.Ast;
 
+
+
+public class AutoBatch<TItem, TRet>:BatchCollector<TItem, TRet>{
+	public AutoBatch(){
+
+	}
+	public static new u64 DfltBatchSize{get;set;} = 100;
+	public I_DuplicateSql SqlDuplicator{get;set;}
+	//public u64 BatchSize;
+	public ISqlCmd FullBatch{get;set;} = null!;
+	public ISqlCmd FinalBatch{get;set;} = null!;
+	public IDbFnCtx Ctx{get;set;}
+	public ISqlCmdMkr SqlCmdMkr{get;set;}
+	public ISqlCmd SqlCmd{get;set;}
+	public static AutoBatch<TItem, TRet> Mk(
+		IDbFnCtx Ctx
+		,ISqlCmdMkr SqlCmdMkr
+		,I_DuplicateSql SqlDuplicator
+		,Func<
+			AutoBatch<TItem, TRet> //Self
+			,IList<TItem>
+			,CT
+			,Task<TRet>
+		> FnAsy
+		,u64 BatchSize = 0
+	){
+		if(BatchSize == 0){
+			BatchSize = DfltBatchSize;
+		}
+		var R = new AutoBatch<TItem, TRet>();
+		var ArgFn = FnAsy;
+		R.FnAsy = async(Items, Ct)=>{
+			var size = (u64)Items.Count;
+			R.SqlCmd = R.FullBatch;
+			var FnGetRepeatedSql = R.SqlDuplicator.DuplicateSql;
+			if((u64)Items.Count < R.BatchSize){
+				R.FinalBatch = await R.Ctx.PrepareToDispose(R.SqlCmdMkr, FnGetRepeatedSql(size), Ct);
+				R.SqlCmd = R.FinalBatch;
+			}else if(R.FullBatch == null){
+				R.FullBatch = await R.Ctx.PrepareToDispose(R.SqlCmdMkr, FnGetRepeatedSql(R.Ctx.BatchSize), Ct);
+				R.SqlCmd = R.FullBatch;
+			}
+			return await ArgFn(R, Items, Ct);
+		};
+		R.Init(R.FnAsy, BatchSize);
+		return R;
+	}
+
+}
+
 public partial class DaoWord{
+
+	public async Task<IAsyncEnumerable<IdWord?>> SlctIdByOwnerHeadLangWithDelBatch(
+		IDbFnCtx Ctx, IUserCtx User, IEnumerable<Head_Lang> HeadLangs, CT Ct
+	){
+		var Sql = T.SqlSplicer().Select(x=>x.Id).From().Where1()
+		.AndEq(x=>x.Owner, out var POwner)
+		.AndEq(x=>x.Head, out var PHead)
+		.AndEq(x=>x.Lang, out var PLang)
+		;
+
+		await using var batch = AutoBatch<Head_Lang, IAsyncEnumerable<IdWord?>>.Mk(
+			Ctx, SqlCmdMkr, Sql,
+			async(z, HeadLangs, Ct)=>{
+				var Head = HeadLangs.Select(x=>x.Head);
+				var Lang = HeadLangs.Select(x=>x.Lang);
+				var UserId = User.UserId;
+				var Args = ArgDict.Mk(T)
+				.AddT(POwner, UserId)
+				.AddManyT(PHead, Head)
+				.AddManyT(PLang, Lang);
+				var GotDicts = z.SqlCmd.Args(Args).AsyE1d(Ct).OrEmpty();
+				return GotDicts.Select(x=>{//TODO 當此組 (Head,Lang)查不到數據旹 會返null否
+					var ans = x[T.Memb(x=>x.Id)];
+					return (IdWord?)IdWord.FromByteArr((u8[])ans!);
+				});
+			}
+		);
+		var R = batch.AddToEnd(HeadLangs, Ct);
+		return R.Flat();
+	}
+
+	public async Task<Func<
+		IUserCtx,
+		IEnumerable<Head_Lang>,
+		CT
+		,Task<IAsyncEnumerable<IdWord?>>
+	>>
+	FnSlctIdByOwnerHeadLangWithDelBatch(IDbFnCtx Ctx,CT Ct){//嘗試批量操作(未完成)
+
+var Sql = T.SqlSplicer().Select(x=>x.Id).From().Where1()
+.AndEq(x=>x.Owner, out var POwner)
+.AndEq(x=>x.Head, out var PHead)
+.AndEq(x=>x.Lang, out var PLang)
+// .ToSqlStr(Ctx)//Ctx中有BatchSize
+;
+		ISqlCmd FullBatch = null!, FinalBatch = null!;
+		return async (User,HeadLangs,Ct)=>{
+			await using var batch = new BatchCollector<Head_Lang, IAsyncEnumerable<IdWord?>>(async(HeadLangs, Ct)=>{
+				var size = (u64)HeadLangs.Count;
+				var SqlCmd = FullBatch;
+				if((u64)HeadLangs.Count < Ctx.BatchSize){
+					FinalBatch = await Ctx.PrepareToDispose(SqlCmdMkr, Sql.ToSqlStr(size), Ct);
+					SqlCmd = FinalBatch;
+				}else if(FullBatch == null){
+					FullBatch = await Ctx.PrepareToDispose(SqlCmdMkr, Sql.ToSqlStr(Ctx.BatchSize), Ct);
+					SqlCmd = FullBatch;
+				}
+
+				var Head = HeadLangs.Select(x=>x.Head);
+				var Lang = HeadLangs.Select(x=>x.Lang);
+				var UserId = User.UserId;
+				var Args = ArgDict.Mk(T)
+				.AddT(POwner, UserId)
+				.AddManyT(PHead, Head)
+				.AddManyT(PLang, Lang);
+				var GotDicts = SqlCmd.Args(Args).AsyE1d(Ct).OrEmpty();
+				return GotDicts.Select(x=>{//TODO 當此組 (Head,Lang)查不到數據旹 會返null否
+					var ans = x[T.Memb(x=>x.Id)];
+					return (IdWord?)IdWord.FromByteArr((u8[])ans!);
+				});
+			}, Ctx.BatchSize);
+			var R = batch.AddToEnd(HeadLangs, Ct);
+			return R.Flat();
+		};
+	}
+
 	public async Task<Func<
 		IUserCtx,
 		str,//Head
@@ -40,23 +167,12 @@ public partial class DaoWord{
 		,Task<IdWord?>
 	>>
 	FnSlctIdByOwnerHeadLangWithDel(IDbFnCtx Ctx,CT Ct){
-		var T = TblMgr.GetTbl<PoWord>(); var N = new PoWord.N();
-//		var POwner = T.Prm(N.Owner);var PHead = T.Prm(N.Head); var PLang = T.Prm(N.Lang);
-var Sql = T.SqlSplicer().Select(x=>x.Id).From().WhereT()
+var Sql = T.SqlSplicer().Select(x=>x.Id).From().Where1()
 .AndEq(x=>x.Owner, out var POwner)
 .AndEq(x=>x.Head, out var PHead)
 .AndEq(x=>x.Lang, out var PLang)
 .ToSqlStr()
 ;
-// 		var Sql =
-// $"""
-// SELECT {T.Fld(N.Id)} AS {T.Qt(N.Id)}
-// FROM {T.Qt(T.DbTblName)}
-// WHERE 1=1
-// AND {T.Eq(POwner)}
-// AND {T.Eq(PHead)}
-// AND {T.Eq(PLang)}
-// """;
 		var SqlCmd = await Ctx.PrepareToDispose(SqlCmdMkr, Sql, Ct);
 		return async (User,Head,Lang,Ct)=>{
 			var UserId = User.UserId;
@@ -68,7 +184,7 @@ var Sql = T.SqlSplicer().Select(x=>x.Id).From().WhereT()
 			if(GotDict == null){
 				return null;
 			}
-			var ans = GotDict[N.Id];
+			var ans = GotDict[T.Memb(x=>x.Id)];
 			return IdWord.FromByteArr((u8[])ans!);
 		};
 	}
@@ -117,20 +233,13 @@ var Sql = T.SqlSplicer().Select(x=>x.Id).From().WhereT()
 		,CT
 		,Task<JnWord?>
 	>> FnSlctJnWordByIdWithDel(
-		IDbFnCtx? Ctx
+		IDbFnCtx Ctx
 		,CT Ct
 	){
-		var TW = TblMgr.GetTbl<PoWord>();
-		var TP = TblMgr.GetTbl<PoWordProp>();
-		var TL = TblMgr.GetTbl<PoWordLearn>();
 		var PWordId = TP.Prm(nameof(PoWordProp.WordId));
 		var Sql_SeekByFKey = (str QuotedTblName)=>{
-			var Sql =
-$"""
-SELECT * FROM {QuotedTblName}
-WHERE 1=1
-AND {TP.Eq(PWordId)}
-""";
+			var Sql = TW.SqlSplicer().Select("*").From(QuotedTblName)
+			.Where1().And(TP.Eq(PWordId)).ToSqlStr();
 			return Sql;
 		};
 		var GetPoWordById = await RepoWord.FnSlctOneById(Ctx, Ct);
@@ -142,10 +251,6 @@ AND {TP.Eq(PWordId)}
 			if(PoWord == null){
 				return null;
 			}
-			// if(PoWord.IsDeleted()){
-			// 	return null;
-			// }
-
 			var Arg = new Str_Any{
 				[nameof(PoWordProp.WordId)] = Id
 			};
@@ -153,7 +258,6 @@ AND {TP.Eq(PWordId)}
 				.Select(dbDict=>TP.DbDictToEntity<PoWordProp>(dbDict))
 				.ToList()
 			;
-
 			var RawLearnDicts = (await Cmd_SeekLearn.RawArgs(TL.ToDbDict(Arg)).All1d(Ct))
 				.Select(dbDict=>TL.DbDictToEntity<PoWordLearn>(dbDict))
 				.ToList()
@@ -244,7 +348,7 @@ AND {T.Fld(PWordId)} IN ({str.Join(",", numParams)})
 		var SqlCmd = await Ctx.PrepareToDispose(SqlCmdMkr, Sql, Ct);
 		return async(IdWords, PageQry ,Ct)=>{
 			var Arg = ArgDict.Mk(T)
-			.AddManyT(numParams, IdWords, Alt: null)
+			.AddManyT(numParams, IdWords)
 			.AddPageQry(PageQry, PLmt, POfst);
 			var DbDict = Ctx.RunCmd(SqlCmd, Arg).AsyE1d(Ct);
 			u64 Cnt = 0;
@@ -285,7 +389,7 @@ AND {T.Fld(PWordId)} IN ({str.Join(",", numParams)})
 		var SqlCmd = await Ctx.PrepareToDispose(SqlCmdMkr, Sql, Ct);
 		return async(IdWords ,Ct)=>{
 			var Arg = ArgDict.Mk(T)
-			.AddManyT(numParams, IdWords, Alt: null);
+			.AddManyT(numParams, IdWords);
 			var DbDict = Ctx.RunCmd(SqlCmd, Arg).AsyE1d(Ct);
 			return DbDict;
 		};
@@ -308,7 +412,7 @@ AND {T.Fld(PWordId)} IN ({str.Join(",", numParams)})
 		var N = new PoWord.N();
 		//var POwner = T.Prm(N.Owner);
 var Sql = T.SqlSplicer().Select("*").From()
-	.WhereT()
+	.Where1()
 	.Raw(SqlFilterDel(T, CfgQry.IncludeDeleted))
 	.And(x=>x.Owner, "=", out var POwner)
 	.OrderByDesc(x=>x.BizCreatedAt)
@@ -417,9 +521,6 @@ var Sql = T.SqlSplicer().Select("*").From()
 		,CT Ct
 	){
 		var PagePoWords = await FnPagePoWords(Ctx, OptQry, Ct);
-		if(RepoWord is not SqlRepo<PoWord, IdWord> repoWord){
-			throw new Exception();//TODO
-		}
 		return async(UserCtx, PageQry, Ct)=>{
 			var PoWordsPage = await PagePoWords(UserCtx, PageQry, Ct);
 			var R = PageAsyE<IJnWord>.Mk(PageQry, null, true, PoWordsPage.TotCnt);
@@ -429,11 +530,11 @@ var Sql = T.SqlSplicer().Select("*").From()
 			var syncPoWordsPage = await PoWordsPage.ToListPage(Ct);//先全部載入內存、否則pg報錯不支持併發查
 			await using var batch = new BatchCollector<PoWord, IList<IJnWord>>(async(PoWords, Ct)=>{
 				var Ids = PoWords.Select(x=>x.Id).ToList();
-				// = await repoWord.FnIncludeEntitysByKeys<>
 				var NWordId = nameof(I_WordId.WordId);
 				var optQry2 = OptQry with { InParamCnt = (u64)Ids.Count };
-				var propsById = await repoWord.IncludeEntitysByKeys(Ctx, NWordId, optQry2, Ids, x=>x.WordId , TP, Ct);
-				var learnsById = await repoWord.IncludeEntitysByKeys(Ctx, NWordId, optQry2, Ids, x=>x.WordId , TL, Ct);
+
+				var propsById = await RepoWord.IncludeEntitysByKeys(Ctx, NWordId, optQry2, Ids, x=>x.WordId , TP, Ct);
+				var learnsById = await RepoWord.IncludeEntitysByKeys(Ctx, NWordId, optQry2, Ids, x=>x.WordId , TL, Ct);
 
 				var result = new List<IJnWord>();
 				foreach(var poWord in PoWords){
@@ -449,66 +550,6 @@ var Sql = T.SqlSplicer().Select("*").From()
 			return R;
 		};
 	}
-
-
-
-	public async Task<Func<
-		IUserCtx
-		,IPageQry
-		,CT
-		,Task<IPageAsyE<IJnWord>>
-	>> FnPageWordsOld3(
-		IDbFnCtx Ctx
-		,OptQry OptQry
-		,CT Ct
-	){
-		// 1. 原有主表分页查询逻辑 不变
-		var PagePoWords = await FnPagePoWords(Ctx, OptQry, Ct);
-		if(RepoWord is not SqlRepo<PoWord, IdWord> repoWord){
-			throw new Exception();
-		}
-
-		return async(UserCtx, PageQry, Ct)=>{
-			var PoWordsPage = await PagePoWords(UserCtx, PageQry, Ct);
-			var R = PageAsyE<IJnWord>.Mk(PageQry, null, true, PoWordsPage.TotCnt);
-			if(PoWordsPage.DataAsyE == null) return R;
-
-			// 2. 原有同步加载主表数据 不变
-			var syncPoWordsPage = await PoWordsPage.ToListPage(Ct);
-			var mainPoWords = syncPoWordsPage.Data ?? [];
-			var mainIds = repoWord.ExtractMainIds(mainPoWords, x => x.Id);
-			if (!mainIds.Any()) return R;
-
-			// 3. 批量查询关联表 + 分组 → 一行搞定！替代原有的mkFn+查询+转实体+分组 全部逻辑
-			var fkField = nameof(PoWordProp.WordId);
-			var optQry2 = new OptQry{
-				InParamCnt = (u64)mainIds.Count(),
-				IncludeDeleted = OptQry.IncludeDeleted
-			};
-			var propDict = await repoWord.BatchQueryJoinDataAndGroupByFk<PoWordProp, IdWord>(
-				Ctx, TP, optQry2, mainIds, x=>x.WordId, fkField, Ct
-			);
-			var learnDict = await repoWord.BatchQueryJoinDataAndGroupByFk<PoWordLearn, IdWord>(
-				Ctx, TL, optQry2, mainIds, x=>x.WordId, fkField, Ct
-			);
-
-			// 4. 组装聚合对象 + 异步枚举返回 → 一行搞定！替代原有的BatchCollector+yield全部逻辑
-			var jnWordAsyncEnum = repoWord.BatchMakeJoinResult<PoWord, IdWord, IJnWord>(mainPoWords, async (poWord) =>
-			{
-				// ✅ 唯一的「业务代码」：聚合对象的构造逻辑，极简！
-				var props = propDict.GetValueOrDefault(poWord.Id, new List<PoWordProp>());
-				var learns = learnDict.GetValueOrDefault(poWord.Id, new List<PoWordLearn>());
-				return new JnWord(poWord, props, learns);
-			}, Ct);
-
-			// 5. 返回结果 不变
-			R.DataAsyE = jnWordAsyncEnum;
-			return R;
-		};
-	}
-
-
-
 
 
 /// <summary>
@@ -528,7 +569,7 @@ var T = TblMgr.GetTbl<PoWord>();
 
 IParam PTempus=null!;
 var Sql = T.SqlSplicer()
-.Select(x=>x.Id).From().WhereT()
+.Select(x=>x.Id).From().Where1()
 .And(x=>x.Owner, "=", out var POwner)
 .And().Paren(b=>
 	b.Bool(x=>x.BizUpdatedAt, ">", out var PTempus)

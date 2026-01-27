@@ -77,50 +77,7 @@ public partial class SvcWord(
 		return R;
 	}
 
-	// protected IEnumerable<PoWordLearn> MkPoLearnEnume(IEnumerable<PoWordProp> NeoProps, IdWord WordId){
-	// 	foreach(var Prop in NeoProps){
-	// 		if(Prop.KStr == KeysProp.Inst.description){
-	// 			var U = new PoWordLearn();
-	// 			U.BizCreatedAt = Prop.BizCreatedAt;
-	// 			U.LearnResult = ELearn.Add;
-	// 			U.WordId = WordId;
-	// 			yield return U;
-	// 		}
-	// 	}
-	// }
-
-	/// <summary>
-	/// 若JnWord已被軟刪則軟刪、否則添。用于匯入遠端ʸ來ʹ詞
-	/// </summary>
-	/// <param name="Ctx"></param>
-	/// <param name="Ct"></param>
-	/// <returns></returns>
-	// public async Task<Func<
-	// 	IUserCtx, IEnumerable<IJnWord>, CT, Task<nil>
-	// >> FnInsertOrDelWords(IDbFnCtx Ctx, CT Ct){
-	// 	var InsertJnWords = await DaoWord.FnInsertJnWords(Ctx, Ct);
-	// 	var SoftDelMany = await FnSoftDelJnWordsByIds(Ctx, Ct);
-	// 	return async(User, Words, Ct)=>{
-	// 		var IdsToDel = new List<IdWord>();
-	// 		var NonDeleted = new List<IJnWord>();
-	// 		foreach(var w in Words){
-	// 			if(w.Word.IsDeleted()){
-	// 				IdsToDel.Add(w.Word.Id);
-	// 			}else{
-	// 				w.Word.Owner = User.UserId;
-	// 				NonDeleted.Add(w);
-	// 			}
-	// 		}
-	// 		await SoftDelMany(User, IdsToDel, Ct);
-	// 		await InsertJnWords(NonDeleted, Ct);
-	// 		return NIL;
-	// 	};
-	// }
-
-
-/// <summary>
 /// 把DtoAddWords 寫入數據庫。不類[從文本生詞表導入單詞]之新增ᵣ [添加記錄]
-/// </summary>
 	public async Task<Func<
 		IUserCtx
 		,DtoAddWordsOld
@@ -298,12 +255,7 @@ public partial class SvcWord(
 	}
 
 
-	/// <summary>
 	/// 專用于添詞芝從文本詞表
-	/// </summary>
-	/// <param name="Ctx"></param>
-	/// <param name="Ct"></param>
-	/// <returns></returns>
 	public async Task<Func<
 		IUserCtx
 		,IEnumerable<JnWord>
@@ -375,12 +327,7 @@ public partial class SvcWord(
 	}
 
 
-	/// <summary>
 	/// 潙已有ʹ詞 增 新ʹ學ˡ錄
-	/// </summary>
-	/// <param name="Ctx"></param>
-	/// <param name="Ct"></param>
-	/// <returns></returns>
 	public async Task<Func<
 		IUserCtx
 		,IEnumerable<WordId_PoLearns>
@@ -625,10 +572,8 @@ public partial class SvcWord(
 		throw new NotImplementedException();
 	}
 
-	/// <summary>
 	/// 更新JnWord。以新傳入之JnWord潙基準、缺者補 盈者刪
 	/// 以id潙基準
-	/// </summary>
 	/// //TODO Id或時間爲空時先自動填充
 	/// TODO 返回實ʹ操作 如 無變, 有增 等
 	public async Task<Func<
@@ -752,11 +697,4 @@ public partial class SvcWord(
 		};
 	}
 
-	void test(){
-		string a = null;
-		string? b= null;
-
-		System.Console.WriteLine(a);
-		System.Console.WriteLine(b);
-	}
 }

@@ -57,7 +57,7 @@ public partial class DaoKv(
 		,CT, Task<PoKv?>
 	>> FnGetByOwnerEtKey(IDbFnCtx Ctx, str KeyCol, CT Ct){
 var PKeyCol = T.Prm(KeyCol);
-var Sql = T.SqlSplicer().Select("*").From().WhereT()
+var Sql = T.SqlSplicer().Select("*").From().Where1()
 .And(T.SqlIsNonDel())
 .AndEq(x=>x.Owner, out var POwner)
 .And($"{T.Fld(PKeyCol)} = {PKeyCol}").ToSqlStr();

@@ -6,13 +6,8 @@ using Ngaq.Core.Shared.User.UserCtx;
 using Ngaq.Core.Shared.Word.Models.Po.Word;
 
 public partial class DaoWord{
-/// <summary>
 /// 不校驗、直接update語句㕥改
 /// 慎用 恐致謬。一般ʹ況ʸ直˪ 先軟刪舊詞後建新詞即可
-/// </summary>
-/// <param name="Ctx"></param>
-/// <param name="Ct"></param>
-/// <returns></returns>
 	public async Task<Func<
 		IUserCtx
 		,IdWord
@@ -35,7 +30,7 @@ public partial class DaoWord{
 var Sql = T.SqlSplicer().UpdateSet()
 .Eq(x=>x.Head, out var PHead)
 .C().Eq(x=>x.Lang, out var PLang)
-.WhereT().AndEq(x=>x.Id, out var PId).ToSqlStr();
+.Where1().AndEq(x=>x.Id, out var PId).ToSqlStr();
 ;
 
 var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
