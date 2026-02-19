@@ -1,86 +1,31 @@
 namespace Ngaq.Local.Word.Dao;
 
+using System.Diagnostics;
+using System.Threading.Tasks;
 using Ngaq.Core.Infra;
 using Ngaq.Core.Model.Po;
 using Ngaq.Core.Model.Po.Kv;
 using Ngaq.Core.Model.Po.Learn_;
 using Ngaq.Core.Model.Po.Word;
-using Tsinswreng.CsSqlHelper;
-using Str_Any = System.Collections.Generic.Dictionary<str, obj?>;
-using IStr_Any = System.Collections.Generic.IDictionary<str, obj?>;
-using Ngaq.Core.Infra.Errors;
-using Ngaq.Core.Models.Po;
-using Tsinswreng.CsPage;
-using Tsinswreng.CsTools;
-using Ngaq.Local.Db.TswG;
-using System.Diagnostics;
-using Ngaq.Core.Word.Models.Po.Word;
-using System.Linq.Expressions;
-using Ngaq.Core.Shared.User.UserCtx;
-using Ngaq.Core.Shared.Word.Models.Po.Kv;
-using Ngaq.Core.Shared.Word.Models;
-using Ngaq.Core.Shared.Word.Models.Po.Word;
 using Ngaq.Core.Shared.Base.Models.Po;
-using Ngaq.Core.Shared.Word.Models.Po.Learn;
-using Ngaq.Local.Domains.Word.Dao;
+using Ngaq.Core.Shared.User.UserCtx;
+using Ngaq.Core.Shared.Word.Models;
 using Ngaq.Core.Shared.Word.Models.Dto;
-using System.Collections;
-using Ngaq.Core.Shared.User.Models.Po.User;
-using Ngaq.Core.Shared.Base.Models.Req;
-using Ngaq.Core.Shared.Base.Models.Resp;
+using Ngaq.Core.Shared.Word.Models.Po.Kv;
+using Ngaq.Core.Shared.Word.Models.Po.Learn;
+using Ngaq.Core.Shared.Word.Models.Po.Word;
+using Ngaq.Core.Word.Models.Po.Word;
+using Ngaq.Local.Db.TswG;
 using Tsinswreng.CsCore;
-using System.Threading.Tasks;
-using Acornima.Ast;
+using Tsinswreng.CsPage;
+using Tsinswreng.CsSqlHelper;
+using Tsinswreng.CsTools;
+using IStr_Any = System.Collections.Generic.IDictionary<str, obj?>;
+using Str_Any = System.Collections.Generic.Dictionary<str, obj?>;
 
 
 
-public class AutoBatch<TItem, TRet>:BatchCollector<TItem, TRet>{
-	public AutoBatch(){
 
-	}
-	public static new u64 DfltBatchSize{get;set;} = 100;
-	public I_DuplicateSql SqlDuplicator{get;set;}
-	//public u64 BatchSize;
-	public ISqlCmd FullBatch{get;set;} = null!;
-	public ISqlCmd FinalBatch{get;set;} = null!;
-	public IDbFnCtx Ctx{get;set;}
-	public ISqlCmdMkr SqlCmdMkr{get;set;}
-	public ISqlCmd SqlCmd{get;set;}
-	public static AutoBatch<TItem, TRet> Mk(
-		IDbFnCtx Ctx
-		,ISqlCmdMkr SqlCmdMkr
-		,I_DuplicateSql SqlDuplicator
-		,Func<
-			AutoBatch<TItem, TRet> //Self
-			,IList<TItem>
-			,CT
-			,Task<TRet>
-		> FnAsy
-		,u64 BatchSize = 0
-	){
-		if(BatchSize == 0){
-			BatchSize = DfltBatchSize;
-		}
-		var R = new AutoBatch<TItem, TRet>();
-		var ArgFn = FnAsy;
-		R.FnAsy = async(Items, Ct)=>{
-			var size = (u64)Items.Count;
-			R.SqlCmd = R.FullBatch;
-			var FnGetRepeatedSql = R.SqlDuplicator.DuplicateSql;
-			if((u64)Items.Count < R.BatchSize){
-				R.FinalBatch = await R.Ctx.PrepareToDispose(R.SqlCmdMkr, FnGetRepeatedSql(size), Ct);
-				R.SqlCmd = R.FinalBatch;
-			}else if(R.FullBatch == null){
-				R.FullBatch = await R.Ctx.PrepareToDispose(R.SqlCmdMkr, FnGetRepeatedSql(R.Ctx.BatchSize), Ct);
-				R.SqlCmd = R.FullBatch;
-			}
-			return await ArgFn(R, Items, Ct);
-		};
-		R.Init(R.FnAsy, BatchSize);
-		return R;
-	}
-
-}
 
 public partial class DaoWord{
 
@@ -114,51 +59,7 @@ public partial class DaoWord{
 		return R.Flat();
 	}
 
-	public async Task<Func<
-		IUserCtx,
-		IEnumerable<Head_Lang>,
-		CT
-		,Task<IAsyncEnumerable<IdWord?>>
-	>>
-	FnSlctIdByOwnerHeadLangWithDelBatch(IDbFnCtx Ctx,CT Ct){//嘗試批量操作(未完成)
-
-var Sql = T.SqlSplicer().Select(x=>x.Id).From().Where1()
-.AndEq(x=>x.Owner, out var POwner)
-.AndEq(x=>x.Head, out var PHead)
-.AndEq(x=>x.Lang, out var PLang)
-// .ToSqlStr(Ctx)//Ctx中有BatchSize
-;
-		ISqlCmd FullBatch = null!, FinalBatch = null!;
-		return async (User,HeadLangs,Ct)=>{
-			await using var batch = new BatchCollector<Head_Lang, IAsyncEnumerable<IdWord?>>(async(HeadLangs, Ct)=>{
-				var size = (u64)HeadLangs.Count;
-				var SqlCmd = FullBatch;
-				if((u64)HeadLangs.Count < Ctx.BatchSize){
-					FinalBatch = await Ctx.PrepareToDispose(SqlCmdMkr, Sql.ToSqlStr(size), Ct);
-					SqlCmd = FinalBatch;
-				}else if(FullBatch == null){
-					FullBatch = await Ctx.PrepareToDispose(SqlCmdMkr, Sql.ToSqlStr(Ctx.BatchSize), Ct);
-					SqlCmd = FullBatch;
-				}
-
-				var Head = HeadLangs.Select(x=>x.Head);
-				var Lang = HeadLangs.Select(x=>x.Lang);
-				var UserId = User.UserId;
-				var Args = ArgDict.Mk(T)
-				.AddT(POwner, UserId)
-				.AddManyT(PHead, Head)
-				.AddManyT(PLang, Lang);
-				var GotDicts = SqlCmd.Args(Args).AsyE1d(Ct).OrEmpty();
-				return GotDicts.Select(x=>{//TODO 當此組 (Head,Lang)查不到數據旹 會返null否
-					var ans = x[T.Memb(x=>x.Id)];
-					return (IdWord?)IdWord.FromByteArr((u8[])ans!);
-				});
-			}, Ctx.BatchSize);
-			var R = batch.AddToEnd(HeadLangs, Ct);
-			return R.Flat();
-		};
-	}
-
+	[Obsolete(@$"用{nameof(SlctIdByOwnerHeadLangWithDelBatch)}")]
 	public async Task<Func<
 		IUserCtx,
 		str,//Head
@@ -810,4 +711,51 @@ var Cmd = await Ctx.PrepareToDispose(SqlCmdMkr, Sql, Ct);
 		};
 	}
 
+#if false
+public async Task<Func<
+		IUserCtx,
+		IEnumerable<Head_Lang>,
+		CT
+		,Task<IAsyncEnumerable<IdWord?>>
+	>>
+	FnSlctIdByOwnerHeadLangWithDelBatch(IDbFnCtx Ctx,CT Ct){//嘗試批量操作(未完成)
+
+var Sql = T.SqlSplicer().Select(x=>x.Id).From().Where1()
+.AndEq(x=>x.Owner, out var POwner)
+.AndEq(x=>x.Head, out var PHead)
+.AndEq(x=>x.Lang, out var PLang)
+// .ToSqlStr(Ctx)//Ctx中有BatchSize
+;
+		ISqlCmd FullBatch = null!, FinalBatch = null!;
+		return async (User,HeadLangs,Ct)=>{
+			await using var batch = new BatchCollector<Head_Lang, IAsyncEnumerable<IdWord?>>(async(HeadLangs, Ct)=>{
+				var size = (u64)HeadLangs.Count;
+				var SqlCmd = FullBatch;
+				if((u64)HeadLangs.Count < Ctx.BatchSize){
+					FinalBatch = await Ctx.PrepareToDispose(SqlCmdMkr, Sql.ToSqlStr(size), Ct);
+					SqlCmd = FinalBatch;
+				}else if(FullBatch == null){
+					FullBatch = await Ctx.PrepareToDispose(SqlCmdMkr, Sql.ToSqlStr(Ctx.BatchSize), Ct);
+					SqlCmd = FullBatch;
+				}
+
+				var Head = HeadLangs.Select(x=>x.Head);
+				var Lang = HeadLangs.Select(x=>x.Lang);
+				var UserId = User.UserId;
+				var Args = ArgDict.Mk(T)
+				.AddT(POwner, UserId)
+				.AddManyT(PHead, Head)
+				.AddManyT(PLang, Lang);
+				var GotDicts = SqlCmd.Args(Args).AsyE1d(Ct).OrEmpty();
+				return GotDicts.Select(x=>{//TODO 當此組 (Head,Lang)查不到數據旹 會返null否
+					var ans = x[T.Memb(x=>x.Id)];
+					return (IdWord?)IdWord.FromByteArr((u8[])ans!);
+				});
+			}, Ctx.BatchSize);
+			var R = batch.AddToEnd(HeadLangs, Ct);
+			return R.Flat();
+		};
+	}
+
+#endif
 }

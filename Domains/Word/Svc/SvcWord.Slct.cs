@@ -31,7 +31,7 @@ public partial class SvcWord{
 		,IEnumerable<IJnWord>
 		,CT
 		,Task<DuplicationGroup<IJnWord>>
-	>> FnGroupByExisingWithDel2(
+	>> GroupByExisingWithDelBatch(
 		IDbFnCtx Ctx
 		,CT Ct
 	){
