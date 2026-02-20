@@ -11,6 +11,8 @@ using System.Net.Http.Headers;
 using System.Text;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
+using Ngaq.Core.Tools;
+using Tsinswreng.CsDictMapper;
 
 namespace Ngaq.Local.Domains.Dictionary.Svc;
 
@@ -18,16 +20,26 @@ public class SvcDictionary:ISvcDictionary{
 	ICfgAccessor Cfg;
 	IJsonSerializer Json;
 	HttpClient HttpClient;
+	IDictMapperShallow DictMapper;
 
 	public SvcDictionary(
-		ICfgAccessor Cfg,
-		IJsonSerializer Json
+		ICfgAccessor Cfg
+		,IJsonSerializer Json
+		,IDictMapperShallow DictMapper
 	){
 		this.Cfg = Cfg;
 		this.Json = Json;
 		this.HttpClient = new HttpClient();
+		this.DictMapper = DictMapper;
 	}
-
+/*
+如果AI響應的文本中 把YamlMd格式又包進代碼塊的話、你要先去掉最外層的代碼塊
+具體的判斷方法:
+去掉開頭的空白字符
+如果響應文本中是以 ```yaml 開頭 就是正確的格式
+如果以```md 或 ````md 或 `````md (或者有更多的反點)、就要先把這層代碼塊去掉
+注意代碼塊起始界和終止界的反點的數量是一致的
+ */
 	[Impl]
 	public async Task<RespLlmDict> Lookup(IUserCtx User, ReqLlmDict Req, CT Ct){
 		var apiUrl = Cfg.Get(ItemsClientCfg.LlmDictionary.ApiUrl);
@@ -91,37 +103,9 @@ public class SvcDictionary:ISvcDictionary{
 
 	private RespLlmDict ParseResponse(string yamlMdText){
 		var yaml = Tsinswreng.CsYamlMd.YamlMd.Inst.ToYaml(yamlMdText);
-
-		var deserializer = new DeserializerBuilder()
-			.WithNamingConvention(UnderscoredNamingConvention.Instance)
-			.Build();
-
-		var yamlObj = deserializer.Deserialize<Dictionary<string, object>>(yaml);
-
-		var result = new RespLlmDict();
-
-		if(yamlObj.TryGetValue("Head", out var head)){
-			result.Head = head?.ToString() ?? "";
-		}
-
-		if(yamlObj.TryGetValue("Pronunciations", out var prons)){
-			if(prons is IList<object> pronList){
-				foreach(var pron in pronList){
-					result.Pronunciations.Add(new Ngaq.Core.Shared.Word.Models.TextedPronunciation{
-						Text = pron?.ToString() ?? ""
-					});
-				}
-			}
-		}
-
-		if(yamlObj.TryGetValue("Descrs", out var descrs)){
-			if(descrs is IList<object> descrList){
-				foreach(var descr in descrList){
-					result.Descrs.Add(descr?.ToString() ?? "");
-				}
-			}
-		}
-
-		return result;
+		var dict = ToolYaml.YamlStrToDict(yaml);
+		var R = new RespLlmDict();
+		DictMapper.AssignShallowT(R, dict);
+		return R;
 	}
 }
