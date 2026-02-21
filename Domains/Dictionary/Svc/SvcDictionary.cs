@@ -3,7 +3,9 @@ using Ngaq.Core.Shared.Dictionary.Svc;
 using Ngaq.Core.Shared.User.UserCtx;
 using Ngaq.Core.Infra.Cfg;
 using Ngaq.Core.Tools.Json;
+using Ngaq.Core.Infra.Errors;
 using Tsinswreng.CsCfg;
+using Tsinswreng.CsErr;
 using Tsinswreng.CsCore;
 using Tsinswreng.CsTools;
 using System.Net.Http.Headers;
@@ -33,7 +35,7 @@ public class SvcDictionary:ISvcDictionary{
 		this.DictMapper = DictMapper;
 	}
 /*
-如果AI響應的文本中 把YamlMd格式又包進代碼塊的話、你要先去掉最外層的代碼塊
+如果AI響應的文本中把YamlMd格式又包進代碼塊的話、你要先去掉最外層的代碼塊
 具體的判斷方法:
 去掉開頭的空白字符
 如果響應文本中是以 ```yaml 開頭 就是正確的格式
@@ -47,7 +49,7 @@ public class SvcDictionary:ISvcDictionary{
 		var model = Cfg.Get(ItemsClientCfg.LlmDictionary.Model);
 
 		if(string.IsNullOrWhiteSpace(apiUrl) || string.IsNullOrWhiteSpace(apiKey)){
-			throw new InvalidOperationException("LLM Dictionary API URL or API Key is not configured.");
+			throw ItemsErr.Dictionary.LlmApiNotConfigured.ToErr();
 		}
 
 		var prompt = BuildPrompt(Req);
@@ -85,35 +87,41 @@ public class SvcDictionary:ISvcDictionary{
 		var llmResponse = ToolJson.JsonStrToDict(responseJson);
 
 		if(llmResponse == null || !llmResponse.TryGetValue("choices", out var choicesObj) || choicesObj is not IList<obj?> choices || choices.Count == 0){
-			throw new InvalidOperationException("LLM API returned empty response.");
+			throw ItemsErr.Dictionary.LlmApiEmptyResponse.ToErr();
 		}
 
 		var firstChoice = choices[0] as IDictionary<str, obj?>;
 		if(firstChoice == null || !firstChoice.TryGetValue("message", out var messageObj) || messageObj is not IKv message){
-			throw new InvalidOperationException("LLM API returned invalid response structure.");
+			throw ItemsErr.Dictionary.LlmApiInvalidResponseStructure.ToErr();
 		}
 
 		var content_result = message.TryGetValue("content", out var contentObj) ? contentObj?.ToString() : null;
 		if(string.IsNullOrEmpty(content_result)){
-			throw new InvalidOperationException("LLM API returned empty content.");
+			throw ItemsErr.Dictionary.LlmApiEmptyContent.ToErr();
 		}
 
 		return content_result;
 	}
 
-	//TODO 異常處理、特別注意檢查序列化是否正確
+	/// <summary>
+	/// 解析 LLM 響應文本為 RespLlmDict
+	/// </summary>
 	private RespLlmDict ParseResponse(string LlmRespText){
-		var textBlock = MdTextBlock.GetTextBlock(LlmRespText);
-		var yamlMdText = "";
-		if(textBlock == null){
-			yamlMdText = LlmRespText;
-		}else if(textBlock.Lang == "md" || textBlock.Lang == "markdown"){
-			yamlMdText = textBlock.Text;
+		try{
+			var textBlock = MdTextBlock.GetTextBlock(LlmRespText);
+			var yamlMdText = "";
+			if(textBlock == null){
+				yamlMdText = LlmRespText;
+			}else if(textBlock.Lang == "md" || textBlock.Lang == "markdown"){
+				yamlMdText = textBlock.Text;
+			}
+			var yaml = Tsinswreng.CsYamlMd.YamlMd.Inst.ToYaml(yamlMdText);
+			var dict = ToolYaml.YamlStrToDict(yaml);
+			var R = new RespLlmDict();
+			DictMapper.AssignShallowT(R, dict);
+			return R;
+		}catch(System.Exception ex){
+			throw ItemsErr.Dictionary.LlmResponseParseFailed.ToErr().AddDebugArgs(LlmRespText, ex.Message);
 		}
-		var yaml = Tsinswreng.CsYamlMd.YamlMd.Inst.ToYaml(yamlMdText);
-		var dict = ToolYaml.YamlStrToDict(yaml);
-		var R = new RespLlmDict();
-		DictMapper.AssignShallowT(R, dict);
-		return R;
 	}
 }
