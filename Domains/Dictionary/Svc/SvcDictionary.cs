@@ -85,17 +85,19 @@ public class SvcDictionary:ISvcDictionary{
 
 		var responseJson = await response.Content.ReadAsStringAsync(Ct);
 		var llmResponse = ToolJson.JsonStrToDict(responseJson);
-
-		if(llmResponse == null || !llmResponse.TryGetValue("choices", out var choicesObj) || choicesObj is not IList<obj?> choices || choices.Count == 0){
+		if(llmResponse == null){
 			throw ItemsErr.Dictionary.LlmApiEmptyResponse.ToErr();
 		}
 
-		var firstChoice = choices[0] as IDictionary<str, obj?>;
-		if(firstChoice == null || !firstChoice.TryGetValue("message", out var messageObj) || messageObj is not IKv message){
+		// 使用 JsonNode 简化访问
+		var node = new JsonNode(llmResponse);
+
+		// 使用路径访问获取 content: choices[0].message.content
+		if(!node.TryGetNodeByPath("choices[0].message.content", out var contentNode)){
 			throw ItemsErr.Dictionary.LlmApiInvalidResponseStructure.ToErr();
 		}
 
-		var content_result = message.TryGetValue("content", out var contentObj) ? contentObj?.ToString() : null;
+		var content_result = contentNode?.ValueObj?.ToString();
 		if(string.IsNullOrEmpty(content_result)){
 			throw ItemsErr.Dictionary.LlmApiEmptyContent.ToErr();
 		}
