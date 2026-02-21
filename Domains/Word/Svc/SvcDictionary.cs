@@ -9,7 +9,7 @@ using Ngaq.Core.Tools.Json;
 using Tsinswreng.CsTools;
 
 
-
+[Obsolete]
 public class SvcDictionary: ISvcDictionary{
 	IJsonSerializer JsonS;
 	public SvcDictionary(

@@ -6,17 +6,16 @@ using Ngaq.Core.Tools.Json;
 using Tsinswreng.CsCfg;
 using Tsinswreng.CsCore;
 using Tsinswreng.CsTools;
-using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
-using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.NamingConventions;
 using Ngaq.Core.Tools;
 using Tsinswreng.CsDictMapper;
 using Tsinswreng.CsYamlMd;
 
-namespace Ngaq.Local.Domains.Dictionary.Svc;
 
+namespace Ngaq.Local.Domains.Dictionary.Svc;
+using Kv = System.Collections.Generic.Dictionary<string, object?>;
+using IKv = System.Collections.Generic.IDictionary<string, object?>;
 public class SvcDictionary:ISvcDictionary{
 	ICfgAccessor Cfg;
 	IJsonSerializer Json;
@@ -62,10 +61,10 @@ public class SvcDictionary:ISvcDictionary{
 	}
 
 	private async Task<string> CallLlmApi(string apiUrl, string apiKey, string model, string prompt, CT Ct){
-		var requestBody = new Dictionary<str, obj?>{
+		var requestBody = new Kv{
 			["model"] = model,
 			["messages"] = new List<obj?>{
-				new Dictionary<str, obj?>{
+				new Kv{
 					["role"] = "user",
 					["content"] = prompt
 				}
@@ -90,7 +89,7 @@ public class SvcDictionary:ISvcDictionary{
 		}
 
 		var firstChoice = choices[0] as IDictionary<str, obj?>;
-		if(firstChoice == null || !firstChoice.TryGetValue("message", out var messageObj) || messageObj is not IDictionary<str, obj?> message){
+		if(firstChoice == null || !firstChoice.TryGetValue("message", out var messageObj) || messageObj is not IKv message){
 			throw new InvalidOperationException("LLM API returned invalid response structure.");
 		}
 
@@ -102,6 +101,7 @@ public class SvcDictionary:ISvcDictionary{
 		return content_result;
 	}
 
+	//TODO 異常處理、特別注意檢查序列化是否正確
 	private RespLlmDict ParseResponse(string LlmRespText){
 		var textBlock = MdTextBlock.GetTextBlock(LlmRespText);
 		var yamlMdText = "";

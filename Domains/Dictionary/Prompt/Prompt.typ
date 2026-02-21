@@ -1,10 +1,6 @@
-#let H(t,d)={
-	t
-"\n"
-	d
+#import "@preview/tsinswreng-auto-heading:0.1.0": auto-heading
 
-}
-
+#let H = auto-heading;
 #let RMd(path)={
   raw(
     read(path)
