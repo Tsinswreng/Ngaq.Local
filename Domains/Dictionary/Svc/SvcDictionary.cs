@@ -13,6 +13,7 @@ using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 using Ngaq.Core.Tools;
 using Tsinswreng.CsDictMapper;
+using Tsinswreng.CsYamlMd;
 
 namespace Ngaq.Local.Domains.Dictionary.Svc;
 
@@ -101,7 +102,14 @@ public class SvcDictionary:ISvcDictionary{
 		return content_result;
 	}
 
-	private RespLlmDict ParseResponse(string yamlMdText){
+	private RespLlmDict ParseResponse(string LlmRespText){
+		var textBlock = MdTextBlock.GetTextBlock(LlmRespText);
+		var yamlMdText = "";
+		if(textBlock == null){
+			yamlMdText = LlmRespText;
+		}else if(textBlock.Lang == "md" || textBlock.Lang == "markdown"){
+			yamlMdText = textBlock.Text;
+		}
 		var yaml = Tsinswreng.CsYamlMd.YamlMd.Inst.ToYaml(yamlMdText);
 		var dict = ToolYaml.YamlStrToDict(yaml);
 		var R = new RespLlmDict();
