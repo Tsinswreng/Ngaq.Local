@@ -62,6 +62,7 @@ public class SvcDictionary:ISvcDictionary{
 		return $"{DfltPrompt.Prompt}\n\n---\n\n以下是用户的查询请求：\n\n{Json.Stringify(Req)}";
 	}
 
+//TODO 參數和返回值 都改成 DTO
 	private async Task<string> CallLlmApi(string apiUrl, string apiKey, string model, string prompt, CT Ct){
 		var requestBody = new Kv{
 			["model"] = model,
@@ -105,10 +106,10 @@ public class SvcDictionary:ISvcDictionary{
 		return content_result;
 	}
 
-	/// <summary>
+
 	/// 解析 LLM 響應文本為 RespLlmDict
-	/// </summary>
-	private RespLlmDict ParseResponse(string LlmRespText){
+	/// TODO 參數和返回值都用DTO。
+	private RespLlmDict ParseResponse(string LlmRespText, str RespContent){
 		try{
 			var textBlock = MdTextBlock.GetTextBlock(LlmRespText);
 			var yamlMdText = "";
@@ -123,7 +124,7 @@ public class SvcDictionary:ISvcDictionary{
 			DictMapper.AssignShallowT(R, dict);
 			return R;
 		}catch(System.Exception ex){
-			throw ItemsErr.Dictionary.LlmResponseParseFailed.ToErr().AddDebugArgs(LlmRespText, ex.Message);
+			throw ItemsErr.Dictionary.LlmResponseParseFailed.ToErr().AddDebugArgs(ex, RespContent);
 		}
 	}
 }
