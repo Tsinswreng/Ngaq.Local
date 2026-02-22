@@ -13,26 +13,76 @@ using System.Text;
 using Ngaq.Core.Tools;
 using Tsinswreng.CsDictMapper;
 using Tsinswreng.CsYamlMd;
+using Microsoft.Extensions.Logging;
+
 
 
 namespace Ngaq.Local.Domains.Dictionary.Svc;
 using Kv = System.Collections.Generic.Dictionary<string, object?>;
 using IKv = System.Collections.Generic.IDictionary<string, object?>;
+
+#region DTOs
+
+/// <summary>
+/// DTO for LLM API request body
+/// </summary>
+public class DtoLlmApiReq{
+	public string? Model{get;set;}
+	public List<DtoLlmMessage>? Messages{get;set;}
+}
+
+/// <summary>
+/// DTO for LLM message
+/// </summary>
+public class DtoLlmMessage{
+	public string? Role{get;set;}
+	public string? Content{get;set;}
+}
+
+/// <summary>
+/// DTO for LLM API call parameters
+/// </summary>
+public class DtoLlmCallParam{
+	public string? ApiUrl{get;set;}
+	public string? ApiKey{get;set;}
+	public string? Model{get;set;}
+	public string? Prompt{get;set;}
+}
+
+/// <summary>
+/// DTO for LLM API response
+/// </summary>
+public class DtoLlmApiResp{
+	/// <summary>
+	/// Raw JSON response text (for debugging)
+	/// </summary>
+	public string? RawResponse{get;set;}
+
+	/// <summary>
+	/// Extracted content from choices[0].message.content
+	/// </summary>
+	public string? Content{get;set;}
+}
+
+#endregion
+
 public class SvcDictionary:ISvcDictionary{
 	ICfgAccessor Cfg;
 	IJsonSerializer Json;
 	HttpClient HttpClient;
 	IDictMapperShallow DictMapper;
-
+	ILogger Logger;
 	public SvcDictionary(
 		ICfgAccessor Cfg
 		,IJsonSerializer Json
 		,IDictMapperShallow DictMapper
+		,ILogger Logger
 	){
 		this.Cfg = Cfg;
 		this.Json = Json;
 		this.HttpClient = new HttpClient();
 		this.DictMapper = DictMapper;
+		this.Logger = Logger;
 	}
 /*
 如果AI響應的文本中把YamlMd格式又包進代碼塊的話、你要先去掉最外層的代碼塊
@@ -53,8 +103,17 @@ public class SvcDictionary:ISvcDictionary{
 		}
 
 		var prompt = BuildPrompt(Req);
-		var responseText = await CallLlmApi(apiUrl, apiKey, model, prompt, Ct);
-		var result = ParseResponse(responseText);
+
+		var dtoParam = new DtoLlmCallParam{
+			ApiUrl = apiUrl,
+			ApiKey = apiKey,
+			Model = model,
+			Prompt = prompt
+		};
+
+		var dtoResp = await CallLlmApi(dtoParam, Ct);
+
+		var result = ParseResponse(dtoResp);
 		return result;
 	}
 
@@ -62,32 +121,43 @@ public class SvcDictionary:ISvcDictionary{
 		return $"{DfltPrompt.Prompt}\n\n---\n\n以下是用户的查询请求：\n\n{Json.Stringify(Req)}";
 	}
 
-//TODO 參數和返回值 都改成 DTO
-	private async Task<string> CallLlmApi(string apiUrl, string apiKey, string model, string prompt, CT Ct){
-		var requestBody = new Kv{
-			["model"] = model,
-			["messages"] = new List<obj?>{
-				new Kv{
-					["role"] = "user",
-					["content"] = prompt
+	/// <summary>
+	/// Call LLM API and return DTO with raw response for debugging
+	/// </summary>
+	private async Task<DtoLlmApiResp> CallLlmApi(DtoLlmCallParam param, CT Ct){
+		var requestBody = new DtoLlmApiReq{
+			Model = param.Model,
+			Messages = new List<DtoLlmMessage>{
+				new DtoLlmMessage{
+					Role = "user",
+					Content = param.Prompt
 				}
 			}
 		};
 
-		var json = ToolJson.DictToJson(requestBody);
+		var json = ToolJson.DictToJson(new Kv{
+			["model"] = requestBody.Model,
+			["messages"] = requestBody.Messages?.Select(m => new Kv{
+				["role"] = m.Role,
+				["content"] = m.Content
+			}).ToList()
+		});
 		var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-		var request = new HttpRequestMessage(HttpMethod.Post, apiUrl);
-		request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+		var request = new HttpRequestMessage(HttpMethod.Post, param.ApiUrl);
+		request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", param.ApiKey);
 		request.Content = content;
 
 		var response = await HttpClient.SendAsync(request, Ct);
 		response.EnsureSuccessStatusCode();
 
 		var responseJson = await response.Content.ReadAsStringAsync(Ct);
+		Logger.LogInformation("LLM API raw response: {Response}", responseJson);
+
 		var llmResponse = ToolJson.JsonStrToDict(responseJson);
 		if(llmResponse == null){
-			throw ItemsErr.Dictionary.LlmApiEmptyResponse.ToErr();
+			throw ItemsErr.Dictionary.LlmApiEmptyResponse.ToErr()
+				.AddDebugArgs(responseJson);
 		}
 
 		// 使用 JsonNode 简化访问
@@ -95,26 +165,33 @@ public class SvcDictionary:ISvcDictionary{
 
 		// 使用路径访问获取 content: choices[0].message.content
 		if(!node.TryGetNodeByPath("choices[0].message.content", out var contentNode)){
-			throw ItemsErr.Dictionary.LlmApiInvalidResponseStructure.ToErr();
+			throw ItemsErr.Dictionary.LlmApiInvalidResponseStructure.ToErr()
+				.AddDebugArgs(responseJson);
 		}
 
 		var content_result = contentNode?.ValueObj?.ToString();
 		if(string.IsNullOrEmpty(content_result)){
-			throw ItemsErr.Dictionary.LlmApiEmptyContent.ToErr();
+			throw ItemsErr.Dictionary.LlmApiEmptyContent.ToErr()
+				.AddDebugArgs(responseJson);
 		}
 
-		return content_result;
+		return new DtoLlmApiResp{
+			RawResponse = responseJson,
+			Content = content_result
+		};
 	}
 
 
 	/// 解析 LLM 響應文本為 RespLlmDict
-	/// TODO 參數和返回值都用DTO。
-	private RespLlmDict ParseResponse(string LlmRespText, str RespContent){
+	private RespLlmDict ParseResponse(DtoLlmApiResp dtoResp){
+		var rawResponse = dtoResp.RawResponse;
+		var content = dtoResp.Content;
+
 		try{
-			var textBlock = MdTextBlock.GetTextBlock(LlmRespText);
+			var textBlock = MdTextBlock.GetTextBlock(content);
 			var yamlMdText = "";
 			if(textBlock == null){
-				yamlMdText = LlmRespText;
+				yamlMdText = content;
 			}else if(textBlock.Lang == "md" || textBlock.Lang == "markdown"){
 				yamlMdText = textBlock.Text;
 			}
@@ -124,7 +201,9 @@ public class SvcDictionary:ISvcDictionary{
 			DictMapper.AssignShallowT(R, dict);
 			return R;
 		}catch(System.Exception ex){
-			throw ItemsErr.Dictionary.LlmResponseParseFailed.ToErr().AddDebugArgs(ex, RespContent);
+			Logger.LogError(ex, "Failed to parse LLM response. Raw response: {RawResponse}", rawResponse);
+			throw ItemsErr.Dictionary.LlmResponseParseFailed.ToErr()
+				.AddDebugArgs(ex, rawResponse);
 		}
 	}
 }
