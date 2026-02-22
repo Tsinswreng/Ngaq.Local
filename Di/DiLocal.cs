@@ -25,6 +25,8 @@ using Ngaq.Core.Shared.Kv.Svc;
 using Ngaq.Local.Domains.Word.Svc;
 using Ngaq.Core.Shared.Word.Svc;
 using Ngaq.Core.Infra.Url;
+using Ngaq.Core.Shared.Dictionary.Svc;
+using Ngaq.Local.Domains.Dictionary.Svc;
 
 
 namespace Ngaq.Local.Di;
@@ -105,7 +107,7 @@ z.AddScoped<DaoWord, DaoWord>();
 z.AddScoped<DaoKv, DaoKv>();
 z.AddScoped<ISvcParseWordList, SvcParseWordList>();
 z.AddScoped<ISvcWord, SvcWord>();
-z.AddScoped<ISvcDictionary, SvcDictionary>();
+z.AddScoped<ISvcDictionary, global::Ngaq.Local.Domains.Dictionary.Svc.SvcDictionary>();
 z.AddScoped<ISvcKv, SvcKv>();
 z.AddScoped<IImgGetter, SvcImg>();
 return z;

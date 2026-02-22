@@ -10,7 +10,7 @@ using Tsinswreng.CsTools;
 
 
 [Obsolete]
-public class SvcDictionary: ISvcDictionary{
+public class SvcDictionary: ObsltISvcDictionary{
 	IJsonSerializer JsonS;
 	public SvcDictionary(
 		IJsonSerializer JsonS
