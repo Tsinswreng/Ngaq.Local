@@ -68,18 +68,18 @@ public class DtoLlmApiResp{
 
 public class SvcDictionary:ISvcDictionary{
 	ICfgAccessor Cfg;
-	IJsonSerializer Json;
+	IJsonSerializer JsonS;
 	HttpClient HttpClient;
 	IDictMapperShallow DictMapper;
 	ILogger Logger;
 	public SvcDictionary(
 		ICfgAccessor Cfg
-		,IJsonSerializer Json
+		,IJsonSerializer JsonS
 		,IDictMapperShallow DictMapper
 		,ILogger Logger
 	){
 		this.Cfg = Cfg;
-		this.Json = Json;
+		this.JsonS = JsonS;
 		this.HttpClient = new HttpClient();
 		this.DictMapper = DictMapper;
 		this.Logger = Logger;
@@ -118,7 +118,7 @@ public class SvcDictionary:ISvcDictionary{
 	}
 
 	private string BuildPrompt(ReqLlmDict Req){
-		return $"{DfltPrompt.Prompt}\n\n---\n\n以下是用户的查询请求：\n\n{Json.Stringify(Req)}";
+		return $"{DfltPrompt.Prompt}\n\n---\n\n以下是用户的查询请求：\n\n{JsonS.Stringify(Req)}";
 	}
 
 	/// <summary>
@@ -191,14 +191,17 @@ public class SvcDictionary:ISvcDictionary{
 			var textBlock = MdTextBlock.GetTextBlock(content);
 			var yamlMdText = "";
 			if(textBlock == null){
-				yamlMdText = content;
+				throw ItemsErr.Dictionary.LlmResponseParseFailed.ToErr();
 			}else if(textBlock.Lang == "md" || textBlock.Lang == "markdown"){
 				yamlMdText = textBlock.Text;
+			}else if(textBlock.Lang == "yaml" || textBlock.Lang == "yml"){
+				yamlMdText = content;
 			}
 			var yaml = Tsinswreng.CsYamlMd.YamlMd.Inst.ToYaml(yamlMdText);
 			var dict = ToolYaml.YamlStrToDict(yaml);
-			var R = new RespLlmDict();
-			DictMapper.AssignShallowT(R, dict);
+			var json = ToolJson.DictToJson(dict);
+			var R = JsonS.Parse<RespLlmDict>(json);
+			
 			return R;
 		}catch(System.Exception ex){
 			Logger.LogError(ex, "Failed to parse LLM response. Raw response: {RawResponse}", rawResponse);

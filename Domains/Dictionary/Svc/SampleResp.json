@@ -1,0 +1,21 @@
+{
+	"id": "chatcmpl-699b0bb6cf88c78389f8777f",
+	"object": "chat.completion",
+	"created": 1771768758,
+	"model": "moonshot-v1-8k",
+	"choices": [
+		{
+			"index": 0,
+			"message": {
+				"role": "assistant",
+				"content": "```yaml\nHead: fuck\nPronunciations:\n  - /fʌk/\nDescrs:\n  - *__descr1\n```\n\n\n# __descr1\n```\n\n【動詞】操；干；搞\n\n指在極端不雅的語境中，用來表達性行為或強烈的不滿和憤怒。該詞語在正式場合和書面語中通常被視為禁忌，並且可能引起冒犯。\n\n*用法*：\n- fuck someone/something: 與某人/某物發生性關係；對某人/某事感到非常憤怒\n\n*例句*：\n1. I can't believe this happened! I really want to fuck this situation.\n   （我真不敢相信這事發生了！我真的對這情況感到非常憤怒。）\n\n*注意*：\n由於該詞語具有冒犯性，建議在非正式和非公開場合謹慎使用。\n\n```"
+			},
+			"finish_reason": "stop"
+		}
+	],
+	"usage": {
+		"prompt_tokens": 1149,
+		"completion_tokens": 213,
+		"total_tokens": 1362
+	}
+}
