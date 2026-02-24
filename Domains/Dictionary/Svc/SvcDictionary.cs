@@ -46,7 +46,10 @@ public class DtoLlmCallParam{
 	public string? ApiUrl{get;set;}
 	public string? ApiKey{get;set;}
 	public string? Model{get;set;}
-	public string? Prompt{get;set;}
+	/// <summary>
+	/// 用戶提示詞
+	/// </summary>
+	public string? UserPrompt{get;set;}
 }
 
 /// <summary>
@@ -102,14 +105,7 @@ public class SvcDictionary:ISvcDictionary{
 			throw ItemsErr.Dictionary.LlmApiNotConfigured.ToErr();
 		}
 
-		var prompt = BuildPrompt(Req);
-
-		var dtoParam = new DtoLlmCallParam{
-			ApiUrl = apiUrl,
-			ApiKey = apiKey,
-			Model = model,
-			Prompt = prompt
-		};
+		var userPrompt = BuildUserPrompt(Req);
 
 		// 统一走流式输出流程
 		// 如果传参方不按流式输出传，就自己攒着等完了一起发结果回去
@@ -124,24 +120,33 @@ public class SvcDictionary:ISvcDictionary{
 			evtToUse = internalEvt;
 		}
 
+		var dtoParam = new DtoLlmCallParam{
+			ApiUrl = apiUrl,
+			ApiKey = apiKey,
+			Model = model,
+			UserPrompt = userPrompt
+		};
+
 		var result = await CallLlmApiStream(evtToUse, dtoParam, Ct);
 		return result;
 	}
 
-	private string BuildPrompt(IReqLlmDict Req){
-		return $"{DfltPrompt.Prompt}\n\n---\n\n以下是用户的查询请求：\n\n{JsonS.Stringify(Req)}";
+	private string BuildUserPrompt(IReqLlmDict Req){
+		return JsonS.Stringify(Req);
 	}
 
-	/// <summary>
-	/// Call LLM API and return DTO with raw response for debugging
-	/// </summary>
+	[Obsolete("非流式")]
 	private async Task<DtoLlmApiResp> CallLlmApi(DtoLlmCallParam param, CT Ct){
 		var requestBody = new DtoLlmApiReq{
 			Model = param.Model,
 			Messages = new List<DtoLlmMessage>{
 				new DtoLlmMessage{
+					Role = "system",
+					Content = DfltPrompt.Prompt
+				},
+				new DtoLlmMessage{
 					Role = "user",
-					Content = param.Prompt
+					Content = param.UserPrompt
 				}
 			}
 		};
@@ -196,13 +201,21 @@ public class SvcDictionary:ISvcDictionary{
 	/// <summary>
 	/// 调用 LLM API 流式输出
 	/// </summary>
-	private async Task<IRespLlmDict> CallLlmApiStream(IReqLlmDictEvt evt, DtoLlmCallParam param, CT Ct){
+	private async Task<IRespLlmDict> CallLlmApiStream(
+		IReqLlmDictEvt evt,
+		DtoLlmCallParam param,
+		CT Ct
+	){
 		var json = ToolJson.DictToJson(new Kv{
 			["model"] = param.Model,
 			["messages"] = new List<Kv>{
 				new Kv{
+					["role"] = "system",
+					["content"] = DfltPrompt.Prompt
+				},
+				new Kv{
 					["role"] = "user",
-					["content"] = param.Prompt
+					["content"] = param.UserPrompt
 				}
 			},
 			["stream"] = true // 启用流式输出
