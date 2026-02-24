@@ -230,9 +230,7 @@ public class SvcDictionary:ISvcDictionary{
 			var payload = line["data: ".Length..];
 			if(payload == "[DONE]"){
 				// 流结束
-				if(evt is ReqLlmDictEvt reqEvt){
-					reqEvt.RaiseOnDone();
-				}
+				evt.OnDone?.Invoke(new DtoOnDone(), Ct);
 				break;
 			}
 
@@ -247,9 +245,7 @@ public class SvcDictionary:ISvcDictionary{
 						if(!string.IsNullOrEmpty(seg)){
 							fullContent.Append(seg);
 							// 触发事件
-							if(evt is ReqLlmDictEvt reqEvt){
-								reqEvt.RaiseOnNewSeg(seg);
-							}
+							evt.OnNewSeg?.Invoke(new DtoOnNewSeg{ NewSeg = seg }, Ct);
 						}
 					}
 				}
