@@ -111,9 +111,20 @@ public class SvcDictionary:ISvcDictionary{
 			Prompt = prompt
 		};
 
-		var dtoResp = await CallLlmApi(dtoParam, Ct);
+		// 统一走流式输出流程
+		// 如果传参方不按流式输出传，就自己攒着等完了一起发结果回去
+		ReqLlmDictEvt? internalEvt = null;
+		IReqLlmDictEvt evtToUse;
 
-		var result = ParseResponse(dtoResp);
+		if(Req is IReqLlmDictEvt reqEvt){
+			evtToUse = reqEvt;
+		}else{
+			// 创建内部事件对象来收集流式输出
+			internalEvt = new ReqLlmDictEvt();
+			evtToUse = internalEvt;
+		}
+
+		var result = await CallLlmApiStream(evtToUse, dtoParam, Ct);
 		return result;
 	}
 
@@ -181,6 +192,80 @@ public class SvcDictionary:ISvcDictionary{
 		};
 	}
 
+
+	/// <summary>
+	/// 调用 LLM API 流式输出
+	/// </summary>
+	private async Task<IRespLlmDict> CallLlmApiStream(IReqLlmDictEvt evt, DtoLlmCallParam param, CT Ct){
+		var json = ToolJson.DictToJson(new Kv{
+			["model"] = param.Model,
+			["messages"] = new List<Kv>{
+				new Kv{
+					["role"] = "user",
+					["content"] = param.Prompt
+				}
+			},
+			["stream"] = true // 启用流式输出
+		});
+		var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+		var request = new HttpRequestMessage(HttpMethod.Post, param.ApiUrl);
+		request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", param.ApiKey);
+		request.Content = content;
+
+		// 使用 ResponseHeadersRead 以支持流式读取
+		var response = await HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, Ct);
+		response.EnsureSuccessStatusCode();
+
+		var fullContent = new StringBuilder();
+
+		using var stream = await response.Content.ReadAsStreamAsync(Ct);
+		using var reader = new StreamReader(stream);
+
+		// 逐行解析 SSE
+		while(await reader.ReadLineAsync() is { } line){
+			if(string.IsNullOrEmpty(line)) continue;
+			if(!line.StartsWith("data: ")) continue;
+
+			var payload = line["data: ".Length..];
+			if(payload == "[DONE]"){
+				// 流结束
+				if(evt is ReqLlmDictEvt reqEvt){
+					reqEvt.RaiseOnDone();
+				}
+				break;
+			}
+
+			try{
+				using var doc = System.Text.Json.JsonDocument.Parse(payload);
+				var root = doc.RootElement;
+
+				if(root.TryGetProperty("choices", out var choices) && choices.GetArrayLength() > 0){
+					var delta = choices[0].GetProperty("delta");
+					if(delta.TryGetProperty("content", out var contentProp)){
+						var seg = contentProp.GetString();
+						if(!string.IsNullOrEmpty(seg)){
+							fullContent.Append(seg);
+							// 触发事件
+							if(evt is ReqLlmDictEvt reqEvt){
+								reqEvt.RaiseOnNewSeg(seg);
+							}
+						}
+					}
+				}
+			}catch(System.Text.Json.JsonException){
+				// 忽略解析错误，继续处理下一行
+				Logger.LogWarning("Failed to parse SSE line: {Line}", line);
+			}
+		}
+
+		// 构建最终响应
+		var dtoResp = new DtoLlmApiResp{
+			Content = fullContent.ToString()
+		};
+
+		return ParseResponse(dtoResp);
+	}
 
 	/// 解析 LLM 響應文本為 RespLlmDict
 	private IRespLlmDict ParseResponse(DtoLlmApiResp dtoResp){
