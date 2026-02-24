@@ -93,7 +93,7 @@ public class SvcDictionary:ISvcDictionary{
 注意代碼塊起始界和終止界的反點的數量是一致的
  */
 	[Impl]
-	public async Task<RespLlmDict> Lookup(IUserCtx User, ReqLlmDict Req, CT Ct){
+	public async Task<IRespLlmDict> Lookup(IUserCtx User, IReqLlmDict Req, CT Ct){
 		var apiUrl = Cfg.Get(ItemsClientCfg.LlmDictionary.ApiUrl);
 		var apiKey = Cfg.Get(ItemsClientCfg.LlmDictionary.ApiKey);
 		var model = Cfg.Get(ItemsClientCfg.LlmDictionary.Model);
@@ -117,7 +117,7 @@ public class SvcDictionary:ISvcDictionary{
 		return result;
 	}
 
-	private string BuildPrompt(ReqLlmDict Req){
+	private string BuildPrompt(IReqLlmDict Req){
 		return $"{DfltPrompt.Prompt}\n\n---\n\n以下是用户的查询请求：\n\n{JsonS.Stringify(Req)}";
 	}
 
@@ -183,7 +183,7 @@ public class SvcDictionary:ISvcDictionary{
 
 
 	/// 解析 LLM 響應文本為 RespLlmDict
-	private RespLlmDict ParseResponse(DtoLlmApiResp dtoResp){
+	private IRespLlmDict ParseResponse(DtoLlmApiResp dtoResp){
 		var rawResponse = dtoResp.RawResponse;
 		var content = dtoResp.Content;
 
@@ -201,7 +201,6 @@ public class SvcDictionary:ISvcDictionary{
 			var dict = ToolYaml.YamlStrToDict(yaml);
 			var json = ToolJson.DictToJson(dict);
 			var R = JsonS.Parse<RespLlmDict>(json);
-			
 			return R;
 		}catch(System.Exception ex){
 			Logger.LogError(ex, "Failed to parse LLM response. Raw response: {RawResponse}", rawResponse);
