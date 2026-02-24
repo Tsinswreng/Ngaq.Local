@@ -29,13 +29,11 @@
 	*YOU MUST OUTPUT ALL CONTENT IN THE TARGET LANGUAGE SPECIFIED IN OptLang.TgtLangs.*
 
 	This means:
-	- If the target language is English (en), write ALL definitions, examples, synonyms, and antonyms in English.
-	- If the target language is Japanese (ja), write ALL content in Japanese.
-	- If the target language is Simplified Chinese (zh-CN), write ALL content in Simplified Chinese.
-	- If the target language is Traditional Chinese (zh-TW), write ALL content in Traditional Chinese.
+	- If the target language is English (en), write ALL definitions, examples, synonyms, antonyms, and example translations in English.
 	- And so on for any other target language.
 
-	*DO NOT use Traditional Chinese or any other language unless it is the specified target language.*
+	*IMPORTANT: Example sentences should be written in the SOURCE LANGUAGE, but their TRANSLATIONS must be in the TARGET LANGUAGE.*
+
 ]
 
 #H[Output Format][
@@ -51,9 +49,21 @@
 ]
 
 #H[Output Example 2][
-	When querying the English word "hello" with target language English (en), the output should be:
+	When querying the English word "hello" with target language Japanese (ja), the output should be:
 
 	#RMd("./assets/2.md")
+]
+
+#H[Output Example 3][
+	When querying the Japanese word "ありがとう" with target language English (en), the output should be:
+
+	#RMd("./assets/3.md")
+]
+
+#H[Output Example 4][
+	When querying the French word "bonjour" with target language Simplified Chinese (zh-CN), the output should be:
+
+	#RMd("./assets/4.md")
 ]
 
 #H[Processing Rules][
