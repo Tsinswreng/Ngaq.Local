@@ -53,35 +53,7 @@
 #H[Output Example 2][
 	When querying the English word "hello" with target language English (en), the output should be:
 
-	```md
-	\`\`\`yaml
-	Head: hello
-	Pronunciations:
-	  - TextType: Ipa
-	    Text: həˈləʊ
-	Descrs:
-	  - *__descr1
-	\`\`\`
-
-
-	# __descr1
-	\`\`\`
-	【Exclamation/Noun】Used as a greeting or to begin a telephone conversation.
-
-	A common expression of greeting, used when meeting someone or answering the phone.
-
-	*Usage*:
-	- hello there: a friendly greeting
-	- say hello to: greet someone on behalf of another
-
-	*Examples*:
-	1. Hello, how are you today?
-	2. She said hello to her neighbor with a warm smile.
-
-	*Synonyms*: hi, greetings, hey
-	*Antonyms*: goodbye, farewell
-	\`\`\`
-	```
+	#RMd("./assets/2.md")
 ]
 
 #H[Processing Rules][
