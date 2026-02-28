@@ -23,7 +23,6 @@ using Tsinswreng.CsTools;
 
 //direct to latest
 public partial class LocalTblMgrIniter{
-	public const str MkIdx = "CREATE INDEX"; //不建議加 "IF NOT EXISTS" 以免掩蓋錯誤
 	public ITblMgr Mgr{get;set;}
 	public LocalTblMgrIniter(ITblMgr Mgr){
 		this.Mgr = Mgr;
@@ -96,10 +95,8 @@ public partial class LocalTblMgrIniter{
 	public static ITable CfgIPoKv(ITable o){
 		o.Col(nameof(IPoKv.KType)).MapEnumToInt32<EKvType>();
 		o.Col(nameof(IPoKv.VType)).MapEnumToInt32<EKvType>();
-		o.OuterAdditionalSqls.AddRange([
-$"{MkIdx} {o.Qt("Idx_"+o.DbTblName+"_KStr")} ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(IPoKv.KStr))})"
-,$"{MkIdx} {o.Qt("Idx_"+o.DbTblName+"_KI64")} ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(IPoKv.KI64))})"
-		]);
+		o.AddIndexByCodeCols($"Idx_{o.DbTblName}_KStr", [nameof(IPoKv.KStr)]);
+		o.AddIndexByCodeCols($"Idx_{o.DbTblName}_KI64", [nameof(IPoKv.KI64)]);
 		return o;
 	}
 
@@ -110,12 +107,7 @@ $"{MkIdx} {o.Qt("Idx_"+o.DbTblName+"_KStr")} ON {o.Qt(o.DbTblName)} ({o.Fld(name
 	public static ITable CfgI_WordId<TPo>(ITable Tbl){
 		var o = Tbl;
 		o.Col(nameof(PoWordProp.WordId)).MapType(IdWord.MkTypeMapFn());
-		o.OuterAdditionalSqls.AddRange([
-$"""
-{MkIdx} {o.Qt("Idx_"+o.DbTblName+"_WordId")}
-ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(I_WordId.WordId))})
-"""
-		]);
+		o.AddIndexByCodeCols($"Idx_{o.DbTblName}_WordId", [nameof(I_WordId.WordId)]);
 		return o;
 	}
 
@@ -138,19 +130,17 @@ ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(I_WordId.WordId))})
 			CfgPoBase(o);
 			o.Col(nameof(PoWeightCalculator.Id)).MapType(IdWeightCalculator.MkTypeMapFn());
 			o.Col(nameof(PoWeightCalculator.Type)).MapEnumToStr<EWeightCalculatorType>();
-			o.OuterAdditionalSqls.AddRange([
-$"""
-CREATE UNIQUE INDEX {o.Qt($"Ux_{o.DbTblName}_UniqueName")}
-ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(PoWeightCalculator.UniqueName))})
-WHERE {o.SqlIsNonDel()}
-AND {o.Fld(nameof(PoWeightCalculator.UniqueName))} IS NOT NULL
-AND {o.Fld(nameof(PoWeightCalculator.UniqueName))} <> ''
-""",
-$"""
-CREATE INDEX {o.Qt($"Idx_{o.DbTblName}_{nameof(PoWeightCalculator.Type)}")}
-ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(PoWeightCalculator.Type))})
-"""
-			]);
+			o.AddIndexByCodeCols(
+				$"Ux_{o.DbTblName}_UniqueName"
+				, [nameof(PoWeightCalculator.UniqueName)]
+				, IsUnique: true
+				, WhereAnds: [
+					o.SqlIsNonDel()
+					, $"{o.Fld(nameof(PoWeightCalculator.UniqueName))} IS NOT NULL"
+					, $"{o.Fld(nameof(PoWeightCalculator.UniqueName))} <> ''"
+				]
+			);
+			o.AddIndexByCodeCols($"Idx_{o.DbTblName}_{nameof(PoWeightCalculator.Type)}", [nameof(PoWeightCalculator.Type)]);
 		}
 
 		var Tbl_Wa = Mk<PoWeightArg>("WeightArg");
@@ -160,19 +150,17 @@ ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(PoWeightCalculator.Type))})
 			CfgPoBase(o);
 			o.Col(nameof(PoWeightArg.Id)).MapType(IdWeightArg.MkTypeMapFn());
 			o.Col(nameof(PoWeightArg.Type)).MapEnumToStr<EWeightArgType>();
-			o.OuterAdditionalSqls.AddRange([
-$"""
-CREATE UNIQUE INDEX {o.Qt($"Ux_{o.DbTblName}_UniqueName")}
-ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(PoWeightArg.UniqueName))})
-WHERE {o.SqlIsNonDel()}
-AND {o.Fld(nameof(PoWeightArg.UniqueName))} IS NOT NULL
-AND {o.Fld(nameof(PoWeightArg.UniqueName))} <> ''
-""",
-$"""
-CREATE INDEX {o.Qt($"Idx_{o.DbTblName}_{nameof(PoWeightArg.WeightCalculatorName)}")}
-ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(PoWeightArg.WeightCalculatorName))})
-"""
-			]);
+			o.AddIndexByCodeCols(
+				$"Ux_{o.DbTblName}_UniqueName"
+				, [nameof(PoWeightArg.UniqueName)]
+				, IsUnique: true
+				, WhereAnds: [
+					o.SqlIsNonDel()
+					, $"{o.Fld(nameof(PoWeightArg.UniqueName))} IS NOT NULL"
+					, $"{o.Fld(nameof(PoWeightArg.UniqueName))} <> ''"
+				]
+			);
+			o.AddIndexByCodeCols($"Idx_{o.DbTblName}_{nameof(PoWeightArg.WeightCalculatorName)}", [nameof(PoWeightArg.WeightCalculatorName)]);
 		}
 
 		var Tbl_Sp = Mk<PoStudyPlan>("StudyPlan");
@@ -183,19 +171,17 @@ ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(PoWeightArg.WeightCalculatorName))})
 			o.Col(nameof(PoStudyPlan.Id)).MapType(IdStudyPlan.MkTypeMapFn());
 			o.Col(nameof(PoStudyPlan.WeightCalculatorId)).MapType(IdWeightCalculator.MkTypeMapFn());
 			o.Col(nameof(PoStudyPlan.WeightArgId)).MapType(IdWeightArg.MkTypeMapFn());
-			o.OuterAdditionalSqls.AddRange([
-$"""
-CREATE UNIQUE INDEX {o.Qt($"Ux_{o.DbTblName}_UniqueName")}
-ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(PoStudyPlan.UniqueName))})
-WHERE {o.SqlIsNonDel()}
-AND {o.Fld(nameof(PoStudyPlan.UniqueName))} IS NOT NULL
-AND {o.Fld(nameof(PoStudyPlan.UniqueName))} <> ''
-""",
-$"""
-CREATE INDEX {o.Qt($"Idx_{o.DbTblName}_{nameof(PoStudyPlan.WeightCalculatorId)}")}
-ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(PoStudyPlan.WeightCalculatorId))})
-"""
-			]);
+			o.AddIndexByCodeCols(
+				$"Ux_{o.DbTblName}_UniqueName"
+				, [nameof(PoStudyPlan.UniqueName)]
+				, IsUnique: true
+				, WhereAnds: [
+					o.SqlIsNonDel()
+					, $"{o.Fld(nameof(PoStudyPlan.UniqueName))} IS NOT NULL"
+					, $"{o.Fld(nameof(PoStudyPlan.UniqueName))} <> ''"
+				]
+			);
+			o.AddIndexByCodeCols($"Idx_{o.DbTblName}_{nameof(PoStudyPlan.WeightCalculatorId)}", [nameof(PoStudyPlan.WeightCalculatorId)]);
 		}
 
 		return Mgr;
@@ -211,24 +197,25 @@ ON {o.Qt(o.DbTblName)} ({o.Fld(nameof(PoStudyPlan.WeightCalculatorId))})
 			o.Col(x=>x.Id).MapType(IdKv.MkTypeMapFn());
 			o.Col(x=>x.Owner).MapType(IdUser.MkTypeMapFn());
 
-			o.OuterAdditionalSqls.AddRange([
-$"""
-{MkIdx} {o.Qt($"Idx_{o.DbTblName}_{nameof(PoKv.Owner)}")}
-ON {o.Qt(o.DbTblName)}({o.Fld(x=>x.Owner)})
-"""
-,$"""
-CREATE UNIQUE INDEX {o.Qt($"Ux_{o.DbTblName}_{nameof(PoKv.Owner)}_{nameof(PoKv.KStr)}")}
-ON {o.Qt(o.DbTblName)}({o.Fld(x=>x.Owner)},{o.Fld(x=>x.KStr)})
-WHERE {o.SqlIsNonDel()}
-AND {o.Fld(nameof(PoKv.KType))} = {o.UpperToRaw(EKvType.Str)}
-"""
-,$"""
-CREATE UNIQUE INDEX {o.Qt($"Ux_{o.DbTblName}_{nameof(PoKv.Owner)}_{nameof(PoKv.KI64)}")}
-ON {o.Qt(o.DbTblName)}({o.Fld(x=>x.Owner)},{o.Fld(x=>x.KI64)})
-WHERE {o.SqlIsNonDel()}
-AND {o.Fld(nameof(PoKv.KType))} = {o.UpperToRaw(EKvType.I64)}
-"""
-			]);
+			o.AddIndexByCodeCols($"Idx_{o.DbTblName}_{nameof(PoKv.Owner)}", [nameof(PoKv.Owner)]);
+			o.AddIndexByCodeCols(
+				$"Ux_{o.DbTblName}_{nameof(PoKv.Owner)}_{nameof(PoKv.KStr)}"
+				, [nameof(PoKv.Owner), nameof(PoKv.KStr)]
+				, IsUnique: true
+				, WhereAnds: [
+					o.SqlIsNonDel()
+					, $"{o.Fld(nameof(PoKv.KType))} = {o.UpperToRaw(EKvType.Str)}"
+				]
+			);
+			o.AddIndexByCodeCols(
+				$"Ux_{o.DbTblName}_{nameof(PoKv.Owner)}_{nameof(PoKv.KI64)}"
+				, [nameof(PoKv.Owner), nameof(PoKv.KI64)]
+				, IsUnique: true
+				, WhereAnds: [
+					o.SqlIsNonDel()
+					, $"{o.Fld(nameof(PoKv.KType))} = {o.UpperToRaw(EKvType.I64)}"
+				]
+			);
 		}
 		return Mgr;
 	}
@@ -245,20 +232,32 @@ AND {o.Fld(nameof(PoKv.KType))} = {o.UpperToRaw(EKvType.I64)}
 			// o.InnerAdditionalSqls.AddRange([
 
 			// ]);
-			o.OuterAdditionalSqls.AddRange([
-$"{MkIdx} {o.Qt($"Idx_{o.DbTblName}_Head_Lang")} ON {o.Qt(o.DbTblName)}({o.Fld(x=>x.Head)}, {o.Fld(x=>x.Lang)})"
-,$"{MkIdx} {o.Qt($"Idx_{o.DbTblName}_CreatedAt")} ON {o.Qt(o.DbTblName)}({o.Fld(x=>x.BizCreatedAt)})"
-,$"{MkIdx} {o.Qt($"Idx_{o.DbTblName}_UpdatedAt")} ON {o.Qt(o.DbTblName)}({o.Fld(x=>x.BizUpdatedAt)})"
-,$"{MkIdx} {o.Qt($"Idx_{o.DbTblName}_StoragedAt")} ON {o.Qt(o.DbTblName)}({o.Fld(x=>x.BizUpdatedAt)})"
-,
-$"""
-CREATE UNIQUE INDEX {o.Qt($"Ux_{o.DbTblName}_Owner_Head_Lang")} ON {o.Qt(o.DbTblName)} (
-{o.Fld(x=>x.Owner)}
-,{o.Fld(x=>x.Head)}
-,{o.Fld(x=>x.Lang)}
-) WHERE {o.SqlIsNonDel()}
-"""
-			]);
+			o.IdxMkr.CfgIdx(
+				null
+				, [nameof(PoWord.Head), nameof(PoWord.Lang)]
+				, [nameof(PoWord.BizCreatedAt)]
+				, [nameof(PoWord.BizUpdatedAt)]
+				, [nameof(PoWord.StoredAt)]
+			);
+			o.IdxMkr.CfgIdxExpr(
+				null
+				,x=>new {x.Head, x.Lang}
+				,x=>x.BizCreatedAt
+				,x=>x.BizUpdatedAt
+				,x=>x.StoredAt
+			);
+			
+			
+			o.AddIndexByCodeCols($"Idx_{o.DbTblName}_Head_Lang", [nameof(PoWord.Head), nameof(PoWord.Lang)]);
+			o.AddIndexByCodeCols($"Idx_{o.DbTblName}_CreatedAt", [nameof(PoWord.BizCreatedAt)]);
+			o.AddIndexByCodeCols($"Idx_{o.DbTblName}_UpdatedAt", [nameof(PoWord.BizUpdatedAt)]);
+			o.AddIndexByCodeCols($"Idx_{o.DbTblName}_StoragedAt", [nameof(PoWord.StoredAt)]);
+			o.AddIndexByCodeCols(
+				$"Ux_{o.DbTblName}_Owner_Head_Lang"
+				, [nameof(PoWord.Owner), nameof(PoWord.Head), nameof(PoWord.Lang)]
+				, IsUnique: true
+				, WhereAnds: [o.SqlIsNonDel()]
+			);
 		}
 
 		var Tbl_Prop = Mk<PoWordProp>("WordProp");
