@@ -9,8 +9,7 @@ using Tsinswreng.CsSqlHelper;
 using Tsinswreng.CsTools;
 
 public partial class LocalDb{
-	protected static LocalDb? _Inst = null;
-	public static LocalDb Inst => _Inst??= new LocalDb();
+	public static LocalDb Inst => field??= new LocalDb();
 
 	public ICfgAccessor CfgAccessor{ get; set; } = AppCfg.Inst;
 	public I_GetBaseDir BaseDir = BaseDirMgr.Inst;
