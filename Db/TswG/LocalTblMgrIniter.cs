@@ -100,9 +100,15 @@ public partial class LocalTblMgrIniter{
 		return o;
 	}
 
+	[Obsolete]
 	public static ITable<T> Mk<T>(str DbTblName){
 		return Table.FnMkTbl<T>(CoreDictMapper.Inst)(DbTblName);
 	}
+	
+	public static ITblSetter<T> Mk2<T>(str DbTblName){
+		return Table.FnSetTbl<T>(CoreDictMapper.Inst)(DbTblName);
+	}
+	
 
 	public static ITable CfgI_WordId<TPo>(ITable Tbl){
 		var o = Tbl;
@@ -188,7 +194,8 @@ public partial class LocalTblMgrIniter{
 	}
 
 	public static ITblMgr InitKv(ITblMgr Mgr){
-		var Tbl_Cfg = Mk<PoKv>("Kv");
+		
+		var Tbl_Cfg = Mk2<PoKv>("Kv");
 		Mgr.AddTbl(Tbl_Cfg);
 		{
 			var o = Tbl_Cfg;
@@ -232,14 +239,14 @@ public partial class LocalTblMgrIniter{
 			// o.InnerAdditionalSqls.AddRange([
 
 			// ]);
-			o.IdxMkr.CfgIdx(
+			o.IdxMkr.Idx(
 				null
 				, [nameof(PoWord.Head), nameof(PoWord.Lang)]
 				, [nameof(PoWord.BizCreatedAt)]
 				, [nameof(PoWord.BizUpdatedAt)]
 				, [nameof(PoWord.StoredAt)]
 			);
-			o.IdxMkr.CfgIdxExpr(
+			o.IdxMkr.IdxExpr(
 				null
 				,x=>new {x.Head, x.Lang}
 				,x=>x.BizCreatedAt
