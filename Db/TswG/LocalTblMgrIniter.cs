@@ -55,22 +55,24 @@ public partial class LocalTblMgrIniter{
 
 	protected bool _Inited{get;set;} = false;
 
-	public static nil CfgBizTimeVer(ITable Tbl){
+	public static ITblSetter<T> CfgBizTimeVer<T>(ITblSetter<T> Tbl){
 		var o = Tbl;
 		o.Col(nameof(I_BizTimeVer.BizTimeVer)).MapType(MapTempus());
-		return NIL;
+		return o;
 	}
 
-	public static ITable CfgBizCreateUpdateTime(ITable Tbl){
+	public static ITblSetter<T> CfgBizCreateUpdateTime<T>(ITblSetter<T> Tbl){
 		var o = Tbl;
 		o.Col(nameof(IBizCreateUpdateTime.BizCreatedAt)).MapType(MapTempus());
 		o.Col(nameof(IBizCreateUpdateTime.BizUpdatedAt)).MapType(MapTempusN());
 		return o;
 	}
 
-	public static ITable CfgPoBase(ITable Tbl){
+	public static ITblSetter<T> CfgPoBase<T>(ITblSetter<T> Tbl)
+		where T:IPoBase, new()
+	{
 		var o = Tbl;
-		o.CodeIdName = nameof(I_Id<nil>.Id);
+		o.Tbl.CodeIdName = nameof(I_Id<nil>.Id);
 		o.Col(nameof(I_Id<nil>.Id)).AdditionalSqls(["PRIMARY KEY"]);
 		o.Col(nameof(IPoBase.DbCreatedAt)).MapType(MapTempus());
 		o.Col(nameof(IPoBase.DbUpdatedAt)).MapType(MapTempus());
@@ -78,21 +80,22 @@ public partial class LocalTblMgrIniter{
 
 		// o.SetCol(nameof(IPoBase.CreatedBy)).MapType(IdUser.MkTypeMapFnNullable());
 		// o.SetCol(nameof(IPoBase.LastUpdatedBy)).MapType(IdUser.MkTypeMapFnNullable());
+		var t = o.Tbl;
 
-		o.SoftDelCol = new SoftDelol{
+		o.Tbl.SoftDelCol = new SoftDelol{
 			CodeColName = nameof(IPoBase.DelAt)
 			,FnDelete = (o)=>{
 				return new IdDel().Value;
 			},FnRestore = (o)=>{
 				return null;
-			},FnSqlIsDel = ()=>Tbl.Fld<IPoBase>(x=>x.DelAt)+"=0"
-			,FnSqlIsNonDel = ()=>Tbl.Fld<IPoBase>(x=>x.DelAt)+"<>0"
+			},FnSqlIsDel = ()=>t.Fld<IPoBase>(x=>x.DelAt)+"=0"
+			,FnSqlIsNonDel = ()=>t.Fld<IPoBase>(x=>x.DelAt)+"<>0"
 		};
 
 		return o;
 	}
 
-	public static ITable CfgIPoKv(ITable o){
+	public static ITblSetter<T> CfgIPoKv<T>(ITblSetter<T> o){
 		o.Col(nameof(IPoKv.KType)).MapEnumToInt32<EKvType>();
 		o.Col(nameof(IPoKv.VType)).MapEnumToInt32<EKvType>();
 		o.AddIndexByCodeCols($"Idx_{o.DbTblName}_KStr", [nameof(IPoKv.KStr)]);
@@ -101,11 +104,11 @@ public partial class LocalTblMgrIniter{
 	}
 
 	[Obsolete]
-	public static ITable<T> Mk<T>(str DbTblName){
+	public static ITable<T> MkObslt<T>(str DbTblName){
 		return Table.FnMkTbl<T>(CoreDictMapper.Inst)(DbTblName);
 	}
 	
-	public static ITblSetter<T> Mk2<T>(str DbTblName){
+	public static ITblSetter<T> Mk<T>(str DbTblName){
 		return Table.FnSetTbl<T>(CoreDictMapper.Inst)(DbTblName);
 	}
 	
@@ -129,7 +132,8 @@ public partial class LocalTblMgrIniter{
 	public static ITblMgr InitStudyPlan(ITblMgr Mgr){
 		//TODO
 		return Mgr;
-		var Tbl_Wc = Mk<PoWeightCalculator>("WeightCalculator");
+#if false
+var Tbl_Wc = Mk<PoWeightCalculator>("WeightCalculator");
 		Mgr.AddTbl(Tbl_Wc);
 		{
 			var o = Tbl_Wc;
@@ -191,12 +195,12 @@ public partial class LocalTblMgrIniter{
 		}
 
 		return Mgr;
+#endif
 	}
 
 	public static ITblMgr InitKv(ITblMgr Mgr){
-		
-		var Tbl_Cfg = Mk2<PoKv>("Kv");
-		Mgr.AddTbl(Tbl_Cfg);
+		var Tbl_Cfg = Mk<PoKv>("Kv");
+		Mgr.AddTbl(Tbl_Cfg.Tbl);
 		{
 			var o = Tbl_Cfg;
 			CfgPoBase(o);
@@ -239,14 +243,14 @@ public partial class LocalTblMgrIniter{
 			// o.InnerAdditionalSqls.AddRange([
 
 			// ]);
-			o.IdxMkr.Idx(
+			o.Idx(
 				null
 				, [nameof(PoWord.Head), nameof(PoWord.Lang)]
 				, [nameof(PoWord.BizCreatedAt)]
 				, [nameof(PoWord.BizUpdatedAt)]
 				, [nameof(PoWord.StoredAt)]
 			);
-			o.IdxMkr.IdxExpr(
+			o.IdxExpr(
 				null
 				,x=>new {x.Head, x.Lang}
 				,x=>x.BizCreatedAt
@@ -286,7 +290,6 @@ public partial class LocalTblMgrIniter{
 			CfgPoBase(o);
 			CfgI_WordId<PoWordLearn>(o);
 			CfgBizCreateUpdateTime(o);
-			o.CodeIdName = nameof(PoWordLearn.Id);
 			o.Col(x=>x.Id).MapType(IdWordLearn.MkTypeMapFn());
 			//o.SetCol(nameof(PoWordLearn.LearnResult)).MapEnumTypeInt32<ELearn>();
 			o.Col(x=>x.LearnResult).MapEnumToStr<ELearn>();
