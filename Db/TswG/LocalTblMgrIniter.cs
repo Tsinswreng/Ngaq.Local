@@ -95,11 +95,10 @@ public partial class LocalTblMgrIniter{
 		return o;
 	}
 
-	public static ITblSetter<T> CfgIPoKv<T>(ITblSetter<T> o){
+	public static ITblSetter<T> CfgIPoKv<T>(ITblSetter<T> o) where T : IPoKv {
 		o.Col(nameof(IPoKv.KType)).MapEnumToInt32<EKvType>();
 		o.Col(nameof(IPoKv.VType)).MapEnumToInt32<EKvType>();
-		o.AddIndexByCodeCols($"Idx_{o.DbTblName}_KStr", [nameof(IPoKv.KStr)]);
-		o.AddIndexByCodeCols($"Idx_{o.DbTblName}_KI64", [nameof(IPoKv.KI64)]);
+		o.IdxExpr(null, x=>x.KStr, x=>x.KI64);
 		return o;
 	}
 
@@ -113,10 +112,11 @@ public partial class LocalTblMgrIniter{
 	}
 	
 
-	public static ITable CfgI_WordId<TPo>(ITable Tbl){
-		var o = Tbl;
-		o.Col(nameof(PoWordProp.WordId)).MapType(IdWord.MkTypeMapFn());
-		o.AddIndexByCodeCols($"Idx_{o.DbTblName}_WordId", [nameof(I_WordId.WordId)]);
+	
+
+	public static ITblSetter<T> CfgI_WordId<T>(ITblSetter<T> o) where T : I_WordId {
+		o.Col(nameof(I_WordId.WordId)).MapType(IdWord.MkTypeMapFn());
+		o.IdxExpr(null, x => x.WordId);
 		return o;
 	}
 
@@ -208,25 +208,13 @@ var Tbl_Wc = Mk<PoWeightCalculator>("WeightCalculator");
 			o.Col(x=>x.Id).MapType(IdKv.MkTypeMapFn());
 			o.Col(x=>x.Owner).MapType(IdUser.MkTypeMapFn());
 
-			o.AddIndexByCodeCols($"Idx_{o.DbTblName}_{nameof(PoKv.Owner)}", [nameof(PoKv.Owner)]);
-			o.AddIndexByCodeCols(
-				$"Ux_{o.DbTblName}_{nameof(PoKv.Owner)}_{nameof(PoKv.KStr)}"
-				, [nameof(PoKv.Owner), nameof(PoKv.KStr)]
-				, IsUnique: true
-				, WhereAnds: [
-					o.SqlIsNonDel()
-					, $"{o.Fld(nameof(PoKv.KType))} = {o.UpperToRaw(EKvType.Str)}"
-				]
-			);
-			o.AddIndexByCodeCols(
-				$"Ux_{o.DbTblName}_{nameof(PoKv.Owner)}_{nameof(PoKv.KI64)}"
-				, [nameof(PoKv.Owner), nameof(PoKv.KI64)]
-				, IsUnique: true
-				, WhereAnds: [
-					o.SqlIsNonDel()
-					, $"{o.Fld(nameof(PoKv.KType))} = {o.UpperToRaw(EKvType.I64)}"
-				]
-			);
+			o.IdxExpr(null, x=>x.Owner);
+			
+			var optUnique1 = new OptMkIdx{Unique = true, Where = o.Tbl.SqlIsNonDel() + $" AND {o.Tbl.Fld(nameof(PoKv.KType))} = {o.Tbl.UpperToRaw(EKvType.Str)}"};
+			o.Idx(optUnique1, [nameof(PoKv.Owner), nameof(PoKv.KStr)]);
+			
+			var optUnique2 = new OptMkIdx{Unique = true, Where = o.Tbl.SqlIsNonDel() + $" AND {o.Tbl.Fld(nameof(PoKv.KType))} = {o.Tbl.UpperToRaw(EKvType.I64)}"};
+			o.Idx(optUnique2, [nameof(PoKv.Owner), nameof(PoKv.KI64)]);
 		}
 		return Mgr;
 	}
@@ -243,13 +231,6 @@ var Tbl_Wc = Mk<PoWeightCalculator>("WeightCalculator");
 			// o.InnerAdditionalSqls.AddRange([
 
 			// ]);
-			o.Idx(
-				null
-				, [nameof(PoWord.Head), nameof(PoWord.Lang)]
-				, [nameof(PoWord.BizCreatedAt)]
-				, [nameof(PoWord.BizUpdatedAt)]
-				, [nameof(PoWord.StoredAt)]
-			);
 			o.IdxExpr(
 				null
 				,x=>new {x.Head, x.Lang}
@@ -258,16 +239,10 @@ var Tbl_Wc = Mk<PoWeightCalculator>("WeightCalculator");
 				,x=>x.StoredAt
 			);
 			
-			
-			o.AddIndexByCodeCols($"Idx_{o.DbTblName}_Head_Lang", [nameof(PoWord.Head), nameof(PoWord.Lang)]);
-			o.AddIndexByCodeCols($"Idx_{o.DbTblName}_CreatedAt", [nameof(PoWord.BizCreatedAt)]);
-			o.AddIndexByCodeCols($"Idx_{o.DbTblName}_UpdatedAt", [nameof(PoWord.BizUpdatedAt)]);
-			o.AddIndexByCodeCols($"Idx_{o.DbTblName}_StoragedAt", [nameof(PoWord.StoredAt)]);
-			o.AddIndexByCodeCols(
-				$"Ux_{o.DbTblName}_Owner_Head_Lang"
+			var optUnique = new OptMkIdx{Unique = true, Where = o.Tbl.SqlIsNonDel()};
+			o.Idx(
+				optUnique
 				, [nameof(PoWord.Owner), nameof(PoWord.Head), nameof(PoWord.Lang)]
-				, IsUnique: true
-				, WhereAnds: [o.SqlIsNonDel()]
 			);
 		}
 
@@ -276,7 +251,7 @@ var Tbl_Wc = Mk<PoWeightCalculator>("WeightCalculator");
 		{
 			var o = Tbl_Prop;
 			CfgPoBase(o);
-			CfgI_WordId<PoWordProp>(o);
+			CfgI_WordId(o);
 			CfgIPoKv(o);
 			CfgBizCreateUpdateTime(o);
 			o.Col(x=>x.Id).MapType(IdWordProp.MkTypeMapFn());
@@ -288,7 +263,7 @@ var Tbl_Wc = Mk<PoWeightCalculator>("WeightCalculator");
 		{
 			var o = Tbl_Learn;
 			CfgPoBase(o);
-			CfgI_WordId<PoWordLearn>(o);
+			CfgI_WordId(o);
 			CfgBizCreateUpdateTime(o);
 			o.Col(x=>x.Id).MapType(IdWordLearn.MkTypeMapFn());
 			//o.SetCol(nameof(PoWordLearn.LearnResult)).MapEnumTypeInt32<ELearn>();
