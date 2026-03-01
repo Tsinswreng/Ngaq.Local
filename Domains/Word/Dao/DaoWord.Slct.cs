@@ -85,7 +85,8 @@ var Sql = T.SqlSplicer().Select(x=>x.Id).From().Where1()
 			if(GotDict == null){
 				return null;
 			}
-			var ans = GotDict[T.Memb(x=>x.Id)];
+			
+			var ans = GotDict[T.DbCol(x=>x.Id)];
 			return IdWord.FromByteArr((u8[])ans!);
 		};
 	}
@@ -243,7 +244,7 @@ $"""
 SELECT * FROM {Tbl.Qt(Tbl.DbTblName)}
 WHERE 1=1
 {FilterDel}
-AND {T.Fld(PWordId)} IN ({str.Join(",", numParams)})
+AND {T.QtCol(PWordId)} IN ({str.Join(",", numParams)})
 {Tbl.SqlMkr.ParamLimOfst(out var PLmt, out var POfst)}
 """;
 		var SqlCmd = await Ctx.PrepareToDispose(SqlCmdMkr, Sql, Ct);
@@ -285,7 +286,7 @@ $"""
 SELECT * FROM {Tbl.Qt(Tbl.DbTblName)}
 WHERE 1=1
 {FilterDel}
-AND {T.Fld(PWordId)} IN ({str.Join(",", numParams)})
+AND {T.QtCol(PWordId)} IN ({str.Join(",", numParams)})
 """;
 		var SqlCmd = await Ctx.PrepareToDispose(SqlCmdMkr, Sql, Ct);
 		return async(IdWords ,Ct)=>{
@@ -532,9 +533,9 @@ var Sql =
 $"""
 SELECT {N.Id} FROM {T.DbTblName}
 WHERE 1=1
-AND {T.Fld(x=>x.Head)} LIKE {PPrefix} || '%'
+AND {T.QtCol(x=>x.Head)} LIKE {PPrefix} || '%'
 AND {T.Eq(POwner)}
-ORDER BY {T.Fld(N.Head)} ASC
+ORDER BY {T.QtCol(N.Head)} ASC
 {T.SqlMkr.ParamLimOfst(out var PLmt, out var POfst)}
 """; // AND {T.Fld(NLang)} = {PLang}
 		var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
@@ -567,7 +568,7 @@ var PId = Tbl.Prm(NId);
 
 var Sql =
 $"""
-SELECT {Tbl.Fld(NWordId)} AS {Tbl.Qt(NWordId)} FROM {Tbl.DbTblName}
+SELECT {Tbl.QtCol(NWordId)} AS {Tbl.Qt(NWordId)} FROM {Tbl.DbTblName}
 WHERE 1=1
 AND {Tbl.Eq(PId)}
 """;
@@ -666,17 +667,17 @@ first_ AS (
 	-- 2. 每个单词第一次被 $LearnResult 的时间
 	SELECT
 		WordId,
-		MIN({T.Fld(NBizCreatedAt)}) AS first_ts
+		MIN({T.QtCol(NBizCreatedAt)}) AS first_ts
 	FROM {T.Qt(T.DbTblName)}
-	WHERE {T.Fld(NLearnResult)} = {PLearnResult}
-	AND {T.Fld(NBizCreatedAt)} >= {PTimeStart}          -- 只关心 tFrom 之后
-	GROUP BY {T.Fld(NWordId)}
+	WHERE {T.QtCol(NLearnResult)} = {PLearnResult}
+	AND {T.QtCol(NBizCreatedAt)} >= {PTimeStart}          -- 只关心 tFrom 之后
+	GROUP BY {T.QtCol(NWordId)}
 )
 -- 3. 把单词落到对应区间里计数
 SELECT
 	r.start_ts as {T.Qt(NStartTime)},
 	r.end_ts as {T.Qt(NEndTime)},
-	COUNT(f.{T.Fld(NWordId)}) AS {T.Qt(NNewWords)}
+	COUNT(f.{T.QtCol(NWordId)}) AS {T.Qt(NNewWords)}
 FROM ts_range r
 LEFT JOIN first_ f
 	ON f.first_ts >= r.start_ts

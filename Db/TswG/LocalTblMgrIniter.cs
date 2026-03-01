@@ -88,8 +88,8 @@ public partial class LocalTblMgrIniter{
 				return new IdDel().Value;
 			},FnRestore = (o)=>{
 				return null;
-			},FnSqlIsDel = ()=>t.Fld<IPoBase>(x=>x.DelAt)+"=0"
-			,FnSqlIsNonDel = ()=>t.Fld<IPoBase>(x=>x.DelAt)+"<>0"
+			},FnSqlIsDel = ()=>t.QtCol<IPoBase>(x=>x.DelAt)+"=0"
+			,FnSqlIsNonDel = ()=>t.QtCol<IPoBase>(x=>x.DelAt)+"<>0"
 		};
 
 		return o;
@@ -210,10 +210,10 @@ var Tbl_Wc = Mk<PoWeightCalculator>("WeightCalculator");
 
 			o.IdxExpr(null, x=>x.Owner);
 			
-			var optUnique1 = new OptMkIdx{Unique = true, Where = o.Tbl.SqlIsNonDel() + $" AND {o.Tbl.Fld(nameof(PoKv.KType))} = {o.Tbl.UpperToRaw(EKvType.Str)}"};
+			var optUnique1 = new OptMkIdx{Unique = true, Where = o.Tbl.SqlIsNonDel() + $" AND {o.Tbl.QtCol(nameof(PoKv.KType))} = {o.Tbl.UpperToRaw(EKvType.Str)}"};
 			o.Idx(optUnique1, [nameof(PoKv.Owner), nameof(PoKv.KStr)]);
 			
-			var optUnique2 = new OptMkIdx{Unique = true, Where = o.Tbl.SqlIsNonDel() + $" AND {o.Tbl.Fld(nameof(PoKv.KType))} = {o.Tbl.UpperToRaw(EKvType.I64)}"};
+			var optUnique2 = new OptMkIdx{Unique = true, Where = o.Tbl.SqlIsNonDel() + $" AND {o.Tbl.QtCol(nameof(PoKv.KType))} = {o.Tbl.UpperToRaw(EKvType.I64)}"};
 			o.Idx(optUnique2, [nameof(PoKv.Owner), nameof(PoKv.KI64)]);
 		}
 		return Mgr;

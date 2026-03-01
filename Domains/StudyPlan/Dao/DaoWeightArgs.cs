@@ -41,7 +41,7 @@ public partial class DaoSqlWeightArgs(
 		var T = Tbl;
 		var Sql = $"""
             DELETE FROM {T.Qt(T.DbTblName)}
-            WHERE {T.Fld(nameof(IPoBase.DelAt))} != 0
+            WHERE {T.QtCol(nameof(IPoBase.DelAt))} != 0
             """;
 		var Cmd = await Ctx.PrepareToDispose(SqlCmdMkr, Sql, Ct);
 		return async (Ct) => {
