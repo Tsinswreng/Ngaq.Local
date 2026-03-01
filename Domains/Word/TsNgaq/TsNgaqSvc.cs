@@ -22,7 +22,7 @@ public class TsNgaqSvc(
 		var PageProp = await RepoProp.FnPageAll(Ctx, Ct);
 		var PageLearn = await RepoLearn.FnPageAll(Ctx, Ct);
 		var Fn = async(CT Ct)=>{
-			var SlctAll = PageQry.SlctAll();
+			var SlctAll = PageQry.SlctI64Max();
 			var textWordPage = await PageTextWord(SlctAll, Ct);
 			var propPage = await PageProp(SlctAll, Ct);
 			var learnPage = await PageLearn(SlctAll, Ct);

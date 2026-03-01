@@ -472,7 +472,7 @@ public partial class SvcWord{
 			if(!EWordsPack.LineSepJnWordJsonGZip.Eq(Req.Type)){
 				throw new NotSupportedException();
 			}
-			var PageAll = await FnPage(User, PageQry.SlctAll(), Ct);
+			var PageAll = await FnPage(User, PageQry.SlctI64Max(), Ct);
 			var Jsons = new List<str>();
 			if(PageAll.DataAsyE is not null){
 				await foreach(var JnWord in PageAll.DataAsyE){
