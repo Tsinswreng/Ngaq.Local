@@ -54,6 +54,8 @@ public partial class DaoWord{
 				.AddT(POwner, UserId)
 				.AddManyT(PHead, Head)
 				.AddManyT(PLang, Lang);
+//在這裏給z加個 ExeReader()方法、返回IResultReader對象 不用再傳參數
+//也允許不用z.ExeReader()、直接和以前一樣z.SqlCmd.Args(...)  兼容舊寫法
 				var GotDicts = z.SqlCmd.Args(Args).AsyE1d(Ct).OrEmpty();
 				return GotDicts.Select(x=>{//TODO 當此組 (Head,Lang)查不到數據旹 會返null否
 					var ans = x[T.Memb(x=>x.Id)];
@@ -69,25 +71,19 @@ public partial class DaoWord{
 	public async Task<IAsyncEnumerable<IdWord?>> BatSlctIdByOwnerHeadLangWithDel_New(
 		IDbFnCtx Ctx, IUserCtx User, IEnumerable<Head_Lang> HeadLangs, CT Ct
 	){
+		var Heads = HeadLangs.Select(x=>x.Head);
+		var Lang = HeadLangs.Select(x=>x.Lang);
 		var Sql = T.SqlSplicer().Select(x=>x.Id).From().Where1()
-		.AndEqOne(x=>x.Owner, User.UserId)
-		.AndEqMany<Head_Lang, str>(x=>x.Head, x=>x.Head)
-		.AndEqMany<Head_Lang, str>(x=>x.Lang, x=>x.Lang)
+		.AndEq(x=>x.Owner, y=>y.One(User.UserId))
+		.AndEq(x=>x.Head, y=>y.Many(Heads))
+		.AndEq(x=>x.Lang, y=>y.Many(Lang))
 		;
 
-		await using var batch = SqlCmdMkr.AutoBatch<Head_Lang, IAsyncEnumerable<IdWord?>>(
-			Ctx, Sql,
-			async(z, HeadLangs, Ct)=>{
-				var Args = Sql.BindArgs(HeadLangs);
-				var GotDicts = z.SqlCmd.Args(Args).AsyE1d(Ct).OrEmpty();
-				return GotDicts.Select(x=>{
-					var ans = x[T.Memb(x=>x.Id)];
-					return (IdWord?)IdWord.FromByteArr((u8[])ans!);
-				});
-			}
-		);
-		var R = batch.AllFlat(HeadLangs, Ct);
-		return R;
+		var GotDicts = SqlCmdMkr.RunSql(Ctx, Sql, Ct).AsyE1d(Ct);
+		return GotDicts.Select(x=>{
+			var ans = x[T.Memb(x=>x.Id)];
+			return (IdWord?)IdWord.FromByteArr((u8[])ans!);
+		});
 	}
 
 	[Obsolete(@$"用{nameof(BatSlctIdByOwnerHeadLangWithDel)}")]
