@@ -24,12 +24,9 @@ using IStr_Any = System.Collections.Generic.IDictionary<str, obj?>;
 using Str_Any = System.Collections.Generic.Dictionary<str, obj?>;
 
 
-
-
-
 public partial class DaoWord{
 
-	public async Task<IAsyncEnumerable<IdWord?>> SlctIdByOwnerHeadLangWithDelBatch(
+	public async Task<IAsyncEnumerable<IdWord?>> BatSlctIdByOwnerHeadLangWithDel(
 		IDbFnCtx Ctx, IUserCtx User, IEnumerable<Head_Lang> HeadLangs, CT Ct
 	){
 		var Sql = T.SqlSplicer().Select(x=>x.Id).From().Where1()
@@ -37,9 +34,18 @@ public partial class DaoWord{
 		.AndEq(x=>x.Head, out var PHead)
 		.AndEq(x=>x.Lang, out var PLang)
 		;
+		/* 
+		var Head = HeadLangs.Select(x=>x.Head);
+		var Lang = HeadLangs.Select(x=>x.Lang);
+		var UserId = User.UserId;
+		var Sql = T.SqlSplicer().Select(x=>x.Id).From().Where1()
+		.AndEq(x=>x.Owner, y=>y.One(UserId))
+		.AndEq(x=>x.Head, y=>y.Many(Head))
+		.AndEq(x=>x.Lang, y=>y.Many(Lang))
+		 */
 
-		await using var batch = AutoBatch<Head_Lang, IAsyncEnumerable<IdWord?>>.Mk(
-			Ctx, SqlCmdMkr, Sql,
+		await using var batch = SqlCmdMkr.AutoBatch<Head_Lang, IAsyncEnumerable<IdWord?>>(
+			Ctx, Sql,
 			async(z, HeadLangs, Ct)=>{
 				var Head = HeadLangs.Select(x=>x.Head);
 				var Lang = HeadLangs.Select(x=>x.Lang);
@@ -55,11 +61,36 @@ public partial class DaoWord{
 				});
 			}
 		);
-		var R = batch.AddToEnd(HeadLangs, Ct);
-		return R.Flat();
+		var R = batch.AllFlat(HeadLangs, Ct);
+		return R;
 	}
 
-	[Obsolete(@$"用{nameof(SlctIdByOwnerHeadLangWithDelBatch)}")]
+	/// Demonstrate new style: define sql and arg binding in one chain.
+	public async Task<IAsyncEnumerable<IdWord?>> BatSlctIdByOwnerHeadLangWithDel_New(
+		IDbFnCtx Ctx, IUserCtx User, IEnumerable<Head_Lang> HeadLangs, CT Ct
+	){
+		var Sql = T.SqlSplicer().Select(x=>x.Id).From().Where1()
+		.AndEqOne(x=>x.Owner, User.UserId)
+		.AndEqMany<Head_Lang, str>(x=>x.Head, x=>x.Head)
+		.AndEqMany<Head_Lang, str>(x=>x.Lang, x=>x.Lang)
+		;
+
+		await using var batch = SqlCmdMkr.AutoBatch<Head_Lang, IAsyncEnumerable<IdWord?>>(
+			Ctx, Sql,
+			async(z, HeadLangs, Ct)=>{
+				var Args = Sql.BindArgs(HeadLangs);
+				var GotDicts = z.SqlCmd.Args(Args).AsyE1d(Ct).OrEmpty();
+				return GotDicts.Select(x=>{
+					var ans = x[T.Memb(x=>x.Id)];
+					return (IdWord?)IdWord.FromByteArr((u8[])ans!);
+				});
+			}
+		);
+		var R = batch.AllFlat(HeadLangs, Ct);
+		return R;
+	}
+
+	[Obsolete(@$"用{nameof(BatSlctIdByOwnerHeadLangWithDel)}")]
 	public async Task<Func<
 		IUserCtx,
 		str,//Head
@@ -454,12 +485,7 @@ var Sql = T.SqlSplicer().Select("*").From()
 	}
 
 
-/// <summary>
 /// 頁查 某時後 改˪ʹ 及 新增ʹ 諸詞 之id
-/// </summary>
-/// <param name="Ctx"></param>
-/// <param name="Ct"></param>
-/// <returns></returns>
 	public async Task<Func<
 		IUserCtx
 		,IPageQry
@@ -573,11 +599,10 @@ WHERE 1=1
 AND {Tbl.Eq(PId)}
 """;
 		var SqlCmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
-		Ctx?.AddToDispose(SqlCmd);
 		return async (Id, Ct)=>{
 			var Arg = ArgDict.Mk()
 			.AddRaw(PId, Tbl.UpperToRaw(Id, NId));
-			var RawDicts = await SqlCmd.AttachCtxTxn(Ctx).Args(Arg).All1d(Ct);
+			var RawDicts = await SqlCmd.Args(Arg).All1d(Ct);
 			if(RawDicts.Count == 0){
 				return null;
 			}
@@ -618,7 +643,7 @@ SELECT "Head", "Lang" FROM "Word" WHERE "Head" = '{i}';
 """);
 }
 var Sql = str.Join("\n", sqls);
-var Cmd = await Ctx.PrepareToDispose(SqlCmdMkr, Sql, Ct);
+var Cmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
 		return async(Ct)=>{
 			var sw = Stopwatch.StartNew();
 			var R2d = await Cmd.All2d(Ct);
@@ -687,7 +712,7 @@ ORDER BY r.start_ts --DESC
 {T.SqlMkr.ParamLimOfst(out var Lmt, out var Ofst)}
 ;
 """;
-var Cmd = await Ctx.PrepareToDispose(SqlCmdMkr, Sql, Ct);
+var Cmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
 		return async(Req, Ct)=>{
 			var Arg = ArgDict.Mk(T)
 			.AddT(PTimeStart, Req.TimeStart)

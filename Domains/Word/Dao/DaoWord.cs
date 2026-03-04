@@ -29,16 +29,11 @@ public partial class DaoWord(
 	protected ITable<PoWordProp> TP => TblMgr.GetTbl<PoWordProp>();
 	protected ITable<PoWordLearn> TL => TblMgr.GetTbl<PoWordLearn>();
 
-	/// <summary>
 	/// <delete>
 	/// /// 予Svc層調用、不在Dao層調用。
 	/// Dao層之操作更低級、直ᵈ操作數據庫、寡聚合、不作額外校驗
 	/// 如FnInsertPoKvs中、內ʹ函數ʹ參數ˋ只受IEnumerable<PoWordProp>、未必潙同一詞ᐪ。且初加旹亦蜮調此 洏初加旹不璫更新UpdatedAt
 	/// </delete>
-	/// </summary>
-	/// <param name="Ctx"></param>
-	/// <param name="Ct"></param>
-	/// <returns></returns>
 	public async Task<Func<
 		IdWord
 		,CT
@@ -51,14 +46,7 @@ public partial class DaoWord(
 		};
 	}
 
-
-	/// <summary>
 	/// 須確保數據同步後 刪。各節點ʹ數據ˋ未同步前只能軟刪
-	/// </summary>
-	/// <param name="Ctx"></param>
-	/// <param name="Tbl"></param>
-	/// <param name="Ct"></param>
-	/// <returns></returns>
 	async Task<Func<
 		CT, Task<nil>
 	>> FnHardDelSoftDeletedInWordDb(IDbFnCtx Ctx, ITable Tbl, CT Ct){
@@ -73,9 +61,6 @@ WHERE {T.QtCol(nameof(IPoBase.DelAt))} <> 0
 			return NIL;
 		};
 	}
-
-
-
 
 	async Task<IList<TPo>> _PageToList<TPo>(
 		IPage<IStr_Any> Page
@@ -97,7 +82,6 @@ WHERE {T.QtCol(nameof(IPoBase.DelAt))} <> 0
 // .LeftJoin(TW, (l,r)=>l.Id)
 // ;
 // 	}
-
 
 
 	public obj? IdUpperToRaw<TPo>(obj UpperId){
