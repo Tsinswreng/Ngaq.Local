@@ -12,6 +12,7 @@ public partial class AppRepo<
 >
 	:SqlRepo<TEntity, TId>
 	,IRepo<TEntity, TId>
+	,IAppRepo<TEntity, TId>
 	where TEntity : class, new()
 {
 	public AppRepo(ITblMgr TblMgr, ISqlCmdMkr SqlCmdMkr, IDictMapperShallow DictMapper) : base(TblMgr, SqlCmdMkr, DictMapper) {
