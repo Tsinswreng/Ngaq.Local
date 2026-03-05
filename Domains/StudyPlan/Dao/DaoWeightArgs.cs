@@ -15,26 +15,22 @@ using Str_Any = System.Collections.Generic.Dictionary<string, object?>;
 public partial class DaoSqlWeightArgs(
 	ISqlCmdMkr SqlCmdMkr,
 	ITblMgr TblMgr,
-	IAppRepo<PoWeightArg, IdWeightArg> RepoWeightArg
+	IRepo<PoWeightArg, IdWeightArg> RepoWeightArg
 ) {
-	/// <summary>
 	/// 更新权重参数后触发业务更新时间
-	/// </summary>
 	public async Task<Func<
 		IdWeightArg,
 		CT,
 		Task<nil>
 	>> FnTriggerOnRootAfterUpd(IDbFnCtx Ctx, CT Ct) {
-		var UpdPoWeightArg = await RepoWeightArg.FnUpd_BizUpdatedAt(Ctx, Ct);
+		var UpdPoWeightArg = await RepoWeightArg.AsAppRepo().FnUpd_BizUpdatedAt(Ctx, Ct);
 		return async (WeightArgId, Ct) => {
 			await UpdPoWeightArg(WeightArgId, Ct);
 			return NIL;
 		};
 	}
 
-	/// <summary>
 	/// 硬删除已软删除的权重参数记录
-	/// </summary>
 	async Task<Func<
 		CT, Task<nil>
 	>> FnHardDelSoftDeletedInWeightArgsDb(IDbFnCtx Ctx, ITable Tbl, CT Ct) {
@@ -50,9 +46,7 @@ public partial class DaoSqlWeightArgs(
 		};
 	}
 
-	/// <summary>
 	/// 分页数据转换为实体列表
-	/// </summary>
 	async Task<IList<TPo>> _PageToList<TPo>(
 		IPage<IStr_Any> Page,
 		ITable Tbl
@@ -65,9 +59,7 @@ public partial class DaoSqlWeightArgs(
 		).AsOrToList();
 	}
 
-	/// <summary>
 	/// 将上层ID转换为原始数据库值
-	/// </summary>
 	public object? IdUpperToRaw<TPo>(object UpperId) {
 		var T = TblMgr.GetTbl<TPo>();
 		return T.UpperToRaw(UpperId, nameof(I_Id<nil>.Id));

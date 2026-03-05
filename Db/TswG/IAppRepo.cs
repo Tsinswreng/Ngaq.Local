@@ -11,12 +11,7 @@ public partial interface IAppRepo<
 {
 
 
-	/// <summary>
 	/// 實體ˇ改後 手動調此方法
-	/// </summary>
-	/// <param name="Ctx"></param>
-	/// <param name="Ct"></param>
-	/// <returns></returns>
 	public Task<Func<
 		TId
 		,CT

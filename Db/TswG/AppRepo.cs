@@ -11,7 +11,7 @@ public partial class AppRepo<
 	, TId
 >
 	:SqlRepo<TEntity, TId>
-	,IAppRepo<TEntity, TId>
+	,IRepo<TEntity, TId>
 	where TEntity : class, new()
 {
 	public AppRepo(ITblMgr TblMgr, ISqlCmdMkr SqlCmdMkr, IDictMapperShallow DictMapper) : base(TblMgr, SqlCmdMkr, DictMapper) {
@@ -35,6 +35,20 @@ public partial class AppRepo<
 			return NIL;
 		};
 	}
+}
 
-
+public static class ExtnIRepo{
+	extension<TPo, TId>(IRepo<TPo, TId> z)
+		where TPo : class, new()
+	{
+		public IAppRepo<TPo, TId> AsAppRepo(){
+			if(z is not IAppRepo<TPo, TId> R){
+				throw new InvalidCastException("Registered Repo is not IAppRepo;"
+				+" You should Register <IRepo, AppRepo>"
+				);
+			}
+			return R;
+		}
+	}
+	
 }

@@ -18,7 +18,7 @@ using Z = DaoKv;
 public partial class DaoKv(
 	ISqlCmdMkr SqlCmdMkr
 	,ITblMgr TblMgr
-	,IAppRepo<PoKv, IdKv> RepoKv
+	, IRepo<PoKv, IdKv> RepoKv
 ){
 
 	ISqlCmdMkr SqlCmdMkr = SqlCmdMkr;

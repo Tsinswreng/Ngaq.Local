@@ -22,17 +22,17 @@ public class SvcStudyPlan{
 
 	ISvcKv SvcKv;
 	TxnWrapper TxnWrapper;
-	IAppRepo<PoStudyPlan, IdStudyPlan> RepoStudyPlan;
-	IAppRepo<PoWeightArg, IdWeightArg> RepoWeightArg;
-	IAppRepo<PoWeightCalculator, IdWeightCalculator> RepoWeightCalculator;
-	IAppRepo<PoPreFilter, IdPreFilter> RepoPreFilter;
+	IRepo<PoStudyPlan, IdStudyPlan> RepoStudyPlan;
+	IRepo<PoWeightArg, IdWeightArg> RepoWeightArg;
+	IRepo<PoWeightCalculator, IdWeightCalculator> RepoWeightCalculator;
+	IRepo<PoPreFilter, IdPreFilter> RepoPreFilter;
 	public SvcStudyPlan(
 		ISvcKv SvcKv
 		,TxnWrapper TxnWrapper
-		,IAppRepo<PoStudyPlan, IdStudyPlan> RepoStudyPlan
-		,IAppRepo<PoWeightArg, IdWeightArg> RepoWeightArg
-		,IAppRepo<PoWeightCalculator, IdWeightCalculator> RepoWeightCalculator
-		,IAppRepo<PoPreFilter, IdPreFilter> RepoPreFilter
+		, IRepo<PoStudyPlan, IdStudyPlan> RepoStudyPlan
+		, IRepo<PoWeightArg, IdWeightArg> RepoWeightArg
+		, IRepo<PoWeightCalculator, IdWeightCalculator> RepoWeightCalculator
+		, IRepo<PoPreFilter, IdPreFilter> RepoPreFilter
 	){
 		this.SvcKv = SvcKv;
 		this.TxnWrapper = TxnWrapper;

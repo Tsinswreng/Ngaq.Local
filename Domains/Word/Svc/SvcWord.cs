@@ -45,9 +45,9 @@ public partial class SvcWord(
 	,ITxnRunner TxnRunner
 	,DaoWord DaoWord
 	,IMkrTxn TxnGetter
-	,IAppRepo<PoWord, IdWord> RepoPoWord
-	,IAppRepo<PoWordProp, IdWordProp> RepoProp
-	,IAppRepo<PoWordLearn, IdWordLearn> RepoLearn
+	, IRepo<PoWord, IdWord> RepoPoWord
+	, IRepo<PoWordProp, IdWordProp> RepoProp
+	, IRepo<PoWordLearn, IdWordLearn> RepoLearn
 	,TxnWrapper TxnWrapper
 	,IJsonSerializer JsonSerializer
 	,ILogger Logger

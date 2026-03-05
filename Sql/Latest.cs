@@ -22,7 +22,7 @@ public partial class DbIniter{
 	public ITxnRunner TxnRunner;
 	public IMkrTxn TxnGetter;
 	public ITblMgr TblMgr;
-	public IRepo<SchemaHistory, i64> RepoSchemaHistory;
+	public Tsinswreng.CsSqlHelper.IRepo<SchemaHistory, i64> RepoSchemaHistory;
 	public ISvcKv SvcKv;
 	public IMigrationMgr MigrationMgr;
 	public DbIniter(
@@ -30,7 +30,7 @@ public partial class DbIniter{
 		,ITxnRunner TxnRunner
 		,IMkrTxn TxnGetter
 		,ITblMgr TblMgr
-		,IAppRepo<SchemaHistory, i64> RepoSchemaHistory
+		, IRepo<SchemaHistory, i64> RepoSchemaHistory
 		,ISvcKv SvcKv
 		,IMigrationMgr MigrationMgr
 	){

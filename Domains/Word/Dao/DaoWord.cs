@@ -19,9 +19,9 @@ using Tsinswreng.CsCore;
 public partial class DaoWord(
 	ISqlCmdMkr SqlCmdMkr
 	,ITblMgr TblMgr
-	,IAppRepo<PoWord, IdWord> RepoWord
-	,IAppRepo<PoWordProp, IdWordProp> RepoKv
-	,IAppRepo<PoWordLearn, IdWordLearn> RepoLearn
+	, IRepo<PoWord, IdWord> RepoWord
+	, IRepo<PoWordProp, IdWordProp> RepoKv
+	, IRepo<PoWordLearn, IdWordLearn> RepoLearn
 ){
 
 	protected ITable<PoWord> T => TblMgr.GetTbl<PoWord>();
@@ -39,7 +39,7 @@ public partial class DaoWord(
 		,CT
 		,Task<nil>
 	>> FnTriggerOnRootAfterUpd(IDbFnCtx Ctx, CT Ct){
-		var UpdPoWord = await RepoWord.FnUpd_BizUpdatedAt(Ctx,Ct);
+		var UpdPoWord = await RepoWord.AsAppRepo().FnUpd_BizUpdatedAt(Ctx,Ct);
 		return async(WordId, Ct)=>{
 			await UpdPoWord(WordId, Ct);
 			return NIL;

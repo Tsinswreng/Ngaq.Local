@@ -36,9 +36,9 @@ public class TsNgaqDependency{
 	public ISqlCmdMkr SqlCmdMkr{get;set;}
 	public ITblMgr TblMgr{get;set;}
 	public TsNgaqSchema TsNgaqSchema{get;set;}
-	public IAppRepo<E.textWord, i64> RepoTextWord{get;set;}
-	public IAppRepo<E.property, i64> RepoProp{get;set;}
-	public IAppRepo<E.learn, i64> RepoLearn{get;set;}
+	public IRepo<E.textWord, i64> RepoTextWord{get;set;}
+	public IRepo<E.property, i64> RepoProp{get;set;}
+	public IRepo<E.learn, i64> RepoLearn{get;set;}
 
 	public TsNgaqSvc TsNgaqSvc{get;set;}
 }

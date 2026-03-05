@@ -10,9 +10,9 @@ using E = Ngaq.Local.TsNgaq.TsNgaqEntities;
 public class TsNgaqSvc(
 	ISqlCmdMkr SqlCmdMkr
 	,ITblMgr TblMgr
-	,IAppRepo<E.textWord, i64> RepoTextWord
-	,IAppRepo<E.property, i64> RepoProp
-	,IAppRepo<E.learn, i64> RepoLearn
+	, IRepo<E.textWord, i64> RepoTextWord
+	, IRepo<E.property, i64> RepoProp
+	, IRepo<E.learn, i64> RepoLearn
 ){
 
 	public async Task<Func<

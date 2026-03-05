@@ -14,12 +14,12 @@ using Z = SvcKv;
 public partial class SvcKv(
 	DaoKv DaoKv
 	,TxnWrapper TxnWrapper
-	,IAppRepo<PoKv, IdKv> RepoKv
+	, IRepo<PoKv, IdKv> RepoKv
 )
 	:ISvcKv
 {
 	DaoKv DaoKv = DaoKv;
-	IAppRepo<PoKv, IdKv> RepoCfg = RepoKv;
+	IRepo<PoKv, IdKv> RepoCfg = RepoKv;
 	//public const str PathSep = "/";
 
 	public Task<PoKv?> GetByOwnerEtKey(IdUser Owner, obj Key, CT Ct){

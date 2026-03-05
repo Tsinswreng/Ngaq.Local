@@ -73,27 +73,27 @@ return z;
 	)where TEntity:class, new()
 	{
 		//z.AddScoped<IRepo<TEntity, TId>, EfRepo<TEntity, TId>>();
-		z.AddScoped<IAppRepo<TEntity, TId>, AppRepo<TEntity, TId>>();
+		z.AddScoped<IRepo<TEntity, TId>, AppRepo<TEntity, TId>>();
 		return z;
 	}
 
 //倉儲
 	static IServiceCollection SetupRepos(this IServiceCollection z){
 z.AddScoped<
-	IAppRepo<SchemaHistory, i64>
-	,AppRepo<SchemaHistory, i64>
+	IRepo<SchemaHistory, i64>
+	, AppRepo<SchemaHistory, i64>
 >();
 z.AddScoped<
-	IAppRepo<PoWord, IdWord>
-	,AppRepo<PoWord, IdWord>
+	IRepo<PoWord, IdWord>
+	, AppRepo<PoWord, IdWord>
 >();
 z.AddScoped<
-	IAppRepo<PoWordProp, IdWordProp>
-	,AppRepo<PoWordProp, IdWordProp>
+	IRepo<PoWordProp, IdWordProp>
+	, AppRepo<PoWordProp, IdWordProp>
 >();
 z.AddScoped<
-	IAppRepo<PoWordLearn, IdWordLearn>
-	,AppRepo<PoWordLearn, IdWordLearn>
+	IRepo<PoWordLearn, IdWordLearn>
+	, AppRepo<PoWordLearn, IdWordLearn>
 >();
 z.AddRepoScoped<PoKv, IdKv>();
 //z.AddScoped<IRunInTxn, AdoTxnRunner>();

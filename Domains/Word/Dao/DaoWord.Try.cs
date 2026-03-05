@@ -33,16 +33,7 @@ public partial class DaoWord{
 		.AndEq(x=>x.Head, out var PHead)
 		.AndEq(x=>x.Lang, out var PLang)
 		;
-		/* 
-		var Head = HeadLangs.Select(x=>x.Head);
-		var Lang = HeadLangs.Select(x=>x.Lang);
-		var UserId = User.UserId;
-		var Sql = T.SqlSplicer().Select(x=>x.Id).From().Where1()
-		.AndEq(x=>x.Owner, y=>y.One(UserId))
-		.AndEq(x=>x.Head, y=>y.Many(Head))
-		.AndEq(x=>x.Lang, y=>y.Many(Lang))
-		 */
-
+		
 		await using var batch = SqlCmdMkr.AutoBatch<Head_Lang, IAsyncEnumerable<IdWord?>>(
 			Ctx, Sql,
 			async(z, HeadLangs, Ct)=>{
@@ -53,8 +44,6 @@ public partial class DaoWord{
 				.AddT(POwner, UserId)
 				.AddManyT(PHead, Head)
 				.AddManyT(PLang, Lang);
-//在這裏給z加個 ExeReader()方法、返回IResultReader對象 不用再傳參數
-//也允許不用z.ExeReader()、直接和以前一樣z.SqlCmd.Args(...)  兼容舊寫法
 				var GotDicts = z.SqlCmd.Args(Args).AsyE1d(Ct).OrEmpty();
 				return GotDicts.Select(x=>{//TODO 當此組 (Head,Lang)查不到數據旹 會返null否
 					if(x is null){
@@ -75,6 +64,7 @@ public partial class DaoWord{
 	){
 		var Heads = HeadLangs.Select(x=>x.Head);
 		var Lang = HeadLangs.Select(x=>x.Lang);
+		//原來的寫法
 		var Sql = T.SqlSplicer().Select(x=>x.Id).From().Where1()
 		.AndEq(x=>x.Owner, y=>y.One(User.UserId))
 		.AndEq(x=>x.Head, y=>y.Many(Heads))
