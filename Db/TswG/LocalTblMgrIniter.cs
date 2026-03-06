@@ -1,6 +1,7 @@
 namespace Ngaq.Local.Db.TswG;
 
 using Ngaq.Core.Infra;
+using Ngaq.Core.Infra.IF;
 using Ngaq.Core.Model.Po.Kv;
 using Ngaq.Core.Model.Po.Learn_;
 using Ngaq.Core.Shared.Base.Models.Po;

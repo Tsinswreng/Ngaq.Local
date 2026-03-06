@@ -9,7 +9,7 @@ using Ngaq.Core.Shared.Kv.Svc;
 using Ngaq.Core.Frontend.User;
 using Ngaq.Core.Shared.User.Models.Po.Device;
 using Microsoft.Extensions.DependencyInjection;
-
+using Ngaq.Core.Infra.IF;
 
 public static class ExtnIServiceProvider{
 	public static T GetRSvc<T>(this IServiceProvider z)

@@ -2,6 +2,7 @@ namespace Ngaq.Local.Frontend.User.Svc;
 
 using Ngaq.Core.Frontend.Kv;
 using Ngaq.Core.Frontend.User.Svc;
+using Ngaq.Core.Infra.IF;
 using Ngaq.Core.Shared.Kv.Models;
 using Ngaq.Core.Shared.Kv.Svc;
 using Ngaq.Core.Shared.User.Models.Po.User;
