@@ -1,7 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Ngaq.Core.Model.Po.Kv;
 using Ngaq.Core.Model.Po.Learn_;
-using Ngaq.Core.Model.Po.Word;
 
 //using Microsoft.CodeAnalysis.Text;
 using Ngaq.Core.Word.Svc;

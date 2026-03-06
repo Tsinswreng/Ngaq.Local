@@ -5,7 +5,6 @@ using Ngaq.Core.Shared.Word.Models.Learn_;
 using Ngaq.Core.Shared.Word.Models.Po.Kv;
 using Ngaq.Core.Shared.Word.Models.Po.Learn;
 using Ngaq.Core.Shared.Word.Models.Po.Word;
-using Ngaq.Core.Model.Po.Word;
 using E = Ngaq.Local.TsNgaq.TsNgaqEntities;
 using Ngaq.Core.Shared.Base.Models.Po;
 

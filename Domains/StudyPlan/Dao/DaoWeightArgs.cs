@@ -1,6 +1,5 @@
 namespace Ngaq.Local.Domains.StudyPlan.Dao;
 
-using Ngaq.Core.Model.Po;
 using Ngaq.Core.Shared.Base.Models.Po;
 using Ngaq.Core.Shared.StudyPlan.Models.Po.WeightArg;
 using Ngaq.Core.Shared.StudyPlan.Models.Po.WeightCalculator;

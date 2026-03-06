@@ -7,10 +7,12 @@
 - OldWord.Sync(NeoWord): 同步。依 BizUpdatedAt 潙據 添ʃ缺 改ʃ有變
 - OldWord.Upd(NeoWord) 把 OldWord 改珹 NeoWord。
 #endif
+
 namespace Ngaq.Local.Domains.Word.Svc;
+
+using Ngaq.Core.Infra.IF;
 using Ngaq.Core.Model.Po.Kv;
 using Ngaq.Core.Model.Po.Learn_;
-using Ngaq.Core.Model.Po.Word;
 
 using Ngaq.Core.Infra.Errors;
 using Tsinswreng.CsTools;

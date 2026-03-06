@@ -1,5 +1,6 @@
 namespace Ngaq.Local.Domains.Word.Svc;
-using Ngaq.Core.Model.Po.Word;
+
+using Ngaq.Core.Infra.IF;
 using Ngaq.Core.Infra.Errors;
 using Tsinswreng.CsPage;
 using Ngaq.Core.Infra;
@@ -23,6 +24,7 @@ using Ngaq.Local.Domains.Word.Dao;
 using Ngaq.Core.Shared.Word;
 using Tsinswreng.CsCore;
 using Tsinswreng.CsErr;
+using Ngaq.Core.Shared.Word.Models.Po.Word;
 
 public partial class SvcWord{
 

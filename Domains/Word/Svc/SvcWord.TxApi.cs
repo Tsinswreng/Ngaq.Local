@@ -1,5 +1,5 @@
 namespace Ngaq.Local.Domains.Word.Svc;
-using Ngaq.Core.Model.Po.Word;
+
 using Ngaq.Core.Tools.Io;
 using Ngaq.Local.Db;
 using Ngaq.Core.Model.Word.Req;
@@ -15,6 +15,7 @@ using Ngaq.Core.Word.Svc;
 using Ngaq.Core.Shared.Word.Models.Dto;
 using Ngaq.Core.Tools;
 using Tsinswreng.CsSqlHelper;
+using Ngaq.Core.Shared.Word.Models.Po.Word;
 
 public partial class SvcWord{
 #region API

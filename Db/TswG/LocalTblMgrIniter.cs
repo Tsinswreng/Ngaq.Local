@@ -1,9 +1,8 @@
 namespace Ngaq.Local.Db.TswG;
+
 using Ngaq.Core.Infra;
-using Ngaq.Core.Model.Po;
 using Ngaq.Core.Model.Po.Kv;
 using Ngaq.Core.Model.Po.Learn_;
-using Ngaq.Core.Model.Po.Word;
 using Ngaq.Core.Shared.Base.Models.Po;
 using Ngaq.Core.Shared.Kv.Models;
 using Ngaq.Core.Shared.StudyPlan.Models.Po.StudyPlan;

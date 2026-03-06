@@ -1,5 +1,5 @@
 namespace Ngaq.Local.Word.Dao;
-using Ngaq.Core.Model.Po.Word;
+
 using Tsinswreng.CsTools;
 using Ngaq.Local.Db.TswG;
 using Ngaq.Core.Shared.Word.Models.Po.Kv;
