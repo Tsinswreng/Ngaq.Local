@@ -114,10 +114,7 @@ public partial class SvcWord{
 	}
 
 
-	/// <summary>
 	/// 蔿 生詞表文本ᙆ待加之諸詞分類 按是否既存于庫中
-	/// </summary>
-	/// <returns></returns>
 	public async Task<Func<
 		IUserCtx
 		,IEnumerable<IJnWord>
@@ -460,12 +457,7 @@ public partial class SvcWord{
 		};
 	}
 
-	/// <summary>
 	/// 蔿臨時 速ᵈ上線
-	/// </summary>
-	/// <param name="Ctx"></param>
-	/// <param name="Ct"></param>
-	/// <returns></returns>
 	public async Task<Func<
 		IUserCtx, ReqPackWords, CT, Task<DtoCompressedWords>
 	>> FnZipAllWordsJsonNoStream(IDbFnCtx Ctx, CT Ct){

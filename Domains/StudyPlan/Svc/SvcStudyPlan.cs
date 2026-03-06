@@ -20,7 +20,6 @@ namespace Ngaq.Local.Domains.StudyPlan.Svc;
 
 
 public class SvcStudyPlan{
-
 	ISvcKv SvcKv;
 	TxnWrapper TxnWrapper;
 	IRepo<PoStudyPlan, IdStudyPlan> RepoStudyPlan;

@@ -57,45 +57,6 @@ var Sql = T.SqlSplicer().Select(x=>x.Id).From().Where1()
 		};
 	}
 
-
-// 	public async Task<Func<
-// 		IEnumerable<IdUser>,
-// 		IEnumerable<str>,//Head
-// 		IEnumerable<str>,//Lang
-// 		CT
-// 		,Task<IList<IdWord?>>
-// 	>>
-// 	FnSlctListIdByOwnerHeadLang(IDbFnCtx Ctx,CT Ct){
-// 		var T = TblMgr.GetTbl<PoWord>(); var N = new PoWord.N();
-// 		var POwner = T.Prm(N.Owner);var PHead = T.Prm(N.Head); var PLang = T.Prm(N.Lang);
-// var fnSql = (u64 i)=>{
-// return $"""
-// SELECT {T.Fld(N.Id)} AS {T.Qt(N.Id)}
-// FROM {T.Qt(T.DbTblName)}
-// WHERE 1=1
-// AND {T.SqlIsNonDel()}
-// AND {T.Eq(POwner.Name, POwner[i])}
-// AND {T.Eq(PHead.Name, PHead[i])}
-// AND {T.Eq(PLang.Name, PLang[i])}
-// """;
-// };
-// 		var SqlCmd = await Ctx.PrepareToDispose(SqlCmdMkr, Sql, Ct);
-// 		return async (User,Head,Lang,Ct)=>{
-// 			var UserId = User.UserId;
-// 			var Args = ArgDict.Mk(T)
-// 			.AddT(POwner, UserId)
-// 			.AddT(PHead, Head)
-// 			.AddT(PLang, Lang);
-// 			var GotDict = await SqlCmd.Args(Args).IterAsyE(Ct).FirstOrDefaultAsync(Ct);
-// 			if(GotDict == null){
-// 				return null;
-// 			}
-// 			var ans = GotDict[N.Id];
-// 			return IdWord.FromByteArr((u8[])ans!);
-// 		};
-// 	}
-
-
 	public async Task<Func<
 		IdWord
 		,CT
