@@ -11,6 +11,7 @@ using Ngaq.Core.Shared.StudyPlan.Models.Po.WeightArg;
 using Ngaq.Core.Shared.StudyPlan.Models.Po.WeightCalculator;
 using Ngaq.Core.Shared.User.Models.Po;
 using Ngaq.Core.Shared.User.Models.Po.User;
+using Ngaq.Core.Shared.Word.Models;
 using Ngaq.Core.Shared.Word.Models.Learn_;
 using Ngaq.Core.Shared.Word.Models.Po.Kv;
 using Ngaq.Core.Shared.Word.Models.Po.Learn;
@@ -269,6 +270,28 @@ var Tbl_Wc = Mk<PoWeightCalculator>("WeightCalculator");
 			//o.SetCol(nameof(PoWordLearn.LearnResult)).MapEnumTypeInt32<ELearn>();
 			o.Col(x=>x.LearnResult).MapEnumToStr<ELearn>();
 		}
+
+		Mgr.AddAgg(
+			AggReg<JnWord, PoWord, IdWord>.Mk(
+				Tbl_Word.Tbl
+				,x=>x.Id
+				,(root, agg)=>new JnWord(
+					root
+					,agg.GetMany<PoWordProp, IdWord>(root.Id)
+					,agg.GetMany<PoWordLearn, IdWord>(root.Id)
+				)
+			)
+			.AddOneToMany(
+				Tbl_Prop.Tbl
+				,nameof(I_WordId.WordId)
+				,x=>x.WordId
+			)
+			.AddOneToMany(
+				Tbl_Learn.Tbl
+				,nameof(I_WordId.WordId)
+				,x=>x.WordId
+			)
+		);
 		return Mgr;
 	}
 

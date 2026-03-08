@@ -87,8 +87,13 @@ public class SvcStudyPlan{
 	){
 		return await TxnWrapper.Wrap(FnSetCurStudyPlanId, User, StudyPlanId, Ct);
 	}
+	
+	
+	
+	
 
-	public async Task<Func<
+	#if false
+public async Task<Func<
 		IUserCtx, IdStudyPlan
 		,CT, Task<BoStudyPlan?>
 	>> FnGetStudyPlanById(IDbFnCtx Ctx, CT Ct){
@@ -136,4 +141,5 @@ public class SvcStudyPlan{
 		};
 	}
 
+	#endif
 }
