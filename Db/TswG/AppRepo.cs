@@ -36,6 +36,18 @@ public partial class AppRepo<
 			return NIL;
 		};
 	}
+	
+	[Impl]
+	public async Task<nil> BatUpd_BizUpdatedAt(
+		IDbFnCtx Ctx, IAsyncEnumerable<TId> Ids, CT Ct
+	){
+		var Now = Tempus.Now();
+		var CodeDicts = Ids.Select(x=>new Dictionary<str, obj?>(){
+			[nameof(IBizCreateUpdateTime.BizUpdatedAt)] = Now
+		});
+		await BatUpdByCodeDict(Ctx, Ids, CodeDicts, Ct);
+		return NIL;
+	}
 }
 
 public static class ExtnIRepo{

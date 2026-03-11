@@ -221,6 +221,7 @@ var Tbl_Wc = Mk<PoWeightCalculator>("WeightCalculator");
 	}
 	public static ITblMgr InitWord(ITblMgr Mgr){
 		var Tbl_Word = Mk<PoWord>("Word");
+		ExtnTblMgr.AddTbl(Mgr, Tbl_Word);
 		Mgr.AddTbl(Tbl_Word);
 		{
 			var o = Tbl_Word;

@@ -10,87 +10,42 @@ using Tsinswreng.CsSqlHelper;
 
 public partial class DaoWord{
 
-
-	public async Task<Func<
-		IEnumerable<IJnWord>
-		,CT
-		,Task<nil>
-	>> FnInsertJnWords(
+	public async Task<nil> BatInsertJnWord(
 		IDbFnCtx Ctx
-		,CT ct
-	) {
-		var InsertPoWords = await RepoWord.FnInsertMany(Ctx, ct);
-		var InsertPoKvs = await RepoKv.FnInsertMany(Ctx, ct);
-		var InsertPoLearns = await RepoLearn.FnInsertMany(Ctx, ct);
-
-		return async(JnWords, Ct)=>{
-			u64 BatchSize = 0xfff;
-			await using var PoWords = new BatchCollector<PoWord, nil>(async(list, ct)=>{
-				await InsertPoWords(list,ct);
-				return NIL;
-			}, BatchSize);
-			await using var PoKvs = new BatchCollector<PoWordProp, nil>(async(e, ct)=>{
-				await InsertPoKvs(e, ct);
-				return NIL;
-			}, BatchSize);
-			await using var PoLearns = new BatchCollector<PoWordLearn, nil>(async(e, ct)=>{
-				await InsertPoLearns(e, ct);
-				return NIL;
-			}, BatchSize);
-			foreach (var JWord in JnWords) {
-				JWord.EnsureForeignId();
-				await PoWords.Add(JWord.Word, Ct);
-				foreach (var Prop in JWord.Props) {
-					await PoKvs.Add(Prop, Ct);
-				}
-				foreach (var Learn in JWord.Learns) {
-					await PoLearns.Add(Learn, Ct);
-				}
-			}
-			await PoWords.End(Ct);
-			await PoKvs.End(Ct);
-			await PoLearns.End(Ct);
-			return NIL;
-		};
-	}
-
-	public async Task<Func<
-		IdWord? //斯批PoWordProp 屬于哪個詞
-		,IEnumerable<PoWordProp>
-		,CT
-		,Task<nil>
-	>> FnInsertPoKvs(
-		IDbFnCtx Ctx
+		,IAsyncEnumerable<IJnWord> Words
 		,CT Ct
 	){
-		var UpdUpd = await FnTriggerOnRootAfterUpd(Ctx,Ct);
-		var InsertMany = await RepoKv.FnInsertMany(Ctx, Ct);
-		return async(WordId,PoKvs,Ct)=>{
-			await InsertMany(PoKvs, Ct);
-			if(WordId is not null){
-				await UpdUpd(WordId.Value, Ct);
-			}
-			return NIL;
-		};
+		var W = Words;
+		await RepoWord.BatInsert(Ctx, W.Select(x=>x.Word), Ct);
+		await RepoProp.BatInsert(Ctx, W.Select(x=>x.Props).Flat(), Ct);
+		await RepoLearn.BatInsert(Ctx, W.Select(x=>x.Learns).Flat(), Ct);
+		return NIL;
 	}
-
-	public async Task<Func<
-		IdWord?
-		,IEnumerable<PoWordLearn>
-		,CT
-		,Task<nil>
-	>> FnInsertPoLearns(
+	
+	
+	public async Task<nil> BatInsertIdToProps(
 		IDbFnCtx Ctx
+		,IAsyncEnumerable<IdWord?> WordId
+		,IAsyncEnumerable<IAsyncEnumerable<PoWordProp>> Props
 		,CT Ct
 	){
-		var UpdUpd = await FnTriggerOnRootAfterUpd(Ctx, Ct);
-		var InsertMany = await RepoLearn.FnInsertMany(Ctx, Ct);
-		return async(WordId, PoLearns, Ct)=>{
-			await InsertMany(PoLearns, Ct);
-			if(WordId is not null){
-				await UpdUpd(WordId.Value, Ct);
-			}
-			return NIL;
-		};
+		var nonNullWordIds = WordId.Where(x=>x is not null).Select(x=>x.Value);
+		await BatAltWordAfterUpd(Ctx, nonNullWordIds, Ct);
+		await RepoProp.BatInsert(Ctx, Props.Flat(), Ct);
+		return NIL;
 	}
+
+	public async Task<nil> BatInsertIdToLearns(
+		IDbFnCtx Ctx
+		,IAsyncEnumerable<IdWord?> WordId
+		,IAsyncEnumerable<IAsyncEnumerable<PoWordLearn>> Learns
+		,CT Ct
+	){
+		var nonNullWordIds = WordId.Where(x=>x is not null).Select(x=>x.Value);
+		await BatAltWordAfterUpd(Ctx, nonNullWordIds, Ct);
+		await RepoLearn.BatInsert(Ctx, Learns.Flat(), Ct);
+		return NIL;
+	}
+
+	
 }

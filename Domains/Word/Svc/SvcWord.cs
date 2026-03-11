@@ -47,9 +47,9 @@ public partial class SvcWord(
 	,ITxnRunner TxnRunner
 	,DaoWord DaoWord
 	,IMkrTxn TxnGetter
-	, IRepo<PoWord, IdWord> RepoPoWord
-	, IRepo<PoWordProp, IdWordProp> RepoProp
-	, IRepo<PoWordLearn, IdWordLearn> RepoLearn
+	,IRepo<PoWord, IdWord> RepoPoWord
+	,IRepo<PoWordProp, IdWordProp> RepoProp
+	,IRepo<PoWordLearn, IdWordLearn> RepoLearn
 	,TxnWrapper TxnWrapper
 	,IJsonSerializer JsonSerializer
 	,ILogger Logger
@@ -127,10 +127,10 @@ public partial class SvcWord(
 					return x;
 				}).ToList();
 				DiffedWord.Learns = DiffedWord.Learns.Select(x=>{
-					x.WordId = UpdatedWord.WordInDb.Id_();
+					x.WordId = UpdatedWord.WordInDb.Id;
 					return x;
 				}).ToList();
-				var WordId = DiffedWord.Id_();
+				var WordId = DiffedWord.Id;
 				await NeoProps.AddRange(DiffedWord.Props, null, Ct);
 				await NeoLearns.AddRange(DiffedWord.Learns, null, Ct);
 				await UpdUpd(WordId, Ct);
@@ -237,17 +237,17 @@ public partial class SvcWord(
 
 			//按新ʹProps 決 添加記錄
 			foreach(var OneNonExisting in DtoAddWords.NeoWords){
-				var NeoPoLearns = MkPoLearnList(OneNonExisting.Props, OneNonExisting.Id_());
+				var NeoPoLearns = MkPoLearnList(OneNonExisting.Props, OneNonExisting.Id);
 				await NeoLearns.AddRange(NeoPoLearns, null, Ct);
 			}
 			foreach(var UpdatedWord in DtoAddWords.UpdatedWords){
 				if(UpdatedWord.DiffedWord == null){
 					continue;
 				}
-				var NeoPoLearns = MkPoLearnList(UpdatedWord.DiffedWord.Props, UpdatedWord.WordInDb.Id_());
+				var NeoPoLearns = MkPoLearnList(UpdatedWord.DiffedWord.Props, UpdatedWord.WordInDb.Id);
 				if(NeoPoLearns.Count > 0){
 					await NeoLearns.AddRange(NeoPoLearns, null, Ct);
-					await UpdUpd(UpdatedWord.WordInDb.Id_(), Ct);
+					await UpdUpd(UpdatedWord.WordInDb.Id, Ct);
 				};
 			}
 			await MergeWordsByDto(UserCtx, DtoAddWords, Ct);
@@ -429,11 +429,8 @@ public partial class SvcWord(
 		};
 	}
 
-/// <summary>
 /// IIter<str>: 每次返一行 JnWord Json。文件ʹ json格式潙按換行符分隔之 獨立ₐ JnWord json、非JnWord列表
 /// 胡不用 JnWord[]? 緣用列表則其元素有「,」間隔、不易流式讀
-/// </summary>
-/// <returns></returns>
 	public async Task<Func<
 		IUserCtx
 		,IAsyncEnumerable<str>
@@ -463,13 +460,13 @@ public partial class SvcWord(
 		return R;
 	}
 
-	/// <summary>
+
 	/// 以 IdWord 潙基準 改(詞頭, 語言)
 	/// 返(詞頭,語言)對應之id
 	/// 庫中無新改ʹ(詞頭,語言)則返源ʹ詞ʹid
 	/// 若有新改ʹ(詞頭,語言) 即把源詞合併入目標詞後 返舊詞ʹid
 	/// 傳入ʹIdWordˋ在庫中尋不見旹返null
-	/// </summary>
+
 	/// <exception cref="FatalLogicErr"></exception>
 	[Obsolete("會直ᵈ改 標識、多端同步旹恐致謬")]
 	public async Task<Func<
@@ -517,12 +514,12 @@ public partial class SvcWord(
 	}
 
 
-	/// <summary>
+
 	/// 以 IdWord 潙基準 改(詞頭, 語言)
 	/// 返ʹid 對應 新(詞頭,語言)
 	/// 軟刪舊詞 建新詞、保證 原有ʹ Id->(Head, Lang)猶對應
 	/// 傳入ʹIdWordˋ在庫中尋不見旹返null
-	/// </summary>
+
 	/// <exception cref="FatalLogicErr"></exception>
 	public async Task<Func<
 		IUserCtx

@@ -28,47 +28,62 @@ using Ngaq.Core.Shared.Word.Models.Po.Word;
 
 public partial class SvcWord{
 
-	public async Task<Func<
-		IUserCtx
-		,IEnumerable<IJnWord>
-		,CT
-		,Task<DuplicationGroup<IJnWord>>
-	>> GroupByExisingWithDelBatch(
+	#if false
+	public async Task<DuplicationGroup<JnWord>> GroupByExisingWithDel(
 		IDbFnCtx Ctx
+		,UserCtx UserCtx
+		,IAsyncEnumerable<JnWord> JnWords
 		,CT Ct
 	){
-		var SeekIdByHeadEtLang = await DaoWord.FnSlctIdByOwnerHeadLangWithDel(Ctx, Ct);
-		var SeekJnWordById = await DaoWord.FnSlctJnWordByIdWithDel(Ctx, Ct);
-		return async(UserCtx, JnWords, Ct)=>{
-			var NonExistingList = new List<IJnWord>();
-			var ExiDupliPairs = new List<Existing_Duplication<IJnWord>>();
-			foreach(var (i,JnWord) in JnWords.Index()){
-				var IdInDb = await SeekIdByHeadEtLang(
-					UserCtx
-					,JnWord.Word.Head
-					,JnWord.Word.Lang
-					,Ct
-				);
-				if(IdInDb == null){
+		// var SeekIdByHeadEtLang = await DaoWord.FnSlctIdByOwnerHeadLangWithDel(Ctx, Ct);
+		// var SeekJnWordById = await DaoWord.FnSlctJnWordByIdWithDel(Ctx, Ct);
+
+		var NonExistingList = new List<IJnWord>();
+		var ExiDupliPairs = new List<Existing_Duplication<IJnWord>>();
+		
+		var GotIdWords = await DaoWord.BatSlctIdByOwnerHeadLangWithDel(
+			Ctx, UserCtx
+			,JnWords.Select(x=>new Head_Lang(x.Head, x.Lang))
+			,Ct
+		);
+		
+		var batch = new BatchCollector<(JnWord, IdWord?), nil>(async(JnWord_GotId_s, Ct)=>{
+			foreach(var (JnWord, IdInDb) in JnWord_GotId_s){
+				if(IdInDb is null){
 					NonExistingList.Add(JnWord);
-				}else{
-					var JnWordInDb = await SeekJnWordById(IdInDb.Value, Ct);
-					if(JnWordInDb == null){
-						throw new FatalLogicErr("BoWordInDb == null");
-					}
-					var ExiDupliPair = new Existing_Duplication<IJnWord>(
-						Existing: JnWordInDb
-						,Duplication: JnWord
-					);
-					ExiDupliPairs.Add(ExiDupliPair);
 				}
 			}
-			var R = new DuplicationGroup<IJnWord>();
-			R.Existing_Duplications = ExiDupliPairs;
-			R.NonExistings = NonExistingList;
-			return R;
-		};
+			return NIL;
+		});
+		
+		//TODO
+		foreach(var (i,JnWord) in JnWords.Index()){
+			var IdInDb = await SeekIdByHeadEtLang(
+				UserCtx
+				,JnWord.Word.Head
+				,JnWord.Word.Lang
+				,Ct
+			);
+			if(IdInDb == null){
+				NonExistingList.Add(JnWord);
+			}else{
+				var JnWordInDb = await SeekJnWordById(IdInDb.Value, Ct);
+				if(JnWordInDb == null){
+					throw new FatalLogicErr("BoWordInDb == null");
+				}
+				var ExiDupliPair = new Existing_Duplication<IJnWord>(
+					Existing: JnWordInDb
+					,Duplication: JnWord
+				);
+				ExiDupliPairs.Add(ExiDupliPair);
+			}
+		}
+		var R = new DuplicationGroup<IJnWord>();
+		R.Existing_Duplications = ExiDupliPairs;
+		R.NonExistings = NonExistingList;
+		return R;
 	}
+	#endif
 
 
 	public async Task<Func<
@@ -261,7 +276,9 @@ public partial class SvcWord{
 			,Ct
 		);
 	}
+	
 
+	[Obsolete]
 	public async Task<Func<
 		IUserCtx
 		,IdWord

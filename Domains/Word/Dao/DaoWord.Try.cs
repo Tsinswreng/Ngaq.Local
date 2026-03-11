@@ -26,7 +26,7 @@ using Str_Any = System.Collections.Generic.Dictionary<str, obj?>;
 public partial class DaoWord{
 
 	public async Task<IAsyncEnumerable<IdWord?>> BatSlctIdByOwnerHeadLangWithDel(
-		IDbFnCtx Ctx, IUserCtx User, IEnumerable<Head_Lang> HeadLangs, CT Ct
+		IDbFnCtx Ctx, IUserCtx User, IAsyncEnumerable<Head_Lang> HeadLangs, CT Ct
 	){
 		var Sql = T.SqlSplicer().Select(x=>x.Id).From().Where1()
 		.AndEq(x=>x.Owner, out var POwner)
