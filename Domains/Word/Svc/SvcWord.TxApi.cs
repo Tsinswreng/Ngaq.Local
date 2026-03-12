@@ -14,7 +14,7 @@ using Ngaq.Core.Shared.Word.Models;
 using Ngaq.Core.Word.Svc;
 using Ngaq.Core.Shared.Word.Models.Dto;
 using Ngaq.Core.Tools;
-using Tsinswreng.CsSqlHelper;
+using Tsinswreng.CsSql;
 using Ngaq.Core.Shared.Word.Models.Po.Word;
 
 public partial class SvcWord{

@@ -2,7 +2,7 @@ using System.Text;
 using Ngaq.Core.Shared.StudyPlan.Models.PreFilter;
 using Ngaq.Core.Tools;
 using Tsinswreng.CsCore;
-using Tsinswreng.CsSqlHelper;
+using Tsinswreng.CsSql;
 using Tsinswreng.CsTools;
 
 namespace Ngaq.Local.Domains.Word.Dao.PreFilter;

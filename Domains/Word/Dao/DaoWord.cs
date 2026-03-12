@@ -2,7 +2,7 @@ namespace Ngaq.Local.Word.Dao;
 
 using Ngaq.Core.Model.Po.Kv;
 using Ngaq.Core.Model.Po.Learn_;
-using Tsinswreng.CsSqlHelper;
+using Tsinswreng.CsSql;
 using Str_Any = System.Collections.Generic.Dictionary<str, obj?>;
 using IStr_Any = System.Collections.Generic.IDictionary<str, obj?>;
 using Tsinswreng.CsPage;

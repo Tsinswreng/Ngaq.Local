@@ -8,7 +8,7 @@ using Ngaq.Core.Sys.Models;
 using Ngaq.Local.Db.TswG;
 using Ngaq.Local.Domains.Kv.Dao;
 using Tsinswreng.CsCore;
-using Tsinswreng.CsSqlHelper;
+using Tsinswreng.CsSql;
 
 using Z = SvcKv;
 public partial class SvcKv(

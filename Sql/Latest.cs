@@ -1,6 +1,6 @@
 namespace Ngaq.Local.Sql;
 
-using Tsinswreng.CsSqlHelper;
+using Tsinswreng.CsSql;
 using Ngaq.Local.Db.TswG;
 using Ngaq.Core.Shared.User.Models.Po.Device;
 using Ngaq.Core.Shared.Kv.Models;
@@ -23,7 +23,7 @@ public partial class DbIniter{
 	public ITxnRunner TxnRunner;
 	public IMkrTxn TxnGetter;
 	public ITblMgr TblMgr;
-	public Tsinswreng.CsSqlHelper.IRepo<SchemaHistory, i64> RepoSchemaHistory;
+	public Tsinswreng.CsSql.IRepo<SchemaHistory, i64> RepoSchemaHistory;
 	public ISvcKv SvcKv;
 	public IMigrationMgr MigrationMgr;
 	public DbIniter(

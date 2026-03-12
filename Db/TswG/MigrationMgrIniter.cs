@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Ngaq.Local.Db.TswG.Migrations;
-using Tsinswreng.CsSqlHelper;
+using Tsinswreng.CsSql;
 
 namespace Ngaq.Local.Db.TswG;
 

@@ -4,7 +4,7 @@ namespace Ngaq.Local.TsNgaq;
 
 using Ngaq.Local.Db.TswG;
 using Tsinswreng.CsPage;
-using Tsinswreng.CsSqlHelper;
+using Tsinswreng.CsSql;
 using E = Ngaq.Local.TsNgaq.TsNgaqEntities;
 
 public class TsNgaqSvc(

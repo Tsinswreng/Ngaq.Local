@@ -5,7 +5,7 @@ using Ngaq.Core.Shared.Word.Models.Po.Kv;
 using Ngaq.Core.Shared.Word.Models.Po.Learn;
 using Ngaq.Core.Shared.Word.Models.Po.Word;
 using Ngaq.Local.Db.TswG;
-using Tsinswreng.CsSqlHelper;
+using Tsinswreng.CsSql;
 using Tsinswreng.CsTools;
 
 namespace Ngaq.Local.Word.Dao;

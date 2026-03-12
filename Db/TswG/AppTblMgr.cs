@@ -1,5 +1,5 @@
 namespace Ngaq.Local.Db.TswG;
-using Tsinswreng.CsSqlHelper.Sqlite;
+using Tsinswreng.CsSql.Sqlite;
 
 public partial class LocalTblMgr:SqliteTblMgr{
 	public static LocalTblMgr Inst => field??= new LocalTblMgr();

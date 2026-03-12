@@ -9,7 +9,7 @@ using Ngaq.Core.Shared.StudyPlan.Models.Po.WeightCalculator;
 using Ngaq.Local.Db.TswG;
 using Tsinswreng.CsCore;
 using Tsinswreng.CsPage;
-using Tsinswreng.CsSqlHelper;
+using Tsinswreng.CsSql;
 using Tsinswreng.CsTools;
 using IStr_Any = System.Collections.Generic.IDictionary<string, object?>;
 using Str_Any = System.Collections.Generic.Dictionary<string, object?>;

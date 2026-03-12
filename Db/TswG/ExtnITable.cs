@@ -1,5 +1,5 @@
 namespace Ngaq.Local.Db.TswG;
-using Tsinswreng.CsSqlHelper;
+using Tsinswreng.CsSql;
 
 public static class ExtnITable{
 	public static str SqlIsNonDel(

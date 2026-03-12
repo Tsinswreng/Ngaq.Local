@@ -19,7 +19,7 @@ using Ngaq.Core.Tools;
 using System.IO.Compression;
 using System.Text;
 using System.Collections;
-using Tsinswreng.CsSqlHelper;
+using Tsinswreng.CsSql;
 using Ngaq.Local.Domains.Word.Dao;
 using Ngaq.Core.Shared.Word;
 using Tsinswreng.CsCore;

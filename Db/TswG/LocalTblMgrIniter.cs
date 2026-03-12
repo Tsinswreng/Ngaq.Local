@@ -19,7 +19,7 @@ using Ngaq.Core.Shared.Word.Models.Po.Word;
 using Ngaq.Core.Sys.Models;
 using Ngaq.Core.Word.Models.Po.Word;
 using Tsinswreng.CsCore;
-using Tsinswreng.CsSqlHelper;
+using Tsinswreng.CsSql;
 using Tsinswreng.CsTools;
 
 //direct to latest

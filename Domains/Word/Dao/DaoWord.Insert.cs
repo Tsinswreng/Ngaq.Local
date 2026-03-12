@@ -6,7 +6,7 @@ using Ngaq.Core.Shared.Word.Models.Po.Kv;
 using Ngaq.Core.Shared.Word.Models;
 using Ngaq.Core.Shared.Word.Models.Po.Word;
 using Ngaq.Core.Shared.Word.Models.Po.Learn;
-using Tsinswreng.CsSqlHelper;
+using Tsinswreng.CsSql;
 
 public partial class DaoWord{
 

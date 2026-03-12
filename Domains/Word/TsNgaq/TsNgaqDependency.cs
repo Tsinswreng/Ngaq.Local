@@ -3,8 +3,8 @@ using System.Data;
 using Microsoft.Data.Sqlite;
 using Ngaq.Local.Db.TswG;
 using Tsinswreng.CsDictMapper;
-using Tsinswreng.CsSqlHelper;
-using Tsinswreng.CsSqlHelper.Sqlite;
+using Tsinswreng.CsSql;
+using Tsinswreng.CsSql.Sqlite;
 using E = Ngaq.Local.TsNgaq.TsNgaqEntities;
 
 public class TsNgaqDependency{

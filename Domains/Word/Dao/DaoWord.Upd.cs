@@ -1,6 +1,6 @@
 namespace Ngaq.Local.Word.Dao;
 
-using Tsinswreng.CsSqlHelper;
+using Tsinswreng.CsSql;
 using Ngaq.Local.Db.TswG;
 using Ngaq.Core.Shared.User.UserCtx;
 using Ngaq.Core.Shared.Word.Models.Po.Word;

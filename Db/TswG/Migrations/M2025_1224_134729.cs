@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Ngaq.Core.Infra;
-using Tsinswreng.CsSqlHelper;
+using Tsinswreng.CsSql;
 
 namespace Ngaq.Local.Db.TswG.Migrations;
 using Self = M2025_1224_134729;

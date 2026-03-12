@@ -5,7 +5,7 @@ using Microsoft.Data.Sqlite;
 using Ngaq.Core.Infra.Cfg;
 using Ngaq.Core.Infra.Url;
 using Tsinswreng.CsCfg;
-using Tsinswreng.CsSqlHelper;
+using Tsinswreng.CsSql;
 using Tsinswreng.CsTools;
 
 public partial class LocalDb{

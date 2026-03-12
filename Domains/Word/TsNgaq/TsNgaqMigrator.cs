@@ -3,7 +3,7 @@ using Ngaq.Core.Word.Svc;
 using Ngaq.Local.Db;
 using Ngaq.Local.Db.TswG;
 using Ngaq.Local.Word.Dao;
-using Tsinswreng.CsSqlHelper;
+using Tsinswreng.CsSql;
 
 namespace Ngaq.Local.TsNgaq;
 using E = Ngaq.Local.TsNgaq.TsNgaqEntities;

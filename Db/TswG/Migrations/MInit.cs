@@ -1,7 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Ngaq.Core.Infra;
-using Tsinswreng.CsSqlHelper;
-using Tsinswreng.CsSqlHelper.Sqlite;
+using Tsinswreng.CsSql;
+using Tsinswreng.CsSql.Sqlite;
 
 namespace Ngaq.Local.Db.TswG.Migrations;
 

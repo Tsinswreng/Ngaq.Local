@@ -1,7 +1,7 @@
 #if false
 using System.Linq.Expressions;
 using Ngaq.Core.Shared.Word.Models.Po.Word;
-using Tsinswreng.CsSqlHelper;
+using Tsinswreng.CsSql;
 
 namespace Ngaq.Local.Domains.Word.Dao.SqlMkr;
 

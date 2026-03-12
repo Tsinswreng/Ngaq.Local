@@ -4,12 +4,12 @@ using Ngaq.Core.Model.Po.Learn_;
 
 //using Microsoft.CodeAnalysis.Text;
 using Ngaq.Core.Word.Svc;
-using Tsinswreng.CsSqlHelper;
+using Tsinswreng.CsSql;
 using Ngaq.Local.Db.TswG;
 using Ngaq.Local.Sql;
 using Ngaq.Core.Infra;
 using Ngaq.Local.ImplFrontend;
-using Tsinswreng.CsSqlHelper.Sqlite;
+using Tsinswreng.CsSql.Sqlite;
 using Tsinswreng.CsDictMapper;
 using Ngaq.Local.Word.Dao;
 using Ngaq.Core.Shared.Word.Models.Po.Kv;

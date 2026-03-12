@@ -1,6 +1,6 @@
 namespace Ngaq.Local.Db.TswG;
 
-using Tsinswreng.CsSqlHelper;
+using Tsinswreng.CsSql;
 using Tsinswreng.CsDictMapper;
 using Ngaq.Core.Infra;
 using Tsinswreng.CsCore;

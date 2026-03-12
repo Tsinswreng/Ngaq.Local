@@ -10,7 +10,7 @@ using Ngaq.Local.Db.TswG;
 using Tsinswreng.CsCfg;
 using Tsinswreng.CsCore;
 using Tsinswreng.CsPage;
-using Tsinswreng.CsSqlHelper;
+using Tsinswreng.CsSql;
 using Tsinswreng.CsTools;
 
 
