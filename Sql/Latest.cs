@@ -130,7 +130,7 @@ public partial class DbIniter{
 
 	public async Task<nil> Init(CT Ct) {
 		var Ctx = new DbFnCtx{};
-		Ctx.Txn = await TxnGetter.MkTxn(Ctx, Ct);
+		Ctx.Txn = await TxnGetter.MkEtBindTxn(Ctx, Ct);
 		var Init = await FnInit(Ctx, Ct);
 		await TxnRunner.RunTxn(Ctx.Txn, Init, Ct);
 		await InitKv(Ct);

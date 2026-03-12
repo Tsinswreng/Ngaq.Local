@@ -51,7 +51,7 @@ public partial class SvcWord{
 		,CT Ct
 	) {
 		var Ctx = new DbFnCtx{};
-		Ctx.Txn = await TxnGetter.MkTxn(Ctx, Ct);
+		Ctx.Txn = await TxnGetter.MkEtBindTxn(Ctx, Ct);
 		var AddOrUpdateWords = await FnMergeWordsFromTxt(Ctx, Ct);
 		await TxnRunner.RunTxn(Ctx.Txn, async(Ct)=>{
 			var BoWords = await SvcParseWordList.ParseWordsFromFilePath(Path_Encode);
@@ -69,7 +69,7 @@ public partial class SvcWord{
 		,CT Ct
 	) {
 		var Ctx = new DbFnCtx{};
-		Ctx.Txn = await TxnGetter.MkTxn(Ctx, Ct);
+		Ctx.Txn = await TxnGetter.MkEtBindTxn(Ctx, Ct);
 		var AddOrUpdateWords = await FnMergeWordsFromTxt(Ctx, Ct);
 		await TxnRunner.RunTxn(Ctx.Txn, async(Ct)=>{
 			var BoWords = await SvcParseWordList.ParseWordsFromText(Text,Ct);
@@ -78,6 +78,7 @@ public partial class SvcWord{
 		},Ct);
 		return NIL;
 	}
+	
 
 
 	[Impl]
@@ -106,6 +107,14 @@ public partial class SvcWord{
 	){
 		return await TxnWrapper.Wrap(FnAddWordId_PoLearnss, UserCtx, WordId_PoLearnss, Ct);
 	}
+	
+	public async Task<nil> TryTxn(IAsyncEnumerable<IJnWord> Words, CT Ct){
+		await SqlCmdMkr.RunInTxn(Ct, async(Ctx)=>
+			DaoWord.BatInsertJnWord(Ctx,Words, Ct)
+		);
+		return NIL;
+	}
+
 
 	[Impl]
 	public async Task<nil> AddWordId_LearnRecordss(
@@ -114,7 +123,7 @@ public partial class SvcWord{
 		,CT Ct
 	){
 		var Ctx = new DbFnCtx{};
-		Ctx.Txn = await TxnGetter.MkTxn(Ctx, Ct);
+		Ctx.Txn = await TxnGetter.MkEtBindTxn(Ctx, Ct);
 		var AddWordId_PoLearnss = await FnAddWordId_PoLearnss(Ctx, Ct);
 		return await TxnRunner.RunTxn(Ctx.Txn, async(Ct)=>{
 			var WordId_PoLearns = WordId_LearnRecordss.Select(WordId_LearnRecords=>{

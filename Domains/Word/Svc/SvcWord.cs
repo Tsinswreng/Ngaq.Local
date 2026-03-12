@@ -45,6 +45,7 @@ using Tsinswreng.CsErr;
 public partial class SvcWord(
 	ISvcParseWordList SvcParseWordList
 	,ITxnRunner TxnRunner
+	,ISqlCmdMkr SqlCmdMkr
 	,DaoWord DaoWord
 	,IMkrTxn TxnGetter
 	,IRepo<PoWord, IdWord> RepoPoWord
