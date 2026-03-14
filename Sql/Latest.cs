@@ -12,12 +12,10 @@ using Ngaq.Core.Infra.IF;
 
 
 
-/// <summary>
 /// 客戶端程序啓動旹初始化數據庫
 /// 未建庫則建庫、庫ʹ版本落後則珩遷移
 /// note: 建庫前勿用預編譯sql
 /// TODO 使通用化
-/// </summary>
 public partial class DbIniter{
 	public ISqlCmdMkr SqlCmdMkr;
 	public ITxnRunner TxnRunner;
@@ -49,9 +47,8 @@ public partial class DbIniter{
 		this.SqlMkSchema = TblMgr.SqlMkSchema();
 	}
 
-	/// <summary>
+
 	/// 未建庫旹一步到位建庫ʃ用ʹSql
-	/// </summary>
 	public str SqlMkSchema{get;set;} ="";
 	public long CreatedAt{get;set;} = 1749888405026;
 
@@ -68,9 +65,8 @@ public partial class DbIniter{
 		return Fn;
 	}
 
-	/// <summary>
+
 	/// 未建庫旹一步到位建庫ʃ用ʹSql
-	/// </summary>
 	/// <param name="DbFnCtx"></param>
 	/// <param name="Ct"></param>
 	/// <returns></returns>

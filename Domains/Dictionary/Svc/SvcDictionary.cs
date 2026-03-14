@@ -23,47 +23,39 @@ using IKv = System.Collections.Generic.IDictionary<string, object?>;
 
 #region DTOs
 
-/// <summary>
 /// DTO for LLM API request body
-/// </summary>
 public class DtoLlmApiReq{
 	public string? Model{get;set;}
 	public List<DtoLlmMessage>? Messages{get;set;}
 }
 
-/// <summary>
 /// DTO for LLM message
-/// </summary>
 public class DtoLlmMessage{
 	public string? Role{get;set;}
 	public string? Content{get;set;}
 }
 
-/// <summary>
 /// DTO for LLM API call parameters
-/// </summary>
 public class DtoLlmCallParam{
 	public string? ApiUrl{get;set;}
 	public string? ApiKey{get;set;}
 	public string? Model{get;set;}
-	/// <summary>
+
 	/// 用戶提示詞
-	/// </summary>
+
 	public string? UserPrompt{get;set;}
 }
 
-/// <summary>
 /// DTO for LLM API response
-/// </summary>
 public class DtoLlmApiResp{
-	/// <summary>
+
 	/// Raw JSON response text (for debugging)
-	/// </summary>
+
 	public string? RawResponse{get;set;}
 
-	/// <summary>
+
 	/// Extracted content from choices[0].message.content
-	/// </summary>
+
 	public string? Content{get;set;}
 }
 
@@ -198,9 +190,9 @@ public class SvcDictionary:ISvcDictionary{
 	}
 
 
-	/// <summary>
+
 	/// 调用 LLM API 流式输出
-	/// </summary>
+
 	private async Task<IRespLlmDict> CallLlmApiStream(
 		IReqLlmDictEvt evt,
 		DtoLlmCallParam param,
