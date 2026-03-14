@@ -7,6 +7,7 @@ using Ngaq.Core.Model.Po.Learn_;
 using Ngaq.Core.Shared.Base.Models.Po;
 using Ngaq.Core.Shared.Kv.Models;
 using Ngaq.Core.Shared.StudyPlan.Models;
+using Ngaq.Core.Shared.StudyPlan.Models.Po.PreFilter;
 using Ngaq.Core.Shared.StudyPlan.Models.Po.StudyPlan;
 using Ngaq.Core.Shared.StudyPlan.Models.Po.WeightArg;
 using Ngaq.Core.Shared.StudyPlan.Models.Po.WeightCalculator;
@@ -18,6 +19,7 @@ using Ngaq.Core.Shared.Word.Models.Po.Kv;
 using Ngaq.Core.Shared.Word.Models.Po.Learn;
 using Ngaq.Core.Shared.Word.Models.Po.Word;
 using Ngaq.Core.Sys.Models;
+using Ngaq.Core.Tools;
 using Ngaq.Core.Word.Models.Po.Word;
 using Tsinswreng.CsCore;
 using Tsinswreng.CsSql;
@@ -53,6 +55,13 @@ public partial class LocalTblMgrIniter{
 
 	public static IUpperTypeMapFnT<u8[], IdUser> MapIdUser(){
 		return IdUser.MkTypeMapFn();
+	}
+
+	public static IUpperTypeMapFnT<str, Version> MapVersion(){
+		return UpperTypeMapFnT<str, Version>.Mk(
+			raw => Version.Parse(raw)
+			,ver => ver.ToString()
+		);
 	}
 
 	protected bool _Inited{get;set;} = false;
@@ -132,72 +141,90 @@ public partial class LocalTblMgrIniter{
 	}
 
 	public static ITblMgr InitStudyPlan(ITblMgr Mgr){
-		//TODO
+		var Tbl_StudyPlan = Mk<PoStudyPlan>("StudyPlan");
+		Mgr.AddTbl(Tbl_StudyPlan);
+		{
+			var o = Tbl_StudyPlan;
+			CfgPoBase(o);
+			CfgBizCreateUpdateTime(o);
+			o.Col(x=>x.Id).MapType(IdStudyPlan.MkTypeMapFn());
+			o.Col(x=>x.Owner).MapType(MapIdUser());
+			o.Col(x=>x.PreFilterId).MapType(IdPreFilter.MkTypeMapFn());
+			o.Col(x=>x.WeightCalculatorId).MapType(IdWeightCalculator.MkTypeMapFn());
+			o.Col(x=>x.WeightArgId).MapType(IdWeightArg.MkTypeMapFn());
+			o.IdxExpr(null
+				,x=>x.Owner
+				,x=>x.UniqueName
+				,x=>x.PreFilterId
+				,x=>x.WeightCalculatorId
+				,x=>x.WeightArgId
+			);
+			o.IdxExpr(
+				new OptMkIdx{
+					Unique=true
+					,Where = o.Tbl.SqlIsNonDel()
+				}
+				,x=>new{x.Owner, x.UniqueName}
+			);
+		}
+
+		var Tbl_PreFilter = Mk<PoPreFilter>("PreFilter");
+		Mgr.AddTbl(Tbl_PreFilter);
+		{
+			var o = Tbl_PreFilter;
+			CfgPoBase(o);
+			CfgBizCreateUpdateTime(o);
+			o.Col(x=>x.Id).MapType(IdPreFilter.MkTypeMapFn());
+			o.Col(x=>x.Owner).MapType(MapIdUser());
+			o.Col(x=>x.Type).MapEnumToInt32<EPreFilterType>();
+			o.Col(x=>x.DataSchemaVer).MapType(MapVersion());
+			o.IdxExpr(null, x=>x.UniqueName);
+		}
+
+		var Tbl_WeightCalculator = Mk<PoWeightCalculator>("WeightCalculator");
+		Mgr.AddTbl(Tbl_WeightCalculator);
+		{
+			var o = Tbl_WeightCalculator;
+			CfgPoBase(o);
+			o.Col(x=>x.Id).MapType(IdWeightCalculator.MkTypeMapFn());
+			o.Col(x=>x.Owner).MapType(MapIdUser());
+			o.Col(x=>x.Type).MapEnumToInt32<EWeightCalculatorType>();
+			o.IdxExpr(null, x=>x.Owner, x=>x.UniqueName);
+		}
+
+		var Tbl_WeightArg = Mk<PoWeightArg>("WeightArg");
+		Mgr.AddTbl(Tbl_WeightArg);
+		{
+			var o = Tbl_WeightArg;
+			CfgPoBase(o);
+			CfgBizCreateUpdateTime(o);
+			o.Col(x=>x.Id).MapType(IdWeightArg.MkTypeMapFn());
+			o.Col(x=>x.Owner).MapType(MapIdUser());
+			o.Col(x=>x.Type).MapEnumToInt32<EWeightArgType>();
+			o.IdxExpr(null, x=>x.Owner, x=>x.UniqueName);
+		}
+
+		Mgr.AddAgg(
+			AggReg<JnStudyPlan, PoStudyPlan, IdStudyPlan>.Mk(
+				Tbl_StudyPlan.Tbl
+				,x=>x.Id
+				,(root, qry)=>new JnStudyPlan{
+					StudyPlan = root
+					,PreFilter = root.PreFilterId.IsNullOrDefault()
+						? null
+						: qry.GetOne<PoPreFilter, IdPreFilter>(root.PreFilterId)
+					,WeightCalculator = root.WeightCalculatorId.IsNullOrDefault()
+						? null
+						: qry.GetOne<PoWeightCalculator, IdWeightCalculator>(root.WeightCalculatorId)
+					,WeightArg = root.WeightArgId.IsNullOrDefault()
+						? null
+						: qry.GetOne<PoWeightArg, IdWeightArg>(root.WeightArgId)
+				}
+			)
+		);
+
 		return Mgr;
-#if false
-var Tbl_Wc = Mk<PoWeightCalculator>("WeightCalculator");
-		Mgr.AddTbl(Tbl_Wc);
-		{
-			var o = Tbl_Wc;
-			CfgPoBase(o);
-			o.Col(nameof(PoWeightCalculator.Id)).MapType(IdWeightCalculator.MkTypeMapFn());
-			o.Col(nameof(PoWeightCalculator.Type)).MapEnumToStr<EWeightCalculatorType>();
-			o.AddIndexByCodeCols(
-				$"Ux_{o.DbTblName}_UniqueName"
-				, [nameof(PoWeightCalculator.UniqueName)]
-				, IsUnique: true
-				, WhereAnds: [
-					o.SqlIsNonDel()
-					, $"{o.Fld(nameof(PoWeightCalculator.UniqueName))} IS NOT NULL"
-					, $"{o.Fld(nameof(PoWeightCalculator.UniqueName))} <> ''"
-				]
-			);
-			o.AddIndexByCodeCols($"Idx_{o.DbTblName}_{nameof(PoWeightCalculator.Type)}", [nameof(PoWeightCalculator.Type)]);
-		}
 
-		var Tbl_Wa = Mk<PoWeightArg>("WeightArg");
-		Mgr.AddTbl(Tbl_Wa);
-		{
-			var o = Tbl_Wa;
-			CfgPoBase(o);
-			o.Col(nameof(PoWeightArg.Id)).MapType(IdWeightArg.MkTypeMapFn());
-			o.Col(nameof(PoWeightArg.Type)).MapEnumToStr<EWeightArgType>();
-			o.AddIndexByCodeCols(
-				$"Ux_{o.DbTblName}_UniqueName"
-				, [nameof(PoWeightArg.UniqueName)]
-				, IsUnique: true
-				, WhereAnds: [
-					o.SqlIsNonDel()
-					, $"{o.Fld(nameof(PoWeightArg.UniqueName))} IS NOT NULL"
-					, $"{o.Fld(nameof(PoWeightArg.UniqueName))} <> ''"
-				]
-			);
-			o.AddIndexByCodeCols($"Idx_{o.DbTblName}_{nameof(PoWeightArg.WeightCalculatorName)}", [nameof(PoWeightArg.WeightCalculatorName)]);
-		}
-
-		var Tbl_Sp = Mk<PoStudyPlan>("StudyPlan");
-		Mgr.AddTbl(Tbl_Sp);
-		{
-			var o = Tbl_Sp;
-			CfgPoBase(o);
-			o.Col(nameof(PoStudyPlan.Id)).MapType(IdStudyPlan.MkTypeMapFn());
-			o.Col(nameof(PoStudyPlan.WeightCalculatorId)).MapType(IdWeightCalculator.MkTypeMapFn());
-			o.Col(nameof(PoStudyPlan.WeightArgId)).MapType(IdWeightArg.MkTypeMapFn());
-			o.AddIndexByCodeCols(
-				$"Ux_{o.DbTblName}_UniqueName"
-				, [nameof(PoStudyPlan.UniqueName)]
-				, IsUnique: true
-				, WhereAnds: [
-					o.SqlIsNonDel()
-					, $"{o.Fld(nameof(PoStudyPlan.UniqueName))} IS NOT NULL"
-					, $"{o.Fld(nameof(PoStudyPlan.UniqueName))} <> ''"
-				]
-			);
-			o.AddIndexByCodeCols($"Idx_{o.DbTblName}_{nameof(PoStudyPlan.WeightCalculatorId)}", [nameof(PoStudyPlan.WeightCalculatorId)]);
-		}
-
-		return Mgr;
-#endif
 	}
 
 	public static ITblMgr InitKv(ITblMgr Mgr){

@@ -104,36 +104,5 @@ public partial class SvcKv(
 		};
 	}
 
-#if false
-	public class ClsGetOneByKStr(Z z):DbFn<IUserCtx, str, PoCfg?>{
-		public async Task Init(IDbFnCtx Ctx, CT Ct){
-			var PageQry = new PageQuery{PageIndex = 0, PageSize = 1, WantTotalCount = false};
-			//var PageByKStr = await new DaoCfg.ClsPageByKStr.Init(Ctx, Ct);
-			var PageByKStr = await new DaoCfg.ClsPageByKStr(z.DaoCfg).Init(Ctx, Ct);
-			FnRun = async(IUserCtx UserCtx, str Key, CT Ct)=>{
-				var Page = await PageByKStr.FnRun(UserCtx, Key, PageQry, Ct);
-				if(Page.DataAsy != null){
-					var R = await Page.DataAsy.FirstOrDefaultAsync(Ct);
-					return R;
-				}
-				return null;
-			};
-		}
-	}
-
-	public class ClsAdd(Z z):DbFn<IUserCtx, PoCfg, nil>{
-		public async Task<ClsAdd> Init(IDbFnCtx Ctx, CT Ct){
-			var InsertMany = await z.RepoCfg.FnInsertMany(Ctx, Ct);
-			FnRun = async(IUserCtx UserCtx, PoCfg PoCfg, CT Ct)=>{
-				PoCfg.Owner = UserCtx.UserId;
-				await InsertMany([PoCfg], Ct);
-				return NIL;
-			};
-			return this;
-		}
-	}
-
-
-#endif
 
 }
