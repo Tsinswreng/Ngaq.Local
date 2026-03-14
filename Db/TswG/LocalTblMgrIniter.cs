@@ -6,6 +6,7 @@ using Ngaq.Core.Model.Po.Kv;
 using Ngaq.Core.Model.Po.Learn_;
 using Ngaq.Core.Shared.Base.Models.Po;
 using Ngaq.Core.Shared.Kv.Models;
+using Ngaq.Core.Shared.StudyPlan.Models;
 using Ngaq.Core.Shared.StudyPlan.Models.Po.StudyPlan;
 using Ngaq.Core.Shared.StudyPlan.Models.Po.WeightArg;
 using Ngaq.Core.Shared.StudyPlan.Models.Po.WeightCalculator;
@@ -276,10 +277,10 @@ var Tbl_Wc = Mk<PoWeightCalculator>("WeightCalculator");
 			AggReg<JnWord, PoWord, IdWord>.Mk(
 				Tbl_Word.Tbl
 				,x=>x.Id
-				,(root, agg)=>new JnWord(
+				,(root, qry)=>new JnWord(
 					root
-					,agg.GetMany<PoWordProp, IdWord>(root.Id)
-					,agg.GetMany<PoWordLearn, IdWord>(root.Id)
+					,qry.GetMany<PoWordProp, IdWord>(root.Id)
+					,qry.GetMany<PoWordLearn, IdWord>(root.Id)
 				)
 			)
 			.AddOneToMany(

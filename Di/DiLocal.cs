@@ -3,7 +3,6 @@ using Ngaq.Core.Model.Po.Kv;
 using Ngaq.Core.Model.Po.Learn_;
 
 //using Microsoft.CodeAnalysis.Text;
-using Ngaq.Core.Word.Svc;
 using Tsinswreng.CsSql;
 using Ngaq.Local.Db.TswG;
 using Ngaq.Local.Sql;

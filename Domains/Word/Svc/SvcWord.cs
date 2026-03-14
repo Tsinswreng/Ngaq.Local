@@ -16,9 +16,7 @@ using Ngaq.Core.Model.Po.Learn_;
 
 using Ngaq.Core.Infra.Errors;
 using Tsinswreng.CsTools;
-using Ngaq.Core.Model.Word.Req;
 using Tsinswreng.CsSql;
-using Ngaq.Core.Word.Svc;
 
 using Ngaq.Core.Infra;
 

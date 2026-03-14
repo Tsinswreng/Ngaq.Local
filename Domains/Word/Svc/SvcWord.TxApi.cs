@@ -2,7 +2,6 @@ namespace Ngaq.Local.Domains.Word.Svc;
 
 using Ngaq.Core.Tools.Io;
 using Ngaq.Local.Db;
-using Ngaq.Core.Model.Word.Req;
 using Tsinswreng.CsCore;
 using Tsinswreng.CsPage;
 using Ngaq.Core.Infra;
