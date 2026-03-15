@@ -1,33 +1,19 @@
-using Microsoft.Extensions.DependencyInjection;
 using Ngaq.Local.Db.TswG.Migrations;
 using Tsinswreng.CsSql;
 
 namespace Ngaq.Local.Db.TswG;
 
-public class MigrationMgrIniter{
-	public IServiceProvider Sp{get;set;}
-	public IMigrationMgr MigrationMgr{get;set;}
-	public ISqlCmdMkr SqlCmdMkr;
-	public IMkrTxn MkrTxn;
-	public MigrationMgrIniter(IServiceProvider Sp){
-		this.Sp = Sp;
-		this.MigrationMgr = Sp.GetRequiredService<MigrationMgr>();
-		this.SqlCmdMkr = Sp.GetRequiredService<ISqlCmdMkr>();
-		this.MkrTxn = Sp.GetRequiredService<IMkrTxn>();
-		Init();
-	}
-	void Init(){
-		MigrationMgr
-		.AddMigration(ToMigration(new MInit(Sp)))
-		.AddMigration(ToMigration(new M2025_1224_134729(Sp)))
-		;
-	}
-
-	public IMigration ToMigration(ISqlMigrationInfo SqlMigrationInfo){
-		return SqlMigration.MkSqlMigration(
-			SqlCmdMkr: SqlCmdMkr
-			,MkrTxn: MkrTxn
-			,SqlMigrationInfo:SqlMigrationInfo
-		);
+/// Local 端遷移清單註冊（僅保留業務選擇，不包含通用去重邏輯）。
+public static class LocalMigrations{
+	extension(IMigrationMgr z){
+		/// 註冊 Local 端全部遷移。
+		/// 通用去重策略由 CsSql.ExtnMigrationMgr 提供。
+		public IMigrationMgr UseLocalMigrations(IServiceProvider Sp){
+			z.AddMigrationsIfAbsent([
+				new MInit(Sp)
+				,new M2025_1224_134729(Sp)
+			]);
+			return z;
+		}
 	}
 }

@@ -11,17 +11,15 @@ using Ngaq.Core.Shared.User.Models.Po.User;
 using Ngaq.Core.Infra.IF;
 
 
-
 /// 客戶端程序啓動旹初始化數據庫
 /// 未建庫則建庫、庫ʹ版本落後則珩遷移
 /// note: 建庫前勿用預編譯sql
-/// TODO 使通用化
 public partial class DbIniter{
 	public ISqlCmdMkr SqlCmdMkr;
 	public ITxnRunner TxnRunner;
 	public IMkrTxn TxnGetter;
 	public ITblMgr TblMgr;
-	public Tsinswreng.CsSql.IRepo<SchemaHistory, i64> RepoSchemaHistory;
+	public IRepo<SchemaHistory, i64> RepoSchemaHistory;
 	public ISvcKv SvcKv;
 	public IMigrationMgr MigrationMgr;
 	public DbIniter(
@@ -33,11 +31,7 @@ public partial class DbIniter{
 		,ISvcKv SvcKv
 		,IMigrationMgr MigrationMgr
 	){
-		if(RepoSchemaHistory is not SqlRepo<SchemaHistory, i64> SqlRepoSchemaHistory){
-			throw new ArgumentException("RepoSchemaHistory must be SqlRepo<SchemaHistory, i64>");
-		}
-		this.RepoSchemaHistory = RepoSchemaHistory;
-		SqlRepoSchemaHistory.DictMapper = SqlHelperDictMapper.Inst;
+		this.RepoSchemaHistory = RepoSchemaHistory.UseSqlHelperDictMapper();
 		this.SvcKv = SvcKv;
 		this.TblMgr = TblMgr;
 		this.TxnRunner = TxnRunner;
@@ -67,10 +61,6 @@ public partial class DbIniter{
 
 
 	/// 未建庫旹一步到位建庫ʃ用ʹSql
-	/// <param name="DbFnCtx"></param>
-	/// <param name="Ct"></param>
-	/// <returns></returns>
-	/// <exception cref="Exception"></exception>
 	public async Task<Func<
 		CT
 		,Task<nil>
@@ -93,32 +83,33 @@ public partial class DbIniter{
 		return Fn;
 	}
 
-	void test(){
-		var a = new List<str>();
-		foreach(var (i,s) in a.Index()){
-
-		}
-	}
-
 	public async Task<Func<
 		CT
 		,Task<nil>
 	>> FnInit(IDbFnCtx DbFnCtx, CT Ct){
 		var MkSchema = await FnMkSchema(DbFnCtx, Ct);
-		var InsertSchemaHistory = await RepoSchemaHistory.FnInsertManyNoPrepare(DbFnCtx, Ct);
 		var SelectSqliteMaster = await FnSelectSqliteMaster(DbFnCtx, Ct);
 		var Fn = async(CT Ct)=>{
 			var Items = await SelectSqliteMaster(Ct);
 			var First = await Items.FirstOrDefaultAsync(Ct);
 			if(First != null){
+				// 已有數據庫：執行未完成的遷移
+				await MigrationMgr.RunPendingMigrations(
+					Ctx: DbFnCtx
+					,SqlCmdMkr: SqlCmdMkr
+					,MkrTxn: TxnGetter
+					,RepoHistory: RepoSchemaHistory
+					,Ct: Ct
+				);
 				return NIL;
 			}
-			var SchemaHistory = new SchemaHistory{
-				CreatedMs = this.CreatedAt
-				,Name = "Init"
-			};
+			// 全新安裝：一步到位建庫，再把所有遷移記錄爲已執行
 			await MkSchema(Ct);
-			await InsertSchemaHistory([SchemaHistory], Ct);
+			await MigrationMgr.MarkAllApplied(
+				Ctx: DbFnCtx
+				,RepoHistory: RepoSchemaHistory
+				,Ct: Ct
+			);
 			return NIL;
 		};
 		return Fn;

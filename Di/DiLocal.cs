@@ -51,6 +51,8 @@ z.AddSingleton<IDbConnMgr, SingletonDbConnGetter>();
 z.AddScoped<ISqlCmdMkr, SqliteCmdMkr>();
 //數據庫諸表ˇ司者
 z.AddSingleton<ITblMgr>(LocalTblMgr.Inst);
+//遷移用空白 TblMgr 工廠
+z.AddSingleton<IMkrTblMgr, LocalMkrTblMgr>();
 //事務ˇ建者
 z.AddScoped<IMkrTxn, SqliteCmdMkr>();
 //事務ˇ珩者
@@ -59,10 +61,14 @@ z.AddScoped<IMkrDbFnCtx ,MkrDbFnCtx>();
 z.AddScoped<TxnWrapper>();
 //數據庫初始化器
 z.AddTransient<DbIniter>();
-z.AddSingleton<IMigrationMgr>(sp=>new MigrationMgr(
-	TblMgr: sp.GetRequiredService<ITblMgr>()
-	,SqlCmdMkr: sp.GetRequiredService<ISqlCmdMkr>()
-));
+// 通用遷移執行邏輯在 CsSql；此處僅聲明 Local 端遷移清單
+z.AddSingleton<IMigrationMgr>(sp=>
+	new MigrationMgr(
+		TblMgr: sp.GetRequiredService<ITblMgr>()
+		,SqlCmdMkr: sp.GetRequiredService<ISqlCmdMkr>()
+	)
+	.UseLocalMigrations(sp)
+);
 return z;
 	}
 

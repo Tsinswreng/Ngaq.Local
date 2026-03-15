@@ -113,16 +113,9 @@ public partial class LocalTblMgrIniter{
 		return o;
 	}
 
-	[Obsolete]
-	public static ITable<T> MkObslt<T>(str DbTblName){
-		return Table.FnMkTbl<T>(CoreDictMapper.Inst)(DbTblName);
-	}
-	
 	public static ITblSetter<T> Mk<T>(str DbTblName){
 		return Table.FnSetTbl<T>(CoreDictMapper.Inst)(DbTblName);
 	}
-	
-
 	
 
 	public static ITblSetter<T> CfgI_WordId<T>(ITblSetter<T> o) where T : I_WordId {
