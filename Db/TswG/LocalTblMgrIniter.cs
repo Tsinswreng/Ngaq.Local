@@ -147,7 +147,7 @@ public partial class LocalTblMgrIniter{
 			o.Col(x=>x.WeightArgId).MapType(IdWeightArg.MkTypeMapFn());
 			o.IdxExpr(null
 				,x=>x.Owner
-				,x=>x.UniqueName
+				,x=>x.UniqName
 				,x=>x.PreFilterId
 				,x=>x.WeightCalculatorId
 				,x=>x.WeightArgId
@@ -157,7 +157,7 @@ public partial class LocalTblMgrIniter{
 					Unique=true
 					,Where = o.Tbl.SqlIsNonDel()
 				}
-				,x=>new{x.Owner, x.UniqueName}
+				,x=>new{x.Owner, x.UniqName}
 			);
 		}
 
@@ -171,7 +171,7 @@ public partial class LocalTblMgrIniter{
 			o.Col(x=>x.Owner).MapType(MapIdUser());
 			o.Col(x=>x.Type).MapEnumToInt32<EPreFilterType>();
 			o.Col(x=>x.DataSchemaVer).MapType(MapVersion());
-			o.IdxExpr(null, x=>x.UniqueName);
+			o.IdxExpr(null, x=>x.UniqName);
 		}
 
 		var Tbl_WeightCalculator = Mk<PoWeightCalculator>("WeightCalculator");
@@ -182,7 +182,7 @@ public partial class LocalTblMgrIniter{
 			o.Col(x=>x.Id).MapType(IdWeightCalculator.MkTypeMapFn());
 			o.Col(x=>x.Owner).MapType(MapIdUser());
 			o.Col(x=>x.Type).MapEnumToInt32<EWeightCalculatorType>();
-			o.IdxExpr(null, x=>x.Owner, x=>x.UniqueName);
+			o.IdxExpr(null, x=>x.Owner, x=>x.UniqName);
 		}
 
 		var Tbl_WeightArg = Mk<PoWeightArg>("WeightArg");
@@ -194,7 +194,7 @@ public partial class LocalTblMgrIniter{
 			o.Col(x=>x.Id).MapType(IdWeightArg.MkTypeMapFn());
 			o.Col(x=>x.Owner).MapType(MapIdUser());
 			o.Col(x=>x.Type).MapEnumToInt32<EWeightArgType>();
-			o.IdxExpr(null, x=>x.Owner, x=>x.UniqueName);
+			o.IdxExpr(null, x=>x.Owner, x=>x.UniqName);
 		}
 
 		Mgr.AddAgg(
