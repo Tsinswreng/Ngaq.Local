@@ -7,8 +7,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="../Tsinswreng.CsDictMapper/proj/Tsinswreng.CsDictMapper/Tsinswreng.CsDictMapper.csproj" />
-		<ProjectReference Include="../Tsinswreng.CsDictMapper/proj/Tsinswreng.CsDictMapper.SrcGen/Tsinswreng.CsDictMapper.SrcGen.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+		<ProjectReference Include="../Tsinswreng.CsStrAcc/proj/Tsinswreng.CsStrAcc/Tsinswreng.CsStrAcc.csproj" />
+		<ProjectReference Include="../Tsinswreng.CsStrAcc/proj/Tsinswreng.CsStrAcc.SrcGen/Tsinswreng.CsStrAcc.SrcGen.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 	</ItemGroup>
 
 	<ItemGroup>

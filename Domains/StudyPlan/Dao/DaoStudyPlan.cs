@@ -22,37 +22,15 @@ public partial class DaoStudyPlan(
 	,IRepo<PoWeightCalculator, IdWeightCalculator> RepoWeightCalculator
 	,IRepo<PoPreFilter, IdPreFilter> RepoPreFilter
 ) {
-	ITable<PoStudyPlan> TblStudyPlan = TblMgr.GetTbl<PoStudyPlan>();
-	ITable<PoPreFilter> TblPreFilter = TblMgr.GetTbl<PoPreFilter>();
+	ITable<PoStudyPlan> TS = TblMgr.GetTbl<PoStudyPlan>();
+	ITable<PoPreFilter> TP = TblMgr.GetTbl<PoPreFilter>();
 	/// 更新权重参数后触发业务更新时间
-	public async Task<Func<
-		IdWeightArg,
-		CT,
-		Task<nil>
-	>> FnTriggerOnRootAfterUpd(IDbFnCtx Ctx, CT Ct) {
-		var UpdPoWeightArg = await RepoWeightArg.AsAppRepo().FnUpd_BizUpdatedAt(Ctx, Ct);
-		return async (WeightArgId, Ct) => {
-			await UpdPoWeightArg(WeightArgId, Ct);
-			return NIL;
-		};
+	
+	
+	public async Task<IAsyncEnumerable<JnStudyPlan?>> BatGetStudyPlanById(
+		IDbFnCtx Ctx, IAsyncEnumerable<IdStudyPlan> Ids, CT Ct
+	){
+		var R = await RepoStudyPlan.BatSlctAggById<JnStudyPlan>(Ctx, Ids, Ct);
+		return R;
 	}
-	
-	// public async Task<IAsyncEnumerable<BoStudyPlan?>> BatGetStudyPlanById(
-	// 	IDbFnCtx Ctx, IEnumerable<IdStudyPlan> Ids, CT Ct
-	// ){
-	// 	var poStudyPlans = await RepoStudyPlan.BatSlctById(Ctx, Ids, Ct);
-		
-	// 	var batch = BatchCollector<PoStudyPlan?, BoStudyPlan>.Mk((poStudyPlan, Ct)=>{
-			
-	// 		RepoStudyPlan.IncludeEntitysByKeys(
-	// 			Ctx, nameof(PoStudyPlan.PreFilterId), null, poStudyPlans.Select(x=>x?.PreFilterId), x=>x.PreFilterId, TblPreFilter, Ct
-	// 		);
-	// 		poStudyPlan
-	// 	});
-		
-	// }
-	
-	
-
-
 }

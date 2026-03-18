@@ -9,7 +9,6 @@ using Ngaq.Local.Sql;
 using Ngaq.Core.Infra;
 using Ngaq.Local.ImplFrontend;
 using Tsinswreng.CsSql.Sqlite;
-using Tsinswreng.CsDictMapper;
 using Ngaq.Local.Word.Dao;
 using Ngaq.Core.Shared.Word.Models.Po.Kv;
 using Ngaq.Local.Domains.Kv.Svc;
@@ -25,6 +24,7 @@ using Ngaq.Core.Shared.Word.Svc;
 using Ngaq.Core.Infra.Url;
 using Ngaq.Core.Shared.Dictionary.Svc;
 using Ngaq.Local.Domains.Dictionary.Svc;
+using Tsinswreng.CsStrAcc;
 
 
 namespace Ngaq.Local.Di;
@@ -36,7 +36,7 @@ public static class DiLocal{
 		z.AddSingleton<I_GetBaseDir>(BaseDirMgr.Inst);
 		z.SetupDbCfg().SetupRepos().SetupSvcs();
 //Core詞典映射
-z.AddSingleton<IDictMapperShallow>(CoreDictMapper.Inst);
+z.AddSingleton<IPropAccessorMgr>(CoreDictMapper.Inst.PropAccessorMgr);
 return z;
 	}
 

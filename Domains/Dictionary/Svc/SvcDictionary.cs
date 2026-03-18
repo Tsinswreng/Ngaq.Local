@@ -11,7 +11,6 @@ using Tsinswreng.CsTools;
 using System.Net.Http.Headers;
 using System.Text;
 using Ngaq.Core.Tools;
-using Tsinswreng.CsDictMapper;
 using Tsinswreng.CsYamlMd;
 using Microsoft.Extensions.Logging;
 
@@ -65,18 +64,15 @@ public class SvcDictionary:ISvcDictionary{
 	ICfgAccessor Cfg;
 	IJsonSerializer JsonS;
 	HttpClient HttpClient;
-	IDictMapperShallow DictMapper;
 	ILogger Logger;
 	public SvcDictionary(
 		ICfgAccessor Cfg
 		,IJsonSerializer JsonS
-		,IDictMapperShallow DictMapper
 		,ILogger Logger
 	){
 		this.Cfg = Cfg;
 		this.JsonS = JsonS;
 		this.HttpClient = new HttpClient();
-		this.DictMapper = DictMapper;
 		this.Logger = Logger;
 	}
 /*

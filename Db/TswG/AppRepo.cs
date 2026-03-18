@@ -1,10 +1,10 @@
 namespace Ngaq.Local.Db.TswG;
 
 using Tsinswreng.CsSql;
-using Tsinswreng.CsDictMapper;
 using Ngaq.Core.Infra;
 using Tsinswreng.CsCore;
 using Ngaq.Core.Shared.Base.Models.Po;
+using Tsinswreng.CsStrAcc;
 
 public partial class AppRepo<
 	TEntity
@@ -15,7 +15,7 @@ public partial class AppRepo<
 	,IAppRepo<TEntity, TId>
 	where TEntity : class, new()
 {
-	public AppRepo(ITblMgr TblMgr, ISqlCmdMkr SqlCmdMkr, IDictMapperShallow DictMapper) : base(TblMgr, SqlCmdMkr, DictMapper) {
+	public AppRepo(ITblMgr TblMgr, ISqlCmdMkr SqlCmdMkr, IPropAccessorMgr DictMapper) : base(TblMgr, SqlCmdMkr, DictMapper) {
 
 	}
 
