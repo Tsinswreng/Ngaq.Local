@@ -1,5 +1,6 @@
 using Ngaq.Core.Frontend.Kv;
 using Ngaq.Core.Infra.IF;
+using Ngaq.Core.Shared.Base.Models.Po;
 using Ngaq.Core.Shared.Kv.Models;
 using Ngaq.Core.Shared.Kv.Svc;
 using Ngaq.Core.Shared.StudyPlan.Models;
@@ -8,19 +9,23 @@ using Ngaq.Core.Shared.StudyPlan.Models.Po.StudyPlan;
 using Ngaq.Core.Shared.StudyPlan.Models.Po.WeightArg;
 using Ngaq.Core.Shared.StudyPlan.Models.Po.WeightCalculator;
 using Ngaq.Core.Shared.StudyPlan.Models.PreFilter;
+using Ngaq.Core.Shared.StudyPlan.Svc;
+using Ngaq.Core.Shared.User.Models.Po.User;
 using Ngaq.Core.Shared.User.UserCtx;
 using Ngaq.Core.Shared.Word.Models.Po.Kv;
 using Ngaq.Core.Tools;
 using Ngaq.Local.Db.TswG;
 using System.Text;
+using Tsinswreng.CsCore;
 using Tsinswreng.CsSql;
 using Tsinswreng.CsTools;
 
 namespace Ngaq.Local.Domains.StudyPlan.Svc;
 
-
-public class SvcStudyPlan{
+public partial class SvcStudyPlan:ISvcStudyPlan{
+	
 	ISvcKv SvcKv;
+	ISqlCmdMkr SqlCmdMkr;
 	TxnWrapper TxnWrapper;
 	IRepo<PoStudyPlan, IdStudyPlan> RepoStudyPlan;
 	IRepo<PoWeightArg, IdWeightArg> RepoWeightArg;
@@ -28,13 +33,15 @@ public class SvcStudyPlan{
 	IRepo<PoPreFilter, IdPreFilter> RepoPreFilter;
 	public SvcStudyPlan(
 		ISvcKv SvcKv
+		,ISqlCmdMkr SqlCmdMkr
 		,TxnWrapper TxnWrapper
-		, IRepo<PoStudyPlan, IdStudyPlan> RepoStudyPlan
-		, IRepo<PoWeightArg, IdWeightArg> RepoWeightArg
-		, IRepo<PoWeightCalculator, IdWeightCalculator> RepoWeightCalculator
-		, IRepo<PoPreFilter, IdPreFilter> RepoPreFilter
+		,IRepo<PoStudyPlan, IdStudyPlan> RepoStudyPlan
+		,IRepo<PoWeightArg, IdWeightArg> RepoWeightArg
+		,IRepo<PoWeightCalculator, IdWeightCalculator> RepoWeightCalculator
+		,IRepo<PoPreFilter, IdPreFilter> RepoPreFilter
 	){
 		this.SvcKv = SvcKv;
+		this. SqlCmdMkr = SqlCmdMkr;
 		this.TxnWrapper = TxnWrapper;
 		this.RepoStudyPlan = RepoStudyPlan;
 		this.RepoWeightArg = RepoWeightArg;
@@ -42,7 +49,7 @@ public class SvcStudyPlan{
 		this.RepoPreFilter = RepoPreFilter;
 	}
 
-
+	[Obsolete]
 	public async Task<Func<
 		IUserCtx,
 		CT, Task<IdStudyPlan?>
@@ -64,6 +71,7 @@ public class SvcStudyPlan{
 		return await TxnWrapper.Wrap(FnGetCurStudyPlanId, User, Ct);
 	}
 
+	[Obsolete]
 	public async Task<Func<
 		IUserCtx, IdStudyPlan
 		,CT,Task<nil>
@@ -87,10 +95,49 @@ public class SvcStudyPlan{
 	){
 		return await TxnWrapper.Wrap(FnSetCurStudyPlanId, User, StudyPlanId, Ct);
 	}
+	public IAsyncEnumerable<T> EnsureOwner<T>(
+		IdUser UserId
+		,IAsyncEnumerable<T> Pos
+	)
+		where T:I_Owner
+	{
+		Pos = Pos.Select(x=>{
+			x.Owner = UserId;
+			return x;
+		});
+		return Pos;
+	}
 	
+	public async Task<nil> BatAddPreFilter(
+		IDbFnCtx Ctx, IUserCtx User
+		, IAsyncEnumerable<PoPreFilter> Pos
+		,CT Ct
+	){
+		Pos = EnsureOwner(User.UserId, Pos);
+		await RepoPreFilter.BatInsert(Ctx, Pos, Ct);
+		return NIL;
+	}
 	
+	public async Task<nil> BatAddWeightArg(
+		IDbFnCtx Ctx, IUserCtx User
+		, IAsyncEnumerable<PoWeightArg> Pos
+		,CT Ct
+	){
+		Pos = EnsureOwner(User.UserId, Pos);
+		await RepoWeightArg.BatInsert(Ctx, Pos, Ct);
+		return NIL;
+	}
 	
-	
+	public async Task<nil> BatAddWeightCalculator(
+		IDbFnCtx Ctx, IUserCtx User
+		, IAsyncEnumerable<PoWeightCalculator> Pos
+		,CT Ct
+	){
+		Pos = EnsureOwner(User.UserId, Pos);
+		await RepoWeightCalculator.BatInsert(Ctx, Pos, Ct);
+		return NIL;
+	}
+
 
 	#if false
 public async Task<Func<

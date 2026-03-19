@@ -26,7 +26,6 @@ public partial class DaoStudyPlan(
 	ITable<PoPreFilter> TP = TblMgr.GetTbl<PoPreFilter>();
 	/// 更新权重参数后触发业务更新时间
 	
-	
 	public async Task<IAsyncEnumerable<JnStudyPlan?>> BatGetStudyPlanById(
 		IDbFnCtx Ctx, IAsyncEnumerable<IdStudyPlan> Ids, CT Ct
 	){
