@@ -22,11 +22,23 @@ public partial class SvcKv(
 	DaoKv DaoKv = DaoKv;
 	IRepo<PoKv, IdKv> RepoKv = RepoKv;
 
-	public Task<IAsyncEnumerable<PoKv?>> BatGetByOwnerEtKey(
-		IAsyncEnumerable<(IdUser, object)> Owner_Key, CT Ct
+	public Task<IAsyncEnumerable<PoKv?>> BatGetByOwnerEtKStr(
+		IAsyncEnumerable<(IdUser, str)> Owner_Key, CT Ct
 	) {
-		throw new NotImplementedException();
+		return SqlCmdMkr.RunInTxn(Ct, (Ctx)=>{
+			return DaoKv.BatGetByOwnerEtKStr(Ctx, Owner_Key, Ct);
+		});
 	}
+
+	public Task<IAsyncEnumerable<PoKv?>> BatGetByOwnerEtKI64(
+		IAsyncEnumerable<(IdUser, i64)> Owner_Key
+		,CT Ct
+	){
+		return SqlCmdMkr.RunInTxn(Ct, (Ctx)=>{
+			return DaoKv.BatGetByOwnerEtKI64(Ctx, Owner_Key, Ct);
+		});
+	}
+	
 
 	public async Task<nil> BatSet(IAsyncEnumerable<PoKv> Kvs, CT Ct) {
 		return SqlCmdMkr.RunInTxn(Ct, (Ctx)=>{

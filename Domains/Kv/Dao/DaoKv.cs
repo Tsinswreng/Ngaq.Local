@@ -29,5 +29,34 @@ public partial class DaoKv(
 		get{return TblMgr.GetTbl<PoKv>();}
 	}
 
-
+	public async Task<IAsyncEnumerable<PoKv?>> BatGetByOwnerEtKI64(
+		IDbFnCtx Ctx
+		,IAsyncEnumerable<(IdUser Owner, i64 Key)> Owner_Key
+		,CT Ct
+	){
+		var keys = Owner_Key.Select(x=>x.Key);
+		var owners = Owner_Key.Select(x=>x.Owner);
+var Sql = T.SqlSplicer().Select("*").From().Where1()
+.And(T.SqlIsNonDel())
+.AndEq(x=>x.Owner, m=>m.Many(owners))
+.AndEq(x=>x.KI64, m=>m.Many(keys));
+		var dicts = SqlCmdMkr.RunDupliSql(Ctx, Sql, Ct);
+		return dicts.Select(x=>T.DbDictToEntity(x));
+	}
+	
+	public async Task<IAsyncEnumerable<PoKv?>> BatGetByOwnerEtKStr(
+		IDbFnCtx Ctx
+		,IAsyncEnumerable<(IdUser Owner, str Key)> Owner_Key
+		,CT Ct
+	){
+		var keys = Owner_Key.Select(x=>x.Key);
+		var owners = Owner_Key.Select(x=>x.Owner);
+var Sql = T.SqlSplicer().Select("*").From().Where1()
+.And(T.SqlIsNonDel())
+.AndEq(x=>x.Owner, m=>m.Many(owners))
+.AndEq(x=>x.KStr, m=>m.Many(keys));
+		var dicts = SqlCmdMkr.RunDupliSql(Ctx, Sql, Ct);
+		return dicts.Select(x=>T.DbDictToEntity(x));
+	}
+	
 }

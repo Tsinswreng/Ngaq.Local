@@ -71,7 +71,7 @@ public partial class DaoWord{
 		.AndEq(x=>x.Lang, y=>y.Many(Lang))
 		;
 
-		var GotDicts = SqlCmdMkr.RunBatSql(Ctx, Sql, Ct);
+		var GotDicts = SqlCmdMkr.RunDupliSql(Ctx, Sql, Ct);
 		return GotDicts.Select(x=>{
 			if(x is null){
 				return null;

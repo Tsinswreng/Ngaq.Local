@@ -9,7 +9,12 @@ using Ngaq.Local.Domains.Kv.Svc;
 using Tsinswreng.CsSql;
 
 public class SvcSecretKv : SvcKv, ISvcSecretKv {
-	public SvcSecretKv(DaoKv DaoKv, TxnWrapper TxnWrapper, IRepo<PoKv, IdKv> RepoKv)
-	: base(DaoKv, TxnWrapper, RepoKv) {
+	public SvcSecretKv(
+		DaoKv DaoKv
+		,TxnWrapper TxnWrapper
+		,IRepo<PoKv, IdKv> RepoKv
+		,ISqlCmdMkr SqlCmdMkr
+	)
+	: base(DaoKv, TxnWrapper, RepoKv, SqlCmdMkr) {
 	}
 }
