@@ -21,37 +21,31 @@ public partial class SvcKv(
 {
 	DaoKv DaoKv = DaoKv;
 	IRepo<PoKv, IdKv> RepoKv = RepoKv;
+	TxnWrapper TxnWrapper = TxnWrapper;
 
 	public Task<IAsyncEnumerable<PoKv?>> BatGetByOwnerEtKStr(
-		IAsyncEnumerable<(IdUser, str)> Owner_Key, CT Ct
+		IDbFnCtx? Ctx, IAsyncEnumerable<(IdUser, str)> Owner_Key, CT Ct
 	) {
-		return SqlCmdMkr.RunInTxn(Ct, (Ctx)=>{
+		return SqlCmdMkr.RunInTxnIfNoCtx(Ctx, Ct, (Ctx)=>{
 			return DaoKv.BatGetByOwnerEtKStr(Ctx, Owner_Key, Ct);
 		});
 	}
 
 	public Task<IAsyncEnumerable<PoKv?>> BatGetByOwnerEtKI64(
-		IAsyncEnumerable<(IdUser, i64)> Owner_Key
+		IDbFnCtx? Ctx, IAsyncEnumerable<(IdUser, i64)> Owner_Key
 		,CT Ct
 	){
-		return SqlCmdMkr.RunInTxn(Ct, (Ctx)=>{
+		return SqlCmdMkr.RunInTxnIfNoCtx(Ctx, Ct, (Ctx)=>{
 			return DaoKv.BatGetByOwnerEtKI64(Ctx, Owner_Key, Ct);
 		});
 	}
 	
-
-	public async Task<nil> BatSet(IAsyncEnumerable<PoKv> Kvs, CT Ct) {
-		return SqlCmdMkr.RunInTxn(Ct, (Ctx)=>{
-			return BatSet(Ctx, Kvs, Ct);
-		});
-	}
 	public async Task<nil> BatSet(
-		IDbFnCtx Ctx
+		IDbFnCtx? Ctx
 		,IAsyncEnumerable<PoKv> Kvs, CT Ct
 	){
-		await RepoKv.BatUpdById(Ctx, Kvs, Ct);
-		return NIL;
+		return await SqlCmdMkr.RunInTxnIfNoCtx(Ctx, Ct, (Ctx)=>{
+			return RepoKv.BatUpdById(Ctx, Kvs, Ct);
+		});
 	}
-	//public const str PathSep = "/";
-
 }

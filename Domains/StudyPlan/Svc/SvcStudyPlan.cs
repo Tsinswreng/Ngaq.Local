@@ -49,28 +49,77 @@ public partial class SvcStudyPlan:ISvcStudyPlan{
 		this.RepoPreFilter = RepoPreFilter;
 	}
 
-	[Obsolete]
-	public async Task<Func<
-		IUserCtx,
-		CT, Task<IdStudyPlan?>
-	>> FnGetCurStudyPlanId(IDbFnCtx Ctx, CT Ct){
-		var fnGet = await SvcKv.FnGetByOwnerEtKey(Ctx, Ct);
-		return async (UserCtx, Ct)=>{
-			var kv = await fnGet(UserCtx.UserId, KeysClientKv.CurStudyPlanId, Ct);
-			if(kv == null || str.IsNullOrEmpty(kv.VStr)){
-				return null;
-			}
-			return IdStudyPlan.FromLow64Base(kv.VStr);
-		};
-	}
+	
 
 	public async Task<IdStudyPlan?> GetCurStudyPlanId(
-		IUserCtx User
+		IDbFnCtx? Ctx
+		,IUserCtx User
 		,CT Ct
 	){
 		return await TxnWrapper.Wrap(FnGetCurStudyPlanId, User, Ct);
 	}
 
+	public async Task<nil> SetCurStudyPlanId(
+		IDbFnCtx? Ctx, IUserCtx User, IdStudyPlan StudyPlanId, CT Ct
+	){
+		return await SqlCmdMkr.RunInTxnIfNoCtx(Ctx, Ct, async(Ctx)=>{
+			var kv = new PoKv();
+			kv.Owner = User.UserId;
+			kv.SetStrStr(KeysClientKv.CurStudyPlanId, StudyPlanId+"");
+			return await SvcKv.BatSet(Ctx, ToolAsyE.ToAsyE([kv]), Ct);
+		});
+		
+	}
+
+	public IAsyncEnumerable<T> EnsureOwner<T>(
+		IdUser UserId
+		,IAsyncEnumerable<T> Pos
+	)
+		where T:I_Owner
+	{
+		Pos = Pos.Select(x=>{
+			x.Owner = UserId;
+			return x;
+		});
+		return Pos;
+	}
+	
+	public async Task<nil> BatAddPreFilter(
+		IDbFnCtx? Ctx, IUserCtx User
+		, IAsyncEnumerable<PoPreFilter> Pos
+		,CT Ct
+	){
+		return await SqlCmdMkr.RunInTxnIfNoCtx(Ctx, Ct, async(Ctx)=>{
+			Pos = EnsureOwner(User.UserId, Pos);
+			await RepoPreFilter.BatInsert(Ctx, Pos, Ct);
+			return NIL;
+		});
+	}
+	
+	public async Task<nil> BatAddWeightArg(
+		IDbFnCtx? Ctx, IUserCtx User
+		, IAsyncEnumerable<PoWeightArg> Pos
+		,CT Ct
+	){
+		return await SqlCmdMkr.RunInTxnIfNoCtx(Ctx, Ct, async(Ctx)=>{
+			Pos = EnsureOwner(User.UserId, Pos);
+			await RepoWeightArg.BatInsert(Ctx, Pos, Ct);
+			return NIL;
+		});
+	}
+	
+	public async Task<nil> BatAddWeightCalculator(
+		IDbFnCtx? Ctx, IUserCtx User
+		, IAsyncEnumerable<PoWeightCalculator> Pos
+		,CT Ct
+	){
+		return await SqlCmdMkr.RunInTxnIfNoCtx(Ctx, Ct, async(Ctx)=>{
+			Pos = EnsureOwner(User.UserId, Pos);
+			await RepoWeightCalculator.BatInsert(Ctx, Pos, Ct);
+			return NIL;
+		});
+	}
+	
 	[Obsolete]
 	public async Task<Func<
 		IUserCtx, IdStudyPlan
@@ -87,55 +136,20 @@ public partial class SvcStudyPlan:ISvcStudyPlan{
 			return NIL;
 		};
 	}
-
-	public async Task<nil> SetCurStudyPlanId(
-		IUserCtx User
-		,IdStudyPlan StudyPlanId
-		,CT Ct
-	){
-		return await TxnWrapper.Wrap(FnSetCurStudyPlanId, User, StudyPlanId, Ct);
-	}
-	public IAsyncEnumerable<T> EnsureOwner<T>(
-		IdUser UserId
-		,IAsyncEnumerable<T> Pos
-	)
-		where T:I_Owner
-	{
-		Pos = Pos.Select(x=>{
-			x.Owner = UserId;
-			return x;
-		});
-		return Pos;
-	}
 	
-	public async Task<nil> BatAddPreFilter(
-		IDbFnCtx Ctx, IUserCtx User
-		, IAsyncEnumerable<PoPreFilter> Pos
-		,CT Ct
-	){
-		Pos = EnsureOwner(User.UserId, Pos);
-		await RepoPreFilter.BatInsert(Ctx, Pos, Ct);
-		return NIL;
-	}
-	
-	public async Task<nil> BatAddWeightArg(
-		IDbFnCtx Ctx, IUserCtx User
-		, IAsyncEnumerable<PoWeightArg> Pos
-		,CT Ct
-	){
-		Pos = EnsureOwner(User.UserId, Pos);
-		await RepoWeightArg.BatInsert(Ctx, Pos, Ct);
-		return NIL;
-	}
-	
-	public async Task<nil> BatAddWeightCalculator(
-		IDbFnCtx Ctx, IUserCtx User
-		, IAsyncEnumerable<PoWeightCalculator> Pos
-		,CT Ct
-	){
-		Pos = EnsureOwner(User.UserId, Pos);
-		await RepoWeightCalculator.BatInsert(Ctx, Pos, Ct);
-		return NIL;
+	[Obsolete]
+	public async Task<Func<
+		IUserCtx,
+		CT, Task<IdStudyPlan?>
+	>> FnGetCurStudyPlanId(IDbFnCtx Ctx, CT Ct){
+		var fnGet = await SvcKv.FnGetByOwnerEtKey(Ctx, Ct);
+		return async (UserCtx, Ct)=>{
+			var kv = await fnGet(UserCtx.UserId, KeysClientKv.CurStudyPlanId, Ct);
+			if(kv == null || str.IsNullOrEmpty(kv.VStr)){
+				return null;
+			}
+			return IdStudyPlan.FromLow64Base(kv.VStr);
+		};
 	}
 
 
