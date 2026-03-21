@@ -10,6 +10,7 @@ using Ngaq.Core.Frontend.User;
 using Ngaq.Core.Shared.User.Models.Po.Device;
 using Microsoft.Extensions.DependencyInjection;
 using Ngaq.Core.Infra.IF;
+using Tsinswreng.CsTools;
 
 public static class ExtnIServiceProvider{
 	public static T GetRSvc<T>(this IServiceProvider z)
@@ -40,16 +41,17 @@ public class AppIniter{
 	async Task<IdClient> InitClientId(CT Ct){
 		var SvcKv = Sp.GetRSvc<ISvcKv>();
 		var Key = KeysClientKv.ClientId;
-		var CliendIdKv = await SvcKv.GetByOwnerEtKey(
+		var CliendIdKv = await SvcKv.GetByOwnerEtKStr(
 			IdUser.Zero, Key, Ct
 		);
 
 
 		if(CliendIdKv is null){
 			var Id = new IdClient();
-			await SvcKv.Set(new PoKv{
+			var kv = new PoKv{
 				Owner = IdUser.Zero
-			}.SetStrStr(Key, Id+""), Ct);
+			}.SetStrStr(Key, Id+"");
+			await SvcKv.BatSet(null, ToolAsyE.ToAsyE([kv]), Ct);
 			return Id;
 		}
 		return IdClient.FromLow64Base(
@@ -62,10 +64,10 @@ public class AppIniter{
 		var userCtxMgr = Sp.GetRSvc<IFrontendUserCtxMgr>();
 		var SvcKv = Sp.GetRSvc<ISvcKv>();
 
-		var CurLocalUserKv = await SvcKv.GetByOwnerEtKey(IdUser.Zero,KeysClientKv.CurLocalUserId,Ct);
-		var CurLoginUserKv = await SvcKv.GetByOwnerEtKey(IdUser.Zero,KeysClientKv.CurLoginUserId,Ct);
-		var RefreshToken = await SvcKv.GetByOwnerEtKey(IdUser.Zero, KeysClientKv.RefreshToken, Ct);
-		var RefreshTokenExpireAt = await SvcKv.GetByOwnerEtKey(IdUser.Zero, KeysClientKv.RefreshTokenExpireAt, Ct);
+		var CurLocalUserKv = await SvcKv.GetByOwnerEtKStr(IdUser.Zero,KeysClientKv.CurLocalUserId,Ct);
+		var CurLoginUserKv = await SvcKv.GetByOwnerEtKStr(IdUser.Zero,KeysClientKv.CurLoginUserId,Ct);
+		var RefreshToken = await SvcKv.GetByOwnerEtKStr(IdUser.Zero, KeysClientKv.RefreshToken, Ct);
+		var RefreshTokenExpireAt = await SvcKv.GetByOwnerEtKStr(IdUser.Zero, KeysClientKv.RefreshTokenExpireAt, Ct);
 		var UserCtx = userCtxMgr.GetUserCtx();
 		if(RefreshToken is not null){//TODO 判段是否過期
 			UserCtx.RefreshToken = RefreshToken.GetVStr();

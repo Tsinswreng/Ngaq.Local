@@ -8,6 +8,7 @@ using Ngaq.Core.Shared.Kv.Svc;
 using Ngaq.Core.Shared.User.Models.Po.User;
 using Ngaq.Core.Shared.Word.Models.Po.Kv;
 using Tsinswreng.CsCore;
+using Tsinswreng.CsTools;
 
 public class SvcTokenStorage:ISvcTokenStorage{
 	//public ISvcSecretKv SvcSecretKv;
@@ -23,10 +24,11 @@ public class SvcTokenStorage:ISvcTokenStorage{
 	[Impl]
 	public async Task<str?> GetRefreshToken(CT Ct){
 		//TODO 先直接存明文 後汶改加密
-		var kv = await SvcKv.GetByOwnerEtKey(
-			IdUser.Zero, KeysClientKv.RefreshToken, Ct
+		var kv = await SvcKv.BatGetByOwnerEtKStr(
+			null, ToolAsyE.ToAsyE([(IdUser.Zero, KeysClientKv.RefreshToken+"")]), Ct
 		);
-		return kv?.GetVStr();
+		var first = await kv.FirstOrDefaultAsync(Ct);
+		return first?.GetVStr();
 	}
 
 	[Obsolete]

@@ -13,7 +13,7 @@ using Tsinswreng.CsSql;
 using Z = SvcKv;
 public partial class SvcKv{
 
-	public Task<PoKv?> GetByOwnerEtKey(IdUser Owner, obj Key, CT Ct){
+	public Task<PoKv?> GetByOwnerEtKStr(IdUser Owner, obj Key, CT Ct){
 		return TxnWrapper.Wrap(FnGetByOwnerEtKey, Owner, Key, Ct);
 	}
 

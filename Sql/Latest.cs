@@ -9,6 +9,7 @@ using Ngaq.Core.Frontend.Kv;
 using Ngaq.Core.Shared.Kv.Svc;
 using Ngaq.Core.Shared.User.Models.Po.User;
 using Ngaq.Core.Infra.IF;
+using Tsinswreng.CsTools;
 
 
 /// 客戶端程序啓動旹初始化數據庫
@@ -129,11 +130,11 @@ public partial class DbIniter{
 		var PoKv = new PoKv();
 		var Path = KeysClientKv.ClientId;
 		PoKv.SetStrStr(Path, ClientId+"");
-		var Old = await SvcKv.GetByOwnerEtKey(IdUser.Zero, Path, Ct);
+		var Old = await SvcKv.BatGetByOwnerEtKStr(null, ToolAsyE.ToAsyE([(IdUser.Zero, Path+"")]), Ct);
 		if(Old is not null){
 			return NIL;
 		}
-		await SvcKv.Set(PoKv, Ct);
+		await SvcKv.BatSet(null, ToolAsyE.ToAsyE([PoKv]), Ct);
 		return NIL;
 	}
 }
