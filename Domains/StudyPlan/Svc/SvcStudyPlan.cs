@@ -91,7 +91,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan{
 	){
 		return await SqlCmdMkr.RunInTxnIfNoCtx(Ctx, Ct, async(Ctx)=>{
 			Pos = EnsureOwner(User.UserId, Pos);
-			await RepoPreFilter.BatInsert(Ctx, Pos, Ct);
+			await RepoPreFilter.BatAdd(Ctx, Pos, Ct);
 			return NIL;
 		});
 	}
@@ -103,7 +103,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan{
 	){
 		return await SqlCmdMkr.RunInTxnIfNoCtx(Ctx, Ct, async(Ctx)=>{
 			Pos = EnsureOwner(User.UserId, Pos);
-			await RepoWeightArg.BatInsert(Ctx, Pos, Ct);
+			await RepoWeightArg.BatAdd(Ctx, Pos, Ct);
 			return NIL;
 		});
 	}
@@ -115,7 +115,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan{
 	){
 		return await SqlCmdMkr.RunInTxnIfNoCtx(Ctx, Ct, async(Ctx)=>{
 			Pos = EnsureOwner(User.UserId, Pos);
-			await RepoWeightCalculator.BatInsert(Ctx, Pos, Ct);
+			await RepoWeightCalculator.BatAdd(Ctx, Pos, Ct);
 			return NIL;
 		});
 	}

@@ -16,9 +16,9 @@ public partial class DaoWord{
 		,CT Ct
 	){
 		var W = Words;
-		await RepoWord.BatInsert(Ctx, W.Select(x=>x.Word), Ct);
-		await RepoProp.BatInsert(Ctx, W.Select(x=>x.Props).Flat(), Ct);
-		await RepoLearn.BatInsert(Ctx, W.Select(x=>x.Learns).Flat(), Ct);
+		await RepoWord.BatAdd(Ctx, W.Select(x=>x.Word), Ct);
+		await RepoProp.BatAdd(Ctx, W.Select(x=>x.Props).Flat(), Ct);
+		await RepoLearn.BatAdd(Ctx, W.Select(x=>x.Learns).Flat(), Ct);
 		return NIL;
 	}
 	
@@ -31,7 +31,7 @@ public partial class DaoWord{
 	){
 		var nonNullWordIds = WordId.Where(x=>x is not null).Select(x=>x.Value);
 		await BatAltWordAfterUpd(Ctx, nonNullWordIds, Ct);
-		await RepoProp.BatInsert(Ctx, Props.Flat(), Ct);
+		await RepoProp.BatAdd(Ctx, Props.Flat(), Ct);
 		return NIL;
 	}
 
@@ -43,7 +43,7 @@ public partial class DaoWord{
 	){
 		var nonNullWordIds = WordId.Where(x=>x is not null).Select(x=>x.Value);
 		await BatAltWordAfterUpd(Ctx, nonNullWordIds, Ct);
-		await RepoLearn.BatInsert(Ctx, Learns.Flat(), Ct);
+		await RepoLearn.BatAdd(Ctx, Learns.Flat(), Ct);
 		return NIL;
 	}
 

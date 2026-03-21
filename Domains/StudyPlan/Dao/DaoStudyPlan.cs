@@ -29,7 +29,7 @@ public partial class DaoStudyPlan(
 	public async Task<IAsyncEnumerable<JnStudyPlan?>> BatGetStudyPlanById(
 		IDbFnCtx Ctx, IAsyncEnumerable<IdStudyPlan> Ids, CT Ct
 	){
-		var R = await RepoStudyPlan.BatSlctAggById<JnStudyPlan>(Ctx, Ids, Ct);
+		var R = await RepoStudyPlan.BatGetAggById<JnStudyPlan>(Ctx, Ids, Ct);
 		return R;
 	}
 }
