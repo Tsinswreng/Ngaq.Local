@@ -99,8 +99,8 @@ public partial class LocalTblMgrIniter{
 				return new IdDel().Value;
 			},FnRestore = (o)=>{
 				return null;
-			},FnSqlIsDel = ()=>t.QtCol<IPoBase>(x=>x.DelAt)+"=0"
-			,FnSqlIsNonDel = ()=>t.QtCol<IPoBase>(x=>x.DelAt)+"<>0"
+			},FnSqlIsDel = ()=>t.QtCol<IPoBase>(x=>x.DelAt)+"<>0"
+			,FnSqlIsNonDel = ()=>t.QtCol<IPoBase>(x=>x.DelAt)+"=0"
 		};
 
 		return o;
