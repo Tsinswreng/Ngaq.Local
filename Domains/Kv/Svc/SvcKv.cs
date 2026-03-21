@@ -26,18 +26,16 @@ public partial class SvcKv(
 	public Task<IAsyncEnumerable<PoKv?>> BatGetByOwnerEtKStr(
 		IDbFnCtx? Ctx, IAsyncEnumerable<(IdUser, str)> Owner_Key, CT Ct
 	) {
-		return SqlCmdMkr.RunInTxnIfNoCtx(Ctx, Ct, (Ctx)=>{
-			return DaoKv.BatGetByOwnerEtKStr(Ctx, Owner_Key, Ct);
-		});
+		Ctx ??= new DbFnCtx();
+		return DaoKv.BatGetByOwnerEtKStr(Ctx, Owner_Key, Ct);
 	}
 
 	public Task<IAsyncEnumerable<PoKv?>> BatGetByOwnerEtKI64(
 		IDbFnCtx? Ctx, IAsyncEnumerable<(IdUser, i64)> Owner_Key
 		,CT Ct
 	){
-		return SqlCmdMkr.RunInTxnIfNoCtx(Ctx, Ct, (Ctx)=>{
-			return DaoKv.BatGetByOwnerEtKI64(Ctx, Owner_Key, Ct);
-		});
+		Ctx ??= new DbFnCtx();
+		return DaoKv.BatGetByOwnerEtKI64(Ctx, Owner_Key, Ct);
 	}
 	
 	public async Task<nil> BatSet(

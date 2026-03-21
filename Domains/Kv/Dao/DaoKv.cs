@@ -41,7 +41,7 @@ var Sql = T.SqlSplicer().Select("*").From().Where1()
 .AndEq(x=>x.Owner, m=>m.Many(owners))
 .AndEq(x=>x.KI64, m=>m.Many(keys));
 		var dicts = SqlCmdMkr.RunDupliSql(Ctx, Sql, Ct);
-		return dicts.Select(x=>T.DbDictToEntity(x));
+		return dicts.Select(x=>x is null ? null : T.DbDictToEntity(x));
 	}
 	
 	public async Task<IAsyncEnumerable<PoKv?>> BatGetByOwnerEtKStr(
@@ -56,7 +56,7 @@ var Sql = T.SqlSplicer().Select("*").From().Where1()
 .AndEq(x=>x.Owner, m=>m.Many(owners))
 .AndEq(x=>x.KStr, m=>m.Many(keys));
 		var dicts = SqlCmdMkr.RunDupliSql(Ctx, Sql, Ct);
-		return dicts.Select(x=>T.DbDictToEntity(x));
+		return dicts.Select(x=>x is null ? null : T.DbDictToEntity(x));
 	}
 	
 }
