@@ -30,7 +30,7 @@ public partial class DaoWord(
 	public Task<nil> BatAltWordAfterUpd(
 		IDbFnCtx Ctx, IAsyncEnumerable<IdWord> Ids, CT Ct
 	){
-		return RepoWord.AsAppRepo().BatUpd_BizUpdatedAt(Ctx, Ids, Ct);
+		return RepoWord.AsAppRepo().BatBizTouch(Ctx, Ids, Ct);
 	}
 
 

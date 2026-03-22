@@ -57,33 +57,7 @@ public partial class SvcWord(
 	,ILogger Logger
 )
 	:ISvcWord
-	,ISvcWordV2
 {
-	#region V2
-	[Impl(typeof(ISvcWordV2))]
-	public async Task<IAsyncEnumerable<JnWord>> GetWordsToLearn(
-		IDbFnCtx? Ctx, IUserCtx User
-	){
-		throw new NotImplementedException();
-	}
-
-	[Impl(typeof(ISvcWordV2))]
-	public Task<IAsyncEnumerable<JnWord>> GetWordsToLearn(
-		IDbFnCtx? Ctx, IUserCtx User, PreFilter? Prefilter
-	){
-		throw new NotImplementedException();
-	}
-
-	[Impl(typeof(ISvcWordV2))]
-	public Task<nil> BatAddNewLearnRecord(
-		IDbFnCtx? Ctx, IUserCtx User
-		,IAsyncEnumerable<PoWordLearn> PoWordLearnAsyE
-	){
-		throw new NotImplementedException();
-	}
-	
-	#endregion V2
-
 	public static PoWord SetPoWordOwner(
 		IUserCtx UserCtx
 		,PoWord PoWord

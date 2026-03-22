@@ -38,7 +38,7 @@ public partial class AppRepo<
 	}
 	
 	[Impl]
-	public async Task<nil> BatUpd_BizUpdatedAt(
+	public async Task<nil> BatBizTouch(
 		IDbFnCtx Ctx, IAsyncEnumerable<TId> Ids, CT Ct
 	){
 		var Now = Tempus.Now();
