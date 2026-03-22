@@ -7,8 +7,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="../Tsinswreng.CsStrAcc/proj/Tsinswreng.CsStrAcc/Tsinswreng.CsStrAcc.csproj" />
-		<ProjectReference Include="../Tsinswreng.CsStrAcc/proj/Tsinswreng.CsStrAcc.SrcGen/Tsinswreng.CsStrAcc.SrcGen.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+		<ProjectReference Include="../Tsinswreng.Srefl/proj/Tsinswreng.Srefl/Tsinswreng.Srefl.csproj" />
+		<ProjectReference Include="../Tsinswreng.Srefl/proj/Tsinswreng.Srefl.SrcGen/Tsinswreng.Srefl.SrcGen.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 	</ItemGroup>
 
 	<ItemGroup>

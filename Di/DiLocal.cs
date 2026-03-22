@@ -24,7 +24,7 @@ using Ngaq.Core.Shared.Word.Svc;
 using Ngaq.Core.Infra.Url;
 using Ngaq.Core.Shared.Dictionary.Svc;
 using Ngaq.Local.Domains.Dictionary.Svc;
-using Tsinswreng.CsStrAcc;
+using Tsinswreng.Srefl;
 
 
 namespace Ngaq.Local.Di;

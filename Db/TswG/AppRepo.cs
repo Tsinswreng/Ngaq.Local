@@ -4,7 +4,7 @@ using Tsinswreng.CsSql;
 using Ngaq.Core.Infra;
 using Tsinswreng.CsCore;
 using Ngaq.Core.Shared.Base.Models.Po;
-using Tsinswreng.CsStrAcc;
+using Tsinswreng.Srefl;
 
 public partial class AppRepo<
 	TEntity
