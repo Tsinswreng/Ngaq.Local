@@ -47,17 +47,10 @@ public partial class DaoStudyPlan(
 	){
 		var Sql = TP.SqlSplicer().Select("*").From().Where1()
 		.AndEq(x=>x.Owner, x=>x.One(Req.Owner))
+		.OrderByDesc(x=>x.BizUpdatedAt)
 		.LimOfst(Req.PageQry)
 		;
-		var r = SqlCmdMkr.RunDupliSql(Ctx, Sql, Ct);
-		Req.PageQry.ToPageAsyE(r);
-		throw new NotImplementedException();
-		
-		
+		var r = SqlCmdMkr.RunDupliSql(Ctx, TP, Sql, Ct);
+		return Req.PageQry.ToPageAsyE(r);
 	}
-	
-	
-	
-	
-	
 }
