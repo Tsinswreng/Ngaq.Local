@@ -53,7 +53,7 @@ public partial class DaoStudyPlan(
 			TP.QtCol(x=>x.BizUpdatedAt)+"Desc"
 			,TP.QtCol(x=>x.Id)+"Desc"
 		])
-		.Raw($"LIMIT {Req.PageQry.PageSize} OFFSET {Req.PageQry.Offset_()}")
+		.LimOfst(Req.PageQry)
 		;
 		var r = SqlCmdMkr.RunDupliSql(Ctx, TP, Sql, Ct);
 		return Req.PageQry.ToPageAsyE(r);
@@ -73,7 +73,7 @@ public partial class DaoStudyPlan(
 			TS.QtCol(x=>x.BizUpdatedAt)+"Desc"
 			,TS.QtCol(x=>x.Id)+"Desc"
 		])
-		.Raw($"LIMIT {Req.PageQry.PageSize} OFFSET {Req.PageQry.Offset_()}")
+		.LimOfst(Req.PageQry)
 		;
 		var r = SqlCmdMkr.RunDupliSql(Ctx, TS, Sql, Ct);
 		return Req.PageQry.ToPageAsyE(r);
@@ -93,7 +93,7 @@ public partial class DaoStudyPlan(
 			TWA.QtCol(x=>x.BizUpdatedAt)+"Desc"
 			,TWA.QtCol(x=>x.Id)+"Desc"
 		])
-		.Raw($"LIMIT {Req.PageQry.PageSize} OFFSET {Req.PageQry.Offset_()}")
+		.LimOfst(Req.PageQry)
 		;
 		var r = SqlCmdMkr.RunDupliSql(Ctx, TWA, Sql, Ct);
 		return Req.PageQry.ToPageAsyE(r);
@@ -112,7 +112,7 @@ public partial class DaoStudyPlan(
 		Sql.OrderBy([
 			TWC.QtCol(x=>x.Id)+"Desc"
 		])
-		.Raw($"LIMIT {Req.PageQry.PageSize} OFFSET {Req.PageQry.Offset_()}")
+		.LimOfst(Req.PageQry)
 		;
 		var r = SqlCmdMkr.RunDupliSql(Ctx, TWC, Sql, Ct);
 		return Req.PageQry.ToPageAsyE(r);
