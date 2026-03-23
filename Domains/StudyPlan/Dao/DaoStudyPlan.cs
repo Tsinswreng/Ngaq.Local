@@ -38,6 +38,8 @@ public partial class DaoStudyPlan(
 	public class ReqPagePreFilter{
 		public IdUser Owner{get;set;}
 		public IPageQry PageQry{get;set;}
+		[Doc(@$"若空則不用此字段作篩選")]
+		public str? UniqNameSearch{get;set;} = null;
 		
 	}
 	
@@ -46,8 +48,14 @@ public partial class DaoStudyPlan(
 		,CT Ct
 	){
 		var Sql = TP.SqlSplicer().Select("*").From().Where1()
-		.AndEq(x=>x.Owner, x=>x.One(Req.Owner))
-		.OrderByDesc(x=>x.BizUpdatedAt)
+		.AndEq(x=>x.Owner, x=>x.One(Req.Owner));
+		if(!string.IsNullOrEmpty(Req.UniqNameSearch)){
+			Sql.Bool(x=>x.UniqName, "LIKE", x=>x.One("%"+Req.UniqNameSearch+"%"));
+		}
+		Sql.OrderBy([
+			TP.QtCol(x=>x.BizUpdatedAt)+"Desc"
+			,TP.QtCol(x=>x.Id)+"Desc"
+		])
 		.LimOfst(Req.PageQry)
 		;
 		var r = SqlCmdMkr.RunDupliSql(Ctx, TP, Sql, Ct);
