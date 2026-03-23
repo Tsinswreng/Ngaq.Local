@@ -15,7 +15,7 @@ public partial class AppRepo<
 	,IAppRepo<TEntity, TId>
 	where TEntity : class, new()
 {
-	public AppRepo(ITblMgr TblMgr, ISqlCmdMkr SqlCmdMkr, IPropAccessorMgr DictMapper) : base(TblMgr, SqlCmdMkr, DictMapper) {
+	public AppRepo(ITblMgr TblMgr, ISqlCmdMkr SqlCmdMkr, IPropAccessorReg DictMapper) : base(TblMgr, SqlCmdMkr, DictMapper) {
 
 	}
 

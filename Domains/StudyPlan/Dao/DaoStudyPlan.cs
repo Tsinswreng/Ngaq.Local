@@ -6,6 +6,7 @@ using Ngaq.Core.Shared.StudyPlan.Models.Po.PreFilter;
 using Ngaq.Core.Shared.StudyPlan.Models.Po.StudyPlan;
 using Ngaq.Core.Shared.StudyPlan.Models.Po.WeightArg;
 using Ngaq.Core.Shared.StudyPlan.Models.Po.WeightCalculator;
+using Ngaq.Core.Shared.User.Models.Po.User;
 using Ngaq.Local.Db.TswG;
 using Tsinswreng.CsCore;
 using Tsinswreng.CsPage;
@@ -32,4 +33,30 @@ public partial class DaoStudyPlan(
 		var R = await RepoStudyPlan.BatGetAggById<JnStudyPlan>(Ctx, Ids, Ct);
 		return R;
 	}
+	
+	
+	public class ReqPagePreFilter{
+		public IdUser Owner{get;set;}
+		public IPageQry PageQry{get;set;}
+		
+	}
+	
+	public async Task<IPageAsyE<PoPreFilter>> PagePreFilter(
+		IDbFnCtx Ctx, ReqPagePreFilter Req
+		,CT Ct
+	){
+		var Sql = TP.SqlSplicer().Select("*").From().Where1()
+		.AndEq(x=>x.Owner, x=>x.One(Req.Owner))
+		.LimOfst(Req.PageQry)
+		;
+		var r = SqlCmdMkr.RunDupliSql(Ctx, Sql, Ct);
+		Req.PageQry.ToPageAsyE(r);
+		
+		
+	}
+	
+	
+	
+	
+	
 }

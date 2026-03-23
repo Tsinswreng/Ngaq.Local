@@ -36,7 +36,7 @@ public static class DiLocal{
 		z.AddSingleton<I_GetBaseDir>(BaseDirMgr.Inst);
 		z.SetupDbCfg().SetupRepos().SetupSvcs();
 //Core詞典映射
-z.AddSingleton<IPropAccessorMgr>(CoreDictMapper.Inst.PropAccessorMgr);
+z.AddSingleton<IPropAccessorReg>(CoreDictMapper.Inst.PropAccessorReg);
 return z;
 	}
 
