@@ -25,6 +25,13 @@ using Ngaq.Core.Infra.Url;
 using Ngaq.Core.Shared.Dictionary.Svc;
 using Ngaq.Local.Domains.Dictionary.Svc;
 using Tsinswreng.Srefl;
+using Ngaq.Core.Shared.StudyPlan.Models.Po.StudyPlan;
+using Ngaq.Core.Shared.StudyPlan.Models.Po.WeightArg;
+using Ngaq.Core.Shared.StudyPlan.Models.Po.WeightCalculator;
+using Ngaq.Core.Shared.StudyPlan.Models.Po.PreFilter;
+using Ngaq.Local.Domains.StudyPlan.Dao;
+using Ngaq.Local.Domains.StudyPlan.Svc;
+using Ngaq.Core.Shared.StudyPlan.Svc;
 
 
 namespace Ngaq.Local.Di;
@@ -100,6 +107,10 @@ z.AddScoped<
 	, AppRepo<PoWordLearn, IdWordLearn>
 >();
 z.AddRepoScoped<PoKv, IdKv>();
+z.AddRepoScoped<PoStudyPlan, IdStudyPlan>();
+z.AddRepoScoped<PoWeightArg, IdWeightArg>();
+z.AddRepoScoped<PoWeightCalculator, IdWeightCalculator>();
+z.AddRepoScoped<PoPreFilter, IdPreFilter>();
 //z.AddScoped<IRunInTxn, AdoTxnRunner>();
 return z;
 	}
@@ -109,10 +120,12 @@ return z;
 	static IServiceCollection SetupSvcs(this IServiceCollection z){
 z.AddScoped<DaoWord, DaoWord>();
 z.AddScoped<DaoKv, DaoKv>();
+z.AddScoped<DaoStudyPlan, DaoStudyPlan>();
 z.AddScoped<ISvcParseWordList, SvcParseWordList>();
 z.AddScoped<ISvcWord, SvcWord>();
 z.AddScoped<ISvcDictionary, global::Ngaq.Local.Domains.Dictionary.Svc.SvcDictionary>();
 z.AddScoped<ISvcKv, SvcKv>();
+z.AddScoped<ISvcStudyPlan, SvcStudyPlan>();
 z.AddScoped<IImgGetter, SvcImg>();
 return z;
 	}

@@ -2,6 +2,7 @@ namespace Ngaq.Local.Domains.StudyPlan.Dao;
 
 using Ngaq.Core.Shared.Base.Models.Po;
 using Ngaq.Core.Shared.StudyPlan.Models;
+using Ngaq.Core.Shared.StudyPlan.Models.Req;
 using Ngaq.Core.Shared.StudyPlan.Models.Po.PreFilter;
 using Ngaq.Core.Shared.StudyPlan.Models.Po.StudyPlan;
 using Ngaq.Core.Shared.StudyPlan.Models.Po.WeightArg;
@@ -25,6 +26,8 @@ public partial class DaoStudyPlan(
 ) {
 	ITable<PoStudyPlan> TS = TblMgr.GetTbl<PoStudyPlan>();
 	ITable<PoPreFilter> TP = TblMgr.GetTbl<PoPreFilter>();
+	ITable<PoWeightArg> TWA = TblMgr.GetTbl<PoWeightArg>();
+	ITable<PoWeightCalculator> TWC = TblMgr.GetTbl<PoWeightCalculator>();
 	/// 更新权重参数后触发业务更新时间
 	
 	public IAsyncEnumerable<JnStudyPlan?> BatGetStudyPlanById(
@@ -35,13 +38,6 @@ public partial class DaoStudyPlan(
 	}
 	
 	
-	public class ReqPagePreFilter{
-		public IdUser Owner{get;set;}
-		public IPageQry PageQry{get;set;}
-		[Doc(@$"若空則不用此字段作篩選")]
-		public str? UniqNameSearch{get;set;} = null;
-		
-	}
 	
 	public async Task<IPageAsyE<PoPreFilter>> PagePreFilter(
 		IDbFnCtx Ctx, ReqPagePreFilter Req
@@ -50,15 +46,75 @@ public partial class DaoStudyPlan(
 		var Sql = TP.SqlSplicer().Select("*").From().Where1()
 		.AndEq(x=>x.Owner, x=>x.One(Req.Owner));
 		if(!string.IsNullOrEmpty(Req.UniqNameSearch)){
+			Sql.And();
 			Sql.Bool(x=>x.UniqName, "LIKE", x=>x.One("%"+Req.UniqNameSearch+"%"));
 		}
 		Sql.OrderBy([
 			TP.QtCol(x=>x.BizUpdatedAt)+"Desc"
 			,TP.QtCol(x=>x.Id)+"Desc"
 		])
-		.LimOfst(Req.PageQry)
+		.Raw($"LIMIT {Req.PageQry.PageSize} OFFSET {Req.PageQry.Offset_()}")
 		;
 		var r = SqlCmdMkr.RunDupliSql(Ctx, TP, Sql, Ct);
+		return Req.PageQry.ToPageAsyE(r);
+	}
+
+	public async Task<IPageAsyE<PoStudyPlan>> PageStudyPlan(
+		IDbFnCtx Ctx, ReqPageStudyPlan Req
+		,CT Ct
+	){
+		var Sql = TS.SqlSplicer().Select("*").From().Where1()
+		.AndEq(x=>x.Owner, x=>x.One(Req.Owner));
+		if(!string.IsNullOrEmpty(Req.UniqNameSearch)){
+			Sql.And();
+			Sql.Bool(x=>x.UniqName, "LIKE", x=>x.One("%"+Req.UniqNameSearch+"%"));
+		}
+		Sql.OrderBy([
+			TS.QtCol(x=>x.BizUpdatedAt)+"Desc"
+			,TS.QtCol(x=>x.Id)+"Desc"
+		])
+		.Raw($"LIMIT {Req.PageQry.PageSize} OFFSET {Req.PageQry.Offset_()}")
+		;
+		var r = SqlCmdMkr.RunDupliSql(Ctx, TS, Sql, Ct);
+		return Req.PageQry.ToPageAsyE(r);
+	}
+
+	public async Task<IPageAsyE<PoWeightArg>> PageWeightArg(
+		IDbFnCtx Ctx, ReqPageWeightArg Req
+		,CT Ct
+	){
+		var Sql = TWA.SqlSplicer().Select("*").From().Where1()
+		.AndEq(x=>x.Owner, x=>x.One(Req.Owner));
+		if(!string.IsNullOrEmpty(Req.UniqNameSearch)){
+			Sql.And();
+			Sql.Bool(x=>x.UniqName, "LIKE", x=>x.One("%"+Req.UniqNameSearch+"%"));
+		}
+		Sql.OrderBy([
+			TWA.QtCol(x=>x.BizUpdatedAt)+"Desc"
+			,TWA.QtCol(x=>x.Id)+"Desc"
+		])
+		.Raw($"LIMIT {Req.PageQry.PageSize} OFFSET {Req.PageQry.Offset_()}")
+		;
+		var r = SqlCmdMkr.RunDupliSql(Ctx, TWA, Sql, Ct);
+		return Req.PageQry.ToPageAsyE(r);
+	}
+
+	public async Task<IPageAsyE<PoWeightCalculator>> PageWeightCalculator(
+		IDbFnCtx Ctx, ReqPageWeightCalculator Req
+		,CT Ct
+	){
+		var Sql = TWC.SqlSplicer().Select("*").From().Where1()
+		.AndEq(x=>x.Owner, x=>x.One(Req.Owner));
+		if(!string.IsNullOrEmpty(Req.UniqNameSearch)){
+			Sql.And();
+			Sql.Bool(x=>x.UniqName, "LIKE", x=>x.One("%"+Req.UniqNameSearch+"%"));
+		}
+		Sql.OrderBy([
+			TWC.QtCol(x=>x.Id)+"Desc"
+		])
+		.Raw($"LIMIT {Req.PageQry.PageSize} OFFSET {Req.PageQry.Offset_()}")
+		;
+		var r = SqlCmdMkr.RunDupliSql(Ctx, TWC, Sql, Ct);
 		return Req.PageQry.ToPageAsyE(r);
 	}
 }
