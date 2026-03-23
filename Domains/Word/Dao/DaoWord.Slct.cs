@@ -28,12 +28,12 @@ public partial class DaoWord{
 
 	
 	
-	public async Task<IAsyncEnumerable<JnWord?>> BatSlctJnWordByIdWithDel(
+	public IAsyncEnumerable<JnWord?> BatSlctJnWordByIdWithDel(
 		IDbFnCtx Ctx
 		,IAsyncEnumerable<IdWord> Ids
 		,CT Ct
 	){
-		return await RepoWord.BatGetAggById<JnWord>(Ctx, Ids, Ct);
+		return RepoWord.BatGetAggById<JnWord>(Ctx, Ids, Ct);
 	}
 
 	static str SqlFilterDel(
@@ -131,7 +131,7 @@ AND {T.QtCol(PWordId)} IN ({str.Join(",", numParams)})
 	public async Task<Func<
 		IList<IdWord>
 		,CT
-		,Task<IAsyncEnumerable<IStr_Any>>
+		,IAsyncEnumerable<IStr_Any>
 	>> FnScltAllByWordIds(
 		IDbFnCtx Ctx
 		,ITable Tbl
@@ -152,7 +152,7 @@ WHERE 1=1
 AND {T.QtCol(PWordId)} IN ({str.Join(",", numParams)})
 """;
 		var SqlCmd = await Ctx.PrepareToDispose(SqlCmdMkr, Sql, Ct);
-		return async(IdWords ,Ct)=>{
+		return (IdWords ,Ct)=>{
 			var Arg = ArgDict.Mk(T)
 			.AddManyT(numParams, IdWords);
 			var DbDict = Ctx.RunCmd(SqlCmd, Arg).AsyE1d(Ct);

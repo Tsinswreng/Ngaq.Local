@@ -24,7 +24,7 @@ public class SvcTokenStorage:ISvcTokenStorage{
 	[Impl]
 	public async Task<str?> GetRefreshToken(CT Ct){
 		//TODO 先直接存明文 後汶改加密
-		var kv = await SvcKv.BatGetByOwnerEtKStr(
+		var kv = SvcKv.BatGetByOwnerEtKStr(
 			null, ToolAsyE.ToAsyE([(IdUser.Zero, KeysClientKv.RefreshToken+"")]), Ct
 		);
 		var first = await kv.FirstOrDefaultAsync(Ct);

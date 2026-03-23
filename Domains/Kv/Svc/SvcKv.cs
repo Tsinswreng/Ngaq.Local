@@ -23,14 +23,14 @@ public partial class SvcKv(
 	IRepo<PoKv, IdKv> RepoKv = RepoKv;
 	TxnWrapper TxnWrapper = TxnWrapper;
 
-	public Task<IAsyncEnumerable<PoKv?>> BatGetByOwnerEtKStr(
+	public IAsyncEnumerable<PoKv?> BatGetByOwnerEtKStr(
 		IDbFnCtx? Ctx, IAsyncEnumerable<(IdUser, str)> Owner_Key, CT Ct
 	) {
 		Ctx ??= new DbFnCtx();
 		return DaoKv.BatGetByOwnerEtKStr(Ctx, Owner_Key, Ct);
 	}
 
-	public Task<IAsyncEnumerable<PoKv?>> BatGetByOwnerEtKI64(
+	public IAsyncEnumerable<PoKv?> BatGetByOwnerEtKI64(
 		IDbFnCtx? Ctx, IAsyncEnumerable<(IdUser, i64)> Owner_Key
 		,CT Ct
 	){

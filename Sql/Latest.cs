@@ -50,11 +50,11 @@ public partial class DbIniter{
 
 	public async Task<Func<
 		CT
-		,Task<IAsyncEnumerable<IDictionary<str, object?>>>
+		,IAsyncEnumerable<IDictionary<str, object?>>
 	>> FnSelectSqliteMaster(IDbFnCtx DbFnCtx, CT Ct){
 		var Sql = "SELECT * FROM sqlite_master";
 		var Cmd = await SqlCmdMkr.MkCmd(DbFnCtx, Sql, Ct);
-		var Fn = async(CT Ct)=>{
+		var Fn = (CT Ct)=>{
 			return Cmd.AsyE1d(Ct);
 		};
 		return Fn;
@@ -91,7 +91,7 @@ public partial class DbIniter{
 		var MkSchema = await FnMkSchema(DbFnCtx, Ct);
 		var SelectSqliteMaster = await FnSelectSqliteMaster(DbFnCtx, Ct);
 		var Fn = async(CT Ct)=>{
-			var Items = await SelectSqliteMaster(Ct);
+			var Items = SelectSqliteMaster(Ct);
 			var First = await Items.FirstOrDefaultAsync(Ct);
 			if(First != null){
 				// 已有數據庫：執行未完成的遷移
@@ -130,8 +130,9 @@ public partial class DbIniter{
 		var PoKv = new PoKv();
 		var Path = KeysClientKv.ClientId;
 		PoKv.SetStrStr(Path, ClientId+"");
-		var Old = await SvcKv.BatGetByOwnerEtKStr(null, ToolAsyE.ToAsyE([(IdUser.Zero, Path+"")]), Ct);
-		if(Old is not null){
+		var olds = SvcKv.BatGetByOwnerEtKStr(null, ToolAsyE.ToAsyE([(IdUser.Zero, Path+"")]), Ct);
+		var old = await olds.FirstOrDefaultAsync(Ct);
+		if(old is not null){
 			return NIL;
 		}
 		await SvcKv.BatSet(null, ToolAsyE.ToAsyE([PoKv]), Ct);

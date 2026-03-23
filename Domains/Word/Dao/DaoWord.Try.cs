@@ -25,7 +25,7 @@ using Str_Any = System.Collections.Generic.Dictionary<str, obj?>;
 
 public partial class DaoWord{
 
-	public async Task<IAsyncEnumerable<IdWord?>> BatSlctIdByOwnerHeadLangWithDel(
+	public IAsyncEnumerable<IdWord?> BatSlctIdByOwnerHeadLangWithDel(
 		IDbFnCtx Ctx, IUserCtx User, IAsyncEnumerable<Head_Lang> HeadLangs, CT Ct
 	){
 		var Sql = T.SqlSplicer().Select(x=>x.Id).From().Where1()
@@ -34,7 +34,7 @@ public partial class DaoWord{
 		.AndEq(x=>x.Lang, out var PLang)
 		;
 		
-		await using var batch = SqlCmdMkr.AutoBatch<Head_Lang, IAsyncEnumerable<IdWord?>>(
+		var batch = SqlCmdMkr.AutoBatch<Head_Lang, IAsyncEnumerable<IdWord?>>(
 			Ctx, Sql,
 			async(z, HeadLangs, Ct)=>{
 				var Head = HeadLangs.Select(x=>x.Head);
@@ -59,7 +59,7 @@ public partial class DaoWord{
 	}
 
 	/// Demonstrate new style: define sql and arg binding in one chain.
-	public async Task<IAsyncEnumerable<IdWord?>> BatSlctIdByOwnerHeadLangWithDel_New(
+	public IAsyncEnumerable<IdWord?> BatSlctIdByOwnerHeadLangWithDel_New(
 		IDbFnCtx Ctx, IUserCtx User, IEnumerable<Head_Lang> HeadLangs, CT Ct
 	){
 		var Heads = HeadLangs.Select(x=>x.Head);

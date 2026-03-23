@@ -29,7 +29,7 @@ public partial class DaoKv(
 		get{return TblMgr.GetTbl<PoKv>();}
 	}
 
-	public async Task<IAsyncEnumerable<PoKv?>> BatGetByOwnerEtKI64(
+	public IAsyncEnumerable<PoKv?> BatGetByOwnerEtKI64(
 		IDbFnCtx Ctx
 		,IAsyncEnumerable<(IdUser Owner, i64 Key)> Owner_Key
 		,CT Ct
@@ -44,7 +44,7 @@ var Sql = T.SqlSplicer().Select("*").From().Where1()
 		return dicts.Select(x=>x is null ? null : T.DbDictToEntity(x));
 	}
 	
-	public async Task<IAsyncEnumerable<PoKv?>> BatGetByOwnerEtKStr(
+	public IAsyncEnumerable<PoKv?> BatGetByOwnerEtKStr(
 		IDbFnCtx Ctx
 		,IAsyncEnumerable<(IdUser Owner, str Key)> Owner_Key
 		,CT Ct
