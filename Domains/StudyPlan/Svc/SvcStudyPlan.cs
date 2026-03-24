@@ -24,7 +24,6 @@ public partial class SvcStudyPlan:ISvcStudyPlan{
 	ISvcKv SvcKv;
 	DaoStudyPlan DaoStudyPlan;
 	ISqlCmdMkr SqlCmdMkr;
-	TxnWrapper TxnWrapper;
 	IRepo<PoStudyPlan, IdStudyPlan> RepoStudyPlan;
 	IRepo<PoWeightArg, IdWeightArg> RepoWeightArg;
 	IRepo<PoWeightCalculator, IdWeightCalculator> RepoWeightCalculator;
@@ -33,7 +32,6 @@ public partial class SvcStudyPlan:ISvcStudyPlan{
 		ISvcKv SvcKv
 		,DaoStudyPlan DaoStudyPlan
 		,ISqlCmdMkr SqlCmdMkr
-		,TxnWrapper TxnWrapper
 		,IRepo<PoStudyPlan, IdStudyPlan> RepoStudyPlan
 		,IRepo<PoWeightArg, IdWeightArg> RepoWeightArg
 		,IRepo<PoWeightCalculator, IdWeightCalculator> RepoWeightCalculator
@@ -42,21 +40,10 @@ public partial class SvcStudyPlan:ISvcStudyPlan{
 		this.SvcKv = SvcKv;
 		this.DaoStudyPlan = DaoStudyPlan;
 		this. SqlCmdMkr = SqlCmdMkr;
-		this.TxnWrapper = TxnWrapper;
 		this.RepoStudyPlan = RepoStudyPlan;
 		this.RepoWeightArg = RepoWeightArg;
 		this.RepoWeightCalculator = RepoWeightCalculator;
 		this.RepoPreFilter = RepoPreFilter;
-	}
-
-	
-
-	public async Task<IdStudyPlan?> GetCurStudyPlanId(
-		IDbFnCtx? Ctx
-		,IUserCtx User
-		,CT Ct
-	){
-		return await TxnWrapper.Wrap(FnGetCurStudyPlanId, User, Ct);
 	}
 
 	public async Task<nil> SetCurStudyPlanId(
@@ -155,23 +142,18 @@ public partial class SvcStudyPlan:ISvcStudyPlan{
 		Ctx ??= new DbFnCtx();
 		return await DaoStudyPlan.PageWeightCalculator(Ctx, Req, Ct);
 	}
-
 	
-	[Obsolete]
-	public async Task<Func<
-		IUserCtx, IdStudyPlan
-		,CT,Task<nil>
-	>> FnSetCurStudyPlanId(
-		IDbFnCtx Ctx, CT Ct
-	){
-		var fnSet = await SvcKv.FnSet(Ctx, Ct);
-		return async (UserCtx, StudyPlanId, Ct)=>{
-			var kv = new PoKv();
-			kv.Owner = UserCtx.UserId;
-			kv.SetStrStr(KeysClientKv.CurStudyPlanId, StudyPlanId+"");
-			await fnSet(kv, Ct);
-			return NIL;
-		};
+	public async Task<IdStudyPlan?> GetCurStudyPlanId(IDbFnCtx? Ctx, IUserCtx User, CT Ct){
+		Ctx ??= new DbFnCtx();
+		var kv = await SvcKv.BatGetByOwnerEtKStr(
+			Ctx
+			,ToolAsyE.ToAsyE([(User.UserId, KeysClientKv.CurStudyPlanId+"")])
+			,Ct
+		).FirstOrDefaultAsync(Ct);
+		if(kv is null || string.IsNullOrEmpty(kv.VStr)){
+			return null;
+		}
+		return IdStudyPlan.FromLow64Base(kv?.VStr??"");
 	}
 	
 	[Obsolete]
