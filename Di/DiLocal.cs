@@ -119,10 +119,12 @@ return z;
 //服務類
 	static IServiceCollection SetupSvcs(this IServiceCollection z){
 z.AddScoped<DaoWord, DaoWord>();
+	z.AddScoped<DaoWordV2, DaoWordV2>();
 z.AddScoped<DaoKv, DaoKv>();
 z.AddScoped<DaoStudyPlan, DaoStudyPlan>();
 z.AddScoped<ISvcParseWordList, SvcParseWordList>();
 z.AddScoped<ISvcWord, SvcWord>();
+	z.AddScoped<ISvcWordV2, SvcWordV2>();
 z.AddScoped<ISvcDictionary, global::Ngaq.Local.Domains.Dictionary.Svc.SvcDictionary>();
 z.AddScoped<ISvcKv, SvcKv>();
 z.AddScoped<ISvcStudyPlan, SvcStudyPlan>();
