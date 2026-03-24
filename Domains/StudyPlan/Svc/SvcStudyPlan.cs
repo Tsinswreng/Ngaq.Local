@@ -16,11 +16,11 @@ using Ngaq.Local.Domains.StudyPlan.Dao;
 using Tsinswreng.CsPage;
 using Tsinswreng.CsSql;
 using Tsinswreng.CsTools;
+using Ngaq.Core.Infra;
 
 namespace Ngaq.Local.Domains.StudyPlan.Svc;
 
 public partial class SvcStudyPlan:ISvcStudyPlan{
-	
 	ISvcKv SvcKv;
 	DaoStudyPlan DaoStudyPlan;
 	ISqlCmdMkr SqlCmdMkr;
@@ -47,15 +47,14 @@ public partial class SvcStudyPlan:ISvcStudyPlan{
 	}
 
 	public async Task<nil> SetCurStudyPlanId(
-		IDbFnCtx? Ctx, IUserCtx User, IdStudyPlan StudyPlanId, CT Ct
+		IDbUserCtx Ctx, IdStudyPlan StudyPlanId, CT Ct
 	){
-		return await SqlCmdMkr.RunInTxnIfNoCtx(Ctx, Ct, async(Ctx)=>{
+		return await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(ctx)=>{
 			var kv = new PoKv();
-			kv.Owner = User.UserId;
+			kv.Owner = Ctx.UserCtx.UserId;
 			kv.SetStrStr(KeysClientKv.CurStudyPlanId, StudyPlanId+"");
-			return await SvcKv.BatSet(Ctx, ToolAsyE.ToAsyE([kv]), Ct);
+			return await SvcKv.BatSet(ctx, ToolAsyE.ToAsyE([kv]), Ct);
 		});
-		
 	}
 
 	public IAsyncEnumerable<T> EnsureOwner<T>(
@@ -72,82 +71,81 @@ public partial class SvcStudyPlan:ISvcStudyPlan{
 	}
 	
 	public async Task<nil> BatAddPreFilter(
-		IDbFnCtx? Ctx, IUserCtx User
+		IDbUserCtx Ctx
 		, IAsyncEnumerable<PoPreFilter> Pos
 		,CT Ct
 	){
-		return await SqlCmdMkr.RunInTxnIfNoCtx(Ctx, Ct, async(Ctx)=>{
-			Pos = EnsureOwner(User.UserId, Pos);
-			await RepoPreFilter.BatAdd(Ctx, Pos, Ct);
+		return await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(ctx)=>{
+			Pos = EnsureOwner(Ctx.UserCtx.UserId, Pos);
+			await RepoPreFilter.BatAdd(ctx, Pos, Ct);
 			return NIL;
 		});
 	}
 	
 	public async Task<nil> BatAddWeightArg(
-		IDbFnCtx? Ctx, IUserCtx User
+		IDbUserCtx Ctx
 		, IAsyncEnumerable<PoWeightArg> Pos
 		,CT Ct
 	){
-		return await SqlCmdMkr.RunInTxnIfNoCtx(Ctx, Ct, async(Ctx)=>{
-			Pos = EnsureOwner(User.UserId, Pos);
-			await RepoWeightArg.BatAdd(Ctx, Pos, Ct);
+		return await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(ctx)=>{
+			Pos = EnsureOwner(Ctx.UserCtx.UserId, Pos);
+			await RepoWeightArg.BatAdd(ctx, Pos, Ct);
 			return NIL;
 		});
 	}
 	
 	public async Task<nil> BatAddWeightCalculator(
-		IDbFnCtx? Ctx, IUserCtx User
+		IDbUserCtx Ctx
 		, IAsyncEnumerable<PoWeightCalculator> Pos
 		,CT Ct
 	){
-		return await SqlCmdMkr.RunInTxnIfNoCtx(Ctx, Ct, async(Ctx)=>{
-			Pos = EnsureOwner(User.UserId, Pos);
-			await RepoWeightCalculator.BatAdd(Ctx, Pos, Ct);
+		return await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(ctx)=>{
+			Pos = EnsureOwner(Ctx.UserCtx.UserId, Pos);
+			await RepoWeightCalculator.BatAdd(ctx, Pos, Ct);
 			return NIL;
 		});
 	}
 
 	public async Task<IPageAsyE<PoStudyPlan>> PageStudyPlan(
-		IDbFnCtx? Ctx
+		IDbUserCtx Ctx
 		,ReqPageStudyPlan Req
 		,CT Ct
 	){
-		Ctx ??= new DbFnCtx();
-		return await DaoStudyPlan.PageStudyPlan(Ctx, Req, Ct);
+		Ctx.DbFnCtx??=new DbFnCtx();
+		return await DaoStudyPlan.PageStudyPlan(Ctx.DbFnCtx, Req, Ct);
 	}
 
 	public async Task<IPageAsyE<PoPreFilter>> PagePreFilter(
-		IDbFnCtx? Ctx
+		IDbUserCtx Ctx
 		,ReqPagePreFilter Req
 		,CT Ct
 	){
-		Ctx ??= new DbFnCtx();
-		return await DaoStudyPlan.PagePreFilter(Ctx, Req, Ct);
+		Ctx.DbFnCtx??=new DbFnCtx();
+		return await DaoStudyPlan.PagePreFilter(Ctx.DbFnCtx, Req, Ct);
 	}
 
 	public async Task<IPageAsyE<PoWeightArg>> PageWeightArg(
-		IDbFnCtx? Ctx
+		IDbUserCtx Ctx
 		,ReqPageWeightArg Req
 		,CT Ct
 	){
-		Ctx ??= new DbFnCtx();
-		return await DaoStudyPlan.PageWeightArg(Ctx, Req, Ct);
+		Ctx.DbFnCtx??=new DbFnCtx();
+		return await DaoStudyPlan.PageWeightArg(Ctx.DbFnCtx, Req, Ct);
 	}
 
 	public async Task<IPageAsyE<PoWeightCalculator>> PageWeightCalculator(
-		IDbFnCtx? Ctx
-		,ReqPageWeightCalculator Req
-		,CT Ct
+		IDbUserCtx Ctx
+		,ReqPageWeightCalculator Req, CT Ct
 	){
-		Ctx ??= new DbFnCtx();
-		return await DaoStudyPlan.PageWeightCalculator(Ctx, Req, Ct);
+		Ctx.DbFnCtx??=new DbFnCtx();
+		return await DaoStudyPlan.PageWeightCalculator(Ctx.DbFnCtx, Req, Ct);
 	}
 	
-	public async Task<IdStudyPlan?> GetCurStudyPlanId(IDbFnCtx? Ctx, IUserCtx User, CT Ct){
-		Ctx ??= new DbFnCtx();
+	
+	public async Task<IdStudyPlan?> GetCurStudyPlanId(IDbUserCtx Ctx, CT Ct){
 		var kv = await SvcKv.BatGetByOwnerEtKStr(
-			Ctx
-			,ToolAsyE.ToAsyE([(User.UserId, KeysClientKv.CurStudyPlanId+"")])
+			Ctx.DbFnCtx
+			,ToolAsyE.ToAsyE([(Ctx.UserCtx.UserId, KeysClientKv.CurStudyPlanId+"")])
 			,Ct
 		).FirstOrDefaultAsync(Ct);
 		if(kv is null || string.IsNullOrEmpty(kv.VStr)){
@@ -156,21 +154,6 @@ public partial class SvcStudyPlan:ISvcStudyPlan{
 		return IdStudyPlan.FromLow64Base(kv?.VStr??"");
 	}
 	
-	[Obsolete]
-	public async Task<Func<
-		IUserCtx,
-		CT, Task<IdStudyPlan?>
-	>> FnGetCurStudyPlanId(IDbFnCtx Ctx, CT Ct){
-		var fnGet = await SvcKv.FnGetByOwnerEtKey(Ctx, Ct);
-		return async (UserCtx, Ct)=>{
-			var kv = await fnGet(UserCtx.UserId, KeysClientKv.CurStudyPlanId, Ct);
-			if(kv == null || str.IsNullOrEmpty(kv.VStr)){
-				return null;
-			}
-			return IdStudyPlan.FromLow64Base(kv.VStr);
-		};
-	}
-
 
 	#if false
 public async Task<Func<
