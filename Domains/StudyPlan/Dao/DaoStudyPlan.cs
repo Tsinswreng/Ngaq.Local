@@ -40,11 +40,11 @@ public partial class DaoStudyPlan(
 	
 	
 	public async Task<IPageAsyE<PoPreFilter>> PagePreFilter(
-		IDbFnCtx Ctx, ReqPagePreFilter Req
+		IDbFnCtx Ctx, IdUser UserId, ReqPagePreFilter Req
 		,CT Ct
 	){
 		var Sql = TP.SqlSplicer().Select("*").From().Where1()
-		.AndEq(x=>x.Owner, x=>x.One(Req.Owner));
+		.AndEq(x=>x.Owner, x=>x.One(UserId));
 		if(!string.IsNullOrEmpty(Req.UniqNameSearch)){
 			Sql.And();
 			Sql.Bool(x=>x.UniqName, "LIKE", x=>x.One("%"+Req.UniqNameSearch+"%"));
@@ -60,11 +60,11 @@ public partial class DaoStudyPlan(
 	}
 
 	public async Task<IPageAsyE<PoStudyPlan>> PageStudyPlan(
-		IDbFnCtx Ctx, ReqPageStudyPlan Req
+		IDbFnCtx Ctx, IdUser UserId, ReqPageStudyPlan Req
 		,CT Ct
 	){
 		var Sql = TS.SqlSplicer().Select("*").From().Where1()
-		.AndEq(x=>x.Owner, x=>x.One(Req.Owner));
+		.AndEq(x=>x.Owner, x=>x.One(UserId));
 		if(!string.IsNullOrEmpty(Req.UniqNameSearch)){
 			Sql.And();
 			Sql.Bool(x=>x.UniqName, "LIKE", x=>x.One("%"+Req.UniqNameSearch+"%"));
@@ -80,11 +80,11 @@ public partial class DaoStudyPlan(
 	}
 
 	public async Task<IPageAsyE<PoWeightArg>> PageWeightArg(
-		IDbFnCtx Ctx, ReqPageWeightArg Req
+		IDbFnCtx Ctx, IdUser UserId, ReqPageWeightArg Req
 		,CT Ct
 	){
 		var Sql = TWA.SqlSplicer().Select("*").From().Where1()
-		.AndEq(x=>x.Owner, x=>x.One(Req.Owner));
+		.AndEq(x=>x.Owner, x=>x.One(UserId));
 		if(!string.IsNullOrEmpty(Req.UniqNameSearch)){
 			Sql.And();
 			Sql.Bool(x=>x.UniqName, "LIKE", x=>x.One("%"+Req.UniqNameSearch+"%"));
@@ -100,11 +100,11 @@ public partial class DaoStudyPlan(
 	}
 
 	public async Task<IPageAsyE<PoWeightCalculator>> PageWeightCalculator(
-		IDbFnCtx Ctx, ReqPageWeightCalculator Req
+		IDbFnCtx Ctx, IdUser UserId, ReqPageWeightCalculator Req
 		,CT Ct
 	){
 		var Sql = TWC.SqlSplicer().Select("*").From().Where1()
-		.AndEq(x=>x.Owner, x=>x.One(Req.Owner));
+		.AndEq(x=>x.Owner, x=>x.One(UserId));
 		if(!string.IsNullOrEmpty(Req.UniqNameSearch)){
 			Sql.And();
 			Sql.Bool(x=>x.UniqName, "LIKE", x=>x.One("%"+Req.UniqNameSearch+"%"));

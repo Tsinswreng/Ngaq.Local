@@ -112,7 +112,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan{
 		,CT Ct
 	){
 		Ctx.DbFnCtx??=new DbFnCtx();
-		return await DaoStudyPlan.PageStudyPlan(Ctx.DbFnCtx, Req, Ct);
+		return await DaoStudyPlan.PageStudyPlan(Ctx.DbFnCtx, Ctx.UserCtx.UserId, Req, Ct);
 	}
 
 	public async Task<IPageAsyE<PoPreFilter>> PagePreFilter(
@@ -121,7 +121,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan{
 		,CT Ct
 	){
 		Ctx.DbFnCtx??=new DbFnCtx();
-		return await DaoStudyPlan.PagePreFilter(Ctx.DbFnCtx, Req, Ct);
+		return await DaoStudyPlan.PagePreFilter(Ctx.DbFnCtx, Ctx.UserCtx.UserId, Req, Ct);
 	}
 
 	public async Task<IPageAsyE<PoWeightArg>> PageWeightArg(
@@ -130,7 +130,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan{
 		,CT Ct
 	){
 		Ctx.DbFnCtx??=new DbFnCtx();
-		return await DaoStudyPlan.PageWeightArg(Ctx.DbFnCtx, Req, Ct);
+		return await DaoStudyPlan.PageWeightArg(Ctx.DbFnCtx, Ctx.UserCtx.UserId, Req, Ct);
 	}
 
 	public async Task<IPageAsyE<PoWeightCalculator>> PageWeightCalculator(
@@ -138,7 +138,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan{
 		,ReqPageWeightCalculator Req, CT Ct
 	){
 		Ctx.DbFnCtx??=new DbFnCtx();
-		return await DaoStudyPlan.PageWeightCalculator(Ctx.DbFnCtx, Req, Ct);
+		return await DaoStudyPlan.PageWeightCalculator(Ctx.DbFnCtx, Ctx.UserCtx.UserId, Req, Ct);
 	}
 	
 	
