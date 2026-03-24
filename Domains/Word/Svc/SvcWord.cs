@@ -572,6 +572,65 @@ public partial class SvcWord(
 		throw new NotImplementedException();
 	}
 
+#if false
+這個函數 FnUpdJnWord() 的核心是：把傳入的單詞狀態當成“目標真相”，把資料庫裡那條詞同步成一樣（新增、修改、軟刪多餘項都會做）。
+
+可看這段：SvcWord.cs:584-700
+
+1) 函數返回的是一個可執行更新的閉包
+FnUpdJnWord(IDbFnCtx Ctx, CT Ct) 先準備好多個子操作函數，最後返回：
+
+參數：(User, SimpleJnWord, Ct)
+行為：對一個詞做完整更新
+返回：Task<nil>
+2) 先判斷：這個 IdWord 在庫裡是否存在
+流程起點是：
+
+把 SimpleJnWord 轉成完整 JnWord
+用 GetJnWordByIdEtCheckOwner 查舊詞 OldWord
+A. 如果不存在（新詞）
+視為“新增”
+會把傳入 ID 重置為新 ID（不信任外部傳入 ID）
+呼叫 MergeWordsIntoDb 走同步新增流程
+3) 如果存在（更新詞）
+這是主流程：
+
+(1) 權限與版本時間處理
+檢查 Owner 必須是當前用戶
+BizUpdatedAt 以資料庫舊值為準（若不同就覆蓋回舊值）
+(2) (Head, Lang) 是否變更
+若詞頭或語言變了，走 FnSoftUpdWordHeadLang：
+
+這個策略是“軟更新標識”：避免直接硬改造成同步語義混亂
+更新後會返回一個可用的 IdWord，再用 SetIdEtEnsureFKey 修正當前 JnWord 的主鍵/外鍵關聯
+(3) 規範化子項 ID
+對 Props / Learns：
+
+沒有 ID 的視為新增項，補新 ID
+同時補 BizCreatedAt
+然後 EnsureForeignId() 確保子項外鍵正確指向詞
+4) 差異計算：雙向 diff
+它做了兩次 Sync：
+
+OldWord.Sync(JnWord, ...)
+產出「要把舊詞變成新詞」所需的新增/變更集合（NeoDiffOld）
+
+JnWord.Sync(OldWord, ...)
+產出「舊詞裡有，但新詞不要」的集合（OldDiffNeo），用來刪除
+
+5) 寫入策略：先補/改，再刪
+先補/改
+SyncFromDto(User, NeoDiffOld.ToDtoSyncWords(OldWord), Ct)
+會把新增和變更寫回 DB（prop/learn/word 本體）
+再刪
+對 OldDiffNeo 中多餘的 Prop、Learn 做軟刪除
+呼叫 RepoProp.FnSoftDelManyByKeys、RepoLearn.FnSoftDelManyByKeys
+一句話總結更新方式
+FnUpdJnWord() 是一個 “以輸入為準的對賬式更新”：
+先校驗與標準化 → 算差異 → 套用新增/修改 → 軟刪除多餘資料。
+所以它不是單純 UPDATE，而是完整的「詞 + 屬性 + 學習記錄」同步流程。
+#endif
+
 	/// 更新JnWord。以新傳入之JnWord潙基準、缺者補 盈者刪
 	/// 以id潙基準
 	/// //TODO Id或時間爲空時先自動填充
