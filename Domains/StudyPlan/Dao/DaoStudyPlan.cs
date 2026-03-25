@@ -33,7 +33,7 @@ public partial class DaoStudyPlan(
 	public IAsyncEnumerable<JnStudyPlan?> BatGetStudyPlanById(
 		IDbFnCtx Ctx, IAsyncEnumerable<IdStudyPlan> Ids, CT Ct
 	){
-		var R = RepoStudyPlan.BatGetAggById<JnStudyPlan>(Ctx, Ids, Ct);
+		var R = RepoStudyPlan.BatGetAggByIdWithDel<JnStudyPlan>(Ctx, Ids, Ct);
 		return R;
 	}
 	

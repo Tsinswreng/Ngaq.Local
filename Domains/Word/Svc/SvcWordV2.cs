@@ -65,8 +65,16 @@ public partial class SvcWordV2(
 			return NIL;
 		});
 	}
-
+	
 	public async Task<nil> BatAddNewWordToLearn(
+		IDbUserCtx Ctx,
+		IAsyncEnumerable<JnWord> Words, CT Ct
+	){
+		throw new NotImplementedException();
+	}
+
+	//TODO 性能低
+	public async Task<nil> BatAddNewWordToLearnOld(
 		IDbUserCtx Ctx,
 		IAsyncEnumerable<PoWord> PoWordAsyE, CT Ct
 	){

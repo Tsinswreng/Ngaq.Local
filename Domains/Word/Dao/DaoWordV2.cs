@@ -37,7 +37,7 @@ public partial class DaoWordV2(
 		,IAsyncEnumerable<IdWord> Ids
 		,CT Ct
 	){
-		return RepoWord.BatGetById(Ctx, Ids, Ct);
+		return RepoWord.BatGetByIdWithDel(Ctx, Ids, Ct);
 	}
 
 	public IAsyncEnumerable<JnWord?> BatGetJnWordByIdWithDel(
@@ -45,7 +45,7 @@ public partial class DaoWordV2(
 		,IAsyncEnumerable<IdWord> Ids
 		,CT Ct
 	){
-		return RepoWord.BatGetAggById<JnWord>(Ctx, Ids, Ct);
+		return RepoWord.BatGetAggByIdWithDel<JnWord>(Ctx, Ids, Ct);
 	}
 
 	public IAsyncEnumerable<IdWord?> BatSlctIdByOwnerHeadLangWithDel(
