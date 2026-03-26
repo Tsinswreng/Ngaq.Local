@@ -69,17 +69,19 @@ public partial class SvcWordV2(
 	/// <param name="Prefilter">前置筛选器；传null表示不过滤。</param>
 	/// <param name="Ct">取消令牌。</param>
 	/// <returns>流式返回的单词序列。</returns>
-	public async IAsyncEnumerable<JnWord> GetWordsToLearn(
+	public IAsyncEnumerable<JnWord> GetWordsToLearn(
 		IDbUserCtx Ctx, PreFilter? Prefilter, [EnumeratorCancellation] CT Ct
 	){
 		Ctx.DbFnCtx ??= new DbFnCtx();
-		var words = DaoWordV2.GetWordsByOwner(Ctx.DbFnCtx, Ctx.UserCtx.UserId, Ct);
-		await foreach(var word in words.WithCancellation(Ct)){
-			if(!IsMatchedByPreFilter(word, Prefilter)){
-				continue;
-			}
-			yield return word;
-		}
+		var words = DaoWordV2.GetWordsByOwnerByPreFilterSql(Ctx.DbFnCtx, Ctx.UserCtx.UserId, Prefilter, Ct);
+		return words;
+		//await foreach(var word in words.WithCancellation(Ct)){
+			
+		// 	if(!IsMatchedByPreFilter(word, Prefilter)){
+		// 		continue;
+		// 	}
+		// 	yield return word;
+		// }
 	}
 
 	async Task<PreFilter?> GetCurStudyPlanPreFilter(IDbUserCtx Ctx, CT Ct){
