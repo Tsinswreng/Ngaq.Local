@@ -90,7 +90,7 @@ public partial class SvcWord{
 		IUserCtx
 		,IEnumerable<IJnWord>
 		,CT
-		,Task<DuplicationGroup<IJnWord>>
+		,Task<DupliGroupList<IJnWord>>
 	>> FnGroupByExisingWithDel(
 		IDbFnCtx Ctx
 		,CT Ct
@@ -99,7 +99,7 @@ public partial class SvcWord{
 		var SeekJnWordById = await DaoWord.FnSlctJnWordByIdWithDel(Ctx, Ct);
 		return async(UserCtx, JnWords, Ct)=>{
 			var NonExistingList = new List<IJnWord>();
-			var ExiDupliPairs = new List<Existing_Duplication<IJnWord>>();
+			var ExiDupliPairs = new List<Existing_Dupli<IJnWord>>();
 			foreach(var (i,JnWord) in JnWords.Index()){
 				var IdInDb = await SeekIdByHeadEtLang(
 					UserCtx
@@ -114,15 +114,15 @@ public partial class SvcWord{
 					if(JnWordInDb == null){
 						throw new FatalLogicErr("BoWordInDb == null");
 					}
-					var ExiDupliPair = new Existing_Duplication<IJnWord>(
+					var ExiDupliPair = new Existing_Dupli<IJnWord>(
 						Existing: JnWordInDb
 						,Duplication: JnWord
 					);
 					ExiDupliPairs.Add(ExiDupliPair);
 				}
 			}
-			var R = new DuplicationGroup<IJnWord>();
-			R.Existing_Duplications = ExiDupliPairs;
+			var R = new DupliGroupList<IJnWord>();
+			R.Existing_Dupli = ExiDupliPairs;
 			R.NonExistings = NonExistingList;
 			return R;
 		};
@@ -162,9 +162,9 @@ public partial class SvcWord{
 
 			// 有變動之諸新詞。
 			var ChangedNewWords = new List<IJnWord>();
-			foreach(var Exi_Dupli in ExistGroup.Existing_Duplications??[]){
+			foreach(var Exi_Dupli in ExistGroup.Existing_Dupli??[]){
 				var OldWord = Exi_Dupli.Existing;//庫中已有ʹ舊詞
-				var NewWord = Exi_Dupli.Duplication;//待加ʹ新詞
+				var NewWord = Exi_Dupli.Dupli;//待加ʹ新詞
 
 				var Diffed = NewWord.DiffByTime(OldWord);
 				if(Diffed == null){
@@ -218,9 +218,9 @@ public partial class SvcWord{
 
 			// 有變動之諸新詞。
 			var ChangedNewWords = new List<IJnWord>();
-			foreach(var Exi_Dupli in ExistGroup.Existing_Duplications??[]){
+			foreach(var Exi_Dupli in ExistGroup.Existing_Dupli??[]){
 				var OldWord = Exi_Dupli.Existing;//庫中已有ʹ舊詞
-				var NewWord = Exi_Dupli.Duplication;//待加ʹ新詞
+				var NewWord = Exi_Dupli.Dupli;//待加ʹ新詞
 
 				IJnWord? NeoPart = new JnWord{Word = OldWord.Word};
 				IJnWord? ChangedPart = new JnWord{Word = OldWord.Word};

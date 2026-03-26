@@ -272,10 +272,9 @@ public partial class LocalTblMgrIniter{
 				,x=>x.StoredAt
 			);
 			
-			var optUnique = new OptMkIdx{Unique = true, Where = o.Tbl.SqlIsNonDel()};
-			o.Idx(
-				optUnique
-				, [nameof(PoWord.Owner), nameof(PoWord.Head), nameof(PoWord.Lang)]
+			o.IdxExpr(
+				new OptMkIdx{Unique = true, Where = o.Tbl.SqlIsNonDel()}
+				,x=>new{x.Owner, x.Head, x.Lang}
 			);
 		}
 

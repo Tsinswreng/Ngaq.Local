@@ -3,6 +3,7 @@ namespace Ngaq.Local.Word.Dao;
 using Ngaq.Core.Infra.IF;
 using Ngaq.Core.Model.Po.Kv;
 using Ngaq.Core.Model.Po.Learn_;
+using Ngaq.Core.Shared.Base.Models;
 using Ngaq.Core.Shared.Base.Models.Po;
 using Ngaq.Core.Shared.User.Models.Po.User;
 using Ngaq.Core.Shared.Word.Models;
@@ -47,8 +48,9 @@ public partial class DaoWordV2(
 	){
 		return RepoWord.BatGetAggByIdWithDel<JnWord>(Ctx, Ids, Ct);
 	}
+	
 
-	public IAsyncEnumerable<IdWord?> BatSlctIdByOwnerHeadLangWithDel(
+	public IAsyncEnumerable<IdWord?> BatGetIdByOwnerHeadLang(
 		IDbFnCtx Ctx
 		,IdUser Owner
 		,IAsyncEnumerable<Head_Lang> HeadLangs
@@ -57,6 +59,7 @@ public partial class DaoWordV2(
 		var Heads = HeadLangs.Select(x=>x.Head);
 		var Langs = HeadLangs.Select(x=>x.Lang);
 		var Sql = TW.SqlSplicer().Select(x=>x.Id).From().Where1()
+		.And(TW.SqlIsNonDel())
 		.AndEq(x=>x.Owner, y=>y.One(Owner))
 		.AndEq(x=>x.Head, y=>y.Many(Heads))
 		.AndEq(x=>x.Lang, y=>y.Many(Langs))

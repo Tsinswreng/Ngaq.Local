@@ -66,75 +66,22 @@ public partial class SvcWordV2(
 		});
 	}
 	
-	public async Task<nil> BatAddNewWordToLearn(
+	public Task<nil> BatAddNewWordToLearn(
 		IDbUserCtx Ctx,
 		IAsyncEnumerable<JnWord> Words, CT Ct
 	){
-		throw new NotImplementedException();
-	}
-
-	//TODO 性能低
-	public async Task<nil> BatAddNewWordToLearnOld(
-		IDbUserCtx Ctx,
-		IAsyncEnumerable<PoWord> PoWordAsyE, CT Ct
-	){
-		return await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(DbCtx)=>{
-			var SeenHeadLang = new HashSet<Head_Lang>();
-			await using var Batch = new BatchCollector<PoWord, nil>(async(NeoWords, Ct)=>{
-				var ToCheck = new List<PoWord>();
-				foreach(var W in NeoWords){
-					W.Owner = Ctx.UserCtx.UserId;
-					var Key = new Head_Lang(W.Head, W.Lang);
-					if(!SeenHeadLang.Add(Key)){
-						continue;
-					}
-					ToCheck.Add(W);
-				}
-				if(ToCheck.Count == 0){
-					return NIL;
-				}
-
-				var GotIds = DaoWordV2.BatSlctIdByOwnerHeadLangWithDel(
-					DbCtx
-					,Ctx.UserCtx.UserId
-					,ToAsyE(ToCheck.Select(x=>new Head_Lang(x.Head, x.Lang)))
-					,Ct
-				);
-				var ExistingIds = new List<IdWord?>();
-				await foreach(var Id in GotIds){
-					ExistingIds.Add(Id);
-				}
-
-				var ToInsert = new List<PoWord>();
-				for(var i = 0; i < ToCheck.Count; i++){
-					if(i < ExistingIds.Count && ExistingIds[i] is not null){
-						continue;
-					}
-					ToInsert.Add(ToCheck[i]);
-				}
-
-				if(ToInsert.Count == 0){
-					return NIL;
-				}
-
-				await RepoWord.BatAdd(DbCtx, ToAsyE(ToInsert), Ct);
-
-				var AddLearns = ToInsert.Select(x=>new PoWordLearn{
-					WordId = x.Id,
-					LearnResult = ELearn.Add,
-				});
-				await RepoLearn.BatAdd(DbCtx, ToAsyE(AddLearns), Ct);
+		var headLangs = Words.Select(x=>new Head_Lang(x.Head, x.Lang));
+		return SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(ctx)=>{
+			var ids = DaoWordV2.BatGetIdByOwnerHeadLang(ctx, Ctx.UserCtx.UserId, headLangs, Ct);
+			var bc = new BatchCollector<IdWord?, nil>(async(Ids, Ct)=>{
+				
 				return NIL;
 			});
-
-			await foreach(var One in PoWordAsyE){
-				await Batch.Add(One, Ct);
-			}
-			await Batch.End(Ct);
+			var ensureConsume = await bc.ConsumeAll(ids, Ct);
 			return NIL;
 		});
+		
 	}
-
 	public async Task<nil> SoftDelJnWordInId(
 		IDbUserCtx Ctx,
 		IAsyncEnumerable<IdWord> Ids, CT Ct
