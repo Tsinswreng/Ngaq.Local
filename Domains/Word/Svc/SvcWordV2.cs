@@ -1,10 +1,17 @@
 namespace Ngaq.Local.Domains.Word.Svc;
 
+using System.Runtime.CompilerServices;
+using System.Text;
+using Ngaq.Core.Frontend.Kv;
 using Ngaq.Core.Infra;
 using Ngaq.Core.Infra.Errors;
 using Ngaq.Core.Model.Po.Kv;
 using Ngaq.Core.Model.Po.Learn_;
+using Ngaq.Core.Tools;
 using Ngaq.Core.Shared.StudyPlan.Models.PreFilter;
+using Ngaq.Core.Shared.StudyPlan.Models.Po.PreFilter;
+using Ngaq.Core.Shared.StudyPlan.Models.Po.StudyPlan;
+using Ngaq.Core.Shared.StudyPlan.Svc;
 using Ngaq.Core.Shared.User.Models.Po.User;
 using Ngaq.Core.Shared.Word.Models;
 using Ngaq.Core.Shared.Word.Models.Learn_;
@@ -15,6 +22,7 @@ using Ngaq.Core.Shared.Word.Svc;
 using Ngaq.Local.Db.TswG;
 using Ngaq.Local.Word.Dao;
 using Tsinswreng.CsErr;
+using Tsinswreng.CsCore;
 using Tsinswreng.CsSql;
 using Tsinswreng.CsTools;
 
@@ -24,6 +32,9 @@ public partial class SvcWordV2(
 	,IRepo<PoWord, IdWord> RepoWord
 	,IRepo<PoWordProp, IdWordProp> RepoProp
 	,IRepo<PoWordLearn, IdWordLearn> RepoLearn
+	,IRepo<PoStudyPlan, IdStudyPlan> RepoStudyPlan
+	,IRepo<PoPreFilter, IdPreFilter> RepoPreFilter
+	,ISvcStudyPlan SvcStudyPlan
 ):ISvcWordV2
 {
 	ISqlCmdMkr SqlCmdMkr = SqlCmdMkr;
@@ -31,19 +42,274 @@ public partial class SvcWordV2(
 	IRepo<PoWord, IdWord> RepoWord = RepoWord;
 	IRepo<PoWordProp, IdWordProp> RepoProp = RepoProp;
 	IRepo<PoWordLearn, IdWordLearn> RepoLearn = RepoLearn;
+	IRepo<PoStudyPlan, IdStudyPlan> RepoStudyPlan = RepoStudyPlan;
+	IRepo<PoPreFilter, IdPreFilter> RepoPreFilter = RepoPreFilter;
+	ISvcStudyPlan SvcStudyPlan = SvcStudyPlan;
 
-	public IAsyncEnumerable<JnWord> GetWordsToLearn(
-		IDbUserCtx Ctx, CT Ct
-	){
-		return GetWordsToLearn(Ctx, null, Ct);
-	}
-
-	public IAsyncEnumerable<JnWord> GetWordsToLearn(
-		IDbUserCtx Ctx, PreFilter? Prefilter, CT Ct
+	/// <summary>
+	/// 取得待学习单词（按当前学习方案的前置筛选器过滤；若未设置则返回用户全部词）。
+	/// </summary>
+	/// <param name="Ctx">数据库与用户上下文。</param>
+	/// <param name="Ct">取消令牌。</param>
+	/// <returns>流式返回的单词序列。</returns>
+	public async IAsyncEnumerable<JnWord> GetWordsToLearn(
+		IDbUserCtx Ctx, [EnumeratorCancellation] CT Ct
 	){
 		Ctx.DbFnCtx ??= new DbFnCtx();
-		_ = Prefilter; // TODO: 待學習方案模塊完成後接入預篩選
-		return DaoWordV2.GetWordsByOwner(Ctx.DbFnCtx, Ctx.UserCtx.UserId, Ct);
+		var preFilter = await GetCurStudyPlanPreFilter(Ctx, Ct);
+		await foreach(var word in GetWordsToLearn(Ctx, preFilter, Ct).WithCancellation(Ct)){
+			yield return word;
+		}
+	}
+
+	/// <summary>
+	/// 取得待学习单词（按入参前置筛选器过滤；若入参为null则返回用户全部词）。
+	/// </summary>
+	/// <param name="Ctx">数据库与用户上下文。</param>
+	/// <param name="Prefilter">前置筛选器；传null表示不过滤。</param>
+	/// <param name="Ct">取消令牌。</param>
+	/// <returns>流式返回的单词序列。</returns>
+	public async IAsyncEnumerable<JnWord> GetWordsToLearn(
+		IDbUserCtx Ctx, PreFilter? Prefilter, [EnumeratorCancellation] CT Ct
+	){
+		Ctx.DbFnCtx ??= new DbFnCtx();
+		var words = DaoWordV2.GetWordsByOwner(Ctx.DbFnCtx, Ctx.UserCtx.UserId, Ct);
+		await foreach(var word in words.WithCancellation(Ct)){
+			if(!IsMatchedByPreFilter(word, Prefilter)){
+				continue;
+			}
+			yield return word;
+		}
+	}
+
+	async Task<PreFilter?> GetCurStudyPlanPreFilter(IDbUserCtx Ctx, CT Ct){
+		var studyPlanId = await SvcStudyPlan.GetCurStudyPlanId(Ctx, Ct);
+		if(studyPlanId is not IdStudyPlan spId || spId.IsNullOrDefault()){
+			return null;
+		}
+
+		var poStudyPlan = await RepoStudyPlan.BatGetByIdWithDel(Ctx.DbFnCtx!, ToAsyE([spId]), Ct)
+			.FirstOrDefaultAsync(Ct);
+		if(poStudyPlan is null || poStudyPlan.Owner != Ctx.UserCtx.UserId){
+			return null;
+		}
+		if(poStudyPlan.PreFilterId.IsNullOrDefault()){
+			return null;
+		}
+
+		var poPreFilter = await RepoPreFilter.BatGetByIdWithDel(Ctx.DbFnCtx!, ToAsyE([poStudyPlan.PreFilterId]), Ct)
+			.FirstOrDefaultAsync(Ct);
+		if(poPreFilter is null || poPreFilter.Owner != Ctx.UserCtx.UserId){
+			return null;
+		}
+		if(poPreFilter.Type != EPreFilterType.Json || poPreFilter.Data is null || poPreFilter.Data.Length == 0){
+			return null;
+		}
+
+		var json = Encoding.UTF8.GetString(poPreFilter.Data);
+		if(string.IsNullOrWhiteSpace(json)){
+			return null;
+		}
+		return JSON.parse<PreFilter>(json);
+	}
+
+	static bool IsMatchedByPreFilter(JnWord Word, PreFilter? PreFilter){
+		if(PreFilter is null){
+			return true;
+		}
+		if(!IsMatchedByFieldFilters(Word, PreFilter.CoreFilter, TryGetCoreFieldValues)){
+			return false;
+		}
+		if(!IsMatchedByFieldFilters(Word, PreFilter.PropFilter, TryGetPropFieldValues)){
+			return false;
+		}
+		return true;
+	}
+
+	delegate bool TryGetFieldValues(JnWord Word, str Field, out IReadOnlyList<obj?> Values);
+
+	static bool IsMatchedByFieldFilters(
+		JnWord Word,
+		IList<FieldsFilter>? FieldFilters,
+		TryGetFieldValues TryGetValues
+	){
+		if(FieldFilters is null || FieldFilters.Count == 0){
+			return true;
+		}
+		foreach(var fieldFilter in FieldFilters){
+			if(IsMatchedByOneFieldsFilter(Word, fieldFilter, TryGetValues)){
+				continue;
+			}
+			return false;
+		}
+		return true;
+	}
+
+	static bool IsMatchedByOneFieldsFilter(
+		JnWord Word,
+		FieldsFilter FieldFilter,
+		TryGetFieldValues TryGetValues
+	){
+		if(FieldFilter.Fields.Count == 0){
+			return true;
+		}
+		foreach(var field in FieldFilter.Fields){
+			if(!TryGetValues(Word, field, out var values)){
+				continue;
+			}
+			if(IsMatchedByFilterItems(values, FieldFilter.Filters)){
+				return true;
+			}
+		}
+		return false;
+	}
+
+	static bool IsMatchedByFilterItems(
+		IReadOnlyList<obj?> CandidateValues,
+		IList<FilterItem> FilterItems
+	){
+		foreach(var filterItem in FilterItems){
+			if(IsMatchedByFilterItem(CandidateValues, filterItem)){
+				continue;
+			}
+			return false;
+		}
+		return true;
+	}
+
+	static bool IsMatchedByFilterItem(
+		IReadOnlyList<obj?> CandidateValues,
+		FilterItem FilterItem
+	){
+		var filterValues = FilterItem.Values ?? [];
+		return FilterItem.Operation switch{
+			EFilterOperationMode.IncludeAny => filterValues.Any(v=>CandidateValues.Any(c=>AreEqual(c, v, FilterItem.ValueType))),
+			EFilterOperationMode.IncludeAll => filterValues.All(v=>CandidateValues.Any(c=>AreEqual(c, v, FilterItem.ValueType))),
+			EFilterOperationMode.ExcludeAll => filterValues.All(v=>CandidateValues.All(c=>!AreEqual(c, v, FilterItem.ValueType))),
+			EFilterOperationMode.Eq => CandidateValues.Any(c=>AreEqual(c, filterValues.FirstOrDefault(), FilterItem.ValueType)),
+			EFilterOperationMode.Ne => CandidateValues.All(c=>!AreEqual(c, filterValues.FirstOrDefault(), FilterItem.ValueType)),
+			EFilterOperationMode.Gt => CandidateValues.Any(c=>CompareNumber(c, filterValues.FirstOrDefault()) > 0),
+			EFilterOperationMode.Ge => CandidateValues.Any(c=>CompareNumber(c, filterValues.FirstOrDefault()) >= 0),
+			EFilterOperationMode.Lt => CandidateValues.Any(c=>CompareNumber(c, filterValues.FirstOrDefault()) < 0),
+			EFilterOperationMode.Le => CandidateValues.Any(c=>CompareNumber(c, filterValues.FirstOrDefault()) <= 0),
+			_ => true,
+		};
+	}
+
+	static bool TryGetCoreFieldValues(JnWord Word, str Field, out IReadOnlyList<obj?> Values){
+		switch(Field){
+			case nameof(PoWord.Head):
+				Values = [Word.Head];
+				return true;
+			case nameof(PoWord.Lang):
+				Values = [Word.Lang];
+				return true;
+			case nameof(PoWord.StoredAt):
+				Values = [Word.Word.StoredAt.Value];
+				return true;
+			case nameof(PoWord.BizCreatedAt):
+				Values = [Word.Word.BizCreatedAt.Value];
+				return true;
+			case nameof(PoWord.BizUpdatedAt):
+				Values = [Word.Word.BizUpdatedAt.Value];
+				return true;
+			default:
+				Values = [];
+				return false;
+		}
+	}
+
+	static bool TryGetPropFieldValues(JnWord Word, str Field, out IReadOnlyList<obj?> Values){
+		var values = new List<obj?>();
+		foreach(var prop in Word.Props){
+			if(prop.KStr != Field){
+				continue;
+			}
+			values.Add(GetPropValue(prop));
+		}
+		Values = values;
+		return values.Count > 0;
+	}
+
+	static obj? GetPropValue(PoWordProp Prop){
+		return Prop.VType switch{
+			EKvType.Str => Prop.VStr,
+			EKvType.I64 => Prop.VI64,
+			EKvType.F64 => Prop.VF64,
+			EKvType.Binary => Prop.VBinary,
+			_ => null,
+		};
+	}
+
+	static bool AreEqual(obj? Candidate, obj? Expected, EValueType ValueType){
+		if(ValueType == EValueType.Number){
+			if(!TryToF64(Candidate, out var cn) || !TryToF64(Expected, out var en)){
+				return false;
+			}
+			return cn == en;
+		}
+		if(Candidate is null || Expected is null){
+			return Candidate is null && Expected is null;
+		}
+		return string.Equals(Candidate.ToString(), Expected.ToString(), StringComparison.Ordinal);
+	}
+
+	static int CompareNumber(obj? Left, obj? Right){
+		if(!TryToF64(Left, out var l) || !TryToF64(Right, out var r)){
+			return int.MinValue;
+		}
+		return l.CompareTo(r);
+	}
+
+	static bool TryToF64(obj? Value, out f64 Number){
+		switch(Value){
+			case null:
+				Number = default;
+				return false;
+			case byte v:
+				Number = v;
+				return true;
+			case sbyte v:
+				Number = v;
+				return true;
+			case short v:
+				Number = v;
+				return true;
+			case ushort v:
+				Number = v;
+				return true;
+			case int v:
+				Number = v;
+				return true;
+			case uint v:
+				Number = v;
+				return true;
+			case long v:
+				Number = v;
+				return true;
+			case ulong v:
+				Number = v;
+				return true;
+			case float v:
+				Number = v;
+				return true;
+			case double v:
+				Number = v;
+				return true;
+			case decimal v:
+				Number = (double)v;
+				return true;
+			case Tempus v:
+				Number = v.Value;
+				return true;
+			default:
+				if(double.TryParse(Value.ToString(), out var parsed)){
+					Number = parsed;
+					return true;
+				}
+				Number = default;
+				return false;
+		}
 	}
 
 	public async Task<nil> BatAddNewLearnRecord(
