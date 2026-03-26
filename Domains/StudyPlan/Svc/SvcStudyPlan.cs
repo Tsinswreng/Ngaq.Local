@@ -8,10 +8,13 @@ using Ngaq.Core.Shared.StudyPlan.Models.Po.PreFilter;
 using Ngaq.Core.Shared.StudyPlan.Models.Po.StudyPlan;
 using Ngaq.Core.Shared.StudyPlan.Models.Po.WeightArg;
 using Ngaq.Core.Shared.StudyPlan.Models.Po.WeightCalculator;
+using Ngaq.Core.Shared.StudyPlan.Models.PreFilter;
 using Ngaq.Core.Shared.StudyPlan.Svc;
+using Ngaq.Core.Shared.Word.Svc;
 using Ngaq.Core.Shared.User.Models.Po.User;
 using Ngaq.Core.Shared.User.UserCtx;
 using Ngaq.Core.Shared.Word.Models.Po.Kv;
+using Ngaq.Core.Tools.Json;
 using Ngaq.Local.Domains.StudyPlan.Dao;
 using Tsinswreng.CsPage;
 using Tsinswreng.CsSql;
@@ -19,6 +22,9 @@ using Tsinswreng.CsTools;
 using Ngaq.Core.Infra;
 using Ngaq.Core.Word.Svc;
 using Ngaq.Core.Shared.StudyPlan.Models;
+using System.Text;
+using System.Text.Json;
+using Ngaq.Core.Tools;
 
 namespace Ngaq.Local.Domains.StudyPlan.Svc;
 
@@ -30,6 +36,8 @@ public partial class SvcStudyPlan:ISvcStudyPlan{
 	IRepo<PoWeightArg, IdWeightArg> RepoWeightArg;
 	IRepo<PoWeightCalculator, IdWeightCalculator> RepoWeightCalculator;
 	IRepo<PoPreFilter, IdPreFilter> RepoPreFilter;
+	IJsonSerializer JsonSerializer;
+	BoStudyPlan? CurBoStudyPlanCache = null;
 	public SvcStudyPlan(
 		ISvcKv SvcKv
 		,DaoStudyPlan DaoStudyPlan
@@ -38,6 +46,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan{
 		,IRepo<PoWeightArg, IdWeightArg> RepoWeightArg
 		,IRepo<PoWeightCalculator, IdWeightCalculator> RepoWeightCalculator
 		,IRepo<PoPreFilter, IdPreFilter> RepoPreFilter
+		,IJsonSerializer JsonSerializer
 	){
 		this.SvcKv = SvcKv;
 		this.DaoStudyPlan = DaoStudyPlan;
@@ -46,6 +55,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan{
 		this.RepoWeightArg = RepoWeightArg;
 		this.RepoWeightCalculator = RepoWeightCalculator;
 		this.RepoPreFilter = RepoPreFilter;
+		this.JsonSerializer = JsonSerializer;
 	}
 
 	public async Task<nil> SetCurStudyPlanId(
@@ -156,16 +166,171 @@ public partial class SvcStudyPlan:ISvcStudyPlan{
 		return IdStudyPlan.FromLow64Base(kv?.VStr??"");
 	}
 
-	public Task<IWeightCalctr?> GetCurWeightCalctr(IDbUserCtx Ctx, CT Ct) {
-		throw new NotImplementedException();
+	public async Task<IWeightCalctr?> GetCurWeightCalctr(IDbUserCtx Ctx, CT Ct) {
+		var bo = await GetCurBoStudyPlan(Ctx, Ct);
+		return bo?.WeightCalctr;
 	}
 
-	public Task<JnStudyPlan?> GetCurJnStudyPlan(IDbUserCtx Ctx, CT Ct) {
-		throw new NotImplementedException();
+	public async Task<JnStudyPlan?> GetCurJnStudyPlan(IDbUserCtx Ctx, CT Ct) {
+		Ctx.DbFnCtx ??= new DbFnCtx();
+		var curStudyPlanId = await GetCurStudyPlanId(Ctx, Ct);
+		if(curStudyPlanId is not IdStudyPlan studyPlanId || studyPlanId.IsNullOrDefault()){
+			return null;
+		}
+
+		var jnStudyPlan = await DaoStudyPlan.BatGetStudyPlanById(
+			Ctx.DbFnCtx
+			,ToolAsyE.ToAsyE([studyPlanId])
+			,Ct
+		).FirstOrDefaultAsync(Ct);
+		if(jnStudyPlan is null){
+			return null;
+		}
+
+		if(jnStudyPlan.StudyPlan.Owner != Ctx.UserCtx.UserId){
+			return null;
+		}
+
+		if(jnStudyPlan.PreFilter is { } poPreFilter && poPreFilter.Owner != Ctx.UserCtx.UserId){
+			jnStudyPlan.PreFilter = null;
+		}
+		if(jnStudyPlan.WeightCalculator is { } poWeightCalculator && poWeightCalculator.Owner != Ctx.UserCtx.UserId){
+			jnStudyPlan.WeightCalculator = null;
+		}
+		if(jnStudyPlan.WeightArg is { } poWeightArg && poWeightArg.Owner != Ctx.UserCtx.UserId){
+			jnStudyPlan.WeightArg = null;
+		}
+
+		return jnStudyPlan;
 	}
 
-	public Task<BoStudyPlan?> GetCurBoStudyPlan(IDbUserCtx Ctx, CT Ct) {
-		throw new NotImplementedException();
+	public async Task<BoStudyPlan?> GetCurBoStudyPlan(IDbUserCtx Ctx, CT Ct) {
+		Ctx.DbFnCtx ??= new DbFnCtx();
+		var curStudyPlanId = await GetCurStudyPlanId(Ctx, Ct);
+		if(curStudyPlanId is not IdStudyPlan studyPlanId || studyPlanId.IsNullOrDefault()){
+			CurBoStudyPlanCache = null;
+			return null;
+		}
+
+		if(
+			CurBoStudyPlanCache?.PoStudyPlan is { } cachedPoStudyPlan
+			&& cachedPoStudyPlan.Id == studyPlanId
+		){
+			var latestPoStudyPlan = await RepoStudyPlan.BatGetByIdWithDel(
+				Ctx.DbFnCtx
+				,ToolAsyE.ToAsyE([studyPlanId])
+				,Ct
+			).FirstOrDefaultAsync(Ct);
+
+			if(
+				latestPoStudyPlan is not null
+				&& latestPoStudyPlan.Owner == Ctx.UserCtx.UserId
+				&& latestPoStudyPlan.BizUpdatedAt == cachedPoStudyPlan.BizUpdatedAt
+			){
+				return CurBoStudyPlanCache;
+			}
+		}
+
+		var jnStudyPlan = await GetCurJnStudyPlan(Ctx, Ct);
+		if(jnStudyPlan is null){
+			CurBoStudyPlanCache = null;
+			return null;
+		}
+
+		var boStudyPlan = new BoStudyPlan{
+			PoStudyPlan = jnStudyPlan.StudyPlan,
+			PoPreFilter = jnStudyPlan.PreFilter,
+			PoWeightArg = jnStudyPlan.WeightArg,
+			PoWeightCalculator = jnStudyPlan.WeightCalculator,
+		};
+
+		if(
+			boStudyPlan.PoPreFilter is { } poPreFilter
+			&& poPreFilter.Type == EPreFilterType.Json
+			&& poPreFilter.Data is { Length: > 0 }
+		){
+			var json = Encoding.UTF8.GetString(poPreFilter.Data);
+			if(!string.IsNullOrWhiteSpace(json)){
+				boStudyPlan.PreFilter = JSON.parse<PreFilter>(json);
+			}
+		}
+
+		if(
+			boStudyPlan.PoWeightArg is { } poWeightArg
+			&& poWeightArg.Type == EWeightArgType.Json
+			&& poWeightArg.Data is { Length: > 0 }
+		){
+			var json = Encoding.UTF8.GetString(poWeightArg.Data);
+			if(!string.IsNullOrWhiteSpace(json)){
+				boStudyPlan.WeightArg = ParseJsonObjDict(json);
+			}
+		}
+
+		boStudyPlan.WeightCalctr = MakeWeightCalctr(boStudyPlan.PoWeightCalculator);
+		CurBoStudyPlanCache = boStudyPlan;
+		return boStudyPlan;
+	}
+
+	IWeightCalctr? MakeWeightCalctr(PoWeightCalculator? PoWeightCalculator){
+		if(PoWeightCalculator is null){
+			return null;
+		}
+		if(PoWeightCalculator.Type == EWeightCalculatorType.Js){
+			if(PoWeightCalculator.Data is not { Length: > 0 }){
+				return null;
+			}
+			var jsCode = Encoding.UTF8.GetString(PoWeightCalculator.Data);
+			if(string.IsNullOrWhiteSpace(jsCode)){
+				return null;
+			}
+			return new JsWeightCalctr(JsonSerializer, jsCode);
+		}
+		return null;
+	}
+
+	static IDictionary<str, obj?> ParseJsonObjDict(str Json){
+		using var doc = JsonDocument.Parse(Json);
+		if(doc.RootElement.ValueKind != JsonValueKind.Object){
+			return new Dictionary<str, obj?>();
+		}
+		return (Dictionary<str, obj?>)JsonElementToObj(doc.RootElement)!;
+	}
+
+	static obj? JsonElementToObj(JsonElement Element){
+		switch(Element.ValueKind){
+			case JsonValueKind.Object:{
+				var dict = new Dictionary<str, obj?>();
+				foreach(var p in Element.EnumerateObject()){
+					dict[p.Name] = JsonElementToObj(p.Value);
+				}
+				return dict;
+			}
+			case JsonValueKind.Array:{
+				var list = new List<obj?>();
+				foreach(var x in Element.EnumerateArray()){
+					list.Add(JsonElementToObj(x));
+				}
+				return list;
+			}
+			case JsonValueKind.String:
+				return Element.GetString();
+			case JsonValueKind.Number:
+				if(Element.TryGetInt64(out var i64v)){
+					return i64v;
+				}
+				if(Element.TryGetDouble(out var f64v)){
+					return f64v;
+				}
+				return Element.ToString();
+			case JsonValueKind.True:
+				return true;
+			case JsonValueKind.False:
+				return false;
+			case JsonValueKind.Null:
+				return null;
+			default:
+				return Element.ToString();
+		}
 	}
 
 
