@@ -36,7 +36,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan{
 	IRepo<PoWeightArg, IdWeightArg> RepoWeightArg;
 	IRepo<PoWeightCalculator, IdWeightCalculator> RepoWeightCalculator;
 	IRepo<PoPreFilter, IdPreFilter> RepoPreFilter;
-	IJsonSerializer JsonSerializer;
+	IJsonSerializer JsonS;
 	BoStudyPlan? CurBoStudyPlanCache = null;
 	public SvcStudyPlan(
 		ISvcKv SvcKv
@@ -55,7 +55,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan{
 		this.RepoWeightArg = RepoWeightArg;
 		this.RepoWeightCalculator = RepoWeightCalculator;
 		this.RepoPreFilter = RepoPreFilter;
-		this.JsonSerializer = JsonSerializer;
+		this.JsonS = JsonSerializer;
 	}
 
 	public async Task<nil> SetCurStudyPlanId(
@@ -251,7 +251,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan{
 		){
 			var json = Encoding.UTF8.GetString(poPreFilter.Data);
 			if(!string.IsNullOrWhiteSpace(json)){
-				boStudyPlan.PreFilter = JSON.parse<PreFilter>(json);
+				boStudyPlan.PreFilter = JsonS.Parse<PreFilter>(json);
 			}
 		}
 
@@ -283,7 +283,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan{
 			if(string.IsNullOrWhiteSpace(jsCode)){
 				return null;
 			}
-			return new JsWeightCalctr(JsonSerializer, jsCode);
+			return new JsWeightCalctr(JsonS, jsCode);
 		}
 		return null;
 	}

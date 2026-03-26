@@ -486,7 +486,7 @@ public partial class SvcWord{
 			var Jsons = new List<str>();
 			if(PageAll.DataAsyE is not null){
 				await foreach(var JnWord in PageAll.DataAsyE){
-					Jsons.Add(JSON.stringify(JnWord));
+					Jsons.Add(JsonS.Stringify(JnWord));
 				}
 			}
 			var Json = str.Join('\n', Jsons);
@@ -506,7 +506,7 @@ public partial class SvcWord{
 			var DtoCompressed = await ZipFn(User, Req, Ct);
 			var packInfo = DtoCompressed.ToOrAssWordsPackInfo();
 			var textWithBlob = ToolTextWithBlob.Pack(
-				JSON.stringify(packInfo), DtoCompressed.Data
+				JsonS.Stringify(packInfo), DtoCompressed.Data
 			);
 			return textWithBlob;
 		};
@@ -519,7 +519,7 @@ public partial class SvcWord{
 			if(EWordsPack.JnWordArrJsonGZip.Eq(Compressed.Type)){
 				var decompressedBytes = Decompress(Compressed.Data??[]);
 				var Json = Encoding.UTF8.GetString(decompressedBytes);
-				return JSON.parse<IList<JnWord>>(Json)!;
+				return JsonS.Parse<IList<JnWord>>(Json)!;
 			}else if(EWordsPack.LineSepJnWordJsonGZip.Eq(Compressed.Type)){
 				var decompressedBytes = Decompress(Compressed.Data??[]);
 				var Json = Encoding.UTF8.GetString(decompressedBytes);
@@ -529,7 +529,7 @@ public partial class SvcWord{
 					if(str.IsNullOrWhiteSpace(line)){
 						continue;
 					}
-					var JnWord = JSON.parse<JnWord>(line);
+					var JnWord = JsonS.Parse<JnWord>(line);
 					if(JnWord is null){
 						continue;
 					}

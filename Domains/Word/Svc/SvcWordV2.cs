@@ -25,6 +25,7 @@ using Tsinswreng.CsErr;
 using Tsinswreng.CsCore;
 using Tsinswreng.CsSql;
 using Tsinswreng.CsTools;
+using Ngaq.Core.Tools.Json;
 
 public partial class SvcWordV2(
 	ISqlCmdMkr SqlCmdMkr
@@ -35,6 +36,7 @@ public partial class SvcWordV2(
 	,IRepo<PoStudyPlan, IdStudyPlan> RepoStudyPlan
 	,IRepo<PoPreFilter, IdPreFilter> RepoPreFilter
 	,ISvcStudyPlan SvcStudyPlan
+	,IJsonSerializer JsonS
 ):ISvcWordV2
 {
 	ISqlCmdMkr SqlCmdMkr = SqlCmdMkr;
@@ -112,7 +114,7 @@ public partial class SvcWordV2(
 		if(string.IsNullOrWhiteSpace(json)){
 			return null;
 		}
-		return JSON.parse<PreFilter>(json);
+		return JsonS.Parse<PreFilter>(json);
 	}
 
 	static bool IsMatchedByPreFilter(JnWord Word, PreFilter? PreFilter){

@@ -53,7 +53,7 @@ public partial class SvcWord(
 	,IRepo<PoWordProp, IdWordProp> RepoProp
 	,IRepo<PoWordLearn, IdWordLearn> RepoLearn
 	,TxnWrapper TxnWrapper
-	,IJsonSerializer JsonSerializer
+	,IJsonSerializer JsonS
 	,ILogger Logger
 )
 	:ISvcWord
@@ -452,7 +452,7 @@ public partial class SvcWord(
 				return NIL;
 			});
 			await foreach(var Line in JsonLineIter){
-				var JnWord = JsonSerializer.Parse<JnWord>(Line);
+				var JnWord = JsonS.Parse<JnWord>(Line);
 				await Bl.Add(JnWord, Ct);
 			}
 			await Bl.End(Ct);
@@ -746,7 +746,7 @@ FnUpdJnWord() 是一個 “以輸入為準的對賬式更新”：
 	>> FnSyncFromTextWithBlob(IDbFnCtx Ctx, CT Ct){
 		var AddCompressedWord = await FnSyncFromCompressedWord(Ctx, Ct);
 		return async(User, TextWithBlob, Ct)=>{
-			var info = JSON.parse<WordsPackInfo>(TextWithBlob.Text);
+			var info = JsonS.Parse<WordsPackInfo>(TextWithBlob.Text);
 			if(info is null){
 				throw ItemsErr.Common.ArgErr.ToErr();
 			}
