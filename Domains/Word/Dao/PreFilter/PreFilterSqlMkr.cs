@@ -9,6 +9,7 @@ using StudyPreFilter = Ngaq.Core.Shared.StudyPlan.Models.PreFilter.PreFilter;
 namespace Ngaq.Local.Word.Dao;
 
 public sealed class PreFilterSqlMkr{
+	i32 _prmSeq = 0;
 	/// 將 Word CoreFilter 轉爲 SQL where 片段與參數。
 	/// </summary>
 	/// <param name="tblWord">PoWord 對應表。</param>
@@ -23,6 +24,7 @@ public sealed class PreFilterSqlMkr{
 		IdUser owner,
 		StudyPreFilter? preFilter
 	){
+		_prmSeq = 0;
 		var where = new StringBuilder("1=1");
 		where.Append("\nAND ").Append(tblWord.SqlIsNonDel());
 
@@ -93,7 +95,7 @@ public sealed class PreFilterSqlMkr{
 			if(v is null){
 				return $"{col} IS NULL";
 			}
-			var p = tblWord.Prm();
+			var p = tblWord.Prm($"CF_{codeCol}_{_prmSeq++}");
 			arg.AddT(p, NormalizeCoreFilterValue(codeCol, v), codeCol);
 			return $"{col} = {p}";
 		}
@@ -102,7 +104,7 @@ public sealed class PreFilterSqlMkr{
 			if(v is null){
 				return $"{col} IS NOT NULL";
 			}
-			var p = tblWord.Prm();
+			var p = tblWord.Prm($"CF_{codeCol}_{_prmSeq++}");
 			arg.AddT(p, NormalizeCoreFilterValue(codeCol, v), codeCol);
 			return $"{col} != {p}";
 		}
@@ -151,7 +153,7 @@ public sealed class PreFilterSqlMkr{
 		if(v is null){
 			return "(0=1)";
 		}
-		var p = tblWord.Prm();
+		var p = tblWord.Prm($"CF_{codeCol}_{_prmSeq++}");
 		arg.AddT(p, NormalizeCoreFilterValue(codeCol, v), codeCol);
 		return $"({qtCol} {op} {p})";
 	}

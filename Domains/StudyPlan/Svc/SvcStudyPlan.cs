@@ -25,6 +25,7 @@ using Ngaq.Core.Shared.StudyPlan.Models;
 using System.Text;
 using System.Text.Json;
 using Ngaq.Core.Tools;
+using Ngaq.Core.Sys.Models;
 
 namespace Ngaq.Local.Domains.StudyPlan.Svc;
 
@@ -36,6 +37,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan{
 	IRepo<PoWeightArg, IdWeightArg> RepoWeightArg;
 	IRepo<PoWeightCalculator, IdWeightCalculator> RepoWeightCalculator;
 	IRepo<PoPreFilter, IdPreFilter> RepoPreFilter;
+	IRepo<PoKv, IdKv> RepoKv;
 	IJsonSerializer JsonS;
 	BoStudyPlan? CurBoStudyPlanCache = null;
 	public SvcStudyPlan(
@@ -46,6 +48,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan{
 		,IRepo<PoWeightArg, IdWeightArg> RepoWeightArg
 		,IRepo<PoWeightCalculator, IdWeightCalculator> RepoWeightCalculator
 		,IRepo<PoPreFilter, IdPreFilter> RepoPreFilter
+		,IRepo<PoKv, IdKv> RepoKv
 		,IJsonSerializer JsonSerializer
 	){
 		this.SvcKv = SvcKv;
@@ -55,6 +58,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan{
 		this.RepoWeightArg = RepoWeightArg;
 		this.RepoWeightCalculator = RepoWeightCalculator;
 		this.RepoPreFilter = RepoPreFilter;
+		this.RepoKv = RepoKv;
 		this.JsonS = JsonSerializer;
 	}
 
@@ -62,10 +66,26 @@ public partial class SvcStudyPlan:ISvcStudyPlan{
 		IDbUserCtx Ctx, IdStudyPlan StudyPlanId, CT Ct
 	){
 		return await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(ctx)=>{
-			var kv = new PoKv();
-			kv.Owner = Ctx.UserCtx.UserId;
-			kv.SetStrStr(KeysClientKv.CurStudyPlanId, StudyPlanId+"");
-			return await SvcKv.BatSet(ctx, ToolAsyE.ToAsyE([kv]), Ct);
+			var key = KeysClientKv.CurStudyPlanId+"";
+			var owner = Ctx.UserCtx.UserId;
+			var oldKv = await SvcKv.BatGetByOwnerEtKStr(
+				ctx
+				,ToolAsyE.ToAsyE([(owner, key)])
+				,Ct
+			).FirstOrDefaultAsync(Ct);
+
+			if(oldKv is null){
+				var kv = new PoKv{
+					Owner = owner,
+				}.SetStrStr(key, StudyPlanId+"");
+				await RepoKv.BatAdd(ctx, ToolAsyE.ToAsyE([kv]), Ct);
+				return NIL;
+			}
+
+			oldKv.Owner = owner;
+			oldKv.SetStrStr(key, StudyPlanId+"");
+			await RepoKv.BatUpdById(ctx, ToolAsyE.ToAsyE([oldKv]), Ct);
+			return NIL;
 		});
 	}
 
@@ -155,6 +175,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan{
 	
 	
 	public async Task<IdStudyPlan?> GetCurStudyPlanId(IDbUserCtx Ctx, CT Ct){
+		Ctx.DbFnCtx ??= new DbFnCtx();
 		var kv = await SvcKv.BatGetByOwnerEtKStr(
 			Ctx.DbFnCtx
 			,ToolAsyE.ToAsyE([(Ctx.UserCtx.UserId, KeysClientKv.CurStudyPlanId+"")])
@@ -163,7 +184,10 @@ public partial class SvcStudyPlan:ISvcStudyPlan{
 		if(kv is null || string.IsNullOrEmpty(kv.VStr)){
 			return null;
 		}
-		return IdStudyPlan.FromLow64Base(kv?.VStr??"");
+		if(IdStudyPlan.TryParse(kv.VStr, out var id)){
+			return id;
+		}
+		return null;
 	}
 
 	public async Task<IWeightCalctr?> GetCurWeightCalctr(IDbUserCtx Ctx, CT Ct) {
@@ -189,6 +213,28 @@ public partial class SvcStudyPlan:ISvcStudyPlan{
 
 		if(jnStudyPlan.StudyPlan.Owner != Ctx.UserCtx.UserId){
 			return null;
+		}
+
+		if(jnStudyPlan.PreFilter is null && !jnStudyPlan.StudyPlan.PreFilterId.IsNullOrDefault()){
+			jnStudyPlan.PreFilter = await RepoPreFilter.BatGetByIdWithDel(
+				Ctx.DbFnCtx
+				,ToolAsyE.ToAsyE([jnStudyPlan.StudyPlan.PreFilterId])
+				,Ct
+			).FirstOrDefaultAsync(Ct);
+		}
+		if(jnStudyPlan.WeightCalculator is null && !jnStudyPlan.StudyPlan.WeightCalculatorId.IsNullOrDefault()){
+			jnStudyPlan.WeightCalculator = await RepoWeightCalculator.BatGetByIdWithDel(
+				Ctx.DbFnCtx
+				,ToolAsyE.ToAsyE([jnStudyPlan.StudyPlan.WeightCalculatorId])
+				,Ct
+			).FirstOrDefaultAsync(Ct);
+		}
+		if(jnStudyPlan.WeightArg is null && !jnStudyPlan.StudyPlan.WeightArgId.IsNullOrDefault()){
+			jnStudyPlan.WeightArg = await RepoWeightArg.BatGetByIdWithDel(
+				Ctx.DbFnCtx
+				,ToolAsyE.ToAsyE([jnStudyPlan.StudyPlan.WeightArgId])
+				,Ct
+			).FirstOrDefaultAsync(Ct);
 		}
 
 		if(jnStudyPlan.PreFilter is { } poPreFilter && poPreFilter.Owner != Ctx.UserCtx.UserId){

@@ -11,12 +11,6 @@ using Ngaq.Core.Shared.Word.Svc;
 public partial class SvcParseWordList
 	: ISvcParseWordList
 {
-	public async Task<nil> AddWordsFromUrl(
-		str Path
-		,CT Ct = default
-	) {
-		throw new NotImplementedException();
-	}
 
 	public async Task<IEnumerable<JnWord>> ParseWordsByIterEtEncoding(
 		IIterable<u8> Iter
