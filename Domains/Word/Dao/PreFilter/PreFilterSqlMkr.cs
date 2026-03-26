@@ -9,7 +9,6 @@ using StudyPreFilter = Ngaq.Core.Shared.StudyPlan.Models.PreFilter.PreFilter;
 namespace Ngaq.Local.Word.Dao;
 
 public sealed class PreFilterSqlMkr{
-	/// <summary>
 	/// 將 Word CoreFilter 轉爲 SQL where 片段與參數。
 	/// </summary>
 	/// <param name="tblWord">PoWord 對應表。</param>

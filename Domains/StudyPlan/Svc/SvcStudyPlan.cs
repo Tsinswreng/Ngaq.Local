@@ -17,6 +17,8 @@ using Tsinswreng.CsPage;
 using Tsinswreng.CsSql;
 using Tsinswreng.CsTools;
 using Ngaq.Core.Infra;
+using Ngaq.Core.Word.Svc;
+using Ngaq.Core.Shared.StudyPlan.Models;
 
 namespace Ngaq.Local.Domains.StudyPlan.Svc;
 
@@ -153,9 +155,21 @@ public partial class SvcStudyPlan:ISvcStudyPlan{
 		}
 		return IdStudyPlan.FromLow64Base(kv?.VStr??"");
 	}
-	
 
-	#if false
+	public Task<IWeightCalctr?> GetCurWeightCalctr(IDbUserCtx Ctx, CT Ct) {
+		throw new NotImplementedException();
+	}
+
+	public Task<JnStudyPlan?> GetCurJnStudyPlan(IDbUserCtx Ctx, CT Ct) {
+		throw new NotImplementedException();
+	}
+
+	public Task<BoStudyPlan?> GetCurBoStudyPlan(IDbUserCtx Ctx, CT Ct) {
+		throw new NotImplementedException();
+	}
+
+
+#if false
 public async Task<Func<
 		IUserCtx, IdStudyPlan
 		,CT, Task<BoStudyPlan?>
@@ -204,5 +218,5 @@ public async Task<Func<
 		};
 	}
 
-	#endif
+#endif
 }

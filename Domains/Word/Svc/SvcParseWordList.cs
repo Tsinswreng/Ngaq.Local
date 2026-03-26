@@ -11,14 +11,14 @@ using Ngaq.Core.Shared.Word.Svc;
 public partial class SvcParseWordList
 	: ISvcParseWordList
 {
-	public async Task<nil> AddWordsFromUrlAsy(
+	public async Task<nil> AddWordsFromUrl(
 		str Path
-		, CT ct = default
+		,CT Ct = default
 	) {
 		throw new NotImplementedException();
 	}
 
-	public async Task<IEnumerable<JnWord>> ParseWordsByIterEtEncodingAsy(
+	public async Task<IEnumerable<JnWord>> ParseWordsByIterEtEncoding(
 		IIterable<u8> Iter
 		,Encoding Encoding
 		,CT Ct = default
@@ -41,10 +41,10 @@ public partial class SvcParseWordList
 		, CT ct = default
 	) {
 		IIterable<u8> ByteReader = new ByteReader(Path_Encode.Path);
-		return await ParseWordsByIterEtEncodingAsy(ByteReader, Path_Encode.Encoding);
+		return await ParseWordsByIterEtEncoding(ByteReader, Path_Encode.Encoding);
 	}
 
-	public async Task<IEnumerable<JnWord>> ParseWordsFromUrlAsy(
+	public async Task<IEnumerable<JnWord>> ParseWordsFromUrl(
 		string Path
 		, CT ct = default
 	) {
@@ -56,7 +56,7 @@ public partial class SvcParseWordList
 		, CT ct = default
 	) {
 		var ByteReader = new StrByteReader(Text);
-		return await ParseWordsByIterEtEncodingAsy(ByteReader, Encoding.UTF8);
+		return await ParseWordsByIterEtEncoding(ByteReader, Encoding.UTF8);
 	}
 
 }
