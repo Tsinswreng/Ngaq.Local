@@ -75,161 +75,225 @@ public partial class SvcWordV2(
 		IAsyncEnumerable<JnWord> Words, CT Ct
 	){
 		return SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(DbCtx)=>{
-			await using var Batch = new BatchCollector<JnWord, nil>(async(WordBatch, Ct)=>{
-				if(WordBatch.Count == 0){
-					return NIL;
-				}
-
-				// 1) 先把同批次內同(Head,Lang)的輸入合併，避免同批次重複插入
-				var Merged = new List<MergedWord>(WordBatch.Count);
-				var KeyToIndex = new Dictionary<Head_Lang, int>();
-				foreach(var Src in WordBatch){
-					var Key = new Head_Lang(Src.Head, Src.Lang);
-					if(!KeyToIndex.TryGetValue(Key, out var i)){
-						var Neo = new JnWord{
-							Word = new PoWord{
-								Id = Src.Word.Id,
-								Owner = Ctx.UserCtx.UserId,
-								Head = Src.Head,
-								Lang = Src.Lang,
-								StoredAt = Src.StoredAt,
-								BizCreatedAt = Src.BizCreatedAt,
-								BizUpdatedAt = Src.BizUpdatedAt,
-							},
-						};
-						Neo.Props = [];
-						Neo.Learns = [];
-						Merged.Add(new MergedWord(Key, Neo));
-						i = Merged.Count - 1;
-						KeyToIndex[Key] = i;
-					}
-					foreach(var P in Src.Props){
-						Merged[i].Word.Props.Add(P);
-					}
-				}
-
-				// 2) 批量查詢這批(Head,Lang)是否已存在
-				var ExistingIds = DaoWordV2.BatGetIdByOwnerHeadLang(
-					DbCtx,
-					Ctx.UserCtx.UserId,
-					ToAsyE(Merged.Select(x=>x.Key)),
-					Ct
-				);
-				var Pos = 0;
-				await foreach(var Id in ExistingIds){
-					if(Pos >= Merged.Count){
-						break;
-					}
-					Merged[Pos].ExistingId = Id;
-					Pos++;
-				}
-
-				// 3) 準備需要新增的根詞、props、learns 與需要touch的詞id
-				var NeoAggs = new List<JnWord>();
-				var NeoProps = new List<PoWordProp>();
-				var NeoLearns = new List<PoWordLearn>();
-				var TouchIds = new List<IdWord>();
-
-				var ExistingIdList = Merged
-					.Where(x=>x.ExistingId is not null)
-					.Select(x=>x.ExistingId!.Value)
-					.ToList();
-				var ExistingById = new Dictionary<IdWord, JnWord>();
-				if(ExistingIdList.Count > 0){
-					var ExistingWords = DaoWordV2.BatGetJnWordByIdWithDel(DbCtx, ToAsyE(ExistingIdList), Ct);
-					var i = 0;
-					await foreach(var Exi in ExistingWords){
-						if(i >= ExistingIdList.Count){
-							break;
-						}
-						var Id = ExistingIdList[i];
-						if(Exi is not null){
-							ExistingById[Id] = Exi;
-						}
-						i++;
-					}
-				}
-
-				foreach(var One in Merged){
-					if(One.ExistingId is null){
-						// 新詞：直接新增聚合；Add 記錄數量 = 全部新詞中的 description 數
-						One.Word.Owner = Ctx.UserCtx.UserId;
-						One.Word.EnsureForeignId();
-						NeoAggs.Add(One.Word);
-						AppendAddLearns(NeoLearns, One.Word.Id, One.Word.Props);
-						continue;
-					}
-
-					var ExiId = One.ExistingId.Value;
-					if(!ExistingById.TryGetValue(ExiId, out var ExiWord)){
-						throw ItemsErr.Word.__And__IsNotSameUserWord.ToErr(ExiId, Ctx.UserCtx.UserId);
-					}
-
-					// 舊詞：僅插入真正新來的props；Add 記錄數量 = 新增進庫的 description props 數
-					var Known = new HashSet<PropFingerprint>();
-					foreach(var P in ExiWord.Props){
-						Known.Add(MkPropFingerprint(P));
-					}
-
-					var AddedAny = false;
-					foreach(var P in One.Word.Props){
-						var Fp = MkPropFingerprint(P);
-						if(!Known.Add(Fp)){
-							continue;
-						}
-						var NeoP = new PoWordProp{
-							Id = P.Id,
-							WordId = ExiId,
-							KType = P.KType,
-							KStr = P.KStr,
-							KI64 = P.KI64,
-							VType = P.VType,
-							VStr = P.VStr,
-							VI64 = P.VI64,
-							VF64 = P.VF64,
-							VBinary = P.VBinary,
-							BizCreatedAt = P.BizCreatedAt,
-							BizUpdatedAt = P.BizUpdatedAt,
-						};
-						NeoProps.Add(NeoP);
-						if(IsDescription(NeoP)){
-							NeoLearns.Add(new PoWordLearn{
-								WordId = ExiId,
-								LearnResult = ELearn.Add,
-								BizCreatedAt = NeoP.BizCreatedAt,
-							});
-						}
-						AddedAny = true;
-					}
-
-					if(AddedAny){
-						TouchIds.Add(ExiId);
-					}
-				}
-
-				if(NeoAggs.Count > 0){
-					await RepoWord.BatAddAgg<JnWord>(DbCtx, ToAsyE(NeoAggs), Ct);
-				}
-				if(NeoProps.Count > 0){
-					await RepoProp.BatAdd(DbCtx, ToAsyE(NeoProps), Ct);
-				}
-				if(NeoLearns.Count > 0){
-					await RepoLearn.BatAdd(DbCtx, ToAsyE(NeoLearns), Ct);
-				}
-				var DistinctTouched = DistinctWordIds(TouchIds);
-				if(DistinctTouched.Count > 0){
-					await DaoWordV2.BatAltWordAfterUpd(DbCtx, ToAsyE(DistinctTouched), Ct);
-				}
-
-				return NIL;
-			});
-
-			await foreach(var One in Words){
-				await Batch.Add(One, Ct);
-			}
-			await Batch.End(Ct);
-			return NIL;
+			return await BatAddNewWordToLearnCore(
+				DbCtx,
+				Ctx.UserCtx.UserId,
+				Words,
+				Ct
+			);
 		});
+	}
+
+	async Task<nil> BatAddNewWordToLearnCore(
+		IDbFnCtx DbCtx,
+		IdUser Owner,
+		IAsyncEnumerable<JnWord> Words,
+		CT Ct
+	){
+		await using var Batch = new BatchCollector<JnWord, nil>(
+			async(WordBatch, Ct)=> await ProcessWordBatch(DbCtx, Owner, WordBatch, Ct)
+		);
+		await foreach(var One in Words){
+			await Batch.Add(One, Ct);
+		}
+		await Batch.End(Ct);
+		return NIL;
+	}
+
+	async Task<nil> ProcessWordBatch(
+		IDbFnCtx DbCtx,
+		IdUser Owner,
+		IList<JnWord> WordBatch,
+		CT Ct
+	){
+		if(WordBatch.Count == 0){
+			return NIL;
+		}
+		var Merged = MergeWordBatch(Owner, WordBatch);
+		await FillExistingIds(DbCtx, Owner, Merged, Ct);
+		var ExistingById = await LoadExistingWordsById(DbCtx, Merged, Ct);
+		var Plan = BuildBatchPlan(Owner, Merged, ExistingById);
+		await ApplyBatchPlan(DbCtx, Plan, Ct);
+		return NIL;
+	}
+
+	List<MergedWord> MergeWordBatch(IdUser Owner, IList<JnWord> WordBatch){
+		var Merged = new List<MergedWord>(WordBatch.Count);
+		var KeyToIndex = new Dictionary<Head_Lang, int>();
+		foreach(var Src in WordBatch){
+			var Key = new Head_Lang(Src.Head, Src.Lang);
+			if(!KeyToIndex.TryGetValue(Key, out var i)){
+				var Neo = MkMergedWord(Owner, Src);
+				Merged.Add(new MergedWord(Key, Neo));
+				i = Merged.Count - 1;
+				KeyToIndex[Key] = i;
+			}
+			foreach(var P in Src.Props){
+				Merged[i].Word.Props.Add(P);
+			}
+		}
+		return Merged;
+	}
+
+	async Task FillExistingIds(
+		IDbFnCtx DbCtx,
+		IdUser Owner,
+		IList<MergedWord> Merged,
+		CT Ct
+	){
+		var ExistingIds = DaoWordV2.BatGetIdByOwnerHeadLang(
+			DbCtx,
+			Owner,
+			ToAsyE(Merged.Select(x=>x.Key)),
+			Ct
+		);
+		var Pos = 0;
+		await foreach(var Id in ExistingIds){
+			if(Pos >= Merged.Count){
+				break;
+			}
+			Merged[Pos].ExistingId = Id;
+			Pos++;
+		}
+	}
+
+	async Task<Dictionary<IdWord, JnWord>> LoadExistingWordsById(
+		IDbFnCtx DbCtx,
+		IEnumerable<MergedWord> Merged,
+		CT Ct
+	){
+		var Ids = Merged.Where(x=>x.ExistingId is not null)
+			.Select(x=>x.ExistingId!.Value)
+			.ToList();
+		var R = new Dictionary<IdWord, JnWord>();
+		if(Ids.Count == 0){
+			return R;
+		}
+		var ExistingWords = DaoWordV2.BatGetJnWordByIdWithDel(DbCtx, ToAsyE(Ids), Ct);
+		var i = 0;
+		await foreach(var Exi in ExistingWords){
+			if(i >= Ids.Count){
+				break;
+			}
+			if(Exi is not null){
+				R[Ids[i]] = Exi;
+			}
+			i++;
+		}
+		return R;
+	}
+
+	WordBatchPlan BuildBatchPlan(
+		IdUser Owner,
+		IEnumerable<MergedWord> Merged,
+		IDictionary<IdWord, JnWord> ExistingById
+	){
+		var Plan = new WordBatchPlan();
+		foreach(var One in Merged){
+			if(One.ExistingId is null){
+				AddNewWordToPlan(Owner, One, Plan);
+				continue;
+			}
+			AddExistingWordToPlan(Owner, One, ExistingById, Plan);
+		}
+		return Plan;
+	}
+
+	void AddNewWordToPlan(IdUser Owner, MergedWord One, WordBatchPlan Plan){
+		One.Word.Owner = Owner;
+		One.Word.EnsureForeignId();
+		Plan.NeoAggs.Add(One.Word);
+		AppendAddLearns(Plan.NeoLearns, One.Word.Id, One.Word.Props);
+	}
+
+	void AddExistingWordToPlan(
+		IdUser Owner,
+		MergedWord One,
+		IDictionary<IdWord, JnWord> ExistingById,
+		WordBatchPlan Plan
+	){
+		var ExiId = One.ExistingId!.Value;
+		if(!ExistingById.TryGetValue(ExiId, out var ExiWord)){
+			throw ItemsErr.Word.__And__IsNotSameUserWord.ToErr(ExiId, Owner);
+		}
+		var Known = new HashSet<PropFingerprint>();
+		foreach(var P in ExiWord.Props){
+			Known.Add(MkPropFingerprint(P));
+		}
+		var AddedAny = false;
+		foreach(var P in One.Word.Props){
+			if(!Known.Add(MkPropFingerprint(P))){
+				continue;
+			}
+			var NeoP = ClonePropToWord(P, ExiId);
+			Plan.NeoProps.Add(NeoP);
+			if(IsDescription(NeoP)){
+				Plan.NeoLearns.Add(MkAddLearn(ExiId, NeoP.BizCreatedAt));
+			}
+			AddedAny = true;
+		}
+		if(AddedAny){
+			Plan.TouchIds.Add(ExiId);
+		}
+	}
+
+	async Task<nil> ApplyBatchPlan(IDbFnCtx DbCtx, WordBatchPlan Plan, CT Ct){
+		if(Plan.NeoAggs.Count > 0){
+			await RepoWord.BatAddAgg<JnWord>(DbCtx, ToAsyE(Plan.NeoAggs), Ct);
+		}
+		if(Plan.NeoProps.Count > 0){
+			await RepoProp.BatAdd(DbCtx, ToAsyE(Plan.NeoProps), Ct);
+		}
+		if(Plan.NeoLearns.Count > 0){
+			await RepoLearn.BatAdd(DbCtx, ToAsyE(Plan.NeoLearns), Ct);
+		}
+		var DistinctTouched = DistinctWordIds(Plan.TouchIds);
+		if(DistinctTouched.Count > 0){
+			await DaoWordV2.BatAltWordAfterUpd(DbCtx, ToAsyE(DistinctTouched), Ct);
+		}
+		return NIL;
+	}
+
+	static JnWord MkMergedWord(IdUser Owner, JnWord Src){
+		var R = new JnWord{
+			Word = new PoWord{
+				Id = Src.Word.Id,
+				Owner = Owner,
+				Head = Src.Head,
+				Lang = Src.Lang,
+				StoredAt = Src.StoredAt,
+				BizCreatedAt = Src.BizCreatedAt,
+				BizUpdatedAt = Src.BizUpdatedAt,
+			},
+		};
+		R.Props = [];
+		R.Learns = [];
+		return R;
+	}
+
+	static PoWordProp ClonePropToWord(PoWordProp P, IdWord WordId){
+		return new PoWordProp{
+			Id = P.Id,
+			WordId = WordId,
+			KType = P.KType,
+			KStr = P.KStr,
+			KI64 = P.KI64,
+			VType = P.VType,
+			VStr = P.VStr,
+			VI64 = P.VI64,
+			VF64 = P.VF64,
+			VBinary = P.VBinary,
+			BizCreatedAt = P.BizCreatedAt,
+			BizUpdatedAt = P.BizUpdatedAt,
+		};
+	}
+
+	static PoWordLearn MkAddLearn(IdWord WordId, Tempus BizCreatedAt){
+		return new PoWordLearn{
+			WordId = WordId,
+			LearnResult = ELearn.Add,
+			BizCreatedAt = BizCreatedAt,
+		};
 	}
 	public async Task<nil> SoftDelJnWordInId(
 		IDbUserCtx Ctx,
@@ -337,6 +401,13 @@ public partial class SvcWordV2(
 		public Head_Lang Key { get; } = Key;
 		public JnWord Word { get; } = Word;
 		public IdWord? ExistingId { get; set; }
+	}
+
+	sealed class WordBatchPlan{
+		public List<JnWord> NeoAggs { get; } = [];
+		public List<PoWordProp> NeoProps { get; } = [];
+		public List<PoWordLearn> NeoLearns { get; } = [];
+		public List<IdWord> TouchIds { get; } = [];
 	}
 
 	record struct PropFingerprint(
