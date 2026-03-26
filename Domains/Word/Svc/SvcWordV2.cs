@@ -52,7 +52,7 @@ public partial class SvcWordV2(
 	){
 		return await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(DbCtx)=>{
 			await using var Batch = new BatchCollector<PoWordLearn, nil>(async(Learns, Ct)=>{
-				var DistinctIds = DistinctWordIds(Learns.Select(x=>x.WordId));
+				var DistinctIds = DistinctWordIds(Learns.Select(x=>x.WordId).ToList());
 				if(DistinctIds.Count == 0){
 					return NIL;
 				}
@@ -93,10 +93,8 @@ public partial class SvcWordV2(
 		await using var Batch = new BatchCollector<JnWord, nil>(
 			async(WordBatch, Ct)=> await ProcessWordBatch(DbCtx, Owner, WordBatch, Ct)
 		);
-		await foreach(var One in Words){
-			await Batch.Add(One, Ct);
-		}
-		await Batch.End(Ct);
+		
+		await Batch.ConsumeAll(Words, Ct);
 		return NIL;
 	}
 
@@ -343,7 +341,7 @@ public partial class SvcWordV2(
 		return NIL;
 	}
 
-	static List<IdWord> DistinctWordIds(IEnumerable<IdWord> Ids){
+	static List<IdWord> DistinctWordIds(IList<IdWord> Ids){
 		var Set = new HashSet<IdWord>();
 		var R = new List<IdWord>();
 		foreach(var Id in Ids){
@@ -355,11 +353,8 @@ public partial class SvcWordV2(
 		return R;
 	}
 
-	static async IAsyncEnumerable<T> ToAsyE<T>(IEnumerable<T> Src){
-		foreach(var One in Src){
-			yield return One;
-		}
-		await Task.CompletedTask;
+	static IAsyncEnumerable<T> ToAsyE<T>(IEnumerable<T> Src){
+		return ToolAsyE.ToAsyE(Src);
 	}
 
 	static bool IsDescription(PoWordProp Prop){
