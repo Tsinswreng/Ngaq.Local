@@ -563,15 +563,6 @@ public partial class SvcWord(
 
 
 
-	public async Task<Func<
-		IUserCtx
-		,IdWordProp
-		,CT
-		,Task<nil>
-	>> FnDelPropById(IDbFnCtx Ctx, CT CT){
-		throw new NotImplementedException();
-	}
-
 #if false
 這個函數 FnUpdJnWord() 的核心是：把傳入的單詞狀態當成“目標真相”，把資料庫裡那條詞同步成一樣（新增、修改、軟刪多餘項都會做）。
 

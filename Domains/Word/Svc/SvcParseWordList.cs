@@ -44,13 +44,6 @@ public partial class SvcParseWordList
 		return await ParseWordsByIterEtEncoding(ByteReader, Path_Encode.Encoding);
 	}
 
-	public async Task<IEnumerable<JnWord>> ParseWordsFromUrl(
-		string Path
-		, CT ct = default
-	) {
-		throw new NotImplementedException();
-	}
-
 	public async Task<IEnumerable<JnWord>> ParseWordsFromText(
 		string Text
 		, CT ct = default

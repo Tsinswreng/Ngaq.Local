@@ -537,7 +537,7 @@ public partial class SvcWord{
 				}
 				return JnWords;
 			}else{
-				throw new NotImplementedException();
+				throw new NotSupportedException();
 			}
 		}catch (System.Exception){
 

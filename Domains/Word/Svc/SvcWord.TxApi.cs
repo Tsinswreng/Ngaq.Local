@@ -90,15 +90,6 @@ public partial class SvcWord{
 	}
 
 	[Impl]
-	public async Task<nil> AddWordsFromUrl(
-		IUserCtx UserCtx
-		,string Path
-		,CT Ct
-	) {
-		throw new NotImplementedException();
-	}
-
-	[Impl]
 	public async Task<nil> AddWordId_PoLearnss(
 		IUserCtx UserCtx
 		,IEnumerable<WordId_PoLearns> WordId_PoLearnss
