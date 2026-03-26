@@ -1,75 +1,205 @@
 using System.Text;
+using Ngaq.Core.Infra;
 using Ngaq.Core.Shared.StudyPlan.Models.PreFilter;
-using Ngaq.Core.Tools;
-using Tsinswreng.CsCore;
+using Ngaq.Core.Shared.User.Models.Po.User;
+using Ngaq.Core.Shared.Word.Models.Po.Word;
+using Ngaq.Local.Db.TswG;
 using Tsinswreng.CsSql;
-using Tsinswreng.CsTools;
+using StudyPreFilter = Ngaq.Core.Shared.StudyPlan.Models.PreFilter.PreFilter;
+namespace Ngaq.Local.Word.Dao;
 
-namespace Ngaq.Local.Domains.Word.Dao.PreFilter;
+public sealed class PreFilterSqlMkr{
+	/// <summary>
+	/// 將 Word CoreFilter 轉爲 SQL where 片段與參數。
+	/// </summary>
+	/// <param name="tblWord">PoWord 對應表。</param>
+	/// <param name="owner">當前用戶。</param>
+	/// <param name="preFilter">前置篩選器，可爲 null。</param>
+	/// <returns>
+	/// whereSql: 可直接拼到 WHERE 後；
+	/// arg: 對應參數。
+	/// </returns>
+	public CoreFilterSql BuildCoreFilterWhere(
+		ITable<PoWord> tblWord,
+		IdUser owner,
+		StudyPreFilter? preFilter
+	){
+		var where = new StringBuilder("1=1");
+		where.Append("\n").Append(tblWord.SqlIsNonDel());
 
-public record ParamEtValue(
-	IParam Param
-	,obj? Value
-	///
-	,Type? ValueType = null
-){
+		var pOwner = tblWord.Prm(nameof(PoWord.Owner));
+		where.Append($"\nAND {tblWord.QtCol(nameof(PoWord.Owner))} = {pOwner}");
+		var arg = ArgDict.Mk(tblWord).AddT(pOwner, owner, nameof(PoWord.Owner));
 
-}
+		if(preFilter is null || preFilter.CoreFilter.Count == 0){
+			return new CoreFilterSql(where.ToString(), arg);
+		}
 
-public class PreFilterSqlMkr {
-
-	public PreFilterSqlMkr() {
-
+		foreach(var fieldsFilter in preFilter.CoreFilter){
+			var one = BuildCoreFieldsFilterSql(tblWord, fieldsFilter, arg);
+			where.Append("\nAND ").Append(one);
+		}
+		return new CoreFilterSql(where.ToString(), arg);
 	}
 
-	///
-	IParam MkParam(str Name) {
-		throw new NotImplementedException();//這裏我稍後自己寫
+	str BuildCoreFieldsFilterSql(ITable<PoWord> tblWord, FieldsFilter fieldsFilter, IArgDict arg){
+		if(fieldsFilter.Fields.Count == 0 || fieldsFilter.Filters.Count == 0){
+			return "(1=1)";
+		}
+
+		var fieldExprs = new List<str>();
+		foreach(var field in fieldsFilter.Fields){
+			var fieldExpr = BuildOneCoreFieldExpr(tblWord, field, fieldsFilter.Filters, arg);
+			if(string.IsNullOrWhiteSpace(fieldExpr)){
+				continue;
+			}
+			fieldExprs.Add(fieldExpr);
+		}
+
+		if(fieldExprs.Count == 0){
+			return "(0=1)";
+		}
+		return "(" + str.Join(" OR ", fieldExprs) + ")";
 	}
 
-	ParamEtValue MkParamEtValue(str Name, object Value, Type? ValueType = null) {
-		throw new NotImplementedException();//這裏我稍後自己寫
+	str BuildOneCoreFieldExpr(
+		ITable<PoWord> tblWord,
+		str field,
+		IList<FilterItem> filters,
+		IArgDict arg
+	){
+		if(!TryMapCoreFieldToWordCodeCol(field, out var codeCol)){
+			return "";
+		}
+		var conds = new List<str>(filters.Count);
+		foreach(var filter in filters){
+			conds.Add(BuildCoreFilterItemCondition(tblWord, codeCol, filter, arg));
+		}
+		if(conds.Count == 0){
+			return "(1=1)";
+		}
+		return "(" + str.Join(" AND ", conds) + ")";
 	}
 
-	str Field(str Name){
-		throw new NotImplementedException();//這裏我稍後自己寫
+	str BuildCoreFilterItemCondition(
+		ITable<PoWord> tblWord,
+		str codeCol,
+		FilterItem filter,
+		IArgDict arg
+	){
+		var col = tblWord.QtCol(codeCol);
+		var vals = filter.Values ?? [];
+
+		str Eq(obj? v){
+			if(v is null){
+				return $"{col} IS NULL";
+			}
+			var p = tblWord.Prm();
+			arg.AddT(p, NormalizeCoreFilterValue(codeCol, v), codeCol);
+			return $"{col} = {p}";
+		}
+
+		str Ne(obj? v){
+			if(v is null){
+				return $"{col} IS NOT NULL";
+			}
+			var p = tblWord.Prm();
+			arg.AddT(p, NormalizeCoreFilterValue(codeCol, v), codeCol);
+			return $"{col} != {p}";
+		}
+
+		switch(filter.Operation){
+			case EFilterOperationMode.IncludeAny:
+				if(vals.Count == 0){
+					return "(0=1)";
+				}
+				return "(" + str.Join(" OR ", vals.Select(Eq)) + ")";
+			case EFilterOperationMode.IncludeAll:
+				if(vals.Count == 0){
+					return "(1=1)";
+				}
+				return "(" + str.Join(" AND ", vals.Select(Eq)) + ")";
+			case EFilterOperationMode.ExcludeAll:
+				if(vals.Count == 0){
+					return "(1=1)";
+				}
+				return "(" + str.Join(" AND ", vals.Select(Ne)) + ")";
+			case EFilterOperationMode.Eq:
+				return "(" + Eq(vals.FirstOrDefault()) + ")";
+			case EFilterOperationMode.Ne:
+				return "(" + Ne(vals.FirstOrDefault()) + ")";
+			case EFilterOperationMode.Gt:
+				return BuildCoreCmpCondition(tblWord, col, codeCol, vals.FirstOrDefault(), ">", arg);
+			case EFilterOperationMode.Ge:
+				return BuildCoreCmpCondition(tblWord, col, codeCol, vals.FirstOrDefault(), ">=", arg);
+			case EFilterOperationMode.Lt:
+				return BuildCoreCmpCondition(tblWord, col, codeCol, vals.FirstOrDefault(), "<", arg);
+			case EFilterOperationMode.Le:
+				return BuildCoreCmpCondition(tblWord, col, codeCol, vals.FirstOrDefault(), "<=", arg);
+			default:
+				return "(1=1)";
+		}
 	}
 
+	str BuildCoreCmpCondition(
+		ITable<PoWord> tblWord,
+		str qtCol,
+		str codeCol,
+		obj? v,
+		str op,
+		IArgDict arg
+	){
+		if(v is null){
+			return "(0=1)";
+		}
+		var p = tblWord.Prm();
+		arg.AddT(p, NormalizeCoreFilterValue(codeCol, v), codeCol);
+		return $"({qtCol} {op} {p})";
+	}
 
-	public void Mk(FilterItem FilterItem, str CodeField){
-		var fld = Field(CodeField);
-		var paramValuePairs = FilterItem.Values.Select(x=>{
-			var paramN = ToolId.NewUlidUInt128();
-			var param = MkParam("_"+ToolUInt128.ToLow64Base(paramN));
-			var r = new ParamEtValue(Param: param, Value: x);
-			return r;
-		}).ToList();
+	static obj? NormalizeCoreFilterValue(str codeCol, obj? raw){
+		if(raw is null){
+			return null;
+		}
+		switch(codeCol){
+			case nameof(PoWord.Head):
+			case nameof(PoWord.Lang):
+				return raw.ToString();
+			case nameof(PoWord.StoredAt):
+			case nameof(PoWord.BizCreatedAt):
+			case nameof(PoWord.BizUpdatedAt):
+				if(raw is Tempus t){
+					return t;
+				}
+				if(raw is DateTime dt){
+					return Tempus.FromDateTime(dt);
+				}
+				if(i64.TryParse(raw.ToString(), out var ms)){
+					return new Tempus(ms);
+				}
+				if(Tempus.TryFromIso(raw.ToString()??"", out var parsed)){
+					return parsed;
+				}
+				return Tempus.Zero;
+			default:
+				return raw;
+		}
+	}
 
-		if(  EFilterOperationMode.IncludeAll.Eq(FilterItem.Operation)  ){
-			var sql = $"AND {fld} IN ({paramValuePairs.ToSqlTuple()})";
+	static bool TryMapCoreFieldToWordCodeCol(str field, out str codeCol){
+		codeCol = field;
+		switch(field){
+			case nameof(PoWord.Head):
+			case nameof(PoWord.Lang):
+			case nameof(PoWord.StoredAt):
+			case nameof(PoWord.BizCreatedAt):
+			case nameof(PoWord.BizUpdatedAt):
+				return true;
+			default:
+				codeCol = "";
+				return false;
 		}
 	}
 }
 
-public static class ExtnParamEtValue{
-	extension(IList<ParamEtValue> z){
-		/// -> (@_1ckmwnFJlBuEbAwKV_uv1, @_1cl9Ev-8L31Q96Rx-83Ws, ...)
-		public str ToSqlTuple(){
-			return str.Join(
-				","
-				,z.Select(x=>x.Param)
-			);
-		}
-	}
-}
-
-
-#if false
-把FilterItem轉成sql。 要用參數化。
-創建命名參數就用MkParam方法。你直接用就可以了、裏面實現不用管。 IParam可以直接拼進sql裏
-
-每個函數上都要加註釋。
-註釋上能對入參和返回值舉例的 就盡量舉例
-
-避免無關改動(包括代碼風格等)、讓文本diff儘量少
-#endif
+public sealed record CoreFilterSql(str WhereSql, IArgDict Arg);

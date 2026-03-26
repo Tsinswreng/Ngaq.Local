@@ -119,6 +119,7 @@ return z;
 //服務類
 	static IServiceCollection SetupSvcs(this IServiceCollection z){
 z.AddScoped<DaoWord, DaoWord>();
+		z.AddScoped<PreFilterSqlMkr, PreFilterSqlMkr>();
 	z.AddScoped<DaoWordV2, DaoWordV2>();
 z.AddScoped<DaoKv, DaoKv>();
 z.AddScoped<DaoStudyPlan, DaoStudyPlan>();

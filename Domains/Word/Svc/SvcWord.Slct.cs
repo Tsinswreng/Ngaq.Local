@@ -20,7 +20,6 @@ using System.IO.Compression;
 using System.Text;
 using System.Collections;
 using Tsinswreng.CsSql;
-using Ngaq.Local.Domains.Word.Dao;
 using Ngaq.Core.Shared.Word;
 using Tsinswreng.CsCore;
 using Tsinswreng.CsErr;

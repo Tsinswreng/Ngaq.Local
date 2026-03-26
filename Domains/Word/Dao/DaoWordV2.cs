@@ -1,7 +1,6 @@
 namespace Ngaq.Local.Word.Dao;
 
 using System.Runtime.CompilerServices;
-using System.Text;
 using Ngaq.Core.Infra;
 using Ngaq.Core.Infra.IF;
 using Ngaq.Core.Model.Po.Kv;
@@ -33,6 +32,7 @@ public partial class DaoWordV2(
 	ITable<PoWordLearn> TL => TblMgr.GetTbl<PoWordLearn>();
 	IRepo<PoWordProp, IdWordProp> RepoProp = RepoProp;
 	IRepo<PoWordLearn, IdWordLearn> RepoLearn = RepoLearn;
+	PreFilterSqlMkr PreFilterSqlMkr = new();
 
 	public Task<nil> BatAltWordAfterUpd(
 		IDbFnCtx Ctx, IAsyncEnumerable<IdWord> Ids, CT Ct
@@ -137,28 +137,18 @@ public partial class DaoWordV2(
 		PreFilter PreFilter,
 		CT Ct
 	){
-		var where = new StringBuilder("1=1");
-		where.Append("\n").Append(TW.SqlIsNonDel());
-
-		var pOwner = TW.Prm(nameof(PoWord.Owner));
-		where.Append($"\nAND {TW.QtCol(nameof(PoWord.Owner))} = {pOwner}");
-		var arg = ArgDict.Mk(TW).AddT(pOwner, Owner, nameof(PoWord.Owner));
-
-		foreach(var fieldsFilter in PreFilter.CoreFilter){
-			var one = BuildCoreFieldsFilterSql(fieldsFilter, arg);
-			where.Append("\nAND ").Append(one);
-		}
+		var coreFilterSql = PreFilterSqlMkr.BuildCoreFilterWhere(TW, Owner, PreFilter);
 
 		var sql =
 $"""
 SELECT {TW.QtCol(nameof(PoWord.Id))}
 FROM {TW.Qt(TW.DbTblName)}
-WHERE {where}
+WHERE {coreFilterSql.WhereSql}
 ORDER BY {TW.QtCol(nameof(PoWord.BizCreatedAt))} DESC
 """;
 		var cmd = await SqlCmdMkr.Prepare(Ctx, sql, Ct);
 		Ctx.AddToDispose(cmd);
-		var rows = Ctx.RunCmd(cmd, arg).AsyE1d(Ct);
+		var rows = Ctx.RunCmd(cmd, coreFilterSql.Arg).AsyE1d(Ct);
 
 		var ids = new List<IdWord>();
 		await foreach(var row in rows){
@@ -206,159 +196,6 @@ ORDER BY {TW.QtCol(nameof(PoWord.BizCreatedAt))} DESC
 			r.Add(id);
 		}
 		return r;
-	}
-
-	str BuildCoreFieldsFilterSql(FieldsFilter FieldsFilter, IArgDict Arg){
-		if(FieldsFilter.Fields.Count == 0){
-			return "(1=1)";
-		}
-		if(FieldsFilter.Filters.Count == 0){
-			return "(1=1)";
-		}
-
-		var fieldExprs = new List<str>();
-		foreach(var field in FieldsFilter.Fields){
-			var fieldExpr = BuildOneCoreFieldExpr(field, FieldsFilter.Filters, Arg);
-			if(string.IsNullOrWhiteSpace(fieldExpr)){
-				continue;
-			}
-			fieldExprs.Add(fieldExpr);
-		}
-
-		if(fieldExprs.Count == 0){
-			return "(0=1)";
-		}
-		return "(" + str.Join(" OR ", fieldExprs) + ")";
-	}
-
-	str BuildOneCoreFieldExpr(str Field, IList<FilterItem> Filters, IArgDict Arg){
-		if(!TryMapCoreFieldToWordCodeCol(Field, out var codeCol)){
-			return "";
-		}
-		var conds = new List<str>(Filters.Count);
-		foreach(var filter in Filters){
-			conds.Add(BuildCoreFilterItemCondition(codeCol, filter, Arg));
-		}
-		if(conds.Count == 0){
-			return "(1=1)";
-		}
-		return "(" + str.Join(" AND ", conds) + ")";
-	}
-
-	str BuildCoreFilterItemCondition(str CodeCol, FilterItem Filter, IArgDict Arg){
-		var col = TW.QtCol(CodeCol);
-		var vals = Filter.Values ?? [];
-
-		str Eq(obj? v){
-			if(v is null){
-				return $"{col} IS NULL";
-			}
-			var p = TW.Prm();
-			Arg.AddT(p, NormalizeCoreFilterValue(CodeCol, v), CodeCol);
-			return $"{col} = {p}";
-		}
-		str Ne(obj? v){
-			if(v is null){
-				return $"{col} IS NOT NULL";
-			}
-			var p = TW.Prm();
-			Arg.AddT(p, NormalizeCoreFilterValue(CodeCol, v), CodeCol);
-			return $"{col} != {p}";
-		}
-
-		switch(Filter.Operation){
-			case EFilterOperationMode.IncludeAny:{
-				if(vals.Count == 0){
-					return "(0=1)";
-				}
-				return "(" + str.Join(" OR ", vals.Select(Eq)) + ")";
-			}
-			case EFilterOperationMode.IncludeAll:{
-				if(vals.Count == 0){
-					return "(1=1)";
-				}
-				return "(" + str.Join(" AND ", vals.Select(Eq)) + ")";
-			}
-			case EFilterOperationMode.ExcludeAll:{
-				if(vals.Count == 0){
-					return "(1=1)";
-				}
-				return "(" + str.Join(" AND ", vals.Select(Ne)) + ")";
-			}
-			case EFilterOperationMode.Eq:
-				return "(" + Eq(vals.FirstOrDefault()) + ")";
-			case EFilterOperationMode.Ne:
-				return "(" + Ne(vals.FirstOrDefault()) + ")";
-			case EFilterOperationMode.Gt:
-				return BuildCoreCmpCondition(col, CodeCol, vals.FirstOrDefault(), ">", Arg);
-			case EFilterOperationMode.Ge:
-				return BuildCoreCmpCondition(col, CodeCol, vals.FirstOrDefault(), ">=", Arg);
-			case EFilterOperationMode.Lt:
-				return BuildCoreCmpCondition(col, CodeCol, vals.FirstOrDefault(), "<", Arg);
-			case EFilterOperationMode.Le:
-				return BuildCoreCmpCondition(col, CodeCol, vals.FirstOrDefault(), "<=", Arg);
-			default:
-				return "(1=1)";
-		}
-	}
-
-	str BuildCoreCmpCondition(
-		str QtCol,
-		str CodeCol,
-		obj? V,
-		str Op,
-		IArgDict Arg
-	){
-		if(V is null){
-			return "(0=1)";
-		}
-		var p = TW.Prm();
-		Arg.AddT(p, NormalizeCoreFilterValue(CodeCol, V), CodeCol);
-		return $"({QtCol} {Op} {p})";
-	}
-
-	obj? NormalizeCoreFilterValue(str CodeCol, obj? Raw){
-		if(Raw is null){
-			return null;
-		}
-		switch(CodeCol){
-			case nameof(PoWord.Head):
-			case nameof(PoWord.Lang):
-				return Raw.ToString();
-			case nameof(PoWord.StoredAt):
-			case nameof(PoWord.BizCreatedAt):
-			case nameof(PoWord.BizUpdatedAt):
-				if(Raw is Tempus t){
-					return t;
-				}
-				if(Raw is DateTime dt){
-					return Tempus.FromDateTime(dt);
-				}
-				if(i64.TryParse(Raw.ToString(), out var ms)){
-					return new Tempus(ms);
-				}
-				if(Tempus.TryFromIso(Raw.ToString()??"", out var parsed)){
-					return parsed;
-				}
-				return Tempus.Zero;
-			default:
-				return Raw;
-		}
-	}
-
-	bool TryMapCoreFieldToWordCodeCol(str Field, out str CodeCol){
-		CodeCol = Field;
-		switch(Field){
-			case nameof(PoWord.Head):
-			case nameof(PoWord.Lang):
-			case nameof(PoWord.StoredAt):
-			case nameof(PoWord.BizCreatedAt):
-			case nameof(PoWord.BizUpdatedAt):
-				return true;
-			default:
-				CodeCol = "";
-				return false;
-		}
 	}
 
 	bool TryGetWordId(IStr_Obj Raw, out IdWord Id){
