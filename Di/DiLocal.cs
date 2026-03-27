@@ -129,6 +129,7 @@ z.AddScoped<ISvcWord, SvcWord>();
 z.AddScoped<ISvcDictionary, global::Ngaq.Local.Domains.Dictionary.Svc.SvcDictionary>();
 z.AddScoped<ISvcKv, SvcKv>();
 z.AddScoped<ISvcStudyPlan, SvcStudyPlan>();
+z.AddScoped<IStudyPlanGetter>(sp=>(IStudyPlanGetter)sp.GetRequiredService<ISvcStudyPlan>());
 z.AddScoped<IImgGetter, SvcImg>();
 return z;
 	}

@@ -26,10 +26,11 @@ using System.Text;
 using System.Text.Json;
 using Ngaq.Core.Tools;
 using Ngaq.Core.Sys.Models;
+using Ngaq.Core.Shared.Word.WeightAlgo;
 
 namespace Ngaq.Local.Domains.StudyPlan.Svc;
 
-public partial class SvcStudyPlan:ISvcStudyPlan{
+public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 	ISvcKv SvcKv;
 	DaoStudyPlan DaoStudyPlan;
 	ISqlCmdMkr SqlCmdMkr;
@@ -60,6 +61,20 @@ public partial class SvcStudyPlan:ISvcStudyPlan{
 		this.RepoPreFilter = RepoPreFilter;
 		this.RepoKv = RepoKv;
 		this.JsonS = JsonSerializer;
+	}
+
+	public async Task<BoStudyPlan> GetStudyPlan(IUserCtx User, CT Ct){
+		var ctx = User;
+		var studyPlan = await GetCurBoStudyPlan(new DbUserCtx(ctx), Ct);
+		if(studyPlan is null){
+			return new BoStudyPlan{
+				WeightCalctr = new DfltWeightCalculator(),
+				WeightArg = new Dictionary<str, obj>(),
+			};
+		}
+		studyPlan.WeightCalctr ??= new DfltWeightCalculator();
+		studyPlan.WeightArg ??= new Dictionary<str, obj>();
+		return studyPlan;
 	}
 
 	public async Task<nil> SetCurStudyPlanId(

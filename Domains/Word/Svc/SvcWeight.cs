@@ -6,7 +6,7 @@ using Ngaq.Core.Word.WeightAlgo;
 
 
 public partial class SvcWeight
-	:WeightCalculator
+	:DfltWeightCalculator
 	,IWeightCalctr
 {
 
