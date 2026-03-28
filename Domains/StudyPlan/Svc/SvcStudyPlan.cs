@@ -27,6 +27,8 @@ using System.Text.Json;
 using Ngaq.Core.Tools;
 using Ngaq.Core.Sys.Models;
 using Ngaq.Core.Shared.Word.WeightAlgo;
+using Ngaq.Core.Shared.Word.WeightAlgo.Models;
+using Tsinswreng.CsCore;
 
 namespace Ngaq.Local.Domains.StudyPlan.Svc;
 
@@ -347,6 +349,141 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 			return new JsWeightCalctr(JsonS, jsCode);
 		}
 		return null;
+	}
+
+	/// <summary>
+	/// 生成「內置默認學習方案」的業務模型。
+	/// 只在內存中構造，不直接操作資料庫。
+	/// </summary>
+	/// <param name="Ctx">資料庫/用戶上下文；此方法主要使用其中的 UserId 作 Owner。</param>
+	/// <param name="Ct">取消令牌。</param>
+	/// <returns>返回完整的內置 <see cref="BoStudyPlan"/>（含 PoStudyPlan/PoWeightCalculator/PoWeightArg 與可運行的默認計算器）。</returns>
+	public Task<BoStudyPlan> GetBuiltinStudyPlan(
+		IDbUserCtx Ctx, CT Ct
+	){
+		var owner = Ctx.UserCtx.UserId;
+		// 內置資源命名都要求帶固定前綴，避免與用戶自定義名稱衝突。
+		var builtinCalcName = Consts.BuiltinPrefix + DfltWeightCalculator.Name;
+		var builtinArgName = Consts.BuiltinPrefix + DfltWeightCfg.Name;
+		var builtinPlanName = Consts.BuiltinPrefix + "Default";
+
+		// 構造默認權重配置，並序列化為 WeightArg 的 JSON 載荷。
+		var cfg = new DfltWeightCfg();
+		var cfgDict = new Dictionary<str, obj?>{
+			[nameof(DfltWeightCfg.AddCnt_Bonus)] = cfg.AddCnt_Bonus.ToList(),
+			[nameof(DfltWeightCfg.DfltAddBonus)] = cfg.DfltAddBonus,
+			[nameof(DfltWeightCfg.DebuffNumerator)] = cfg.DebuffNumerator,
+			[nameof(DfltWeightCfg.Base)] = cfg.Base,
+			[nameof(DfltWeightCfg.FinalAddBonusDenominator)] = cfg.FinalAddBonusDenominator,
+		};
+		var cfgJson = DictJson.ToJson(cfgDict);
+		var cfgBytes = Encoding.UTF8.GetBytes(cfgJson);
+
+		// 內置算法：Type=BuiltIn，Data 留空，運行時直接用 DfltWeightCalculator。
+		var poWeightCalculator = new PoWeightCalculator{
+			Owner = owner,
+			UniqName = builtinCalcName,
+			Type = EWeightCalculatorType.Builtin,
+			Data = null,
+			Descr = "",
+		};
+		// 內置算法參數：Type=Json，Data 保存默認配置。
+		var poWeightArg = new PoWeightArg{
+			Owner = owner,
+			UniqName = builtinArgName,
+			Type = EWeightArgType.Json,
+			Data = cfgBytes,
+			WeightCalculatorName = builtinCalcName,
+			Descr = "",
+		};
+		// StudyPlan 用外鍵關聯到剛構造的算法與參數。
+		var poStudyPlan = new PoStudyPlan{
+			Owner = owner,
+			UniqName = builtinPlanName,
+			Descr = "",
+			WeightCalculatorId = poWeightCalculator.Id,
+			WeightArgId = poWeightArg.Id,
+			PreFilterId = IdPreFilter.Zero,
+		};
+
+		var boStudyPlan = new BoStudyPlan{
+			PoStudyPlan = poStudyPlan,
+			PoWeightCalculator = poWeightCalculator,
+			PoWeightArg = poWeightArg,
+			PoPreFilter = null,
+			PreFilter = null,
+			WeightCalctr = new DfltWeightCalculator(),
+			WeightArg = cfgDict,
+		};
+		return Task.FromResult(boStudyPlan);
+	}
+
+	/// <summary>
+	/// 確保用戶當前學習方案存在且可用。
+	/// 規則：
+	/// 1) 若 CurStudyPlanId 對應方案存在且屬於當前用戶，保持不變；
+	/// 2) 否則若用戶已有任意方案，選最近的一個作為當前方案；
+	/// 3) 否則創建一套內置默認方案並設為當前方案。
+	/// </summary>
+	/// <param name="Ctx">資料庫/用戶上下文。若未帶 DbFnCtx，內部會自動開事務上下文。</param>
+	/// <param name="Ct">取消令牌。</param>
+	/// <returns>若創建了新的內置方案返回 true；僅校正/沿用既有方案返回 false。</returns>
+	public async Task<bool> EnsureCurStudyPlan(
+		IDbUserCtx Ctx, CT Ct
+	){
+		return await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(dbCtx)=>{
+			var dbUserCtx = new DbUserCtx(Ctx.UserCtx, dbCtx);
+			var owner = Ctx.UserCtx.UserId;
+
+			// 1) 先驗證當前 CurStudyPlanId 是否有效且屬於當前用戶。
+			var curStudyPlanId = await GetCurStudyPlanId(dbUserCtx, Ct);
+			if(curStudyPlanId is IdStudyPlan curId && !curId.IsNullOrDefault()){
+				var curPoStudyPlan = await RepoStudyPlan.BatGetByIdWithDel(
+					dbCtx,
+					ToolAsyE.ToAsyE([curId]),
+					Ct
+				).FirstOrDefaultAsync(Ct);
+				if(curPoStudyPlan is not null && curPoStudyPlan.Owner == owner){
+					return false;
+				}
+			}
+
+			// 2) 若當前 id 失效，嘗試回退到用戶已有的最近一個方案。
+			var req = new ReqPageStudyPlan{
+				PageQry = new PageQry{
+					PageIdx = 0,
+					PageSize = 1,
+				},
+			};
+			var page = await DaoStudyPlan.PageStudyPlan(dbCtx, owner, req, Ct);
+			var latestStudyPlan = await page.DataAsyE.OrEmpty().FirstOrDefaultAsync(Ct);
+			if(latestStudyPlan is not null){
+				await SetCurStudyPlanId(dbUserCtx, latestStudyPlan.Id, Ct);
+				CurBoStudyPlanCache = null;
+				return false;
+			}
+
+			// 3) 用戶完全沒有方案時，創建並落庫內置默認方案。
+			var builtinStudyPlan = await GetBuiltinStudyPlan(dbUserCtx, Ct);
+			if(builtinStudyPlan.PoWeightCalculator is { } poWeightCalculator){
+				await RepoWeightCalculator.BatAdd(dbCtx, ToolAsyE.ToAsyE([poWeightCalculator]), Ct);
+			}
+			if(builtinStudyPlan.PoWeightArg is { } poWeightArg){
+				await RepoWeightArg.BatAdd(dbCtx, ToolAsyE.ToAsyE([poWeightArg]), Ct);
+			}
+			if(builtinStudyPlan.PoPreFilter is { } poPreFilter){
+				await RepoPreFilter.BatAdd(dbCtx, ToolAsyE.ToAsyE([poPreFilter]), Ct);
+			}
+			if(builtinStudyPlan.PoStudyPlan is not { } poStudyPlan){
+				return false;
+			}
+			await RepoStudyPlan.BatAdd(dbCtx, ToolAsyE.ToAsyE([poStudyPlan]), Ct);
+			await SetCurStudyPlanId(dbUserCtx, poStudyPlan.Id, Ct);
+
+			// 新創建的默認方案可直接作為快取，減少後續重查。
+			CurBoStudyPlanCache = builtinStudyPlan;
+			return true;
+		});
 	}
 
 }
