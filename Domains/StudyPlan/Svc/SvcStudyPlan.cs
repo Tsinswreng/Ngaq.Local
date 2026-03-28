@@ -369,14 +369,8 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 
 		// 構造默認權重配置，並序列化為 WeightArg 的 JSON 載荷。
 		var cfg = new DfltWeightCfg();
-		var cfgDict = new Dictionary<str, obj?>{
-			[nameof(DfltWeightCfg.AddCnt_Bonus)] = cfg.AddCnt_Bonus.ToList(),
-			[nameof(DfltWeightCfg.DfltAddBonus)] = cfg.DfltAddBonus,
-			[nameof(DfltWeightCfg.DebuffNumerator)] = cfg.DebuffNumerator,
-			[nameof(DfltWeightCfg.Base)] = cfg.Base,
-			[nameof(DfltWeightCfg.FinalAddBonusDenominator)] = cfg.FinalAddBonusDenominator,
-		};
-		var cfgJson = DictJson.ToJson(cfgDict);
+		var cfgJson = JsonS.Stringify(cfg);
+		var cfgDict = ToolJson.JsonStrToDict(cfgJson);
 		var cfgBytes = Encoding.UTF8.GetBytes(cfgJson);
 
 		// 內置算法：Type=BuiltIn，Data 留空，運行時直接用 DfltWeightCalculator。
