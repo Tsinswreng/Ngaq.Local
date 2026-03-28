@@ -381,7 +381,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 	/// <param name="Ctx">資料庫/用戶上下文；此方法主要使用其中的 UserId 作 Owner。</param>
 	/// <param name="Ct">取消令牌。</param>
 	/// <returns>返回完整的內置 <see cref="BoStudyPlan"/>（含 PoStudyPlan/PoWeightCalculator/PoWeightArg 與可運行的默認計算器）。</returns>
-	public Task<BoStudyPlan> GetBuiltinStudyPlan(
+	public Task<BoStudyPlan> GetDfltStudyPlan(
 		IDbUserCtx Ctx, CT Ct
 	){
 		var owner = Ctx.UserCtx.UserId;
@@ -435,16 +435,6 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		return Task.FromResult(boStudyPlan);
 	}
 
-	/// <summary>
-	/// 確保用戶當前學習方案存在且可用。
-	/// 規則：
-	/// 1) 若 CurStudyPlanId 對應方案存在且屬於當前用戶，保持不變；
-	/// 2) 否則若用戶已有任意方案，選最近的一個作為當前方案；
-	/// 3) 否則創建一套內置默認方案並設為當前方案。
-	/// </summary>
-	/// <param name="Ctx">資料庫/用戶上下文。若未帶 DbFnCtx，內部會自動開事務上下文。</param>
-	/// <param name="Ct">取消令牌。</param>
-	/// <returns>若創建了新的內置方案返回 true；僅校正/沿用既有方案返回 false。</returns>
 	public async Task<bool> EnsureCurStudyPlan(
 		IDbUserCtx Ctx, CT Ct
 	){
@@ -481,7 +471,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 			}
 
 			// 3) 用戶完全沒有方案時，創建並落庫內置默認方案。
-			var builtinStudyPlan = await GetBuiltinStudyPlan(dbUserCtx, Ct);
+			var builtinStudyPlan = await GetDfltStudyPlan(dbUserCtx, Ct);
 			if(builtinStudyPlan.PoWeightCalculator is { } poWeightCalculator){
 				await RepoWeightCalculator.BatAdd(dbCtx, ToolAsyE.ToAsyE([poWeightCalculator]), Ct);
 			}
@@ -501,6 +491,12 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 			CurBoStudyPlanCache = builtinStudyPlan;
 			return true;
 		});
+	}
+	
+	public Task<nil> RestoreBuiltinStudyPlan(
+		IDbUserCtx Ctx, CT Ct
+	){
+		throw new NotImplementedException();
 	}
 
 }
