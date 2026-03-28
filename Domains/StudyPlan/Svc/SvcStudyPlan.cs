@@ -394,6 +394,77 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 	}
 
 
+	public async Task<bool> EnsureBuiltinStudyPlan(
+		IDbUserCtx Ctx, CT Ct
+	){
+		Ctx.DbFnCtx ??= new DbFnCtx();
+		var builtinName = Consts.BuiltinPrefix + DfltWeightCalculator.Name;
+		
+		// 检查是否已存在内置权重算法
+		var existing = await RepoWeightCalculator.GetAll(Ctx.DbFnCtx, Ct)
+			.Where(x => x.UniqName == builtinName)
+			.FirstOrDefaultAsync(Ct);
+		
+		if(existing != null){
+			return false; // 已存在，无需创建
+		}
+		
+		// 创建内置权重算法
+		var poWeightCalculator = new PoWeightCalculator{
+			Owner = IdUser.Zero, // 内置算法属于系统，不是特定用户
+			UniqName = builtinName,
+			Type = EWeightCalculatorType.Builtin,
+			Data = null, // 内置算法不需要额外数据
+			Descr = "内置默认权重算法"
+		};
+		
+		await RepoWeightCalculator.BatAdd(Ctx.DbFnCtx, ToolAsyE.ToAsyE([poWeightCalculator]), Ct);
+		return true; // 创建成功
+	}
+
+	public async Task<bool> EnsureCurStudyPlan(
+		IDbUserCtx Ctx, CT Ct
+	){
+		// 检查用户当前是否已设置学习方案
+		var curStudyPlanId = await GetCurStudyPlanId(Ctx, Ct);
+		if(curStudyPlanId is IdStudyPlan id && !id.IsNullOrDefault()){
+			return false; // 已存在，无需创建
+		}
+		
+		// 确保内置权重算法存在
+		await EnsureBuiltinStudyPlan(Ctx, Ct);
+		
+		Ctx.DbFnCtx ??= new DbFnCtx();
+		
+		// 获取内置权重算法
+		var builtinName = Consts.BuiltinPrefix + DfltWeightCalculator.Name;
+		var builtinWeightCalculator = await RepoWeightCalculator.GetAll(Ctx.DbFnCtx, Ct)
+			.Where(x => x.UniqName == builtinName)
+			.FirstOrDefaultAsync(Ct);
+		
+		if(builtinWeightCalculator == null){
+			// 如果内置算法不存在，抛出异常
+			throw new InvalidOperationException("内置权重算法不存在");
+		}
+		
+		// 创建默认学习方案
+		var poStudyPlan = new PoStudyPlan{
+			Owner = Ctx.UserCtx.UserId,
+			UniqName = "默认学习方案",
+			Descr = "系统默认学习方案",
+			WeightCalculatorId = builtinWeightCalculator.Id,
+			PreFilterId = IdPreFilter.Zero,
+			WeightArgId = IdWeightArg.Zero
+		};
+		
+		await RepoStudyPlan.BatAdd(Ctx.DbFnCtx, ToolAsyE.ToAsyE([poStudyPlan]), Ct);
+		
+		// 设置为当前学习方案
+		await SetCurStudyPlanId(Ctx, poStudyPlan.Id, Ct);
+		
+		return true; // 创建成功
+	}
+
 #if false
 public async Task<Func<
 		IUserCtx, IdStudyPlan
