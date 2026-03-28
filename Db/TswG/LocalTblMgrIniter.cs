@@ -107,8 +107,8 @@ public partial class LocalTblMgrIniter{
 	}
 
 	public static ITblSetter<T> CfgIPoKv<T>(ITblSetter<T> o) where T : IPoKv {
-		o.Col(nameof(IPoKv.KType)).MapEnumToInt32<EKvType>();
-		o.Col(nameof(IPoKv.VType)).MapEnumToInt32<EKvType>();
+		o.Col(nameof(IPoKv.KType)).MapEnumToStr<EKvType>();
+		o.Col(nameof(IPoKv.VType)).MapEnumToStr<EKvType>();
 		o.IdxExpr(null, x=>x.KStr, x=>x.KI64);
 		return o;
 	}
@@ -167,7 +167,7 @@ public partial class LocalTblMgrIniter{
 			CfgBizCreateUpdateTime(o);
 			o.Col(x=>x.Id).MapType(IdPreFilter.MkTypeMapFn());
 			o.Col(x=>x.Owner).MapType(MapIdUser());
-			o.Col(x=>x.Type).MapEnumToInt32<EPreFilterType>();
+			o.Col(x=>x.Type).MapEnumToStr<EPreFilterType>();
 			o.Col(x=>x.DataSchemaVer).MapType(MapVersion());
 			o.IdxExpr(null, x=>x.UniqName);
 		}
@@ -179,7 +179,7 @@ public partial class LocalTblMgrIniter{
 			CfgPoBase(o);
 			o.Col(x=>x.Id).MapType(IdWeightCalculator.MkTypeMapFn());
 			o.Col(x=>x.Owner).MapType(MapIdUser());
-			o.Col(x=>x.Type).MapEnumToInt32<EWeightCalculatorType>();
+			o.Col(x=>x.Type).MapEnumToStr<EWeightCalculatorType>();
 			o.IdxExpr(
 				new OptMkIdx{
 					Unique=true
@@ -197,7 +197,7 @@ public partial class LocalTblMgrIniter{
 			CfgBizCreateUpdateTime(o);
 			o.Col(x=>x.Id).MapType(IdWeightArg.MkTypeMapFn());
 			o.Col(x=>x.Owner).MapType(MapIdUser());
-			o.Col(x=>x.Type).MapEnumToInt32<EWeightArgType>();
+			o.Col(x=>x.Type).MapEnumToStr<EWeightArgType>();
 			o.IdxExpr(
 				new OptMkIdx{
 					Unique=true

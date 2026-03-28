@@ -64,6 +64,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 	}
 
 	public async Task<BoStudyPlan> GetStudyPlan(IUserCtx User, CT Ct){
+		await EnsureCurStudyPlan(User.ToDbUserCtx(), Ct);
 		var studyPlan = await GetCurBoStudyPlan(User.ToDbUserCtx(), Ct);
 		if(studyPlan is null){
 			return new BoStudyPlan{
