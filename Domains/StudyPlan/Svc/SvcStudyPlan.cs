@@ -29,6 +29,8 @@ using Ngaq.Core.Sys.Models;
 using Ngaq.Core.Shared.Word.WeightAlgo;
 using Ngaq.Core.Shared.Word.WeightAlgo.Models;
 using Tsinswreng.CsCore;
+using Ngaq.Core.Infra.Errors;
+using Tsinswreng.CsErr;
 
 namespace Ngaq.Local.Domains.StudyPlan.Svc;
 
@@ -325,7 +327,13 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		){
 			var json = Encoding.UTF8.GetString(poWeightArg.Data);
 			if(!string.IsNullOrWhiteSpace(json)){
-				boStudyPlan.WeightArg = ToolJson.JsonStrToDict(json);
+				try{
+					boStudyPlan.WeightArg = ToolJson.JsonStrToDict(json);
+				}catch(Exception e){
+					throw ItemsErr.Word.WeightCalcGetStudyPlanFailed.ToErr()
+						.AddErr(e)
+						.AddDebugArgs(poWeightArg.Id, poWeightArg.UniqName, json);
+				}
 			}
 		}
 
@@ -338,17 +346,32 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		if(PoWeightCalculator is null){
 			return null;
 		}
+		if(PoWeightCalculator.Type == EWeightCalculatorType.Builtin){
+			return new DfltWeightCalculator();
+		}
 		if(PoWeightCalculator.Type == EWeightCalculatorType.Js){
 			if(PoWeightCalculator.Data is not { Length: > 0 }){
-				return null;
+				throw ItemsErr.Word.WeightCalcInvalidAlgorithm.ToErr(
+					PoWeightCalculator.Id,
+					PoWeightCalculator.UniqName,
+					"JsDataEmpty"
+				);
 			}
 			var jsCode = Encoding.UTF8.GetString(PoWeightCalculator.Data);
 			if(string.IsNullOrWhiteSpace(jsCode)){
-				return null;
+				throw ItemsErr.Word.WeightCalcInvalidAlgorithm.ToErr(
+					PoWeightCalculator.Id,
+					PoWeightCalculator.UniqName,
+					"JsCodeEmpty"
+				);
 			}
 			return new JsWeightCalctr(JsonS, jsCode);
 		}
-		return null;
+		throw ItemsErr.Word.WeightCalcInvalidAlgorithm.ToErr(
+			PoWeightCalculator.Id,
+			PoWeightCalculator.UniqName,
+			PoWeightCalculator.Type
+		);
 	}
 
 	/// <summary>
