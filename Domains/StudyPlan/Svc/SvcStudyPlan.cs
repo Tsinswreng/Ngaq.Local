@@ -515,4 +515,133 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		return NIL;
 	}
 
+	/// 批量更新權重算法。
+	/// 參照 BatUpdPreFilter 的寫法：先校驗 Owner，再在事務內批量更新。
+	public async Task<nil> BatUpdWeightCalculator(
+		IDbUserCtx Ctx, IAsyncEnumerable<PoWeightCalculator> Pos, CT Ct
+	){
+		Pos = Pos.Select(x=>{
+			if(x.Owner != Ctx.UserCtx.UserId){
+				throw new Exception(Todo.I18n("x.Owner != Ctx.UserCtx.UserId"));
+			}
+			return x;
+		});
+		await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, (ctx)=>{
+			return RepoWeightCalculator.BatUpd(ctx, Pos, Ct);
+		});
+		return NIL;
+	}
+
+	/// 批量更新權重參數。
+	/// 參照 BatUpdPreFilter 的寫法：先校驗 Owner，再在事務內批量更新。
+	public async Task<nil> BatUpdWeightArg(
+		IDbUserCtx Ctx, IAsyncEnumerable<PoWeightArg> Pos, CT Ct
+	){
+		Pos = Pos.Select(x=>{
+			if(x.Owner != Ctx.UserCtx.UserId){
+				throw new Exception(Todo.I18n("x.Owner != Ctx.UserCtx.UserId"));
+			}
+			return x;
+		});
+		await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, (ctx)=>{
+			return RepoWeightArg.BatUpd(ctx, Pos, Ct);
+		});
+		return NIL;
+	}
+
+	/// 批量軟刪除前置篩選器（僅刪除根實體，不處理關聯）。
+	/// 參照 BatUpdPreFilter 的寫法：先校驗 Owner，再在事務內批量軟刪除。
+	public async Task<nil> BatSoftDelPreFilter(
+		IDbUserCtx Ctx, IAsyncEnumerable<PoPreFilter> Pos, CT Ct
+	){
+		Pos = Pos.Select(x=>{
+			if(x.Owner != Ctx.UserCtx.UserId){
+				throw new Exception(Todo.I18n("x.Owner != Ctx.UserCtx.UserId"));
+			}
+			return x;
+		});
+		await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(ctx)=>{
+			await RepoPreFilter.BatSoftDelById(ctx, Pos.Select(x=>x.Id), Ct);
+			return NIL;
+		});
+		return NIL;
+	}
+
+	/// 批量軟刪除權重算法（僅刪除根實體，不處理關聯）。
+	/// 參照 BatUpdPreFilter 的寫法：先校驗 Owner，再在事務內批量軟刪除。
+	public async Task<nil> BatSoftDelWeightCalculator(
+		IDbUserCtx Ctx, IAsyncEnumerable<PoWeightCalculator> Pos, CT Ct
+	){
+		Pos = Pos.Select(x=>{
+			if(x.Owner != Ctx.UserCtx.UserId){
+				throw new Exception(Todo.I18n("x.Owner != Ctx.UserCtx.UserId"));
+			}
+			return x;
+		});
+		await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(ctx)=>{
+			await RepoWeightCalculator.BatSoftDelById(ctx, Pos.Select(x=>x.Id), Ct);
+			return NIL;
+		});
+		return NIL;
+	}
+
+	/// 批量軟刪除權重參數（僅刪除根實體，不處理關聯）。
+	/// 參照 BatUpdPreFilter 的寫法：先校驗 Owner，再在事務內批量軟刪除。
+	public async Task<nil> BatSoftDelWeightArg(
+		IDbUserCtx Ctx, IAsyncEnumerable<PoWeightArg> Pos, CT Ct
+	){
+		Pos = Pos.Select(x=>{
+			if(x.Owner != Ctx.UserCtx.UserId){
+				throw new Exception(Todo.I18n("x.Owner != Ctx.UserCtx.UserId"));
+			}
+			return x;
+		});
+		await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(ctx)=>{
+			await RepoWeightArg.BatSoftDelById(ctx, Pos.Select(x=>x.Id), Ct);
+			return NIL;
+		});
+		return NIL;
+	}
+
+	/// 批量更新學習方案。
+	public async Task<nil> BatUpdStudyPlan(
+		IDbUserCtx Ctx, IAsyncEnumerable<PoStudyPlan> Pos, CT Ct
+	){
+		Pos = Pos.Select(x=>{
+			if(x.Owner != Ctx.UserCtx.UserId){
+				throw new Exception(Todo.I18n("x.Owner != Ctx.UserCtx.UserId"));
+			}
+			return x;
+		});
+		await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(ctx)=>{
+			await RepoStudyPlan.BatUpd(ctx, Pos, Ct);
+			CurBoStudyPlanCache = null;
+			return NIL;
+		});
+		return NIL;
+	}
+
+	/// 批量軟刪除學習方案。僅標記 PoStudyPlan 本體，不處理關聯資產。
+	public async Task<nil> BatSoftDelStudyPlan(
+		IDbUserCtx Ctx, IAsyncEnumerable<PoStudyPlan> Pos, CT Ct
+	){
+		Pos = Pos.Select(x=>{
+			if(x.Owner != Ctx.UserCtx.UserId){
+				throw new Exception(Todo.I18n("x.Owner != Ctx.UserCtx.UserId"));
+			}
+			return x;
+		});
+		await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(ctx)=>{
+			await RepoStudyPlan.BatSoftDelById(ctx, Pos.Select(x=>x.Id), Ct);
+			CurBoStudyPlanCache = null;
+			return NIL;
+		});
+		return NIL;
+	}
+
+	public Task<nil> RestoreBuiltinStudyPlan(IDbUserCtx Ctx, CT Ct) {
+		//這個不用寫 也不用測試
+		throw new NotImplementedException();
+	}
+
 }
