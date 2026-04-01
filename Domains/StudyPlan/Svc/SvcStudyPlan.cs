@@ -119,24 +119,43 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		});
 		return Pos;
 	}
+
+	static void ThrowMappedStudyPlanErr(
+		IErrItem ErrType, Exception Ex
+	){
+		if(Ex is AppErr appErr && ReferenceEquals(appErr.Type, ErrType)){
+			throw Ex;
+		}
+		var err = ErrType.ToErr();
+		err.AddErr(Ex);
+		throw err;
+	}
+
+	async Task<nil> WrapStudyPlanErr(
+		IErrItem ErrType
+		,Func<Task<nil>> Fn
+	){
+		try{
+			return await Fn();
+		}
+		catch(Exception ex){
+			ThrowMappedStudyPlanErr(ErrType, ex);
+			throw;
+		}
+	}
 	
 	public async Task<nil> BatAddPreFilter(
 		IDbUserCtx Ctx
 		, IAsyncEnumerable<PoPreFilter> Pos
 		,CT Ct
 	){
-		try{
+		return await WrapStudyPlanErr(ItemsErr.StudyPlan.AddFailedDataMayConflict, async()=>{
 			return await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(ctx)=>{
 				Pos = EnsureOwner(Ctx.UserCtx.UserId, Pos);
 				await RepoPreFilter.BatAdd(ctx, Pos, Ct);
 				return NIL;
 			});
-		}
-		catch (System.Exception ex){
-			var E = ItemsErr.StudyPlan.AddFailedDataMayConflict.ToErr();
-			E.AddErr(ex);
-			throw E;
-		}
+		});
 	}
 	
 	public async Task<nil> BatAddWeightArg(
@@ -144,10 +163,12 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		, IAsyncEnumerable<PoWeightArg> Pos
 		,CT Ct
 	){
-		return await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(ctx)=>{
-			Pos = EnsureOwner(Ctx.UserCtx.UserId, Pos);
-			await RepoWeightArg.BatAdd(ctx, Pos, Ct);
-			return NIL;
+		return await WrapStudyPlanErr(ItemsErr.StudyPlan.AddFailedDataMayConflict, async()=>{
+			return await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(ctx)=>{
+				Pos = EnsureOwner(Ctx.UserCtx.UserId, Pos);
+				await RepoWeightArg.BatAdd(ctx, Pos, Ct);
+				return NIL;
+			});
 		});
 	}
 	
@@ -156,10 +177,12 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		, IAsyncEnumerable<PoWeightCalculator> Pos
 		,CT Ct
 	){
-		return await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(ctx)=>{
-			Pos = EnsureOwner(Ctx.UserCtx.UserId, Pos);
-			await RepoWeightCalculator.BatAdd(ctx, Pos, Ct);
-			return NIL;
+		return await WrapStudyPlanErr(ItemsErr.StudyPlan.AddFailedDataMayConflict, async()=>{
+			return await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(ctx)=>{
+				Pos = EnsureOwner(Ctx.UserCtx.UserId, Pos);
+				await RepoWeightCalculator.BatAdd(ctx, Pos, Ct);
+				return NIL;
+			});
 		});
 	}
 
@@ -510,16 +533,18 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		,IAsyncEnumerable<PoPreFilter> Pos
 		,CT Ct
 	){
-		Pos = Pos.Select(x=>{
-			if(x.Owner != Ctx.UserCtx.UserId){
-				throw new Exception(Todo.I18n("x.Owner != Ctx.UserCtx.UserId"));
-			}
-			return x;
+		return await WrapStudyPlanErr(ItemsErr.StudyPlan.UpdateFailedDataMayConflict, async()=>{
+			Pos = Pos.Select(x=>{
+				if(x.Owner != Ctx.UserCtx.UserId){
+					throw new Exception(Todo.I18n("x.Owner != Ctx.UserCtx.UserId"));
+				}
+				return x;
+			});
+			await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, (ctx)=>{
+				return RepoPreFilter.BatUpd(ctx, Pos, Ct);
+			});
+			return NIL;
 		});
-		await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, (ctx)=>{
-			return RepoPreFilter.BatUpd(ctx, Pos, Ct);
-		});
-		return NIL;
 	}
 
 	/// 批量更新權重算法。
@@ -527,16 +552,18 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 	public async Task<nil> BatUpdWeightCalculator(
 		IDbUserCtx Ctx, IAsyncEnumerable<PoWeightCalculator> Pos, CT Ct
 	){
-		Pos = Pos.Select(x=>{
-			if(x.Owner != Ctx.UserCtx.UserId){
-				throw new Exception(Todo.I18n("x.Owner != Ctx.UserCtx.UserId"));
-			}
-			return x;
+		return await WrapStudyPlanErr(ItemsErr.StudyPlan.UpdateFailedDataMayConflict, async()=>{
+			Pos = Pos.Select(x=>{
+				if(x.Owner != Ctx.UserCtx.UserId){
+					throw new Exception(Todo.I18n("x.Owner != Ctx.UserCtx.UserId"));
+				}
+				return x;
+			});
+			await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, (ctx)=>{
+				return RepoWeightCalculator.BatUpd(ctx, Pos, Ct);
+			});
+			return NIL;
 		});
-		await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, (ctx)=>{
-			return RepoWeightCalculator.BatUpd(ctx, Pos, Ct);
-		});
-		return NIL;
 	}
 
 	/// 批量更新權重參數。
@@ -544,16 +571,18 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 	public async Task<nil> BatUpdWeightArg(
 		IDbUserCtx Ctx, IAsyncEnumerable<PoWeightArg> Pos, CT Ct
 	){
-		Pos = Pos.Select(x=>{
-			if(x.Owner != Ctx.UserCtx.UserId){
-				throw new Exception(Todo.I18n("x.Owner != Ctx.UserCtx.UserId"));
-			}
-			return x;
+		return await WrapStudyPlanErr(ItemsErr.StudyPlan.UpdateFailedDataMayConflict, async()=>{
+			Pos = Pos.Select(x=>{
+				if(x.Owner != Ctx.UserCtx.UserId){
+					throw new Exception(Todo.I18n("x.Owner != Ctx.UserCtx.UserId"));
+				}
+				return x;
+			});
+			await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, (ctx)=>{
+				return RepoWeightArg.BatUpd(ctx, Pos, Ct);
+			});
+			return NIL;
 		});
-		await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, (ctx)=>{
-			return RepoWeightArg.BatUpd(ctx, Pos, Ct);
-		});
-		return NIL;
 	}
 
 	/// 批量軟刪除前置篩選器（僅刪除根實體，不處理關聯）。
@@ -614,18 +643,20 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 	public async Task<nil> BatUpdStudyPlan(
 		IDbUserCtx Ctx, IAsyncEnumerable<PoStudyPlan> Pos, CT Ct
 	){
-		Pos = Pos.Select(x=>{
-			if(x.Owner != Ctx.UserCtx.UserId){
-				throw new Exception(Todo.I18n("x.Owner != Ctx.UserCtx.UserId"));
-			}
-			return x;
-		});
-		await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(ctx)=>{
-			await RepoStudyPlan.BatUpd(ctx, Pos, Ct);
-			CurBoStudyPlanCache = null;
+		return await WrapStudyPlanErr(ItemsErr.StudyPlan.UpdateFailedDataMayConflict, async()=>{
+			Pos = Pos.Select(x=>{
+				if(x.Owner != Ctx.UserCtx.UserId){
+					throw new Exception(Todo.I18n("x.Owner != Ctx.UserCtx.UserId"));
+				}
+				return x;
+			});
+			await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(ctx)=>{
+				await RepoStudyPlan.BatUpd(ctx, Pos, Ct);
+				CurBoStudyPlanCache = null;
+				return NIL;
+			});
 			return NIL;
 		});
-		return NIL;
 	}
 
 	/// 批量軟刪除學習方案。僅標記 PoStudyPlan 本體，不處理關聯資產。
