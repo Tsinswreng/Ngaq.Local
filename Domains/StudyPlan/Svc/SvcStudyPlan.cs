@@ -125,11 +125,18 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		, IAsyncEnumerable<PoPreFilter> Pos
 		,CT Ct
 	){
-		return await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(ctx)=>{
-			Pos = EnsureOwner(Ctx.UserCtx.UserId, Pos);
-			await RepoPreFilter.BatAdd(ctx, Pos, Ct);
-			return NIL;
-		});
+		try{
+			return await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(ctx)=>{
+				Pos = EnsureOwner(Ctx.UserCtx.UserId, Pos);
+				await RepoPreFilter.BatAdd(ctx, Pos, Ct);
+				return NIL;
+			});
+		}
+		catch (System.Exception ex){
+			var E = ItemsErr.StudyPlan.AddFailedDataMayConflict.ToErr();
+			E.AddErr(ex);
+			throw E;
+		}
 	}
 	
 	public async Task<nil> BatAddWeightArg(
