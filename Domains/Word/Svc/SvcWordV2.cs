@@ -1,7 +1,6 @@
 namespace Ngaq.Local.Domains.Word.Svc;
 
 using System.Runtime.CompilerServices;
-using System.Text;
 using Ngaq.Core.Frontend.Kv;
 using Ngaq.Core.Infra;
 using Ngaq.Core.Infra.Errors;
@@ -106,11 +105,11 @@ public partial class SvcWordV2(
 		if(poPreFilter is null || poPreFilter.Owner != Ctx.UserCtx.UserId){
 			return null;
 		}
-		if(poPreFilter.Type != EPreFilterType.Json || poPreFilter.Data is null || poPreFilter.Data.Length == 0){
+		if(poPreFilter.Type != EPreFilterType.Json || string.IsNullOrWhiteSpace(poPreFilter.Text)){
 			return null;
 		}
 
-		var json = Encoding.UTF8.GetString(poPreFilter.Data);
+		var json = poPreFilter.Text;
 		if(string.IsNullOrWhiteSpace(json)){
 			return null;
 		}

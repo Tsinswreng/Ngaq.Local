@@ -22,7 +22,6 @@ using Tsinswreng.CsTools;
 using Ngaq.Core.Infra;
 using Ngaq.Core.Word.Svc;
 using Ngaq.Core.Shared.StudyPlan.Models;
-using System.Text;
 using System.Text.Json;
 using Ngaq.Core.Tools;
 using Ngaq.Core.Sys.Models;
@@ -73,11 +72,11 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		if(studyPlan is null){
 			return new BoStudyPlan{
 				WeightCalctr = new DfltWeightCalculator(),
-				WeightArg = new Dictionary<str, obj>(),
+				WeightArg = new Dictionary<str, obj?>(),
 			};
 		}
 		studyPlan.WeightCalctr ??= new DfltWeightCalculator();
-		studyPlan.WeightArg ??= new Dictionary<str, obj>();
+		studyPlan.WeightArg ??= new Dictionary<str, obj?>();
 		return studyPlan;
 	}
 
@@ -312,9 +311,9 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		if(
 			boStudyPlan.PoPreFilter is { } poPreFilter
 			&& poPreFilter.Type == EPreFilterType.Json
-			&& poPreFilter.Data is { Length: > 0 }
+			&& !string.IsNullOrWhiteSpace(poPreFilter.Text)
 		){
-			var json = Encoding.UTF8.GetString(poPreFilter.Data);
+			var json = poPreFilter.Text;
 			if(!string.IsNullOrWhiteSpace(json)){
 				boStudyPlan.PreFilter = JsonS.Parse<PreFilter>(json);
 			}
@@ -323,9 +322,9 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		if(
 			boStudyPlan.PoWeightArg is { } poWeightArg
 			&& poWeightArg.Type == EWeightArgType.Json
-			&& poWeightArg.Data is { Length: > 0 }
+			&& !string.IsNullOrWhiteSpace(poWeightArg.Text)
 		){
-			var json = Encoding.UTF8.GetString(poWeightArg.Data);
+			var json = poWeightArg.Text;
 			if(!string.IsNullOrWhiteSpace(json)){
 				try{
 					boStudyPlan.WeightArg = ToolJson.JsonStrToDict(json);
@@ -350,14 +349,14 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 			return new DfltWeightCalculator();
 		}
 		if(PoWeightCalculator.Type == EWeightCalculatorType.Js){
-			if(PoWeightCalculator.Data is not { Length: > 0 }){
+			if(string.IsNullOrWhiteSpace(PoWeightCalculator.Text)){
 				throw ItemsErr.Word.WeightCalcInvalidAlgorithm.ToErr(
 					PoWeightCalculator.Id,
 					PoWeightCalculator.UniqName,
 					"JsDataEmpty"
 				);
 			}
-			var jsCode = Encoding.UTF8.GetString(PoWeightCalculator.Data);
+			var jsCode = PoWeightCalculator.Text;
 			if(string.IsNullOrWhiteSpace(jsCode)){
 				throw ItemsErr.Word.WeightCalcInvalidAlgorithm.ToErr(
 					PoWeightCalculator.Id,
@@ -374,10 +373,8 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		);
 	}
 
-	/// <summary>
 	/// 生成「內置默認學習方案」的業務模型。
 	/// 只在內存中構造，不直接操作資料庫。
-	/// </summary>
 	/// <param name="Ctx">資料庫/用戶上下文；此方法主要使用其中的 UserId 作 Owner。</param>
 	/// <param name="Ct">取消令牌。</param>
 	/// <returns>返回完整的內置 <see cref="BoStudyPlan"/>（含 PoStudyPlan/PoWeightCalculator/PoWeightArg 與可運行的默認計算器）。</returns>
@@ -394,22 +391,22 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		var cfg = new DfltWeightCfg();
 		var cfgJson = JsonS.Stringify(cfg);
 		var cfgDict = ToolJson.JsonStrToDict(cfgJson);
-		var cfgBytes = Encoding.UTF8.GetBytes(cfgJson);
-
-		// 內置算法：Type=BuiltIn，Data 留空，運行時直接用 DfltWeightCalculator。
+		// 內置算法：Type=BuiltIn，Text/Binary 留空，運行時直接用 DfltWeightCalculator。
 		var poWeightCalculator = new PoWeightCalculator{
 			Owner = owner,
 			UniqName = builtinCalcName,
 			Type = EWeightCalculatorType.Builtin,
-			Data = null,
+			Text = null,
+			Binary = null,
 			Descr = "",
 		};
-		// 內置算法參數：Type=Json，Data 保存默認配置。
+		// 內置算法參數：Type=Json，Text 保存默認配置。
 		var poWeightArg = new PoWeightArg{
 			Owner = owner,
 			UniqName = builtinArgName,
 			Type = EWeightArgType.Json,
-			Data = cfgBytes,
+			Text = cfgJson,
+			Binary = null,
 			WeightCalculatorName = builtinCalcName,
 			Descr = "",
 		};
