@@ -102,7 +102,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 
 			oldKv.Owner = owner;
 			oldKv.SetStrStr(key, StudyPlanId+"");
-			await RepoKv.BatUpdById(ctx, ToolAsyE.ToAsyE([oldKv]), Ct);
+			await RepoKv.BatUpd(ctx, ToolAsyE.ToAsyE([oldKv]), Ct);
 			return NIL;
 		});
 	}
@@ -489,11 +489,30 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 			return true;
 		});
 	}
-	
-	public Task<nil> RestoreBuiltinStudyPlan(
-		IDbUserCtx Ctx, CT Ct
+
+	static async IAsyncEnumerable<T> ToAsyE<T>(
+		IEnumerable<T> Items
 	){
-		throw new NotImplementedException();
+		foreach(var item in Items){
+			yield return item;
+		}
+	}
+	
+	public async Task<nil> BatUpdPreFilter(
+		IDbUserCtx Ctx
+		,IAsyncEnumerable<PoPreFilter> Pos
+		,CT Ct
+	){
+		Pos = Pos.Select(x=>{
+			if(x.Owner != Ctx.UserCtx.UserId){
+				throw new Exception(Todo.I18n("x.Owner != Ctx.UserCtx.UserId"));
+			}
+			return x;
+		});
+		await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, (ctx)=>{
+			return RepoPreFilter.BatUpd(ctx, Pos, Ct);
+		});
+		return NIL;
 	}
 
 }

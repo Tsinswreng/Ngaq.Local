@@ -43,7 +43,7 @@ public partial class SvcKv(
 		,IAsyncEnumerable<PoKv> Kvs, CT Ct
 	){
 		return await SqlCmdMkr.RunInTxnIfNoCtx(Ctx, Ct, (Ctx)=>{
-			return RepoKv.BatUpdById(Ctx, Kvs, Ct);
+			return RepoKv.BatUpd(Ctx, Kvs, Ct);
 		});
 	}
 }

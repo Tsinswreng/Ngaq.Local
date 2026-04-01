@@ -36,6 +36,58 @@ public partial class DaoStudyPlan(
 		var R = RepoStudyPlan.BatGetAggByIdWithDel<JnStudyPlan>(Ctx, Ids, Ct);
 		return R;
 	}
+
+	public IAsyncEnumerable<PoStudyPlan?> BatGetStudyPlanByOwnerUniqName(
+		IDbFnCtx Ctx
+		,IdUser Owner
+		,IAsyncEnumerable<str> UniqNames
+		,CT Ct
+	){
+		var sql = TS.SqlSplicer().Select("*").From().Where1()
+			.And(TS.SqlIsNonDel())
+			.AndEq(x=>x.Owner, y=>y.One(Owner))
+			.AndEq(x=>x.UniqName, y=>y.Many(UniqNames));
+		return SqlCmdMkr.RunDupliSql(Ctx, TS, sql, Ct);
+	}
+
+	public IAsyncEnumerable<PoPreFilter?> BatGetPreFilterByOwnerUniqName(
+		IDbFnCtx Ctx
+		,IdUser Owner
+		,IAsyncEnumerable<str> UniqNames
+		,CT Ct
+	){
+		var sql = TP.SqlSplicer().Select("*").From().Where1()
+			.And(TP.SqlIsNonDel())
+			.AndEq(x=>x.Owner, y=>y.One(Owner))
+			.AndEq(x=>x.UniqName, y=>y.Many(UniqNames));
+		return SqlCmdMkr.RunDupliSql(Ctx, TP, sql, Ct);
+	}
+
+	public IAsyncEnumerable<PoWeightArg?> BatGetWeightArgByOwnerUniqName(
+		IDbFnCtx Ctx
+		,IdUser Owner
+		,IAsyncEnumerable<str> UniqNames
+		,CT Ct
+	){
+		var sql = TWA.SqlSplicer().Select("*").From().Where1()
+			.And(TWA.SqlIsNonDel())
+			.AndEq(x=>x.Owner, y=>y.One(Owner))
+			.AndEq(x=>x.UniqName, y=>y.Many(UniqNames));
+		return SqlCmdMkr.RunDupliSql(Ctx, TWA, sql, Ct);
+	}
+
+	public IAsyncEnumerable<PoWeightCalculator?> BatGetWeightCalculatorByOwnerUniqName(
+		IDbFnCtx Ctx
+		,IdUser Owner
+		,IAsyncEnumerable<str> UniqNames
+		,CT Ct
+	){
+		var sql = TWC.SqlSplicer().Select("*").From().Where1()
+			.And(TWC.SqlIsNonDel())
+			.AndEq(x=>x.Owner, y=>y.One(Owner))
+			.AndEq(x=>x.UniqName, y=>y.Many(UniqNames));
+		return SqlCmdMkr.RunDupliSql(Ctx, TWC, sql, Ct);
+	}
 	
 	
 	
