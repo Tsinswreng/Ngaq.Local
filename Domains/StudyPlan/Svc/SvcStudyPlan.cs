@@ -123,7 +123,13 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 	static void ThrowMappedStudyPlanErr(
 		IErrItem ErrType, Exception Ex
 	){
-		if(Ex is AppErr appErr && ReferenceEquals(appErr.Type, ErrType)){
+		if(
+			Ex is AppErr appErr
+			&& (
+				ReferenceEquals(appErr.Type, ErrType)
+				|| ReferenceEquals(appErr.Type, ItemsErr.Common.PermissionDenied)
+			)
+		){
 			throw Ex;
 		}
 		var err = ErrType.ToErr();
@@ -527,6 +533,72 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 			yield return item;
 		}
 	}
+
+	async Task<nil> ThrowIfAnyNotOwned<TEntity, TId>(
+		IDbUserCtx DbCtx
+		,IRepo<TEntity, TId> Repo
+		,IList<TEntity> Rows
+		,CT Ct
+	)
+		where TEntity: class, I_Owner, I_Id<TId>, new()
+	{
+		var ids = Rows.Select(x=>x.Id);
+		var gotRows = Repo.BatGetByIdWithDel(DbCtx.DbFnCtx!, ToolAsyE.ToAsyE(ids), Ct);
+		var owner = DbCtx.UserCtx.UserId;
+		await foreach(var (_, got) in gotRows.Index()){
+			if(got is null || got.Owner != owner){
+				throw ItemsErr.Common.PermissionDenied.ToErr();
+			}
+		}
+		return NIL;
+	}
+
+	async Task<nil> BatUpdWithOwnerCheck<TEntity, TId>(
+		IDbUserCtx Ctx
+		,IRepo<TEntity, TId> Repo
+		,IAsyncEnumerable<TEntity> Pos
+		,CT Ct
+	)
+		where TEntity: class, I_Owner, I_Id<TId>, new()
+	{
+		await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(ctx)=>{
+			var dbUserCtx = new DbUserCtx(Ctx.UserCtx, ctx);
+			var owner = Ctx.UserCtx.UserId;
+			await using var batch = new BatchCollector<TEntity, nil>(async(rows, ct)=>{
+				await ThrowIfAnyNotOwned(dbUserCtx, Repo, rows, ct);
+				foreach(var row in rows){
+					row.Owner = owner;
+				}
+				await Repo.BatUpd(ctx, ToolAsyE.ToAsyE(rows), ct);
+				return NIL;
+			});
+			await batch.ConsumeAll(Pos, Ct);
+			return NIL;
+		});
+		return NIL;
+	}
+
+	async Task<nil> BatSoftDelWithOwnerCheck<TEntity, TId>(
+		IDbUserCtx Ctx
+		,IRepo<TEntity, TId> Repo
+		,IAsyncEnumerable<TEntity> Pos
+		,CT Ct
+	)
+		where TEntity: class, I_Owner, I_Id<TId>, new()
+	{
+		await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(ctx)=>{
+			var dbUserCtx = new DbUserCtx(Ctx.UserCtx, ctx);
+			await using var batch = new BatchCollector<TEntity, nil>(async(rows, ct)=>{
+				await ThrowIfAnyNotOwned(dbUserCtx, Repo, rows, ct);
+				var ids = rows.Select(x=>x.Id);
+				await Repo.BatSoftDelById(ctx, ToolAsyE.ToAsyE(ids), ct);
+				return NIL;
+			});
+			await batch.ConsumeAll(Pos, Ct);
+			return NIL;
+		});
+		return NIL;
+	}
 	
 	public async Task<nil> BatUpdPreFilter(
 		IDbUserCtx Ctx
@@ -534,15 +606,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		,CT Ct
 	){
 		return await WrapStudyPlanErr(ItemsErr.StudyPlan.UpdateFailedDataMayConflict, async()=>{
-			Pos = Pos.Select(x=>{
-				if(x.Owner != Ctx.UserCtx.UserId){
-					throw new Exception(Todo.I18n("x.Owner != Ctx.UserCtx.UserId"));
-				}
-				return x;
-			});
-			await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, (ctx)=>{
-				return RepoPreFilter.BatUpd(ctx, Pos, Ct);
-			});
+			await BatUpdWithOwnerCheck(Ctx, RepoPreFilter, Pos, Ct);
 			return NIL;
 		});
 	}
@@ -553,15 +617,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		IDbUserCtx Ctx, IAsyncEnumerable<PoWeightCalculator> Pos, CT Ct
 	){
 		return await WrapStudyPlanErr(ItemsErr.StudyPlan.UpdateFailedDataMayConflict, async()=>{
-			Pos = Pos.Select(x=>{
-				if(x.Owner != Ctx.UserCtx.UserId){
-					throw new Exception(Todo.I18n("x.Owner != Ctx.UserCtx.UserId"));
-				}
-				return x;
-			});
-			await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, (ctx)=>{
-				return RepoWeightCalculator.BatUpd(ctx, Pos, Ct);
-			});
+			await BatUpdWithOwnerCheck(Ctx, RepoWeightCalculator, Pos, Ct);
 			return NIL;
 		});
 	}
@@ -572,15 +628,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		IDbUserCtx Ctx, IAsyncEnumerable<PoWeightArg> Pos, CT Ct
 	){
 		return await WrapStudyPlanErr(ItemsErr.StudyPlan.UpdateFailedDataMayConflict, async()=>{
-			Pos = Pos.Select(x=>{
-				if(x.Owner != Ctx.UserCtx.UserId){
-					throw new Exception(Todo.I18n("x.Owner != Ctx.UserCtx.UserId"));
-				}
-				return x;
-			});
-			await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, (ctx)=>{
-				return RepoWeightArg.BatUpd(ctx, Pos, Ct);
-			});
+			await BatUpdWithOwnerCheck(Ctx, RepoWeightArg, Pos, Ct);
 			return NIL;
 		});
 	}
@@ -590,16 +638,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 	public async Task<nil> BatSoftDelPreFilter(
 		IDbUserCtx Ctx, IAsyncEnumerable<PoPreFilter> Pos, CT Ct
 	){
-		Pos = Pos.Select(x=>{
-			if(x.Owner != Ctx.UserCtx.UserId){
-				throw new Exception(Todo.I18n("x.Owner != Ctx.UserCtx.UserId"));
-			}
-			return x;
-		});
-		await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(ctx)=>{
-			await RepoPreFilter.BatSoftDelById(ctx, Pos.Select(x=>x.Id), Ct);
-			return NIL;
-		});
+		await BatSoftDelWithOwnerCheck(Ctx, RepoPreFilter, Pos, Ct);
 		return NIL;
 	}
 
@@ -608,16 +647,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 	public async Task<nil> BatSoftDelWeightCalculator(
 		IDbUserCtx Ctx, IAsyncEnumerable<PoWeightCalculator> Pos, CT Ct
 	){
-		Pos = Pos.Select(x=>{
-			if(x.Owner != Ctx.UserCtx.UserId){
-				throw new Exception(Todo.I18n("x.Owner != Ctx.UserCtx.UserId"));
-			}
-			return x;
-		});
-		await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(ctx)=>{
-			await RepoWeightCalculator.BatSoftDelById(ctx, Pos.Select(x=>x.Id), Ct);
-			return NIL;
-		});
+		await BatSoftDelWithOwnerCheck(Ctx, RepoWeightCalculator, Pos, Ct);
 		return NIL;
 	}
 
@@ -626,16 +656,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 	public async Task<nil> BatSoftDelWeightArg(
 		IDbUserCtx Ctx, IAsyncEnumerable<PoWeightArg> Pos, CT Ct
 	){
-		Pos = Pos.Select(x=>{
-			if(x.Owner != Ctx.UserCtx.UserId){
-				throw new Exception(Todo.I18n("x.Owner != Ctx.UserCtx.UserId"));
-			}
-			return x;
-		});
-		await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(ctx)=>{
-			await RepoWeightArg.BatSoftDelById(ctx, Pos.Select(x=>x.Id), Ct);
-			return NIL;
-		});
+		await BatSoftDelWithOwnerCheck(Ctx, RepoWeightArg, Pos, Ct);
 		return NIL;
 	}
 
@@ -644,17 +665,8 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		IDbUserCtx Ctx, IAsyncEnumerable<PoStudyPlan> Pos, CT Ct
 	){
 		return await WrapStudyPlanErr(ItemsErr.StudyPlan.UpdateFailedDataMayConflict, async()=>{
-			Pos = Pos.Select(x=>{
-				if(x.Owner != Ctx.UserCtx.UserId){
-					throw new Exception(Todo.I18n("x.Owner != Ctx.UserCtx.UserId"));
-				}
-				return x;
-			});
-			await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(ctx)=>{
-				await RepoStudyPlan.BatUpd(ctx, Pos, Ct);
-				CurBoStudyPlanCache = null;
-				return NIL;
-			});
+			await BatUpdWithOwnerCheck(Ctx, RepoStudyPlan, Pos, Ct);
+			CurBoStudyPlanCache = null;
 			return NIL;
 		});
 	}
@@ -663,17 +675,8 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 	public async Task<nil> BatSoftDelStudyPlan(
 		IDbUserCtx Ctx, IAsyncEnumerable<PoStudyPlan> Pos, CT Ct
 	){
-		Pos = Pos.Select(x=>{
-			if(x.Owner != Ctx.UserCtx.UserId){
-				throw new Exception(Todo.I18n("x.Owner != Ctx.UserCtx.UserId"));
-			}
-			return x;
-		});
-		await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(ctx)=>{
-			await RepoStudyPlan.BatSoftDelById(ctx, Pos.Select(x=>x.Id), Ct);
-			CurBoStudyPlanCache = null;
-			return NIL;
-		});
+		await BatSoftDelWithOwnerCheck(Ctx, RepoStudyPlan, Pos, Ct);
+		CurBoStudyPlanCache = null;
 		return NIL;
 	}
 
@@ -697,19 +700,19 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 				var ids = DaoStudyPlan.BatSlctWeightCalculatorIdByOwnerUniqNameWithDel(
 					dbCtx, owner, ToolAsyE.ToAsyE([poWeightCalculator.UniqName]), Ct
 				).Where(x=>x is not null).Select(x=>x!.Value);
-				await RepoWeightCalculator.BatHardDelById(dbCtx, ids, Ct);
+				await RepoWeightCalculator.BatSoftDelById(dbCtx, ids, Ct);
 			}
 			if(!string.IsNullOrEmpty(poWeightArg.UniqName)){
 				var ids = DaoStudyPlan.BatSlctWeightArgIdByOwnerUniqNameWithDel(
 					dbCtx, owner, ToolAsyE.ToAsyE([poWeightArg.UniqName]), Ct
 				).Where(x=>x is not null).Select(x=>x!.Value);
-				await RepoWeightArg.BatHardDelById(dbCtx, ids, Ct);
+				await RepoWeightArg.BatSoftDelById(dbCtx, ids, Ct);
 			}
 			if(!string.IsNullOrEmpty(poStudyPlan.UniqName)){
 				var ids = DaoStudyPlan.BatSlctStudyPlanIdByOwnerUniqNameWithDel(
 					dbCtx, owner, ToolAsyE.ToAsyE([poStudyPlan.UniqName]), Ct
 				).Where(x=>x is not null).Select(x=>x!.Value);
-				await RepoStudyPlan.BatHardDelById(dbCtx, ids, Ct);
+				await RepoStudyPlan.BatSoftDelById(dbCtx, ids, Ct);
 			}
 
 			await RepoWeightCalculator.BatAdd(dbCtx, ToolAsyE.ToAsyE([poWeightCalculator]), Ct);
