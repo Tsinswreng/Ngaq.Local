@@ -15,6 +15,7 @@ using Tsinswreng.CsSql;
 using Tsinswreng.CsTools;
 using IStr_Any = System.Collections.Generic.IDictionary<string, object?>;
 using Str_Any = System.Collections.Generic.Dictionary<string, object?>;
+using Ngaq.Core.Infra.IF;
 
 public partial class DaoStudyPlan(
 	ISqlCmdMkr SqlCmdMkr
@@ -35,6 +36,45 @@ public partial class DaoStudyPlan(
 	){
 		var R = RepoStudyPlan.BatGetAggByIdWithDel<JnStudyPlan>(Ctx, Ids, Ct);
 		return R;
+	}
+
+	public IAsyncEnumerable<IdStudyPlan?> BatSlctStudyPlanIdByOwnerUniqNameWithDel(
+		IDbFnCtx Ctx, IdUser Owner, IAsyncEnumerable<str> UniqNames, CT Ct
+	){
+		var sql = TS.SqlSplicer().Select(x=>x.Id).From().Where1()
+			.AndEq(x=>x.Owner, x=>x.One(Owner))
+			.AndEq(x=>x.UniqName, x=>x.Many(UniqNames));
+		var dicts = SqlCmdMkr.RunDupliSql(Ctx, sql, Ct);
+		return dicts.Select(x=>x is null
+			? (IdStudyPlan?)null
+			: IdStudyPlan.FromByteArr((u8[])x[TS.Memb(y=>y.Id)]!)
+		);
+	}
+
+	public IAsyncEnumerable<IdWeightArg?> BatSlctWeightArgIdByOwnerUniqNameWithDel(
+		IDbFnCtx Ctx, IdUser Owner, IAsyncEnumerable<str> UniqNames, CT Ct
+	){
+		var sql = TWA.SqlSplicer().Select(x=>x.Id).From().Where1()
+			.AndEq(x=>x.Owner, x=>x.One(Owner))
+			.AndEq(x=>x.UniqName, x=>x.Many(UniqNames));
+		var dicts = SqlCmdMkr.RunDupliSql(Ctx, sql, Ct);
+		return dicts.Select(x=>x is null
+			? (IdWeightArg?)null
+			: IdWeightArg.FromByteArr((u8[])x[TWA.Memb(y=>y.Id)]!)
+		);
+	}
+
+	public IAsyncEnumerable<IdWeightCalculator?> BatSlctWeightCalculatorIdByOwnerUniqNameWithDel(
+		IDbFnCtx Ctx, IdUser Owner, IAsyncEnumerable<str> UniqNames, CT Ct
+	){
+		var sql = TWC.SqlSplicer().Select(x=>x.Id).From().Where1()
+			.AndEq(x=>x.Owner, x=>x.One(Owner))
+			.AndEq(x=>x.UniqName, x=>x.Many(UniqNames));
+		var dicts = SqlCmdMkr.RunDupliSql(Ctx, sql, Ct);
+		return dicts.Select(x=>x is null
+			? (IdWeightCalculator?)null
+			: IdWeightCalculator.FromByteArr((u8[])x[TWC.Memb(y=>y.Id)]!)
+		);
 	}
 	
 	

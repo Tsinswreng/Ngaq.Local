@@ -678,8 +678,48 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 	}
 
 	public Task<nil> RestoreBuiltinStudyPlan(IDbUserCtx Ctx, CT Ct) {
-		//這個不用寫 也不用測試
-		throw new NotImplementedException();
+		return SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(dbCtx)=>{
+			var dbUserCtx = new DbUserCtx(Ctx.UserCtx, dbCtx);
+			var builtinStudyPlan = await GetDfltStudyPlan(dbUserCtx, Ct);
+			var owner = Ctx.UserCtx.UserId;
+
+			if(builtinStudyPlan.PoWeightCalculator is not { } poWeightCalculator){
+				return NIL;
+			}
+			if(builtinStudyPlan.PoWeightArg is not { } poWeightArg){
+				return NIL;
+			}
+			if(builtinStudyPlan.PoStudyPlan is not { } poStudyPlan){
+				return NIL;
+			}
+
+			if(!string.IsNullOrEmpty(poWeightCalculator.UniqName)){
+				var ids = DaoStudyPlan.BatSlctWeightCalculatorIdByOwnerUniqNameWithDel(
+					dbCtx, owner, ToolAsyE.ToAsyE([poWeightCalculator.UniqName]), Ct
+				).Where(x=>x is not null).Select(x=>x!.Value);
+				await RepoWeightCalculator.BatHardDelById(dbCtx, ids, Ct);
+			}
+			if(!string.IsNullOrEmpty(poWeightArg.UniqName)){
+				var ids = DaoStudyPlan.BatSlctWeightArgIdByOwnerUniqNameWithDel(
+					dbCtx, owner, ToolAsyE.ToAsyE([poWeightArg.UniqName]), Ct
+				).Where(x=>x is not null).Select(x=>x!.Value);
+				await RepoWeightArg.BatHardDelById(dbCtx, ids, Ct);
+			}
+			if(!string.IsNullOrEmpty(poStudyPlan.UniqName)){
+				var ids = DaoStudyPlan.BatSlctStudyPlanIdByOwnerUniqNameWithDel(
+					dbCtx, owner, ToolAsyE.ToAsyE([poStudyPlan.UniqName]), Ct
+				).Where(x=>x is not null).Select(x=>x!.Value);
+				await RepoStudyPlan.BatHardDelById(dbCtx, ids, Ct);
+			}
+
+			await RepoWeightCalculator.BatAdd(dbCtx, ToolAsyE.ToAsyE([poWeightCalculator]), Ct);
+			await RepoWeightArg.BatAdd(dbCtx, ToolAsyE.ToAsyE([poWeightArg]), Ct);
+			await RepoStudyPlan.BatAdd(dbCtx, ToolAsyE.ToAsyE([poStudyPlan]), Ct);
+			await SetCurStudyPlanId(dbUserCtx, poStudyPlan.Id, Ct);
+
+			CurBoStudyPlanCache = builtinStudyPlan;
+			return NIL;
+		});
 	}
 
 }
