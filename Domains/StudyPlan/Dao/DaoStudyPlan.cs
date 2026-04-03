@@ -84,6 +84,7 @@ public partial class DaoStudyPlan(
 		,CT Ct
 	){
 		var Sql = TP.SqlSplicer().Select("*").From().Where1()
+		.And(TP.SqlIsNonDel())
 		.AndEq(x=>x.Owner, x=>x.One(UserId));
 		if(!string.IsNullOrEmpty(Req.UniqNameSearch)){
 			Sql.And();
@@ -104,6 +105,7 @@ public partial class DaoStudyPlan(
 		,CT Ct
 	){
 		var Sql = TS.SqlSplicer().Select("*").From().Where1()
+		.And(TS.SqlIsNonDel())
 		.AndEq(x=>x.Owner, x=>x.One(UserId));
 		if(!string.IsNullOrEmpty(Req.UniqNameSearch)){
 			Sql.And();
@@ -124,6 +126,7 @@ public partial class DaoStudyPlan(
 		,CT Ct
 	){
 		var Sql = TWA.SqlSplicer().Select("*").From().Where1()
+		.And(TWA.SqlIsNonDel())
 		.AndEq(x=>x.Owner, x=>x.One(UserId));
 		if(!string.IsNullOrEmpty(Req.UniqNameSearch)){
 			Sql.And();
@@ -144,6 +147,7 @@ public partial class DaoStudyPlan(
 		,CT Ct
 	){
 		var Sql = TWC.SqlSplicer().Select("*").From().Where1()
+		.And(TWC.SqlIsNonDel())
 		.AndEq(x=>x.Owner, x=>x.One(UserId));
 		if(!string.IsNullOrEmpty(Req.UniqNameSearch)){
 			Sql.And();
