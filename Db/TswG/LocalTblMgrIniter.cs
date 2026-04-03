@@ -199,6 +199,7 @@ public partial class LocalTblMgrIniter{
 			o.Col(x=>x.Id).MapType(IdWeightArg.MkTypeMapFn());
 			o.Col(x=>x.Owner).MapType(MapIdUser());
 			o.Col(x=>x.Type).MapEnumToStr<EWeightArgType>();
+			o.Col(x=>x.WeightCalculatorId).MapType(IdWeightCalculator.MkTypeMapFn());
 			Ux_Owner_UniqName(o);
 		}
 

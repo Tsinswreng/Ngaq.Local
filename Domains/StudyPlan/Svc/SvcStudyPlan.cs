@@ -443,7 +443,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 			Type = EWeightArgType.Json,
 			Text = cfgJson,
 			Binary = null,
-			WeightCalculatorName = builtinCalcName,
+			WeightCalculatorId = poWeightCalculator.Id,
 			Descr = "",
 		};
 		// StudyPlan 用外鍵關聯到剛構造的算法與參數。
@@ -723,6 +723,27 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 			CurBoStudyPlanCache = builtinStudyPlan;
 			return NIL;
 		});
+	}
+	
+	public T? EnsureOwner<T>(T? Entity, IdUser Owner)
+		where T:I_Owner
+	{
+		if(Entity is null){
+			return default;
+		}
+		if(Entity.Owner != Owner){
+			return default;
+		}
+		return Entity;
+	}
+	
+	public IAsyncEnumerable<PoWeightCalculator?> BatGetWeightCalculatorById(
+		IDbUserCtx Ctx, IAsyncEnumerable<IdWeightCalculator> Ids, CT Ct
+	){
+		Ctx.DbFnCtx??=new DbFnCtx();
+		var pos = RepoWeightCalculator.BatGetById(Ctx.DbFnCtx, Ids, Ct);
+		var r = pos.Select(x=>EnsureOwner(x, Ctx.UserCtx.UserId));
+		return r;
 	}
 
 }
