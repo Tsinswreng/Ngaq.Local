@@ -83,8 +83,7 @@ public partial class DaoStudyPlan(
 		IDbFnCtx Ctx, IdUser UserId, ReqPagePreFilter Req
 		,CT Ct
 	){
-		var Sql = TP.SqlSplicer().Select("*").From().Where1()
-		.And(TP.SqlIsNonDel())
+		var Sql = TP.SqlSplicer().Select("*").From().WhereNonDel()
 		.AndEq(x=>x.Owner, x=>x.One(UserId));
 		if(!string.IsNullOrEmpty(Req.UniqNameSearch)){
 			Sql.And();
@@ -104,8 +103,7 @@ public partial class DaoStudyPlan(
 		IDbFnCtx Ctx, IdUser UserId, ReqPageStudyPlan Req
 		,CT Ct
 	){
-		var Sql = TS.SqlSplicer().Select("*").From().Where1()
-		.And(TS.SqlIsNonDel())
+		var Sql = TS.SqlSplicer().Select("*").From().WhereNonDel()
 		.AndEq(x=>x.Owner, x=>x.One(UserId));
 		if(!string.IsNullOrEmpty(Req.UniqNameSearch)){
 			Sql.And();
