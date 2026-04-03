@@ -164,6 +164,21 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		});
 	}
 	
+	public async Task<nil> BatAddStudyPlan(
+		IDbUserCtx Ctx
+		, IAsyncEnumerable<PoStudyPlan> Pos
+		,CT Ct
+	){
+		return await WrapStudyPlanErr(ItemsErr.StudyPlan.AddFailedDataMayConflict, async()=>{
+			return await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(ctx)=>{
+				Pos = EnsureOwner(Ctx.UserCtx.UserId, Pos);
+				await RepoStudyPlan.BatAdd(ctx, Pos, Ct);
+				CurBoStudyPlanCache = null;
+				return NIL;
+			});
+		});
+	}
+	
 	public async Task<nil> BatAddWeightArg(
 		IDbUserCtx Ctx
 		, IAsyncEnumerable<PoWeightArg> Pos
@@ -742,6 +757,24 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 	){
 		Ctx.DbFnCtx??=new DbFnCtx();
 		var pos = RepoWeightCalculator.BatGetById(Ctx.DbFnCtx, Ids, Ct);
+		var r = pos.Select(x=>EnsureOwner(x, Ctx.UserCtx.UserId));
+		return r;
+	}
+	
+	public IAsyncEnumerable<PoPreFilter?> BatGetPreFilterById(
+		IDbUserCtx Ctx, IAsyncEnumerable<IdPreFilter> Ids, CT Ct
+	){
+		Ctx.DbFnCtx??=new DbFnCtx();
+		var pos = RepoPreFilter.BatGetById(Ctx.DbFnCtx, Ids, Ct);
+		var r = pos.Select(x=>EnsureOwner(x, Ctx.UserCtx.UserId));
+		return r;
+	}
+	
+	public IAsyncEnumerable<PoWeightArg?> BatGetWeightArgById(
+		IDbUserCtx Ctx, IAsyncEnumerable<IdWeightArg> Ids, CT Ct
+	){
+		Ctx.DbFnCtx??=new DbFnCtx();
+		var pos = RepoWeightArg.BatGetById(Ctx.DbFnCtx, Ids, Ct);
 		var r = pos.Select(x=>EnsureOwner(x, Ctx.UserCtx.UserId));
 		return r;
 	}
