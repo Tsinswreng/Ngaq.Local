@@ -33,6 +33,7 @@ using Ngaq.Local.Domains.StudyPlan.Dao;
 using Ngaq.Local.Domains.StudyPlan.Svc;
 using Ngaq.Core.Shared.StudyPlan.Svc;
 using Ngaq.Core.Shared.Word.Models.Po.UserLang;
+using Ngaq.Local.Domains.Word.Dao;
 
 
 namespace Ngaq.Local.Di;
@@ -108,21 +109,32 @@ return z;
 
 //服務類
 	static IServiceCollection SetupSvcs(this IServiceCollection z){
-z.AddScoped<DaoWord, DaoWord>();
-z.AddScoped<PreFilterSqlMkr, PreFilterSqlMkr>();
-z.AddScoped<DaoWordV2, DaoWordV2>();
+		SetupWord(z);
+		SetupStudyPlan(z);
 z.AddScoped<DaoKv, DaoKv>();
-z.AddScoped<DaoStudyPlan, DaoStudyPlan>();
-z.AddScoped<ISvcParseWordList, SvcParseWordList>();
-z.AddScoped<ISvcWord, SvcWord>();
-z.AddScoped<ISvcWordV2, SvcWordV2>();
-z.AddScoped<ISvcUserLang, SvcUserLang>();
 z.AddScoped<ISvcDictionary, SvcDictionary>();
 z.AddScoped<ISvcKv, SvcKv>();
-z.AddScoped<ISvcStudyPlan, SvcStudyPlan>();
-z.AddScoped<IStudyPlanGetter>(sp=>(IStudyPlanGetter)sp.GetRequiredService<ISvcStudyPlan>());
 z.AddScoped<IImgGetter, SvcImg>();
 return z;
+	}
+	
+	static IServiceCollection SetupWord(this IServiceCollection z){
+		z.AddScoped<DaoWord, DaoWord>();
+		z.AddScoped<DaoWordV2, DaoWordV2>();
+		z.AddScoped<DaoUserLang, DaoUserLang>();
+		z.AddScoped<ISvcParseWordList, SvcParseWordList>();
+		z.AddScoped<ISvcWord, SvcWord>();
+		z.AddScoped<ISvcWordV2, SvcWordV2>();
+		z.AddScoped<ISvcUserLang, SvcUserLang>();
+		return z;
+	}
+	
+	static IServiceCollection SetupStudyPlan(this IServiceCollection z){
+		z.AddScoped<DaoStudyPlan, DaoStudyPlan>();
+		z.AddScoped<ISvcStudyPlan, SvcStudyPlan>();
+		z.AddScoped<IStudyPlanGetter>(sp=>(IStudyPlanGetter)sp.GetRequiredService<ISvcStudyPlan>());
+		z.AddScoped<PreFilterSqlMkr, PreFilterSqlMkr>();
+		return z;
 	}
 
 }
