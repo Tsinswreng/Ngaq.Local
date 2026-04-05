@@ -36,9 +36,9 @@ public class SvcUserLang(
 		IDbUserCtx Ctx, IAsyncEnumerable<PoUserLang> Pos, CT Ct
 	){
 		Pos = Pos.CheckOwner(Ctx.UserCtx.UserId);
+		
 		try{
 			await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(ctx)=>{
-				await RepoUserLang.AsAppRepo().BatBizTouch(ctx, Pos.Select(x=>x.Id), Ct);
 				await RepoUserLang.BatUpd(ctx, Pos, Ct);
 				return NIL;
 			});
@@ -51,46 +51,23 @@ public class SvcUserLang(
 		}
 	}
 
-	public async Task<nil> BatUpdUserLangOld(//不應該用BatchCollector分批
-		IDbUserCtx Ctx, IAsyncEnumerable<PoUserLang> Pos, CT Ct
-	){
-		return await WrapSvcErr(ItemsErr.Common.DataIllegalOrConflict, async()=>{
-			return await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(dbCtx)=>{
-				var owner = Ctx.UserCtx.UserId;
-				await using var batch = new BatchCollector<PoUserLang, nil>(async(rows, ct)=>{
-					var checkedRows = rows.CheckOwner(owner).ToList();
-					var now = Tempus.Now();
-					foreach(var row in checkedRows){
-						row.BizUpdatedAt = now;
-					}
-					await RepoUserLang.BatUpd(dbCtx, ToolAsyE.ToAsyE(checkedRows), ct);
-					return NIL;
-				});
-				await batch.ConsumeAll(Pos, Ct);
-				return NIL;
-			});
-		});
-	}
-
 	public async Task<nil> BatAddUserLang(
 		IDbUserCtx Ctx, IAsyncEnumerable<PoUserLang> Pos, CT Ct
 	){
-		return await WrapSvcErr(ItemsErr.Common.DataIllegalOrConflict, async()=>{
-			return await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(dbCtx)=>{
-				var owner = Ctx.UserCtx.UserId;
-				await using var batch = new BatchCollector<PoUserLang, nil>(async(rows, ct)=>{
-					var checkedRows = rows.CheckOwner(owner).ToList();
-					var now = Tempus.Now();
-					foreach(var row in checkedRows){
-						row.BizUpdatedAt = now;
-					}
-					await RepoUserLang.BatAdd(dbCtx, ToolAsyE.ToAsyE(checkedRows), ct);
-					return NIL;
-				});
-				await batch.ConsumeAll(Pos, Ct);
+		Pos = Pos.CheckOwner(Ctx.UserCtx.UserId);
+		Pos = Pos.Touch();
+		try{
+			await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(ctx)=>{
+				await RepoUserLang.BatAdd(ctx, Pos, Ct);
 				return NIL;
 			});
-		});
+			return NIL;
+		}
+		catch(System.Exception ex){
+			var e = ItemsErr.Common.DataIllegalOrConflict.ToErr();
+			e.AddErr(ex);
+			throw e;
+		}
 	}
 
 	public IAsyncEnumerable<str> GetUnregisteredUserLangs(
@@ -103,10 +80,10 @@ public class SvcUserLang(
 	public async Task<nil> AddAllUnregisteredUserLangs(
 		IDbUserCtx Ctx, CT Ct
 	){
-		return await WrapSvcErr(ItemsErr.Common.DataIllegalOrConflict, async()=>{
-			return await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(dbCtx)=>{
+		try{
+			await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(ctx)=>{
 				var owner = Ctx.UserCtx.UserId;
-				var langs = Dao.GetUnregisteredUserLangs(dbCtx, owner, Ct);
+				var langs = Dao.GetUnregisteredUserLangs(ctx, owner, Ct);
 				var pos = langs.Select(lang=>new PoUserLang{
 					Owner = owner,
 					UniqName = lang,
@@ -114,40 +91,16 @@ public class SvcUserLang(
 					RelLang = lang,
 					Descr = "",
 				});
-				await using var batch = new BatchCollector<PoUserLang, nil>(async(rows, ct)=>{
-					var checkedRows = rows.CheckOwner(owner).ToList();
-					var now = Tempus.Now();
-					foreach(var row in checkedRows){
-						row.BizUpdatedAt = now;
-					}
-					await RepoUserLang.BatAdd(dbCtx, ToolAsyE.ToAsyE(checkedRows), ct);
-					return NIL;
-				});
-				await batch.ConsumeAll(pos, Ct);
+				pos = pos.CheckOwner(owner);
+				await RepoUserLang.BatAdd(ctx, pos, Ct);
 				return NIL;
 			});
-		});
-	}
-
-	static void ThrowMappedSvcErr(IErrNode ErrType, Exception Ex){
-		if(
-			Ex is AppErr appErr
-			&& ReferenceEquals(appErr.Type, ItemsErr.Common.PermissionDenied)
-		){
-			throw Ex;
+			return NIL;
 		}
-		var err = ErrType.ToErr();
-		err.AddErr(Ex);
-		throw err;
-	}
-
-	async Task<nil> WrapSvcErr(IErrNode ErrType, Func<Task<nil>> Fn){
-		try{
-			return await Fn();
-		}
-		catch(Exception ex){
-			ThrowMappedSvcErr(ErrType, ex);
-			throw;
+		catch(System.Exception ex){
+			var e = ItemsErr.Common.DataIllegalOrConflict.ToErr();
+			e.AddErr(ex);
+			throw e;
 		}
 	}
 }
