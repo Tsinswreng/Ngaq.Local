@@ -1,6 +1,7 @@
 using Ngaq.Core.Infra.IF;
 using Ngaq.Core.Shared.Kv.Models;
 using Ngaq.Core.Shared.User.Models.Po.User;
+using Ngaq.Core.Shared.Word.Models.Po.Kv;
 using Ngaq.Core.Sys.Models;
 using Tsinswreng.CsSql;
 
@@ -18,10 +19,18 @@ public partial class LocalTblMgrIniter{
 
 			o.IdxExpr(null, x=>x.Owner);
 			
-			var optUnique1 = new OptMkIdx{Unique = true, Where = o.Tbl.SqlIsNonDel() + $" AND {o.Tbl.QtCol(nameof(PoKv.KType))} = '{o.Tbl.UpperToRaw(EKvType.Str, nameof(PoKv.KType))}'"};
+			var optUnique1 = new OptMkIdx{
+				Unique = true,
+				Where = o.Tbl.SqlIsNonDel()
+					+ $" AND {o.Tbl.QtCol(nameof(PoKv.KType))} = '{o.Tbl.UpperToRaw(EKvType.Str, nameof(PoKv.KType))}'"
+			};
 			o.Idx(optUnique1, [nameof(PoKv.Owner), nameof(PoKv.KStr)]);
 
-			var optUnique2 = new OptMkIdx{Unique = true, Where = o.Tbl.SqlIsNonDel() + $" AND {o.Tbl.QtCol(nameof(PoKv.KType))} = '{o.Tbl.UpperToRaw(EKvType.I64, nameof(PoKv.KType))}'"};
+			var optUnique2 = new OptMkIdx{
+				Unique = true,
+				Where = o.Tbl.SqlIsNonDel()
+					+ $" AND {o.Tbl.QtCol(nameof(PoKv.KType))} = '{o.Tbl.UpperToRaw(EKvType.I64, nameof(PoKv.KType))}'"
+				};
 			o.Idx(optUnique2, [nameof(PoKv.Owner), nameof(PoKv.KI64)]);
 		}
 		return Mgr;

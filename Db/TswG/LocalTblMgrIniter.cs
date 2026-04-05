@@ -72,7 +72,9 @@ public partial class LocalTblMgrIniter{
 		return o;
 	}
 
-	public static ITblSetter<T> CfgBizCreateUpdateTime<T>(ITblSetter<T> Tbl){
+	public static ITblSetter<T> CfgBizCreateUpdateTime<T>(ITblSetter<T> Tbl)
+		where T:IBizCreateUpdateTime
+	{
 		var o = Tbl;
 		o.Col(nameof(IBizCreateUpdateTime.BizCreatedAt)).MapType(MapTempus());
 		o.Col(nameof(IBizCreateUpdateTime.BizUpdatedAt)).MapType(MapTempusN());

@@ -1,0 +1,34 @@
+using Ngaq.Core.Infra.IF;
+using Ngaq.Core.Shared.Dictionary.Models;
+using Ngaq.Core.Shared.User.Models.Po.User;
+using Ngaq.Core.Shared.Word.Models.Po.UserLang;
+using Ngaq.Core.Sys.Models;
+using Tsinswreng.CsSql;
+
+namespace Ngaq.Local.Db.TswG;
+public partial class LocalTblMgrIniter{
+	public static ITblMgr InitUserLang(ITblMgr Mgr){
+		var Tbl_StudyPlan = Mk<PoUserLang>("UserLang");
+		Mgr.AddTbl(Tbl_StudyPlan);
+		{
+			var o = Tbl_StudyPlan;
+			CfgPoBase(o);
+			CfgBizCreateUpdateTime(o);
+			o.Col(x=>x.Id).MapType(IdUserLang.MkTypeMapFn());
+			o.Col(x=>x.Owner).MapType(IdUser.MkTypeMapFn());
+			o.Col(x=>x.RelLangType).MapEnumToStr<ELangIdentType>();
+			o.IdxExpr(
+				new OptMkIdx{
+					Unique = true,
+					Where = o.Tbl.SqlIsNonDel()
+				}
+				,x=>new{x.Owner, x.UniqName}
+			);
+			o.IdxExpr(
+				null
+				,x=>new{x.Owner, x.RelLang, x.RelLangType}
+			);
+		}
+		return Mgr;
+	}
+}
