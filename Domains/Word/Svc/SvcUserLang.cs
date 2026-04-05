@@ -39,12 +39,17 @@ public class SvcUserLang(
 		
 		try{
 			await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(ctx)=>{
+				
 				await RepoUserLang.BatUpd(ctx, Pos, Ct);
+				await RepoUserLang.AsAppRepo().BatBizTouch(ctx,Pos.Select(x=>x.Id),Ct);
 				return NIL;
 			});
 			return NIL;
 		}
-		catch (System.Exception ex){
+		catch(AppErr ex) when(ReferenceEquals(ex.Type, ItemsErr.Common.PermissionDenied)){
+			throw;
+		}
+		catch(Exception ex){
 			var e = ItemsErr.Common.DataIllegalOrConflict.ToErr();
 			e.AddErr(ex);
 			throw e;
@@ -63,7 +68,10 @@ public class SvcUserLang(
 			});
 			return NIL;
 		}
-		catch(System.Exception ex){
+		catch(AppErr ex) when(ReferenceEquals(ex.Type, ItemsErr.Common.PermissionDenied)){
+			throw;
+		}
+		catch(Exception ex){
 			var e = ItemsErr.Common.DataIllegalOrConflict.ToErr();
 			e.AddErr(ex);
 			throw e;
@@ -92,12 +100,16 @@ public class SvcUserLang(
 					Descr = "",
 				});
 				pos = pos.CheckOwner(owner);
+				pos = pos.Touch();
 				await RepoUserLang.BatAdd(ctx, pos, Ct);
 				return NIL;
 			});
 			return NIL;
 		}
-		catch(System.Exception ex){
+		catch(AppErr ex) when(ReferenceEquals(ex.Type, ItemsErr.Common.PermissionDenied)){
+			throw;
+		}
+		catch(Exception ex){
 			var e = ItemsErr.Common.DataIllegalOrConflict.ToErr();
 			e.AddErr(ex);
 			throw e;
