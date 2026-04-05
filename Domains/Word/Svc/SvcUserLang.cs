@@ -38,8 +38,7 @@ public class SvcUserLang(
 		Pos = Pos.CheckOwner(Ctx.UserCtx.UserId);
 		
 		try{
-			await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(ctx)=>{
-				
+			await SqlCmdMkr.StartTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(ctx)=>{
 				await RepoUserLang.BatUpd(ctx, Pos, Ct);
 				await RepoUserLang.AsAppRepo().BatBizTouch(ctx,Pos.Select(x=>x.Id),Ct);
 				return NIL;
@@ -62,7 +61,7 @@ public class SvcUserLang(
 		Pos = Pos.CheckOwner(Ctx.UserCtx.UserId);
 		Pos = Pos.Touch();
 		try{
-			await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(ctx)=>{
+			await SqlCmdMkr.StartTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(ctx)=>{
 				await RepoUserLang.BatAdd(ctx, Pos, Ct);
 				return NIL;
 			});
@@ -89,7 +88,7 @@ public class SvcUserLang(
 		IDbUserCtx Ctx, CT Ct
 	){
 		try{
-			await SqlCmdMkr.RunInTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(ctx)=>{
+			await SqlCmdMkr.StartTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(ctx)=>{
 				var owner = Ctx.UserCtx.UserId;
 				var langs = Dao.GetUnregisteredUserLangs(ctx, owner, Ct);
 				var pos = langs.Select(lang=>new PoUserLang{
