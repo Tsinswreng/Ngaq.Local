@@ -24,6 +24,8 @@ public partial class LocalTblMgrIniter{
 				}
 				,x=>new{x.Owner, x.UniqName}
 			);
+			
+			//從 RelLang查詢 UniqName (主用)
 			o.IdxExpr(
 				null
 				,x=>new{x.Owner, x.RelLang, x.RelLangType}

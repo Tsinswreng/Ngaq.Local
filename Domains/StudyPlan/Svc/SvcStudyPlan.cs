@@ -121,7 +121,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 	}
 
 	static void ThrowMappedStudyPlanErr(
-		IErrNode ErrType, Exception Ex
+		IErrItem ErrType, Exception Ex
 	){
 		if(
 			Ex is AppErr appErr
@@ -138,7 +138,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 	}
 
 	async Task<nil> WrapStudyPlanErr(
-		IErrNode ErrType
+		IErrItem ErrType
 		,Func<Task<nil>> Fn
 	){
 		try{

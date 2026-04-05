@@ -87,7 +87,7 @@ public partial class DaoStudyPlan(
 		.AndEq(x=>x.Owner, x=>x.One(UserId));
 		if(!string.IsNullOrEmpty(Req.UniqNameSearch)){
 			Sql.And();
-			Sql.Bool(x=>x.UniqName, "LIKE", x=>x.One("%"+Req.UniqNameSearch+"%"));
+			Sql.Bool(x=>x.UniqName, "LIKE", x=>x.One("%"+Req.UniqNameSearch+"%"));//一個用戶不會定義很多很多學習方案及資產 故可接受不經索引
 		}
 		Sql.OrderBy([
 			TP.QtCol(x=>x.BizUpdatedAt)+"Desc"
