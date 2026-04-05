@@ -83,7 +83,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 	public async Task<nil> SetCurStudyPlanId(
 		IDbUserCtx Ctx, IdStudyPlan StudyPlanId, CT Ct
 	){
-		return await SqlCmdMkr.StartTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(ctx)=>{
+		return await SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(ctx)=>{
 			var key = KeysClientKv.CurStudyPlanId+"";
 			var owner = Ctx.UserCtx.UserId;
 			var oldKv = await SvcKv.BatGetByOwnerEtKStr(
@@ -156,7 +156,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		,CT Ct
 	){
 		return await WrapStudyPlanErr(ItemsErr.StudyPlan.AddFailedDataMayConflict, async()=>{
-			return await SqlCmdMkr.StartTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(ctx)=>{
+			return await SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(ctx)=>{
 				Pos = EnsureOwner(Ctx.UserCtx.UserId, Pos);
 				await RepoPreFilter.BatAdd(ctx, Pos, Ct);
 				return NIL;
@@ -170,7 +170,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		,CT Ct
 	){
 		return await WrapStudyPlanErr(ItemsErr.StudyPlan.AddFailedDataMayConflict, async()=>{
-			return await SqlCmdMkr.StartTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(ctx)=>{
+			return await SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(ctx)=>{
 				Pos = EnsureOwner(Ctx.UserCtx.UserId, Pos);
 				await RepoStudyPlan.BatAdd(ctx, Pos, Ct);
 				CurBoStudyPlanCache = null;
@@ -185,7 +185,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		,CT Ct
 	){
 		return await WrapStudyPlanErr(ItemsErr.StudyPlan.AddFailedDataMayConflict, async()=>{
-			return await SqlCmdMkr.StartTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(ctx)=>{
+			return await SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(ctx)=>{
 				Pos = EnsureOwner(Ctx.UserCtx.UserId, Pos);
 				await RepoWeightArg.BatAdd(ctx, Pos, Ct);
 				return NIL;
@@ -199,7 +199,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		,CT Ct
 	){
 		return await WrapStudyPlanErr(ItemsErr.StudyPlan.AddFailedDataMayConflict, async()=>{
-			return await SqlCmdMkr.StartTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(ctx)=>{
+			return await SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(ctx)=>{
 				Pos = EnsureOwner(Ctx.UserCtx.UserId, Pos);
 				await RepoWeightCalculator.BatAdd(ctx, Pos, Ct);
 				return NIL;
@@ -486,7 +486,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 	public async Task<bool> EnsureCurStudyPlan(
 		IDbUserCtx Ctx, CT Ct
 	){
-		return await SqlCmdMkr.StartTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(dbCtx)=>{
+		return await SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(dbCtx)=>{
 			var dbUserCtx = new DbUserCtx(Ctx.UserCtx, dbCtx);
 			var owner = Ctx.UserCtx.UserId;
 
@@ -576,7 +576,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 	)
 		where TEntity: class, I_Owner, I_Id<TId>, new()
 	{
-		await SqlCmdMkr.StartTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(ctx)=>{
+		await SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(ctx)=>{
 			var dbUserCtx = new DbUserCtx(Ctx.UserCtx, ctx);
 			var owner = Ctx.UserCtx.UserId;
 			await using var batch = new BatchCollector<TEntity, nil>(async(rows, ct)=>{
@@ -601,7 +601,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 	)
 		where TEntity: class, I_Owner, I_Id<TId>, new()
 	{
-		await SqlCmdMkr.StartTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(ctx)=>{
+		await SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(ctx)=>{
 			var dbUserCtx = new DbUserCtx(Ctx.UserCtx, ctx);
 			await using var batch = new BatchCollector<TEntity, nil>(async(rows, ct)=>{
 				await ThrowIfAnyNotOwned(dbUserCtx, Repo, rows, ct);
@@ -696,7 +696,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 	}
 
 	public Task<nil> RestoreBuiltinStudyPlan(IDbUserCtx Ctx, CT Ct) {
-		return SqlCmdMkr.StartTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(dbCtx)=>{
+		return SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(dbCtx)=>{
 			var dbUserCtx = new DbUserCtx(Ctx.UserCtx, dbCtx);
 			var builtinStudyPlan = await GetDfltStudyPlan(dbUserCtx, Ct);
 			var owner = Ctx.UserCtx.UserId;

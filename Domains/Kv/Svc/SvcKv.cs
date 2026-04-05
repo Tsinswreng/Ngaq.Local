@@ -42,7 +42,7 @@ public partial class SvcKv(
 		IDbFnCtx? Ctx
 		,IAsyncEnumerable<PoKv> Kvs, CT Ct
 	){
-		return await SqlCmdMkr.StartTxnIfNoCtx(Ctx, Ct, (Ctx)=>{
+		return await SqlCmdMkr.EnsureTxn(Ctx, Ct, (Ctx)=>{
 			return RepoKv.BatUpd(Ctx, Kvs, Ct);
 		});
 	}

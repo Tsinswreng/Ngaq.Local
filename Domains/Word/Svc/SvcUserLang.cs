@@ -50,7 +50,7 @@ public class SvcUserLang : ISvcUserLang {
 		}, Ct);
 
 	public async Task<nil> AddAllUnregisteredUserLangs(IDbUserCtx Ctx, CT Ct) {
-		Ctx.DbFnCtx ??= new DbFnCtx();
+		Ctx.DbFnCtx??=new DbFnCtx();
 		var langs = Dao.GetUnregisteredUserLangs(Ctx.DbFnCtx, Ctx.UserCtx.UserId, Ct);
 		var pos = langs.Select(lang => new PoUserLang {
 			Owner = Ctx.UserCtx.UserId,
@@ -81,14 +81,13 @@ public class SvcUserLang : ISvcUserLang {
 
 		try {
 			// 3. 事务管理（若已有 DbFnCtx 则复用，否则开启新事务）
-			await SqlCmdMkr.StartTxnIfNoCtx(ctx.DbFnCtx, ct, async txnCtx => {
+			await SqlCmdMkr.EnsureTxn(ctx.DbFnCtx, ct, async txnCtx => {
 				await operation(txnCtx, RepoUserLang, pos, ct);
 				return NIL;
 			});
 			return NIL;
 		}
-		catch (AppErr ex) when (ReferenceEquals(ex.Type, ItemsErr.Common.PermissionDenied)) {
-			// 权限异常原样抛出
+		catch (AppErr){
 			throw;
 		}
 		catch (Exception ex) {

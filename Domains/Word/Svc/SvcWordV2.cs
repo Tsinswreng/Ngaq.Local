@@ -319,7 +319,7 @@ public partial class SvcWordV2(
 		IDbUserCtx Ctx
 		,IAsyncEnumerable<PoWordLearn> PoWordLearnAsyE, CT Ct
 	){
-		return await SqlCmdMkr.StartTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(DbCtx)=>{
+		return await SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(DbCtx)=>{
 			await using var Batch = new BatchCollector<PoWordLearn, nil>(async(Learns, Ct)=>{
 				var DistinctIds = DistinctWordIds(Learns.Select(x=>x.WordId).ToList());
 				if(DistinctIds.Count == 0){
@@ -343,7 +343,7 @@ public partial class SvcWordV2(
 		IDbUserCtx Ctx,
 		IAsyncEnumerable<JnWord> Words, CT Ct
 	){
-		return SqlCmdMkr.StartTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(DbCtx)=>{
+		return SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(DbCtx)=>{
 			return await BatAddNewWordToLearnCore(
 				DbCtx,
 				Ctx.UserCtx.UserId,
@@ -566,7 +566,7 @@ public partial class SvcWordV2(
 		IDbUserCtx Ctx,
 		IAsyncEnumerable<IdWord> Ids, CT Ct
 	){
-		return await SqlCmdMkr.StartTxnIfNoCtx(Ctx.DbFnCtx, Ct, async(DbCtx)=>{
+		return await SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(DbCtx)=>{
 			await using var Batch = new BatchCollector<IdWord, nil>(async(IdBatch, Ct)=>{
 				var DistinctIds = DistinctWordIds(IdBatch);
 				if(DistinctIds.Count == 0){
