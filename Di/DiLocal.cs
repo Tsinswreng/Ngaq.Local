@@ -32,6 +32,7 @@ using Ngaq.Core.Shared.StudyPlan.Models.Po.PreFilter;
 using Ngaq.Local.Domains.StudyPlan.Dao;
 using Ngaq.Local.Domains.StudyPlan.Svc;
 using Ngaq.Core.Shared.StudyPlan.Svc;
+using Ngaq.Core.Shared.Word.Models.Po.UserLang;
 
 
 namespace Ngaq.Local.Di;
@@ -90,22 +91,11 @@ return z;
 
 //倉儲
 	static IServiceCollection SetupRepos(this IServiceCollection z){
-z.AddScoped<
-	IRepo<SchemaHistory, i64>
-	, AppRepo<SchemaHistory, i64>
->();
-z.AddScoped<
-	IRepo<PoWord, IdWord>
-	, AppRepo<PoWord, IdWord>
->();
-z.AddScoped<
-	IRepo<PoWordProp, IdWordProp>
-	, AppRepo<PoWordProp, IdWordProp>
->();
-z.AddScoped<
-	IRepo<PoWordLearn, IdWordLearn>
-	, AppRepo<PoWordLearn, IdWordLearn>
->();
+z.AddRepoScoped<SchemaHistory, i64>();
+z.AddRepoScoped<PoWord, IdWord>();
+z.AddRepoScoped<PoWordProp, IdWordProp>();
+z.AddRepoScoped<PoWordLearn, IdWordLearn>();
+z.AddRepoScoped<PoUserLang, IdUserLang>();
 z.AddRepoScoped<PoKv, IdKv>();
 z.AddRepoScoped<PoStudyPlan, IdStudyPlan>();
 z.AddRepoScoped<PoWeightArg, IdWeightArg>();
@@ -119,14 +109,15 @@ return z;
 //服務類
 	static IServiceCollection SetupSvcs(this IServiceCollection z){
 z.AddScoped<DaoWord, DaoWord>();
-		z.AddScoped<PreFilterSqlMkr, PreFilterSqlMkr>();
-	z.AddScoped<DaoWordV2, DaoWordV2>();
+z.AddScoped<PreFilterSqlMkr, PreFilterSqlMkr>();
+z.AddScoped<DaoWordV2, DaoWordV2>();
 z.AddScoped<DaoKv, DaoKv>();
 z.AddScoped<DaoStudyPlan, DaoStudyPlan>();
 z.AddScoped<ISvcParseWordList, SvcParseWordList>();
 z.AddScoped<ISvcWord, SvcWord>();
-	z.AddScoped<ISvcWordV2, SvcWordV2>();
-z.AddScoped<ISvcDictionary, global::Ngaq.Local.Domains.Dictionary.Svc.SvcDictionary>();
+z.AddScoped<ISvcWordV2, SvcWordV2>();
+z.AddScoped<ISvcUserLang, SvcUserLang>();
+z.AddScoped<ISvcDictionary, SvcDictionary>();
 z.AddScoped<ISvcKv, SvcKv>();
 z.AddScoped<ISvcStudyPlan, SvcStudyPlan>();
 z.AddScoped<IStudyPlanGetter>(sp=>(IStudyPlanGetter)sp.GetRequiredService<ISvcStudyPlan>());
