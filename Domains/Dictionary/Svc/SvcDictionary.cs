@@ -123,72 +123,7 @@ public class SvcDictionary:ISvcDictionary{
 		return JsonS.Stringify(Req);
 	}
 
-	[Obsolete("非流式")]
-	private async Task<DtoLlmApiResp> CallLlmApi(DtoLlmCallParam param, CT Ct){
-		var requestBody = new DtoLlmApiReq{
-			Model = param.Model,
-			Messages = new List<DtoLlmMessage>{
-				new DtoLlmMessage{
-					Role = "system",
-					Content = DfltPrompt.Prompt
-				},
-				new DtoLlmMessage{
-					Role = "user",
-					Content = param.UserPrompt
-				}
-			}
-		};
-
-		var json = ToolJson.DictToJson(new Kv{
-			["model"] = requestBody.Model,
-			["messages"] = requestBody.Messages?.Select(m => new Kv{
-				["role"] = m.Role,
-				["content"] = m.Content
-			}).ToList()
-		});
-		var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-		var request = new HttpRequestMessage(HttpMethod.Post, param.ApiUrl);
-		request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", param.ApiKey);
-		request.Content = content;
-
-		var response = await HttpClient.SendAsync(request, Ct);
-		response.EnsureSuccessStatusCode();
-
-		var responseJson = await response.Content.ReadAsStringAsync(Ct);
-		Logger.LogInformation("LLM API raw response: {Response}", responseJson);
-
-		var llmResponse = ToolJson.JsonStrToDict(responseJson);
-		if(llmResponse == null){
-			throw ItemsErr.Dictionary.LlmApiEmptyResponse.ToErr()
-				.AddDebugArgs(responseJson);
-		}
-
-		// 使用 JsonNode 简化访问
-		var node = new JsonNode(llmResponse);
-
-		// 使用路径访问获取 content: choices[0].message.content
-		if(!node.TryGetNodeByPath("choices[0].message.content", out var contentNode)){
-			throw ItemsErr.Dictionary.LlmApiInvalidResponseStructure.ToErr()
-				.AddDebugArgs(responseJson);
-		}
-
-		var content_result = contentNode?.ValueObj?.ToString();
-		if(string.IsNullOrEmpty(content_result)){
-			throw ItemsErr.Dictionary.LlmApiEmptyContent.ToErr()
-				.AddDebugArgs(responseJson);
-		}
-
-		return new DtoLlmApiResp{
-			RawResponse = responseJson,
-			Content = content_result
-		};
-	}
-
-
-
 	/// 调用 LLM API 流式输出
-
 	private async Task<IRespLlmDict> CallLlmApiStream(
 		IReqLlmDictEvt evt,
 		DtoLlmCallParam param,
@@ -196,7 +131,7 @@ public class SvcDictionary:ISvcDictionary{
 	){
 		var json = ToolJson.DictToJson(new Kv{
 			["model"] = param.Model,
-			["messages"] = new List<Kv>{
+			["messages"] = new List<IKv>{
 				new Kv{
 					["role"] = "system",
 					["content"] = DfltPrompt.Prompt
