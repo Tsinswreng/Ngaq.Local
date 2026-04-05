@@ -7,7 +7,6 @@ using Tsinswreng.CsSql;
 
 namespace Ngaq.Local.Domains.Word.Dao;
 
-
 public class DaoUserLang(
 	ITblMgr TblMgr
 	,ISqlCmdMkr SqlCmdMkr
