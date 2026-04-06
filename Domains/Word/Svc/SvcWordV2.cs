@@ -25,6 +25,7 @@ using Tsinswreng.CsCore;
 using Tsinswreng.CsSql;
 using Tsinswreng.CsTools;
 using Ngaq.Core.Tools.Json;
+using Ngaq.Core.Shared.Dictionary.Models;
 
 public partial class SvcWordV2(
 	ISqlCmdMkr SqlCmdMkr
@@ -659,6 +660,10 @@ public partial class SvcWordV2(
 			P.VF64,
 			Binary
 		);
+	}
+
+	public JnWord LlmDictWordToJnWord(IDbUserCtx Ctx, IRespLlmDict LlmDict, CT Ct) {
+		throw new NotImplementedException();
 	}
 
 	sealed class MergedWord(Head_Lang Key, JnWord Word){
