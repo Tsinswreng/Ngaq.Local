@@ -34,6 +34,7 @@ using Ngaq.Local.Domains.StudyPlan.Svc;
 using Ngaq.Core.Shared.StudyPlan.Svc;
 using Ngaq.Core.Shared.Word.Models.Po.UserLang;
 using Ngaq.Core.Shared.Word.Models.Po.NormLangToUserLang;
+using Ngaq.Core.Shared.Dictionary.Models.Po.NormLang;
 using Ngaq.Local.Domains.Word.Dao;
 
 
@@ -98,6 +99,7 @@ z.AddRepoScoped<PoWord, IdWord>();
 z.AddRepoScoped<PoWordProp, IdWordProp>();
 z.AddRepoScoped<PoWordLearn, IdWordLearn>();
 z.AddRepoScoped<PoUserLang, IdUserLang>();
+z.AddRepoScoped<PoNormLang, IdNormLang>();
 z.AddRepoScoped<PoNormLangToUserLang, IdNormLangToUserLang>();
 z.AddRepoScoped<PoKv, IdKv>();
 z.AddRepoScoped<PoStudyPlan, IdStudyPlan>();
@@ -124,11 +126,13 @@ return z;
 		z.AddScoped<DaoWord, DaoWord>();
 		z.AddScoped<DaoWordV2, DaoWordV2>();
 		z.AddScoped<DaoUserLang, DaoUserLang>();
+		z.AddScoped<DaoNormLang, DaoNormLang>();
 		z.AddScoped<DaoNormLangToUserLang, DaoNormLangToUserLang>();
 		z.AddScoped<ISvcParseWordList, SvcParseWordList>();
 		z.AddScoped<ISvcWord, SvcWord>();
 		z.AddScoped<ISvcWordV2, SvcWordV2>();
 		z.AddScoped<ISvcUserLang, SvcUserLang>();
+		z.AddScoped<ISvcNormLang, SvcNormLang>();
 		z.AddScoped<ISvcNormLangToUserLang, SvcNormLangToUserLang>();
 		return z;
 	}
