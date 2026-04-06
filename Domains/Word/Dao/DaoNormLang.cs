@@ -16,15 +16,16 @@ public class DaoNormLang(
 	public IAsyncEnumerable<PoNormLang?> BatGetNormLangByTypeCode(
 		IDbFnCtx Ctx,
 		IdUser Owner,
-		IAsyncEnumerable<(ELangIdentType, str)> Type_Code,
+		IAsyncEnumerable<(ELangIdentType Type, str Code)> Type_Code,
 		CT Ct
 	){
-		var Types = Type_Code.Select(x=>x.Item1);
-		var Codes = Type_Code.Select(x=>x.Item2);
+		// var Types = Type_Code.Select(x=>x.Item1);
+		// var Codes = Type_Code.Select(x=>x.Item2);
+		var tc = Type_Code;
 		var Sql = T.SqlSplicer().Select("*").From().WhereNonDel()
 			.AndEq(x=>x.Owner, x=>x.One(Owner))
-			.AndEq(x=>x.Type, x=>x.Many(Types))
-			.AndEq(x=>x.Code, x=>x.Many(Codes))
+			.AndEq(x=>x.Type, x=>x.Many(tc, x=>x.Type))
+			.AndEq(x=>x.Code, x=>x.Many(tc, x=>x.Code))
 		;
 		return SqlCmdMkr.RunDupliSql(Ctx, T, Sql, Ct);
 	}
