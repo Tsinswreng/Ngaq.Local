@@ -17,6 +17,7 @@ using Ngaq.Core.Shared.Word.Models;
 using Ngaq.Core.Shared.Word.Models.Learn_;
 using Ngaq.Core.Shared.Word.Models.Po.Kv;
 using Ngaq.Core.Shared.Word.Models.Po.Learn;
+using Ngaq.Core.Shared.Word.Models.Po.NormLangToUserLang;
 using Ngaq.Core.Shared.Word.Models.Po.Word;
 using Ngaq.Core.Sys.Models;
 using Ngaq.Core.Tools;
@@ -132,6 +133,7 @@ public partial class LocalTblMgrIniter{
 		InitWord(Mgr);
 		InitStudyPlan(Mgr);
 		InitUserLang(Mgr);
+		InitNormLangToUserLang(Mgr);
 		_Inited = true;
 		return NIL;
 	}

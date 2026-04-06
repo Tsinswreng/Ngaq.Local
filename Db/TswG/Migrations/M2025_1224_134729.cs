@@ -27,6 +27,7 @@ public class M2025_1224_134729:SqlMigrationInfo{
 		var Mgr = MkrTblMgr.MkTblMgr();
 		LocalTblMgrIniter.InitStudyPlan(Mgr);
 		LocalTblMgrIniter.InitUserLang(Mgr);
+		LocalTblMgrIniter.InitNormLangToUserLang(Mgr);
 		SqlsUp = Mgr.SqlsMkSchema();
 	}
 }
