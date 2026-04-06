@@ -132,6 +132,7 @@ public partial class LocalTblMgrIniter{
 		InitKv(Mgr);
 		InitWord(Mgr);
 		InitStudyPlan(Mgr);
+		InitNormLang(Mgr);
 		InitUserLang(Mgr);
 		InitNormLangToUserLang(Mgr);
 		_Inited = true;
