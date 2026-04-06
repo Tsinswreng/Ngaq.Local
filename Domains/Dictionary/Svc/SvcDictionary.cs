@@ -13,6 +13,7 @@ using System.Text;
 using Ngaq.Core.Tools;
 using Tsinswreng.CsYamlMd;
 using Microsoft.Extensions.Logging;
+using Ngaq.Core.Infra;
 
 
 
@@ -75,14 +76,19 @@ public class SvcDictionary:ISvcDictionary{
 		this.HttpClient = new HttpClient();
 		this.Logger = Logger;
 	}
-/*
+
+	public Task<IList<NormLang>> GetRecentUsedNormLangs(IDbUserCtx Ctx, CT Ct) {
+		throw new NotImplementedException();
+	}
+
+	/*
 如果AI響應的文本中把YamlMd格式又包進代碼塊的話、你要先去掉最外層的代碼塊
 具體的判斷方法:
 去掉開頭的空白字符
 如果響應文本中是以 ```yaml 開頭 就是正確的格式
 如果以```md 或 ````md 或 `````md (或者有更多的反點)、就要先把這層代碼塊去掉
 注意代碼塊起始界和終止界的反點的數量是一致的
- */
+*/
 	[Impl]
 	public async Task<IRespLlmDict> Lookup(IUserCtx User, IReqLlmDict Req, CT Ct){
 		var apiUrl = Cfg.Get(ItemsClientCfg.LlmDictionary.ApiUrl);
