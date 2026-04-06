@@ -74,36 +74,38 @@ public class SvcNormLang : ISvcNormLang{
 
 	public async Task<nil> InitBuiltinNormLang(IDbUserCtx Ctx, CT Ct){
 		var Owner = Ctx.UserCtx.UserId;
-		var Seeds = InitNormLang.GetNormLangList().Select(x=>new PoNormLang{
-			Owner = Owner,
-			Type = x.Type,
-			Code = x.Code,
-			NativeName = x.NativeName,
-		}).ToList();
-		if(Seeds.Count == 0){
+		var SeedList = InitNormLang.GetNormLangList();
+		if(SeedList.Count == 0){
 			return NIL;
 		}
 
 		var Exists = BatGetNormLangByTypeCode(
 			Ctx,
-			ToolAsyE.ToAsyE(Seeds.Select(x=>(x.Type, x.Code))),
+			ToolAsyE.ToAsyE(SeedList.Select(x=>(x.Type, x.Code))),
 			Ct
 		);
-		var ToAdd = new List<PoNormLang>();
-		var i = 0;
-		await foreach(var Po in Exists.WithCancellation(Ct)){
-			if(i >= Seeds.Count){
-				break;
+
+		// 對齊批量查詢返回的順序，只保留數據庫中尚不存在的內置語言。
+		async IAsyncEnumerable<PoNormLang> FilterNonExists(){
+			var i = 0;
+			await foreach(var Po in Exists.WithCancellation(Ct)){
+				if(i >= SeedList.Count){
+					yield break;
+				}
+				if(Po is null){
+					var Seed = SeedList[i];
+					yield return new PoNormLang{
+						Owner = Owner,
+						Type = Seed.Type,
+						Code = Seed.Code,
+						NativeName = Seed.NativeName,
+					};
+				}
+				i++;
 			}
-			if(Po is null){
-				ToAdd.Add(Seeds[i]);
-			}
-			i++;
 		}
-		if(ToAdd.Count == 0){
-			return NIL;
-		}
-		await BatAddNormLang(Ctx, ToolAsyE.ToAsyE(ToAdd), Ct);
+
+		await BatAddNormLang(Ctx, FilterNonExists(), Ct);
 		return NIL;
 	}
 
