@@ -56,7 +56,7 @@ public class SvcUserLang : ISvcUserLang {
 			Owner = Ctx.UserCtx.UserId,
 			UniqName = lang,
 			RelLangType = ELangIdentType.Bcp47,
-			RelLang = lang,
+			RelLang = "",
 			Descr = "",
 		});
 		await DoWrite(Ctx, pos, needTouch: true, async (dbCtx, repo, pos, ct) => {
