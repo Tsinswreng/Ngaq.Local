@@ -5,7 +5,6 @@ using Ngaq.Core.Shared.User.Models;
 using Ngaq.Core.Shared.User.Models.Po.User;
 using Ngaq.Core.Shared.User.UserCtx;
 using Ngaq.Core.Shared.Word.Models.Po.Kv;
-using Ngaq.Core.Sys.Models;
 using Ngaq.Local.Db.TswG;
 using Tsinswreng.CsCfg;
 using Tsinswreng.CsCore;

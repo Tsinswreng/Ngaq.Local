@@ -1,4 +1,4 @@
-using Ngaq.Core.Shared.Dictionary.Models;
+﻿using Ngaq.Core.Shared.Dictionary.Models;
 using Ngaq.Core.Shared.Dictionary.Svc;
 using Ngaq.Core.Shared.User.UserCtx;
 using Ngaq.Core.Infra.Cfg;
@@ -14,6 +14,13 @@ using Ngaq.Core.Tools;
 using Tsinswreng.CsYamlMd;
 using Microsoft.Extensions.Logging;
 using Ngaq.Core.Infra;
+using Ngaq.Core.Shared.Dictionary.Models.Po.NormLang;
+using Ngaq.Core.Shared.Kv;
+using Ngaq.Core.Shared.Kv.Models;
+using Ngaq.Core.Shared.Kv.Svc;
+using Ngaq.Core.Shared.Word.Models.Po.Kv;
+using Ngaq.Core.Shared.Word.Svc;
+using Tsinswreng.CsSql;
 
 
 
@@ -66,19 +73,60 @@ public class SvcDictionary:ISvcDictionary{
 	IJsonSerializer JsonS;
 	HttpClient HttpClient;
 	ILogger Logger;
+	ISvcKv SvcKv;
+	ISvcNormLang SvcNormLang;
+	IRepo<PoKv, IdKv> RepoKv;
+	ISqlCmdMkr SqlCmdMkr;
 	public SvcDictionary(
 		ICfgAccessor Cfg
 		,IJsonSerializer JsonS
 		,ILogger Logger
+		,ISvcKv SvcKv
+		,ISvcNormLang SvcNormLang
+		,IRepo<PoKv, IdKv> RepoKv
+		,ISqlCmdMkr SqlCmdMkr
 	){
 		this.Cfg = Cfg;
 		this.JsonS = JsonS;
 		this.HttpClient = new HttpClient();
 		this.Logger = Logger;
+		this.SvcKv = SvcKv;
+		this.SvcNormLang = SvcNormLang;
+		this.RepoKv = RepoKv;
+		this.SqlCmdMkr = SqlCmdMkr;
 	}
 
-	public Task<IList<NormLang>> GetRecentUsedNormLangs(IDbUserCtx Ctx, CT Ct) {
-		throw new NotImplementedException();
+	public async Task<PoNormLang?> GetCurSrcNormLang(IDbUserCtx Ctx, CT Ct){
+		return await LoadOrInitCurLang(
+			Ctx, KeysKv.Dictionary.CurSrcLang+"", "en", "English", Ct
+		);
+	}
+
+	public async Task<PoNormLang?> SetCurSrcNormLang(
+		IDbUserCtx Ctx, PoNormLang Po, CT Ct
+	){
+		var normalized = NormalizeCurLang(Ctx, Po);
+		await SaveCurLang(Ctx, KeysKv.Dictionary.CurSrcLang+"", normalized, Ct);
+		return normalized;
+	}
+
+	public async Task<PoNormLang?> GetCurTgtNormLang(IDbUserCtx Ctx, CT Ct){
+		return await LoadOrInitCurLang(
+			Ctx, KeysKv.Dictionary.CurTgtLang+"", "zh", "中文", Ct
+		);
+	}
+
+	public async Task<PoNormLang?> SetCurTgtNormLang(
+		IDbUserCtx Ctx, PoNormLang Po, CT Ct
+	){
+		var normalized = NormalizeCurLang(Ctx, Po);
+		await SaveCurLang(Ctx, KeysKv.Dictionary.CurTgtLang+"", normalized, Ct);
+		return normalized;
+	}
+
+	public Task<IList<NormLang>> GetRecentUsedNormLangs(IDbUserCtx Ctx, CT Ct){
+		IList<NormLang> r = [];
+		return Task.FromResult(r);
 	}
 
 	/*
@@ -127,6 +175,106 @@ public class SvcDictionary:ISvcDictionary{
 
 	private string BuildUserPrompt(IReqLlmDict Req){
 		return JsonS.Stringify(Req);
+	}
+
+	private async Task<PoNormLang?> LoadOrInitCurLang(
+		IDbUserCtx Ctx,
+		str Key,
+		str DfltCode,
+		str DfltNativeName,
+		CT Ct
+	){
+		Ctx.DbFnCtx ??= new DbFnCtx();
+		var owner = Ctx.UserCtx.UserId;
+		var kv = await SvcKv.BatGetByOwnerEtKStr(
+			Ctx.DbFnCtx,
+			ToolAsyE.ToAsyE([(owner, Key)]),
+			Ct
+		).FirstOrDefaultAsync(Ct);
+
+		var parsed = ParsePoNormLang(kv?.GetVStr());
+		if(parsed is not null && !str.IsNullOrWhiteSpace(parsed.Code)){
+			parsed.Owner = owner;
+			return parsed;
+		}
+
+		var dflt = await GetOrMkBuiltinNormLang(Ctx, DfltCode, DfltNativeName, Ct);
+		await SaveCurLang(Ctx, Key, dflt, Ct);
+		return dflt;
+	}
+
+	private async Task<PoNormLang> GetOrMkBuiltinNormLang(
+		IDbUserCtx Ctx,
+		str Code,
+		str DfltNativeName,
+		CT Ct
+	){
+		var po = await SvcNormLang.BatGetNormLangByTypeCode(
+			Ctx,
+			ToolAsyE.ToAsyE([(ELangIdentType.Bcp47, Code)]),
+			Ct
+		).FirstOrDefaultAsync(Ct);
+		if(po is not null){
+			po.Owner = Ctx.UserCtx.UserId;
+			return po;
+		}
+		return new PoNormLang{
+			Owner = Ctx.UserCtx.UserId,
+			Type = ELangIdentType.Bcp47,
+			Code = Code,
+			NativeName = DfltNativeName,
+		};
+	}
+
+	private async Task<nil> SaveCurLang(
+		IDbUserCtx Ctx,
+		str Key,
+		PoNormLang Po,
+		CT Ct
+	){
+		Ctx.DbFnCtx ??= new DbFnCtx();
+		var owner = Ctx.UserCtx.UserId;
+		var json = JsonS.Stringify(Po);
+
+		return await SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async DbCtx=>{
+			var oldKv = await SvcKv.BatGetByOwnerEtKStr(
+				DbCtx,
+				ToolAsyE.ToAsyE([(owner, Key)]),
+				Ct
+			).FirstOrDefaultAsync(Ct);
+			if(oldKv is null){
+				var kv = new PoKv{
+					Owner = owner,
+				}.SetStrStr(Key, json);
+				await RepoKv.BatAdd(DbCtx, ToolAsyE.ToAsyE([kv]), Ct);
+				return NIL;
+			}
+			oldKv.Owner = owner;
+			oldKv.SetStrStr(Key, json);
+			await RepoKv.BatUpd(DbCtx, ToolAsyE.ToAsyE([oldKv]), Ct);
+			return NIL;
+		});
+	}
+
+	private static PoNormLang NormalizeCurLang(IDbUserCtx Ctx, PoNormLang Po){
+		return new PoNormLang{
+			Id = Po.Id,
+			Owner = Ctx.UserCtx.UserId,
+			Type = Po.Type == ELangIdentType.Unknown ? ELangIdentType.Bcp47 : Po.Type,
+			Code = (Po.Code ?? "").Trim(),
+			NativeName = (Po.NativeName ?? "").Trim(),
+		};
+	}
+
+	private PoNormLang? ParsePoNormLang(str? Json){
+		if(str.IsNullOrWhiteSpace(Json)){
+			return null;
+		}
+		try{
+			return JsonS.Parse<PoNormLang>(Json!);
+		}catch{
+			return null;
+		}
 	}
 
 	/// 调用 LLM API 流式输出

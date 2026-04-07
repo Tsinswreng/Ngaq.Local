@@ -24,7 +24,6 @@ using Ngaq.Core.Word.Svc;
 using Ngaq.Core.Shared.StudyPlan.Models;
 using System.Text.Json;
 using Ngaq.Core.Tools;
-using Ngaq.Core.Sys.Models;
 using Ngaq.Core.Shared.Word.WeightAlgo;
 using Ngaq.Core.Shared.Word.WeightAlgo.Models;
 using Tsinswreng.CsCore;

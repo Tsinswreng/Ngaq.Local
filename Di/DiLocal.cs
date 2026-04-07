@@ -13,7 +13,6 @@ using Ngaq.Local.Word.Dao;
 using Ngaq.Core.Shared.Word.Models.Po.Kv;
 using Ngaq.Local.Domains.Kv.Svc;
 using Ngaq.Local.Domains.Kv.Dao;
-using Ngaq.Core.Sys.Models;
 using Ngaq.Core.Shared.Kv.Models;
 using Ngaq.Core.Shared.Word.Models.Po.Word;
 using Ngaq.Core.Shared.Word.Models.Po.Learn;
