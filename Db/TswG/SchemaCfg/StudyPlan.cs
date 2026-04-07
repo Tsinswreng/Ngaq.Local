@@ -5,7 +5,7 @@ using Ngaq.Core.Shared.StudyPlan.Models.Po.StudyPlan;
 using Ngaq.Core.Shared.StudyPlan.Models.Po.WeightArg;
 using Ngaq.Core.Shared.StudyPlan.Models.Po.WeightCalculator;
 using Ngaq.Core.Shared.User.Models.Po.User;
-using Ngaq.Core.Sys.Models;
+
 using Ngaq.Core.Tools;
 using Tsinswreng.CsSql;
 

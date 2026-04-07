@@ -2,7 +2,7 @@ using Ngaq.Core.Infra.IF;
 using Ngaq.Core.Shared.Dictionary.Models;
 using Ngaq.Core.Shared.User.Models.Po.User;
 using Ngaq.Core.Shared.Word.Models.Po.UserLang;
-using Ngaq.Core.Sys.Models;
+
 using Tsinswreng.CsSql;
 
 namespace Ngaq.Local.Db.TswG;

@@ -19,7 +19,7 @@ using Ngaq.Core.Shared.Word.Models.Po.Kv;
 using Ngaq.Core.Shared.Word.Models.Po.Learn;
 using Ngaq.Core.Shared.Word.Models.Po.NormLangToUserLang;
 using Ngaq.Core.Shared.Word.Models.Po.Word;
-using Ngaq.Core.Sys.Models;
+
 using Ngaq.Core.Tools;
 using Ngaq.Core.Word.Models.Po.Word;
 using Tsinswreng.CsCore;
