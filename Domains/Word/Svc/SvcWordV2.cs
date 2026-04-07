@@ -36,6 +36,7 @@ public partial class SvcWordV2(
 	,IRepo<PoStudyPlan, IdStudyPlan> RepoStudyPlan
 	,IRepo<PoPreFilter, IdPreFilter> RepoPreFilter
 	,ISvcStudyPlan SvcStudyPlan
+	,ISvcNormLangToUserLang SvcNormLangToUserLang
 	,IJsonSerializer JsonS
 ):ISvcWordV2
 {
@@ -47,13 +48,9 @@ public partial class SvcWordV2(
 	IRepo<PoStudyPlan, IdStudyPlan> RepoStudyPlan = RepoStudyPlan;
 	IRepo<PoPreFilter, IdPreFilter> RepoPreFilter = RepoPreFilter;
 	ISvcStudyPlan SvcStudyPlan = SvcStudyPlan;
+	ISvcNormLangToUserLang SvcNormLangToUserLang = SvcNormLangToUserLang;
 
-	/// <summary>
-	/// 取得待学习单词（按当前学习方案的前置筛选器过滤；若未设置则返回用户全部词）。
-	/// </summary>
-	/// <param name="Ctx">数据库与用户上下文。</param>
-	/// <param name="Ct">取消令牌。</param>
-	/// <returns>流式返回的单词序列。</returns>
+
 	public async IAsyncEnumerable<JnWord> GetWordsToLearn(
 		IDbUserCtx Ctx, [EnumeratorCancellation] CT Ct
 	){
@@ -64,13 +61,6 @@ public partial class SvcWordV2(
 		}
 	}
 
-	/// <summary>
-	/// 取得待学习单词（按入参前置筛选器过滤；若入参为null则返回用户全部词）。
-	/// </summary>
-	/// <param name="Ctx">数据库与用户上下文。</param>
-	/// <param name="Prefilter">前置筛选器；传null表示不过滤。</param>
-	/// <param name="Ct">取消令牌。</param>
-	/// <returns>流式返回的单词序列。</returns>
 	public IAsyncEnumerable<JnWord> GetWordsToLearn(
 		IDbUserCtx Ctx, PreFilter? Prefilter, [EnumeratorCancellation] CT Ct
 	){
@@ -662,8 +652,82 @@ public partial class SvcWordV2(
 		);
 	}
 
-	public JnWord LlmDictWordToJnWord(IDbUserCtx Ctx, IRespLlmDict LlmDict, CT Ct) {
-		throw new NotImplementedException();
+	public async Task<JnWord> LlmDictWordToJnWord(IDbUserCtx Ctx, IReqLlmDict Req, IRespLlmDict LlmDict, CT Ct){
+		var SrcLang = Req.OptLang.SrcLang;
+		var NormLangType = SrcLang.Type == ELangIdentType.Unknown ? ELangIdentType.Bcp47 : SrcLang.Type;
+		var NormLangCode = string.IsNullOrWhiteSpace(SrcLang.Code) ? "en" : SrcLang.Code.Trim();
+		var Lang = await ResolveUserLangByNormLang(Ctx, NormLangType, NormLangCode, Ct);
+		var Now = Tempus.Now();
+
+		var R = new JnWord{
+			Word = new PoWord{
+				Owner = Ctx.UserCtx.UserId,
+				Head = (LlmDict.Head ?? "").Trim(),
+				Lang = Lang,
+				StoredAt = Now,
+				BizCreatedAt = Now,
+				BizUpdatedAt = Now,
+			},
+			Props = [],
+			Learns = [],
+		};
+
+		AppendDescrProps(R.Props, LlmDict.Descrs, Now);
+		AppendPronunciationProps(R.Props, LlmDict.Pronunciations, Now);
+		R.EnsureForeignId();
+		return R;
+	}
+
+	async Task<str> ResolveUserLangByNormLang(IDbUserCtx Ctx, ELangIdentType NormLangType, str NormLang, CT Ct){
+		Ctx.DbFnCtx ??= new DbFnCtx();
+		var UserLang = await SvcNormLangToUserLang.GetUserLangByNormLang(
+			Ctx,
+			NormLangType,
+			NormLang,
+			Ct
+		);
+		if(string.IsNullOrWhiteSpace(UserLang)){
+			return NormLang;
+		}
+		return UserLang;
+	}
+
+	void AppendDescrProps(IList<PoWordProp> Out, IList<str> Descrs, Tempus BizTime){
+		foreach(var Descr in Descrs){
+			var Text = (Descr ?? "").Trim();
+			if(Text == ""){
+				continue;
+			}
+			Out.Add(MkStrProp(KeysProp.Inst.description, Text, BizTime));
+		}
+	}
+
+	void AppendPronunciationProps(
+		IList<PoWordProp> Out,
+		IList<TextedPronunciation> Pronunciations,
+		Tempus BizTime
+	){
+		foreach(var Pron in Pronunciations){
+			var TextType = (Pron.TextType ?? "").Trim();
+			var Text = (Pron.Text ?? "").Trim();
+			if(TextType == "" && Text == ""){
+				continue;
+			}
+			var PronJson = JsonS.Stringify(new TextedPronunciation{
+				TextType = TextType,
+				Text = Text,
+			});
+			Out.Add(MkStrProp(KeysProp.Inst.pronunciation, PronJson, BizTime));
+		}
+	}
+
+	static PoWordProp MkStrProp(str Key, str Value, Tempus BizTime){
+		var R = new PoWordProp{
+			BizCreatedAt = BizTime,
+			BizUpdatedAt = BizTime,
+		};
+		R.SetStrToken(null, Key, Value);
+		return R;
 	}
 
 	sealed class MergedWord(Head_Lang Key, JnWord Word){

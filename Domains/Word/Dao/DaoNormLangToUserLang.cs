@@ -42,9 +42,13 @@ public class DaoNormLangToUserLang(
 		var Sql = T.SqlSplicer().Select("*").From().WhereNonDel()
 			.AndEq(x=>x.Owner, x=>x.One(Owner))
 		;
-		if(!string.IsNullOrEmpty(Req.UserLang)){
+		var SearchText = Req.SearchText?.Trim();
+		if(!string.IsNullOrEmpty(SearchText)){
+			var Like = "%"+SearchText+"%";
 			Sql.And();
-			Sql.Bool(x=>x.UserLang, "LIKE", x=>x.One("%"+Req.UserLang+"%"));
+			Sql.Bool(x=>x.UserLang, "LIKE", x=>x.One(Like))
+				.Or()
+				.Bool(x=>x.NormLang, "LIKE", x=>x.One(Like));
 		}
 		Sql.OrderBy([
 			T.QtCol(x=>x.BizUpdatedAt)+" Desc",
