@@ -44,8 +44,7 @@ public class DaoNormLang(
 			Sql.Bool(x=>x.Code, "LIKE", x=>x.One("%"+Req.Code+"%"));
 		}
 		Sql.OrderBy([
-			T.QtCol(x=>x.BizUpdatedAt)+" Desc",
-			T.QtCol(x=>x.Id)+" Desc"
+			T.QtCol(x=>x.Code)+" ",
 		])
 		.LimOfst(Req.PageQry)
 		;

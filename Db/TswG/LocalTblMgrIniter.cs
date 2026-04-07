@@ -135,6 +135,7 @@ public partial class LocalTblMgrIniter{
 		InitNormLang(Mgr);
 		InitUserLang(Mgr);
 		InitNormLangToUserLang(Mgr);
+		InitRecentUse(Mgr);
 		_Inited = true;
 		return NIL;
 	}
