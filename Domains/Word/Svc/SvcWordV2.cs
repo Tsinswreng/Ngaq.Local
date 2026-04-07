@@ -687,7 +687,8 @@ public partial class SvcWordV2(
 			Ct
 		);
 		if(string.IsNullOrWhiteSpace(UserLang)){
-			return NormLang;
+			throw ItemsErr.Word.NormLangToUserLangIsNotMapped
+				.ToErr(NormLangType, NormLang);
 		}
 		return UserLang;
 	}
