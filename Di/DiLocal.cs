@@ -34,6 +34,7 @@ using Ngaq.Core.Shared.StudyPlan.Svc;
 using Ngaq.Core.Shared.Word.Models.Po.UserLang;
 using Ngaq.Core.Shared.Word.Models.Po.NormLangToUserLang;
 using Ngaq.Core.Shared.Dictionary.Models.Po.NormLang;
+using Ngaq.Core.Shared.Audio;
 using Ngaq.Local.Domains.Word.Dao;
 
 
@@ -116,6 +117,8 @@ return z;
 		SetupStudyPlan(z);
 z.AddScoped<DaoKv, DaoKv>();
 z.AddScoped<ISvcDictionary, SvcDictionary>();
+z.AddSingleton<OnlineAudio>();
+z.AddScoped<ISvcTts, Gtts>();
 z.AddScoped<ISvcKv, SvcKv>();
 z.AddScoped<IImgGetter, SvcImg>();
 return z;
