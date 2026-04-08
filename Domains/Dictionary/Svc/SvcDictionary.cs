@@ -371,23 +371,21 @@ public class SvcDictionary:ISvcDictionary{
 	private IRespLlmDict ParseResponse(DtoLlmApiResp dtoResp){
 		var rawResponse = dtoResp.RawResponse;
 		var content = dtoResp.Content;
-
 		try{
-			var textBlock = MdTextBlock.GetTextBlock(content);
-			var yamlMdText = "";
-			if(textBlock == null){
-				throw ItemsErr.Dictionary.LlmResponseParseFailed.ToErr();
-			}else if(textBlock.Lang == "md" || textBlock.Lang == "markdown"){
-				yamlMdText = textBlock.Text;
-			}else if(textBlock.Lang == "yaml" || textBlock.Lang == "yml"){
-				yamlMdText = content;
+			var parseResult = YamlMd.Inst.TryToYamlLenient(content, out var yaml);
+			if(parseResult == ELenientParseResult.Failed){
+				Err(null);
 			}
-			var yaml = Tsinswreng.CsYamlMd.YamlMd.Inst.ToYaml(yamlMdText);
 			var dict = ToolYaml.YamlStrToDict(yaml);
 			var json = ToolJson.DictToJson(dict);
 			var R = JsonS.Parse<RespLlmDict>(json);
-			return R;
+			return R!;
 		}catch(System.Exception ex){
+			Err(ex);
+		}
+		return null!;
+		
+		void Err(Exception? ex){
 			Logger.LogError(
 				ex,
 				"Failed to parse LLM response. Content: {Content}; Raw response: {RawResponse}",
@@ -396,6 +394,6 @@ public class SvcDictionary:ISvcDictionary{
 			);
 			throw ItemsErr.Dictionary.LlmResponseParseFailed.ToErr()
 				.AddDebugArgs(ex, rawResponse, content);
-		}
+		};
 	}
 }
