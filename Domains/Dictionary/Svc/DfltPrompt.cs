@@ -197,10 +197,11 @@ If **Query.ContextSentence** is provided, determine the word meaning based on co
 - Multi-line text must be placed in code blocks with correct indentation and formatting
 - Strictly follow the YamlMd format to ensure it can be correctly parsed as YAML
 
-## Prohibitions
+## Note
 
 - DO NOT include any explanatory text or conversation in the output
 - DO NOT output any format other than YamlMd
+- your whole output text should starts with ```yaml
 
 """;
 }

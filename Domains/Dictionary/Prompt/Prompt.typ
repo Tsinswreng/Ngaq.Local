@@ -87,8 +87,9 @@
 	- Multi-line text must be placed in code blocks with correct indentation and formatting
 	- Strictly follow the YamlMd format to ensure it can be correctly parsed as YAML
 ]
-
-#H[Prohibitions][
+#let Start = "```yaml"
+#H[Note][
 	- DO NOT include any explanatory text or conversation in the output
 	- DO NOT output any format other than YamlMd
+	- your whole output text should starts with #Start
 ]
