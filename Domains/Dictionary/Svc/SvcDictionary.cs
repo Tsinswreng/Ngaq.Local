@@ -177,6 +177,15 @@ public class SvcDictionary:ISvcDictionary{
 		return JsonS.Stringify(Req);
 	}
 
+	/// 直接解析 LLM 原始輸出文本，不觸發外部 API 調用。
+	public IRespLlmDict ParseRawOutput(str RawOutput){
+		var dtoResp = new DtoLlmApiResp{
+			RawResponse = RawOutput,
+			Content = RawOutput,
+		};
+		return ParseResponse(dtoResp);
+	}
+
 	private async Task<PoNormLang?> LoadOrInitCurLang(
 		IDbUserCtx Ctx,
 		str Key,
@@ -308,49 +317,54 @@ public class SvcDictionary:ISvcDictionary{
 		response.EnsureSuccessStatusCode();
 
 		var fullContent = new StringBuilder();
+		try{
+			using var stream = await response.Content.ReadAsStreamAsync(Ct);
+			using var reader = new StreamReader(stream);
 
-		using var stream = await response.Content.ReadAsStreamAsync(Ct);
-		using var reader = new StreamReader(stream);
+			// 逐行解析 SSE
+			while(await reader.ReadLineAsync() is { } line){
+				if(string.IsNullOrEmpty(line)) continue;
+				if(!line.StartsWith("data: ")) continue;
 
-		// 逐行解析 SSE
-		while(await reader.ReadLineAsync() is { } line){
-			if(string.IsNullOrEmpty(line)) continue;
-			if(!line.StartsWith("data: ")) continue;
+				var payload = line["data: ".Length..];
+				if(payload == "[DONE]"){
+					// 流结束
+					evt.OnDone?.Invoke(new DtoOnDone(), Ct);
+					break;
+				}
 
-			var payload = line["data: ".Length..];
-			if(payload == "[DONE]"){
-				// 流结束
-				evt.OnDone?.Invoke(new DtoOnDone(), Ct);
-				break;
-			}
+				try{
+					using var doc = System.Text.Json.JsonDocument.Parse(payload);
+					var root = doc.RootElement;
 
-			try{
-				using var doc = System.Text.Json.JsonDocument.Parse(payload);
-				var root = doc.RootElement;
-
-				if(root.TryGetProperty("choices", out var choices) && choices.GetArrayLength() > 0){
-					var delta = choices[0].GetProperty("delta");
-					if(delta.TryGetProperty("content", out var contentProp)){
-						var seg = contentProp.GetString();
-						if(!string.IsNullOrEmpty(seg)){
-							fullContent.Append(seg);
-							// 触发事件
-							evt.OnNewSeg?.Invoke(new DtoOnNewSeg{ NewSeg = seg }, Ct);
+					if(root.TryGetProperty("choices", out var choices) && choices.GetArrayLength() > 0){
+						var delta = choices[0].GetProperty("delta");
+						if(delta.TryGetProperty("content", out var contentProp)){
+							var seg = contentProp.GetString();
+							if(!string.IsNullOrEmpty(seg)){
+								fullContent.Append(seg);
+								// 触发事件
+								evt.OnNewSeg?.Invoke(new DtoOnNewSeg{ NewSeg = seg }, Ct);
+							}
 						}
 					}
+				}catch(System.Text.Json.JsonException){
+					// 忽略解析错误，继续处理下一行
+					Logger.LogWarning("Failed to parse SSE line: {Line}", line);
 				}
-			}catch(System.Text.Json.JsonException){
-				// 忽略解析错误，继续处理下一行
-				Logger.LogWarning("Failed to parse SSE line: {Line}", line);
 			}
+
+			// 構建最終響應：RawResponse / Content 都記錄完整拼接文本，便於錯誤排查。
+			var merged = fullContent.ToString();
+			return ParseRawOutput(merged);
+		}catch(Exception ex){
+			Logger.LogError(
+				ex,
+				"LLM dictionary stream failed. Partial LLM response: {LlmResponse}",
+				fullContent.ToString()
+			);
+			throw;
 		}
-
-		// 构建最终响应
-		var dtoResp = new DtoLlmApiResp{
-			Content = fullContent.ToString()
-		};
-
-		return ParseResponse(dtoResp);
 	}
 
 	/// 解析 LLM 響應文本為 RespLlmDict
@@ -374,9 +388,14 @@ public class SvcDictionary:ISvcDictionary{
 			var R = JsonS.Parse<RespLlmDict>(json);
 			return R;
 		}catch(System.Exception ex){
-			Logger.LogError(ex, "Failed to parse LLM response. Raw response: {RawResponse}", rawResponse);
+			Logger.LogError(
+				ex,
+				"Failed to parse LLM response. Content: {Content}; Raw response: {RawResponse}",
+				content,
+				rawResponse
+			);
 			throw ItemsErr.Dictionary.LlmResponseParseFailed.ToErr()
-				.AddDebugArgs(ex, rawResponse);
+				.AddDebugArgs(ex, rawResponse, content);
 		}
 	}
 }

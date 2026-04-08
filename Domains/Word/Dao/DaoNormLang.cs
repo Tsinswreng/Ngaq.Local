@@ -19,8 +19,6 @@ public class DaoNormLang(
 		IAsyncEnumerable<(ELangIdentType Type, str Code)> Type_Code,
 		CT Ct
 	){
-		// var Types = Type_Code.Select(x=>x.Item1);
-		// var Codes = Type_Code.Select(x=>x.Item2);
 		var tc = Type_Code;
 		var Sql = T.SqlSplicer().Select("*").From().WhereNonDel()
 			.AndEq(x=>x.Owner, x=>x.One(Owner))
@@ -41,7 +39,7 @@ public class DaoNormLang(
 		;
 		if(!string.IsNullOrEmpty(Req.Code)){
 			Sql.And();
-			Sql.Bool(x=>x.Code, "LIKE", x=>x.One("%"+Req.Code+"%"));
+			Sql.Bool(x=>x.Code, "LIKE", x=>x.One(Req.Code+"%"));
 		}
 		Sql.OrderBy([
 			T.QtCol(x=>x.Code)+" ",
