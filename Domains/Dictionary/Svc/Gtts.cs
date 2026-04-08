@@ -1,13 +1,10 @@
 using Ngaq.Core.Shared.Audio;
-using Ngaq.Core.Infra;
 using Ngaq.Core.Infra.Errors;
-using Ngaq.Core.Shared.Dictionary.Models.Po.NormLang;
 using Ngaq.Core.Shared.Dictionary.Svc;
 using Tsinswreng.CsErr;
 using Tsinswreng.CsCore;
-using Tsinswreng.CsSql;
-using Tsinswreng.CsTools;
 using System.Collections.Concurrent;
+using Ngaq.Core.Shared.Dictionary.Models;
 
 namespace Ngaq.Local.Domains.Dictionary.Svc;
 
@@ -22,54 +19,41 @@ public class Gtts: ISvcTts{
 	/// 編碼參數固定為 UTF-8。
 	const str GttsInputEncoding = "UTF-8";
 
-	/// 語言查詢倉儲：按 Id 取語言碼。
-	private readonly IRepo<PoNormLang, IdNormLang> RepoNormLang;
 	/// 在線音頻下載器：把 URL 下載並封裝為可重讀 Audio。
 	private readonly OnlineAudio OnlineAudio;
 	/// 內存緩存：同一 (文本, 語言碼) 只下載一次。
 	private readonly ConcurrentDictionary<str, Lazy<Task<Audio>>> Cache = [];
 
 	public Gtts(
-		IRepo<PoNormLang, IdNormLang> RepoNormLang,
 		OnlineAudio OnlineAudio
 	){
-		this.RepoNormLang = RepoNormLang;
 		this.OnlineAudio = OnlineAudio;
 	}
 
-	/// 根據文本和標準語言 Id 生成語音。
+	/// 根據文本和標準語言生成語音。
 	/// <param name="Text">要轉語音的文本。</param>
-	/// <param name="Lang">標準語言 Id。</param>
+	/// <param name="Lang">標準語言（含 Type/Code）。</param>
 	/// <returns>可重複讀取的音頻對象。</returns>
 	public Task<Audio> GetAudio(
-		str Text, IdNormLang Lang
+		str Text, INormLang Lang
 	){
 		// step 1: 先做入參校驗，避免下游查庫/請求時才報錯。
 		if(str.IsNullOrWhiteSpace(Text)){
 			throw ItemsErr.Common.ArgErr.ToErr().AddDebugArgs(nameof(Text));
 		}
-		if(Lang.Equals(default(IdNormLang))){
+		if(Lang is null){
 			throw ItemsErr.Common.ArgErr.ToErr().AddDebugArgs(nameof(Lang));
 		}
 
 		return GetAudioCore(Text, Lang);
 	}
 
-	/// 真正的異步流程：查語言碼 -> 命中/寫入緩存 -> 下載音頻。
-	private async Task<Audio> GetAudioCore(str Text, IdNormLang Lang){
-		// step 2: 用語言 Id 讀取規範語言，拿到可供 gTTS 使用的語言碼。
-		var poLang = await RepoNormLang.BatGetById(
-			new DbFnCtx(),
-			ToolAsyE.ToAsyE([Lang]),
-			CT.None
-		).FirstOrDefaultAsync(CT.None);
-		if(poLang is null){
-			throw ItemsErr.Common.ArgErr.ToErr().AddDebugArgs(nameof(Lang), Lang);
-		}
-
-		var gttsLangCode = NormalizeLangCodeForGtts(poLang.Code);
+	/// 真正的異步流程：讀語言碼 -> 命中/寫入緩存 -> 下載音頻。
+	private async Task<Audio> GetAudioCore(str Text, INormLang Lang){
+		// step 2: 直接使用接口提供的標準語言碼，避免額外查庫。
+		var gttsLangCode = NormalizeLangCodeForGtts(Lang.Code);
 		if(str.IsNullOrWhiteSpace(gttsLangCode)){
-			throw ItemsErr.Common.ArgErr.ToErr().AddDebugArgs(nameof(poLang.Code), poLang.Code);
+			throw ItemsErr.Common.ArgErr.ToErr().AddDebugArgs(nameof(Lang.Code), Lang.Code);
 		}
 
 		// step 3: 以「文本+語言碼」作為鍵進行內存緩存，減少重複下載。
@@ -116,4 +100,3 @@ public class Gtts: ISvcTts{
 		return $"{GttsLangCode}\n{Text}";
 	}
 }
-
