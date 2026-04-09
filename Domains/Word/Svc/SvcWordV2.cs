@@ -677,6 +677,22 @@ public partial class SvcWordV2(
 		R.EnsureForeignId();
 		return R;
 	}
+	
+
+	public async Task<JnWord> LlmDictWordToJnWordWithLearn(
+		IDbUserCtx Ctx
+		,IReqLlmDict Req
+		,IRespLlmDict LlmDict, CT Ct
+	){
+		var Jnword = await LlmDictWordToJnWord(Ctx, Req, LlmDict, Ct);
+		var learn = new PoWordLearn{
+			WordId = Jnword.Word.Id,
+			LearnResult = ELearn.Add,
+			BizCreatedAt = Tempus.Now(),
+		};
+		Jnword.Learns.Add(learn);
+		return Jnword;
+	}
 
 	async Task<str> ResolveUserLangByNormLang(IDbUserCtx Ctx, ELangIdentType NormLangType, str NormLang, CT Ct){
 		Ctx.DbFnCtx ??= new DbFnCtx();
