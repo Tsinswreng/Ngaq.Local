@@ -32,6 +32,21 @@ public class SvcUserLang : ISvcUserLang {
 		return await Dao.PageUserLang(Ctx.DbFnCtx, Ctx.UserCtx.UserId, Req, Ct);
 	}
 
+	/// 批量按語言唯一名讀取當前用戶的語言實體。
+	/// 若某個唯一名不存在，對應位置返回 null。
+	/// <param name="Ctx">用戶+數據庫上下文。</param>
+	/// <param name="UniqNames">待查語言唯一名序列。</param>
+	/// <param name="Ct">取消令牌。</param>
+	/// <returns>與輸入對齊的 <see cref="PoUserLang"/> 可空序列。</returns>
+	public IAsyncEnumerable<PoUserLang?> BatGetUserLang(
+		IDbUserCtx Ctx,
+		IAsyncEnumerable<str> UniqNames,
+		CT Ct
+	){
+		Ctx.DbFnCtx ??= new DbFnCtx();
+		return Dao.BatGetUserLang(Ctx.DbFnCtx, Ctx.UserCtx.UserId, UniqNames, Ct);
+	}
+
 	public IAsyncEnumerable<str> GetUnregisteredUserLangs(IDbUserCtx Ctx, CT Ct) {
 		Ctx.DbFnCtx ??= new DbFnCtx();
 		return Dao.GetUnregisteredUserLangs(Ctx.DbFnCtx, Ctx.UserCtx.UserId, Ct);

@@ -117,10 +117,8 @@ return z;
 		SetupStudyPlan(z);
 z.AddScoped<DaoKv, DaoKv>();
 z.AddScoped<ISvcDictionary, SvcDictionary>();
-z.AddSingleton<OnlineAudio>();
-z.AddScoped<ISvcTts, Gtts>();
 z.AddScoped<ISvcKv, SvcKv>();
-z.AddScoped<IImgGetter, SvcImg>();
+
 return z;
 	}
 	

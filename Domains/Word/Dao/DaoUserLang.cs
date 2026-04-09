@@ -16,6 +16,28 @@ public class DaoUserLang(
 	
 	ITable<PoUserLang> T = TblMgr.GetTbl<PoUserLang>();
 	ITable<PoWord> TW = TblMgr.GetTbl<PoWord>();
+
+	/// 批量按語言唯一名查詢用戶語言。
+	/// 輸入流只消費一次，且輸出與輸入位置對齊；不存在時返回 null。
+	/// <param name="Ctx">數據庫函數上下文。</param>
+	/// <param name="Owner">當前用戶 Id。</param>
+	/// <param name="UniqNames">待查語言唯一名序列。</param>
+	/// <param name="Ct">取消令牌。</param>
+	/// <returns>對齊輸入順序的 <see cref="PoUserLang"/> 可空序列。</returns>
+	public IAsyncEnumerable<PoUserLang?> BatGetUserLang(
+		IDbFnCtx Ctx,
+		IdUser Owner,
+		IAsyncEnumerable<str> UniqNames,
+		CT Ct
+	){
+		// 將 Owner 與 UniqName 綁成同一條輸入流，避免對可迭代參數的多次消費。
+		var Owner_UniqName = UniqNames.Select(x=>(Owner, UniqName: x));
+		var Sql = T.SqlSplicer().Select("*").From().WhereNonDel()
+			.AndEq(x=>x.Owner, x=>x.Many(Owner_UniqName, x=>x.Owner))
+			.AndEq(x=>x.UniqName, x=>x.Many(Owner_UniqName, x=>x.UniqName))
+		;
+		return SqlCmdMkr.RunDupliSql(Ctx, T, Sql, Ct);
+	}
 	
 	public async Task<IPageAsyE<PoUserLang>> PageUserLang(
 		IDbFnCtx Ctx, IdUser Owner, ReqPageUserLang Req, CT Ct
