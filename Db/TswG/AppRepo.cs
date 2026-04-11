@@ -48,6 +48,10 @@ public partial class AppRepo<
 		await BatUpdByCodeDict(Ctx, Ids, CodeDicts, Ct);
 		return NIL;
 	}
+
+	public IAsyncEnumerable<TEntity> BatGetChangedEntityAfterTimeWithDel(IDbUserCtx Ctx, Tempus ChangedTime, CT Ct) {
+		throw new NotImplementedException();
+	}
 }
 
 public static class ExtnIRepo{

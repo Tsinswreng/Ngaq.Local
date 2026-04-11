@@ -86,8 +86,7 @@ public partial class DaoWordV2(
 		,IdUser Owner
 		,CT Ct
 	){
-		var Sql = TW.SqlSplicer().Select("*").From().Where1()
-		.And(TW.SqlIsNonDel())
+		var Sql = TW.SqlSplicer().Select("*").From().WhereNonDel()
 		.AndEq(x=>x.Owner, y=>y.One(Owner))
 		.OrderByDesc(x=>x.BizCreatedAt)
 		;

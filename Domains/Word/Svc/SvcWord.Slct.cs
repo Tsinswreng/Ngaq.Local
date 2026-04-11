@@ -499,13 +499,13 @@ public partial class SvcWord{
 	}
 
 	public async Task<Func<
-		IUserCtx, ReqPackWords, CT, Task<TextWithBlob>
+		IUserCtx, ReqPackWords, CT, Task<NgaqTextWithBlob>
 	>> FnPackAllWordsToTextWithBlobNoStream(IDbFnCtx Ctx, CT Ct){
 		var ZipFn = await FnZipAllWordsJsonNoStream(Ctx, Ct);
 		return async(User, Req, Ct)=>{
 			var DtoCompressed = await ZipFn(User, Req, Ct);
 			var packInfo = DtoCompressed.ToOrAssWordsPackInfo();
-			var textWithBlob = ToolTextWithBlob.Pack(
+			var textWithBlob = NgaqTextWithBlob.Pack(
 				JsonS.Stringify(packInfo), DtoCompressed.Data
 			);
 			return textWithBlob;

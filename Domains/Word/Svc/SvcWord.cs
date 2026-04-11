@@ -205,7 +205,7 @@ public partial class SvcWord(
 					}
 				}
 				if(Cfg.AutoUpdBizUpdatedAt && UpdatedWord.WordInDb is not null){
-					await UpdUpd(UpdatedWord.WordInDb.Id_(), Ct);
+					await UpdUpd(UpdatedWord.WordInDb.Id, Ct);
 				}
 			}//~foreach(var UpdatedWord in DtoAddWords.UpdatedWords)
 			sw.Stop();
@@ -545,17 +545,17 @@ public partial class SvcWord(
 			var IdOfWordWithHeadLang = await SlctIdByOwnerHeadLang(User, Head, Lang, Ct);
 			IdWord IdToRtn = default;
 			if(IdOfWordWithHeadLang is null){
-				IdToRtn = clonedWordOfId.Id_();
+				IdToRtn = clonedWordOfId.Id;
 			}else{
 				var WordOfHeadLang = await GetJnWordByIdEtCheckOwner(User, IdOfWordWithHeadLang.Value, Ct)
 				?? throw new FatalLogicErr("Existing is null");
-				clonedWordOfId.SetIdEtEnsureFKey(WordOfHeadLang.Id_());
+				clonedWordOfId.SetIdEtEnsureFKey(WordOfHeadLang.Id);
 				IdToRtn = IdOfWordWithHeadLang.Value;
 			}
 			clonedWordOfId.Word.Head = Head;
 			clonedWordOfId.Word.Lang = Lang;
 			await MergeWordsIntoDb(User, [clonedWordOfId] , Ct);
-			await UpdUpd(clonedWordOfId.Id_(), Ct);
+			await UpdUpd(clonedWordOfId.Id, Ct);
 			await SoftDelJnWordById(User, [WordId], Ct);
 			return IdToRtn;
 		};
@@ -733,7 +733,7 @@ FnUpdJnWord() 是一個 “以輸入為準的對賬式更新”：
 	}
 
 	public async Task<Func<
-		IUserCtx, TextWithBlob, CT, Task<nil>
+		IUserCtx, NgaqTextWithBlob, CT, Task<nil>
 	>> FnSyncFromTextWithBlob(IDbFnCtx Ctx, CT Ct){
 		var AddCompressedWord = await FnSyncFromCompressedWord(Ctx, Ct);
 		return async(User, TextWithBlob, Ct)=>{

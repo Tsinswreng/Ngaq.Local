@@ -175,12 +175,12 @@ public partial class SvcWord{
 		return await TxnWrapper.Wrap(FnSyncFromCompressedWord, User, Dto, Ct);
 	}
 
-	public async Task<TextWithBlob> PackAllWordsToTextWithBlobNoStream(IUserCtx User, ReqPackWords Req, CT Ct){
+	public async Task<NgaqTextWithBlob> PackAllWordsToTextWithBlobNoStream(IUserCtx User, ReqPackWords Req, CT Ct){
 		return await TxnWrapper.Wrap(FnPackAllWordsToTextWithBlobNoStream, User, Req, Ct);
 	}
 
 
-	public async Task<nil> SyncFromTextWithBlob(IUserCtx User, TextWithBlob TextWithBlob, CT Ct){
+	public async Task<nil> SyncFromTextWithBlob(IUserCtx User, NgaqTextWithBlob TextWithBlob, CT Ct){
 		return await TxnWrapper.Wrap(FnSyncFromTextWithBlob, User, TextWithBlob, Ct);
 	}
 

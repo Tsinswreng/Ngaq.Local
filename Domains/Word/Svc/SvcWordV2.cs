@@ -26,6 +26,7 @@ using Tsinswreng.CsSql;
 using Tsinswreng.CsTools;
 using Ngaq.Core.Tools.Json;
 using Ngaq.Core.Shared.Dictionary.Models;
+using Ngaq.Core.Shared.Word.Models.Dto;
 
 public partial class SvcWordV2(
 	ISqlCmdMkr SqlCmdMkr
@@ -38,7 +39,7 @@ public partial class SvcWordV2(
 	,ISvcStudyPlan SvcStudyPlan
 	,ISvcNormLangToUserLang SvcNormLangToUserLang
 	,IJsonSerializer JsonS
-):ISvcWordV2
+):ISvcWordV2,ISvcWordSync
 {
 	ISqlCmdMkr SqlCmdMkr = SqlCmdMkr;
 	DaoWordV2 DaoWordV2 = DaoWordV2;
@@ -329,6 +330,7 @@ public partial class SvcWordV2(
 			return NIL;
 		});
 	}
+	
 	
 	public Task<nil> BatAddNewWordToLearn(
 		IDbUserCtx Ctx,
@@ -745,6 +747,58 @@ public partial class SvcWordV2(
 		};
 		R.SetStrToken(null, Key, Value);
 		return R;
+	}
+
+	public Task<object> BatAddJnWord(IDbUserCtx Ctx, IAsyncEnumerable<JnWord> Words, CT Ct) {
+		throw new NotImplementedException();
+	}
+
+	public Task<object> BatUpdWordProp(IDbUserCtx Ctx, IAsyncEnumerable<PoWordProp> WordProps, CT Ct) {
+		throw new NotImplementedException();
+	}
+
+	public Task<object> DelWordPropInId(IDbUserCtx Ctx, IAsyncEnumerable<IdWordProp> Ids, CT Ct) {
+		throw new NotImplementedException();
+	}
+
+	public Task<object> DelWordLearnInId(IDbUserCtx Ctx, IAsyncEnumerable<IdWordLearn> Ids, CT Ct) {
+		throw new NotImplementedException();
+	}
+
+	public Task<IAsyncEnumerable<IdWord?>> BatUpdPoWord(IDbUserCtx Ctx, IAsyncEnumerable<PoWord> PoWords, CT Ct) {
+		throw new NotImplementedException();
+	}
+
+	public IAsyncEnumerable<IdWord?> BatUpdHeadLang(IDbUserCtx Ctx, IAsyncEnumerable<PoWord> PoWords, CT Ct) {
+		throw new NotImplementedException();
+	}
+
+	public Task<object> BizSyncJnWordByBizId(IDbUserCtx Ctx, IAsyncEnumerable<JnWord> JnWords, CT Ct) {
+		throw new NotImplementedException();
+	}
+
+	public Task<object> BatSyncByDto(IDbUserCtx Ctx, IAsyncEnumerable<DtoJnWordSyncResult> Dtos, CT Ct) {
+		throw new NotImplementedException();
+	}
+
+	public Task<object> BatSync_NoChange(IDbUserCtx Ctx, IAsyncEnumerable<DtoJnWordSyncResult> Dtos, CT Ct) {
+		throw new NotImplementedException();
+	}
+
+	public Task<object> BatSync_RemoteIsOlder(IDbUserCtx Ctx, IAsyncEnumerable<DtoJnWordSyncResult> Dtos, CT Ct) {
+		throw new NotImplementedException();
+	}
+
+	public Task<object> BatSync_LocalNotExist(IDbUserCtx Ctx, IAsyncEnumerable<DtoJnWordSyncResult> Dtos, CT Ct) {
+		throw new NotImplementedException();
+	}
+
+	public Task<object> BatSync_AddedIndependently(IDbUserCtx Ctx, IAsyncEnumerable<DtoJnWordSyncResult> Dtos, CT Ct) {
+		throw new NotImplementedException();
+	}
+
+	IAsyncEnumerable<DtoJnWordSyncResult> ISvcWordV2.BizSyncJnWordByBizId(IDbUserCtx Ctx, IAsyncEnumerable<JnWord> JnWords, CT Ct) {
+		throw new NotImplementedException();
 	}
 
 	sealed class MergedWord(Head_Lang Key, JnWord Word){
