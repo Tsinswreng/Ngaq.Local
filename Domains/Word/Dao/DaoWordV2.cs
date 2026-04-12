@@ -8,6 +8,7 @@ using Ngaq.Core.Model.Po.Learn_;
 using Ngaq.Core.Shared.Base.Models;
 using Ngaq.Core.Shared.Base.Models.Po;
 using Ngaq.Core.Shared.StudyPlan.Models.PreFilter;
+using Ngaq.Core.Shared.User.Models.Po;
 using Ngaq.Core.Shared.User.Models.Po.User;
 using Ngaq.Core.Shared.Word.Models;
 using Ngaq.Core.Shared.Word.Models.Po.Kv;
@@ -79,6 +80,153 @@ public partial class DaoWordV2(
 			var RawId = x[TW.Memb(e=>e.Id)];
 			return (IdWord?)IdWord.FromByteArr((u8[])RawId!);
 		});
+	}
+	
+	/// 批量按 (Owner, Head, Lang) 查單詞（含已軟刪除），返回順序與入參一一對應。
+	public IAsyncEnumerable<PoWord?> BatGetPoWordByOwnerHeadLangWithDel(
+		IDbFnCtx Ctx,
+		IdUser Owner,
+		IAsyncEnumerable<Head_Lang> HeadLangs,
+		CT Ct
+	){
+		var heads = HeadLangs.Select(x=>x.Head);
+		var langs = HeadLangs.Select(x=>x.Lang);
+		var sql = TW.SqlSplicer().Select("*").From().Where1()
+			.AndEq(x=>x.Owner, y=>y.One(Owner))
+			.AndEq(x=>x.Head, y=>y.Many(heads))
+			.AndEq(x=>x.Lang, y=>y.Many(langs))
+		;
+		return SqlCmdMkr.RunDupliSql(Ctx, TW, sql, Ct);
+	}
+
+	/// 批量更新單詞主體的 Head/Lang，並同步觸發 BizUpdatedAt。
+	public async Task<nil> BatUpdHeadLangById(
+		IDbFnCtx Ctx,
+		IAsyncEnumerable<(IdWord Id, str Head, str Lang)> Args,
+		CT Ct
+	){
+		await using var batch = new BatchCollector<(IdWord Id, str Head, str Lang), nil>(async(rows, Ct)=>{
+			if(rows.Count == 0){
+				return NIL;
+			}
+			var ids = new List<IdWord>(rows.Count);
+			var dicts = new List<IDictionary<str, obj?>>(rows.Count);
+			foreach(var row in rows){
+				ids.Add(row.Id);
+				dicts.Add(new Dictionary<str, obj?>{
+					[nameof(PoWord.Head)] = row.Head,
+					[nameof(PoWord.Lang)] = row.Lang,
+				});
+			}
+			await RepoWord.BatUpdByCodeDict(Ctx, ToolAsyE.ToAsyE(ids), ToolAsyE.ToAsyE(dicts), Ct);
+			await BatAltWordAfterUpd(Ctx, ToolAsyE.ToAsyE(ids), Ct);
+			return NIL;
+		});
+		await batch.ConsumeAll(Args, Ct);
+		return NIL;
+	}
+
+	/// 批量取消軟刪除（DelAt = 0），並同步觸發 BizUpdatedAt。
+	public async Task<nil> BatRestoreInId(
+		IDbFnCtx Ctx,
+		IAsyncEnumerable<IdWord> Ids,
+		CT Ct
+	){
+		await using var batch = new BatchCollector<IdWord, nil>(async(idBatch, Ct)=>{
+			if(idBatch.Count == 0){
+				return NIL;
+			}
+			var codeDicts = idBatch.Select(_=>new Dictionary<str, obj?>{
+				[nameof(IPoBase.DelAt)] = default(IdDel),
+			});
+			await RepoWord.BatUpdByCodeDict(Ctx, ToolAsyE.ToAsyE(idBatch), ToolAsyE.ToAsyE(codeDicts), Ct);
+			await BatAltWordAfterUpd(Ctx, ToolAsyE.ToAsyE(idBatch), Ct);
+			return NIL;
+		});
+		await batch.ConsumeAll(Ids, Ct);
+		return NIL;
+	}
+
+	/// 批量把資產 (WordProp/WordLearn) 的 WordId 從 Old 移到 New。
+	public async Task<nil> BatMoveAssetsToWordId(
+		IDbFnCtx Ctx,
+		IAsyncEnumerable<(IdWord Old, IdWord New)> Moves,
+		CT Ct
+	){
+		await using var batch = new BatchCollector<(IdWord Old, IdWord New), nil>(async(moveBatch, Ct)=>{
+			if(moveBatch.Count == 0){
+				return NIL;
+			}
+			var oldIds = moveBatch.Select(x=>x.Old).Distinct().ToList();
+			var opt = new OptQry{
+				InParamCnt = (u64)oldIds.Count,
+				IncludeDeleted = true,
+			};
+			var propsByOld = await RepoWord.IncludeEntitysByKeys(
+				Ctx,
+				nameof(I_WordId.WordId),
+				opt,
+				oldIds,
+				x=>x.WordId,
+				TP,
+				Ct
+			);
+			var learnsByOld = await RepoWord.IncludeEntitysByKeys(
+				Ctx,
+				nameof(I_WordId.WordId),
+				opt,
+				oldIds,
+				x=>x.WordId,
+				TL,
+				Ct
+			);
+
+			var updProps = new List<PoWordProp>();
+			var updLearns = new List<PoWordLearn>();
+			foreach(var (oldId, newId) in moveBatch){
+				foreach(var prop in propsByOld.GetValueOrDefault(oldId, [])){
+					prop.WordId = newId;
+					updProps.Add(prop);
+				}
+				foreach(var learn in learnsByOld.GetValueOrDefault(oldId, [])){
+					learn.WordId = newId;
+					updLearns.Add(learn);
+				}
+			}
+			if(updProps.Count > 0){
+				await RepoProp.BatUpd(Ctx, ToolAsyE.ToAsyE(updProps), Ct);
+			}
+			if(updLearns.Count > 0){
+				await RepoLearn.BatUpd(Ctx, ToolAsyE.ToAsyE(updLearns), Ct);
+			}
+			return NIL;
+		});
+		await batch.ConsumeAll(Moves, Ct);
+		return NIL;
+	}
+
+	/// 批量更改 Word 主鍵 Id，並同步把全部資產外鍵一起遷移。
+	public async Task<nil> BatChangeWordId(
+		IDbFnCtx Ctx,
+		IAsyncEnumerable<(IdWord Old, IdWord New)> Moves,
+		CT Ct
+	){
+		await using var batch = new BatchCollector<(IdWord Old, IdWord New), nil>(async(moveBatch, Ct)=>{
+			var normalized = moveBatch.Where(x=>x.Old != x.New).ToList();
+			if(normalized.Count == 0){
+				return NIL;
+			}
+			var oldIds = normalized.Select(x=>x.Old).ToList();
+			var codeDicts = normalized.Select(x=>(IDictionary<str, obj?>)new Dictionary<str, obj?>{
+				[nameof(PoWord.Id)] = x.New,
+			});
+			await RepoWord.BatUpdByCodeDict(Ctx, ToolAsyE.ToAsyE(oldIds), ToolAsyE.ToAsyE(codeDicts), Ct);
+			await BatMoveAssetsToWordId(Ctx, ToolAsyE.ToAsyE(normalized), Ct);
+			await BatAltWordAfterUpd(Ctx, ToolAsyE.ToAsyE(normalized.Select(x=>x.New)), Ct);
+			return NIL;
+		});
+		await batch.ConsumeAll(Moves, Ct);
+		return NIL;
 	}
 
 	public IAsyncEnumerable<JnWord> GetWordsByOwner(

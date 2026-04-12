@@ -131,6 +131,7 @@ return z;
 		z.AddScoped<ISvcParseWordList, SvcParseWordList>();
 		z.AddScoped<ISvcWord, SvcWord>();
 		z.AddScoped<ISvcWordV2, SvcWordV2>();
+		z.AddScoped<ISvcWordInMem, SvcWordInMem>();
 		z.AddScoped<ISvcUserLang, SvcUserLang>();
 		z.AddScoped<ISvcNormLang, SvcNormLang>();
 		z.AddScoped<ISvcNormLangToUserLang, SvcNormLangToUserLang>();
