@@ -67,7 +67,7 @@ public partial class SvcWordV2(
 	}
 
 	public IAsyncEnumerable<JnWord> GetWordsToLearn(
-		IDbUserCtx Ctx, PreFilter? Prefilter, [EnumeratorCancellation] CT Ct
+		IDbUserCtx Ctx, PreFilter? Prefilter, CT Ct
 	){
 		Ctx.DbFnCtx ??= new DbFnCtx();
 		var words = DaoWordV2.GetWordsByOwnerByPreFilterSql(Ctx.DbFnCtx, Ctx.UserCtx.UserId, Prefilter, Ct);
@@ -1024,13 +1024,15 @@ public partial class SvcWordV2(
 
 	/// 無需同步，僅消費輸入保持批量流程一致。
 	public async Task<nil> BatSync_NoChange(IDbUserCtx Ctx, IAsyncEnumerable<DtoJnWordSyncResult> Dtos, CT Ct){
-		await Dtos.ConsumeAll(Ct);
+		await foreach(var _ in Dtos.WithCancellation(Ct)){
+		}
 		return NIL;
 	}
 
 	/// 遠端更舊，無需同步，僅消費輸入。
 	public async Task<nil> BatSync_RemoteIsOlder(IDbUserCtx Ctx, IAsyncEnumerable<DtoJnWordSyncResult> Dtos, CT Ct){
-		await Dtos.ConsumeAll(Ct);
+		await foreach(var _ in Dtos.WithCancellation(Ct)){
+		}
 		return NIL;
 	}
 
