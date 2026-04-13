@@ -16,6 +16,7 @@ using Ngaq.Core.Shared.Word.Models.Po.Learn;
 using Ngaq.Core.Shared.Word.Models.Po.Word;
 using Ngaq.Core.Word.Models.Po.Word;
 using Ngaq.Local.Db.TswG;
+using Ngaq.Local.Domains.Word;
 using Tsinswreng.CsCore;
 using Tsinswreng.CsSql;
 using Tsinswreng.CsTools;
@@ -375,7 +376,7 @@ ORDER BY {TW.QtCol(nameof(PoWord.BizCreatedAt))} DESC
 			return true;
 		}
 		foreach(var field in FieldFilter.Fields){
-			var values = Props.Where(x=>x.KStr == field).Select(GetPropValue).ToList();
+			var values = Props.Where(x=>x.KStr == field).Select(WordFilterValueUtil.GetPropValue).ToList();
 			if(values.Count == 0){
 				continue;
 			}
@@ -399,98 +400,17 @@ ORDER BY {TW.QtCol(nameof(PoWord.BizCreatedAt))} DESC
 	static bool IsMatchedByOnePropFilterItem(IReadOnlyList<obj?> CandidateValues, FilterItem FilterItem){
 		var filterValues = FilterItem.Values ?? [];
 		return FilterItem.Operation switch{
-			EFilterOperationMode.IncludeAny => filterValues.Any(v=>CandidateValues.Any(c=>AreEqual(c, v, FilterItem.ValueType))),
-			EFilterOperationMode.IncludeAll => filterValues.All(v=>CandidateValues.Any(c=>AreEqual(c, v, FilterItem.ValueType))),
-			EFilterOperationMode.ExcludeAll => filterValues.All(v=>CandidateValues.All(c=>!AreEqual(c, v, FilterItem.ValueType))),
-			EFilterOperationMode.Eq => CandidateValues.Any(c=>AreEqual(c, filterValues.FirstOrDefault(), FilterItem.ValueType)),
-			EFilterOperationMode.Ne => CandidateValues.All(c=>!AreEqual(c, filterValues.FirstOrDefault(), FilterItem.ValueType)),
-			EFilterOperationMode.Gt => CandidateValues.Any(c=>CompareNumber(c, filterValues.FirstOrDefault()) > 0),
-			EFilterOperationMode.Ge => CandidateValues.Any(c=>CompareNumber(c, filterValues.FirstOrDefault()) >= 0),
-			EFilterOperationMode.Lt => CandidateValues.Any(c=>CompareNumber(c, filterValues.FirstOrDefault()) < 0),
-			EFilterOperationMode.Le => CandidateValues.Any(c=>CompareNumber(c, filterValues.FirstOrDefault()) <= 0),
+			EFilterOperationMode.IncludeAny => filterValues.Any(v=>CandidateValues.Any(c=>WordFilterValueUtil.AreEqual(c, v, FilterItem.ValueType))),
+			EFilterOperationMode.IncludeAll => filterValues.All(v=>CandidateValues.Any(c=>WordFilterValueUtil.AreEqual(c, v, FilterItem.ValueType))),
+			EFilterOperationMode.ExcludeAll => filterValues.All(v=>CandidateValues.All(c=>!WordFilterValueUtil.AreEqual(c, v, FilterItem.ValueType))),
+			EFilterOperationMode.Eq => CandidateValues.Any(c=>WordFilterValueUtil.AreEqual(c, filterValues.FirstOrDefault(), FilterItem.ValueType)),
+			EFilterOperationMode.Ne => CandidateValues.All(c=>!WordFilterValueUtil.AreEqual(c, filterValues.FirstOrDefault(), FilterItem.ValueType)),
+			EFilterOperationMode.Gt => CandidateValues.Any(c=>WordFilterValueUtil.CompareNumber(c, filterValues.FirstOrDefault()) > 0),
+			EFilterOperationMode.Ge => CandidateValues.Any(c=>WordFilterValueUtil.CompareNumber(c, filterValues.FirstOrDefault()) >= 0),
+			EFilterOperationMode.Lt => CandidateValues.Any(c=>WordFilterValueUtil.CompareNumber(c, filterValues.FirstOrDefault()) < 0),
+			EFilterOperationMode.Le => CandidateValues.Any(c=>WordFilterValueUtil.CompareNumber(c, filterValues.FirstOrDefault()) <= 0),
 			_ => true,
 		};
-	}
-
-	static obj? GetPropValue(PoWordProp Prop){
-		return Prop.VType switch{
-			EKvType.Str => Prop.VStr,
-			EKvType.I64 => Prop.VI64,
-			EKvType.F64 => Prop.VF64,
-			EKvType.Binary => Prop.VBinary,
-			_ => null,
-		};
-	}
-
-	static bool AreEqual(obj? Candidate, obj? Expected, EValueType ValueType){
-		if(ValueType == EValueType.Number){
-			if(!TryToF64(Candidate, out var cn) || !TryToF64(Expected, out var en)){
-				return false;
-			}
-			return cn == en;
-		}
-		if(Candidate is null || Expected is null){
-			return Candidate is null && Expected is null;
-		}
-		return string.Equals(Candidate.ToString(), Expected.ToString(), StringComparison.Ordinal);
-	}
-
-	static int CompareNumber(obj? Left, obj? Right){
-		if(!TryToF64(Left, out var l) || !TryToF64(Right, out var r)){
-			return int.MinValue;
-		}
-		return l.CompareTo(r);
-	}
-
-	static bool TryToF64(obj? Value, out f64 Number){
-		switch(Value){
-			case null:
-				Number = default;
-				return false;
-			case byte v:
-				Number = v;
-				return true;
-			case sbyte v:
-				Number = v;
-				return true;
-			case short v:
-				Number = v;
-				return true;
-			case ushort v:
-				Number = v;
-				return true;
-			case int v:
-				Number = v;
-				return true;
-			case uint v:
-				Number = v;
-				return true;
-			case long v:
-				Number = v;
-				return true;
-			case ulong v:
-				Number = v;
-				return true;
-			case float v:
-				Number = v;
-				return true;
-			case double v:
-				Number = v;
-				return true;
-			case decimal v:
-				Number = (double)v;
-				return true;
-			case Tempus v:
-				Number = v.Value;
-				return true;
-			default:
-				if(double.TryParse(Value.ToString(), out var parsed)){
-					Number = parsed;
-					return true;
-				}
-				Number = default;
-				return false;
-		}
 	}
 
 	IAsyncEnumerable<JnWord> CollectJnWordsByBatch(

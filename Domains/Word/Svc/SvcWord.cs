@@ -746,5 +746,9 @@ FnUpdJnWord() 是一個 “以輸入為準的對賬式更新”：
 			return NIL;
 		};
 	}
+	
+	void t(){
+		
+	}
 
 }

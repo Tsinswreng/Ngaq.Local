@@ -29,6 +29,7 @@ using Ngaq.Core.Tools.Json;
 using Ngaq.Core.Shared.Dictionary.Models;
 using Ngaq.Core.Shared.Word.Models.Dto;
 using Ngaq.Core.Shared.Base.Models.Po;
+using Ngaq.Local.Domains.Word;
 
 public partial class SvcWordV2(
 	ISqlCmdMkr SqlCmdMkr
@@ -182,15 +183,15 @@ public partial class SvcWordV2(
 	){
 		var filterValues = FilterItem.Values ?? [];
 		return FilterItem.Operation switch{
-			EFilterOperationMode.IncludeAny => filterValues.Any(v=>CandidateValues.Any(c=>AreEqual(c, v, FilterItem.ValueType))),
-			EFilterOperationMode.IncludeAll => filterValues.All(v=>CandidateValues.Any(c=>AreEqual(c, v, FilterItem.ValueType))),
-			EFilterOperationMode.ExcludeAll => filterValues.All(v=>CandidateValues.All(c=>!AreEqual(c, v, FilterItem.ValueType))),
-			EFilterOperationMode.Eq => CandidateValues.Any(c=>AreEqual(c, filterValues.FirstOrDefault(), FilterItem.ValueType)),
-			EFilterOperationMode.Ne => CandidateValues.All(c=>!AreEqual(c, filterValues.FirstOrDefault(), FilterItem.ValueType)),
-			EFilterOperationMode.Gt => CandidateValues.Any(c=>CompareNumber(c, filterValues.FirstOrDefault()) > 0),
-			EFilterOperationMode.Ge => CandidateValues.Any(c=>CompareNumber(c, filterValues.FirstOrDefault()) >= 0),
-			EFilterOperationMode.Lt => CandidateValues.Any(c=>CompareNumber(c, filterValues.FirstOrDefault()) < 0),
-			EFilterOperationMode.Le => CandidateValues.Any(c=>CompareNumber(c, filterValues.FirstOrDefault()) <= 0),
+			EFilterOperationMode.IncludeAny => filterValues.Any(v=>CandidateValues.Any(c=>WordFilterValueUtil.AreEqual(c, v, FilterItem.ValueType))),
+			EFilterOperationMode.IncludeAll => filterValues.All(v=>CandidateValues.Any(c=>WordFilterValueUtil.AreEqual(c, v, FilterItem.ValueType))),
+			EFilterOperationMode.ExcludeAll => filterValues.All(v=>CandidateValues.All(c=>!WordFilterValueUtil.AreEqual(c, v, FilterItem.ValueType))),
+			EFilterOperationMode.Eq => CandidateValues.Any(c=>WordFilterValueUtil.AreEqual(c, filterValues.FirstOrDefault(), FilterItem.ValueType)),
+			EFilterOperationMode.Ne => CandidateValues.All(c=>!WordFilterValueUtil.AreEqual(c, filterValues.FirstOrDefault(), FilterItem.ValueType)),
+			EFilterOperationMode.Gt => CandidateValues.Any(c=>WordFilterValueUtil.CompareNumber(c, filterValues.FirstOrDefault()) > 0),
+			EFilterOperationMode.Ge => CandidateValues.Any(c=>WordFilterValueUtil.CompareNumber(c, filterValues.FirstOrDefault()) >= 0),
+			EFilterOperationMode.Lt => CandidateValues.Any(c=>WordFilterValueUtil.CompareNumber(c, filterValues.FirstOrDefault()) < 0),
+			EFilterOperationMode.Le => CandidateValues.Any(c=>WordFilterValueUtil.CompareNumber(c, filterValues.FirstOrDefault()) <= 0),
 			_ => true,
 		};
 	}
@@ -224,91 +225,10 @@ public partial class SvcWordV2(
 			if(prop.KStr != Field){
 				continue;
 			}
-			values.Add(GetPropValue(prop));
+			values.Add(WordFilterValueUtil.GetPropValue(prop));
 		}
 		Values = values;
 		return values.Count > 0;
-	}
-
-	static obj? GetPropValue(PoWordProp Prop){
-		return Prop.VType switch{
-			EKvType.Str => Prop.VStr,
-			EKvType.I64 => Prop.VI64,
-			EKvType.F64 => Prop.VF64,
-			EKvType.Binary => Prop.VBinary,
-			_ => null,
-		};
-	}
-
-	static bool AreEqual(obj? Candidate, obj? Expected, EValueType ValueType){
-		if(ValueType == EValueType.Number){
-			if(!TryToF64(Candidate, out var cn) || !TryToF64(Expected, out var en)){
-				return false;
-			}
-			return cn == en;
-		}
-		if(Candidate is null || Expected is null){
-			return Candidate is null && Expected is null;
-		}
-		return string.Equals(Candidate.ToString(), Expected.ToString(), StringComparison.Ordinal);
-	}
-
-	static int CompareNumber(obj? Left, obj? Right){
-		if(!TryToF64(Left, out var l) || !TryToF64(Right, out var r)){
-			return int.MinValue;
-		}
-		return l.CompareTo(r);
-	}
-
-	static bool TryToF64(obj? Value, out f64 Number){
-		switch(Value){
-			case null:
-				Number = default;
-				return false;
-			case byte v:
-				Number = v;
-				return true;
-			case sbyte v:
-				Number = v;
-				return true;
-			case short v:
-				Number = v;
-				return true;
-			case ushort v:
-				Number = v;
-				return true;
-			case int v:
-				Number = v;
-				return true;
-			case uint v:
-				Number = v;
-				return true;
-			case long v:
-				Number = v;
-				return true;
-			case ulong v:
-				Number = v;
-				return true;
-			case float v:
-				Number = v;
-				return true;
-			case double v:
-				Number = v;
-				return true;
-			case decimal v:
-				Number = (double)v;
-				return true;
-			case Tempus v:
-				Number = v.Value;
-				return true;
-			default:
-				if(double.TryParse(Value.ToString(), out var parsed)){
-					Number = parsed;
-					return true;
-				}
-				Number = default;
-				return false;
-		}
 	}
 
 	public async Task<nil> BatAddNewLearnRecord(
@@ -923,45 +843,77 @@ public partial class SvcWordV2(
 		IAsyncEnumerable<PoWord> PoWords,
 		CT Ct
 	){
-		var results = new List<IdWord?>();
-		await foreach(var arg in PoWords.WithCancellation(Ct)){
-			// step 1: 先按 Id 校驗舊詞存在與權限。
-			var wordOfId = await DaoWordV2.BatGetPoWordByIdWithDel(DbCtx, ToAsyE([arg.Id]), Ct).FirstOrDefaultAsync(Ct);
-			if(wordOfId is null){
-				throw ItemsErr.Word.WordOfId__NotFound.ToErr(arg.Id);
-			}
-			wordOfId.CheckOwner(UserId);
-
-			if(wordOfId.Head == arg.Head && wordOfId.Lang == arg.Lang){
-				results.Add(null);
-				continue;
+		await using var batch = new BatchCollector<PoWord, IList<IdWord?>>(async(args, Ct)=>{
+			if(args.Count == 0){
+				return [];
 			}
 
-			// step 2: 查目標 (Head,Lang) 是否已存在（含軟刪）。
-			var target = await DaoWordV2.BatGetPoWordByOwnerHeadLangWithDel(
-				DbCtx,
-				UserId,
-				ToAsyE([new Head_Lang(arg.Head, arg.Lang)]),
-				Ct
-			).FirstOrDefaultAsync(Ct);
+			// step 1: 批量查當前 Id 對應的舊詞，按位置對齊校驗存在與權限。
+			var inputIds = args.Select(x=>x.Id).ToList();
+			var wordsOfId = await DaoWordV2.BatGetPoWordByIdWithDel(DbCtx, ToAsyE(inputIds), Ct).ToListAsync(Ct);
+			// step 2: 批量查目標 (Head,Lang) 對應詞（含軟刪），後續按索引一一處理。
+			var keys = args.Select(x=>new Head_Lang(x.Head, x.Lang)).ToList();
+			var targets = await DaoWordV2.BatGetPoWordByOwnerHeadLangWithDel(DbCtx, UserId, ToAsyE(keys), Ct).ToListAsync(Ct);
 
-			if(target is null){
-				await DaoWordV2.BatUpdHeadLangById(DbCtx, ToAsyE([(wordOfId.Id, arg.Head, arg.Lang)]), Ct);
-				results.Add(null);
-				continue;
+			var r = new List<IdWord?>(args.Count);
+			var updHeadLangArgs = new List<(IdWord Id, str Head, str Lang)>();
+			var restoreIds = new List<IdWord>();
+			var softDelIds = new List<IdWord>();
+			var moveAssetsArgs = new List<(IdWord Old, IdWord New)>();
+			var touchIds = new List<IdWord>();
+
+			for(var i = 0; i < args.Count; i++){
+				var arg = args[i];
+				var wordOfId = wordsOfId[i];
+				if(wordOfId is null){
+					throw ItemsErr.Word.WordOfId__NotFound.ToErr(arg.Id);
+				}
+				wordOfId.CheckOwner(UserId);
+
+				if(wordOfId.Head == arg.Head && wordOfId.Lang == arg.Lang){
+					r.Add(null);
+					continue;
+				}
+
+				var target = targets[i];
+				if(target is null){
+					updHeadLangArgs.Add((wordOfId.Id, arg.Head, arg.Lang));
+					r.Add(null);
+					continue;
+				}
+
+				if(!target.DelAt.IsNullOrDefault()){
+					restoreIds.Add(target.Id);
+				}
+
+				// step 3: 目標已存在時，按規則軟刪舊詞並遷移資產。
+				softDelIds.Add(wordOfId.Id);
+				moveAssetsArgs.Add((wordOfId.Id, target.Id));
+				touchIds.Add(wordOfId.Id);
+				touchIds.Add(target.Id);
+				r.Add(target.Id == arg.Id ? null : target.Id);
 			}
 
-			if(!target.DelAt.IsNullOrDefault()){
-				await DaoWordV2.BatRestoreInId(DbCtx, ToAsyE([target.Id]), Ct);
+			if(updHeadLangArgs.Count > 0){
+				await DaoWordV2.BatUpdHeadLangById(DbCtx, ToAsyE(updHeadLangArgs), Ct);
 			}
+			if(restoreIds.Count > 0){
+				await DaoWordV2.BatRestoreInId(DbCtx, ToAsyE(restoreIds.Distinct()), Ct);
+			}
+			if(softDelIds.Count > 0){
+				await RepoWord.BatSoftDelById(DbCtx, ToAsyE(softDelIds.Distinct()), Ct);
+			}
+			if(moveAssetsArgs.Count > 0){
+				await DaoWordV2.BatMoveAssetsToWordId(DbCtx, ToAsyE(moveAssetsArgs), Ct);
+			}
+			if(touchIds.Count > 0){
+				await DaoWordV2.BatAltWordAfterUpd(DbCtx, ToAsyE(touchIds.Distinct()), Ct);
+			}
+			return r;
+		});
 
-			// step 3: 衝突時，軟刪舊詞，資產改外鍵遷移到目標詞。
-			await RepoWord.BatSoftDelById(DbCtx, ToAsyE([wordOfId.Id]), Ct);
-			await DaoWordV2.BatMoveAssetsToWordId(DbCtx, ToAsyE([(wordOfId.Id, target.Id)]), Ct);
-			await DaoWordV2.BatAltWordAfterUpd(DbCtx, ToAsyE([wordOfId.Id, target.Id]), Ct);
-			results.Add(target.Id == arg.Id ? null : target.Id);
-		}
-		return results;
+		var ans = await batch.ConsumeAll(PoWords, Ct);
+		return ans.SelectMany(x=>x).ToList();
 	}
 
 	/// 先按 BizId(Owner,Head,Lang) 做內存比較，再返回同步 DTO。
@@ -971,21 +923,48 @@ public partial class SvcWordV2(
 		[EnumeratorCancellation] CT Ct
 	){
 		Ctx.DbFnCtx ??= new DbFnCtx();
-		await foreach(var remote in JnWords.WithCancellation(Ct)){
-			remote.Owner = Ctx.UserCtx.UserId;
-			remote.EnsureForeignId();
-			var localPo = await DaoWordV2.BatGetPoWordByOwnerHeadLangWithDel(
+		await using var batch = new BatchCollector<JnWord, IAsyncEnumerable<DtoJnWordSyncResult>>(async(remotes, Ct)=>{
+			if(remotes.Count == 0){
+				return ToAsyE(Array.Empty<DtoJnWordSyncResult>());
+			}
+
+			foreach(var remote in remotes){
+				remote.Owner = Ctx.UserCtx.UserId;
+				remote.EnsureForeignId();
+			}
+
+			var headLangs = remotes.Select(x=>new Head_Lang(x.Head, x.Lang)).ToList();
+			var localPos = await DaoWordV2.BatGetPoWordByOwnerHeadLangWithDel(
 				Ctx.DbFnCtx,
 				Ctx.UserCtx.UserId,
-				ToAsyE([new Head_Lang(remote.Head, remote.Lang)]),
+				ToAsyE(headLangs),
 				Ct
-			).FirstOrDefaultAsync(Ct);
-			JnWord? local = null;
-			if(localPo is not null){
-				local = await DaoWordV2.BatGetJnWordByIdWithDel(Ctx.DbFnCtx, ToAsyE([localPo.Id]), Ct)
-					.FirstOrDefaultAsync(Ct);
+			).ToListAsync(Ct);
+
+			var ids = localPos.Where(x=>x is not null).Select(x=>x!.Id).Distinct().ToList();
+			var localById = new Dictionary<IdWord, JnWord?>();
+			if(ids.Count > 0){
+				var locals = await DaoWordV2.BatGetJnWordByIdWithDel(Ctx.DbFnCtx, ToAsyE(ids), Ct).ToListAsync(Ct);
+				for(var i = 0; i < ids.Count; i++){
+					localById[ids[i]] = locals[i];
+				}
 			}
-			yield return SvcWordInMem.SyncJnWord(local, remote);
+
+			var dtos = new List<DtoJnWordSyncResult>(remotes.Count);
+			for(var i = 0; i < remotes.Count; i++){
+				var localPo = localPos[i];
+				JnWord? local = null;
+				if(localPo is not null){
+					local = localById.GetValueOrDefault(localPo.Id);
+				}
+				dtos.Add(SvcWordInMem.SyncJnWord(local, remotes[i]));
+			}
+			return ToAsyE(dtos);
+		});
+
+		var all = batch.AllFlat(JnWords, Ct);
+		await foreach(var dto in all.WithCancellation(Ct)){
+			yield return dto;
 		}
 	}
 
@@ -1053,25 +1032,30 @@ public partial class SvcWordV2(
 	/// Id 不同時，以更小 Id 爲準，先統一 Id，再把遠端內容合入。
 	public Task<nil> BatSync_IdNotEqual(IDbUserCtx Ctx, IAsyncEnumerable<DtoJnWordSyncResult> Dtos, CT Ct){
 		return SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(DbCtx)=>{
-			await foreach(var dto in Dtos.WithCancellation(Ct)){
-				var local = dto.Local ?? throw ItemsErr.Word.Word__And__SyncFailed.ToErr("LocalNull");
-				var remote = dto.Remote ?? throw ItemsErr.Word.Word__And__SyncFailed.ToErr("RemoteNull");
-				local.Word.CheckOwner(Ctx.UserCtx.UserId);
-				remote.Owner = Ctx.UserCtx.UserId;
-				remote.EnsureForeignId();
+			await using var batch = new BatchCollector<DtoJnWordSyncResult, nil>(async(dtoBatch, Ct)=>{
+				var moveIds = new List<(IdWord Old, IdWord New)>();
+				var remotesToApply = new List<JnWord>(dtoBatch.Count);
+				foreach(var dto in dtoBatch){
+					var local = dto.Local ?? throw ItemsErr.Word.Word__And__SyncFailed.ToErr("LocalNull");
+					var remote = dto.Remote ?? throw ItemsErr.Word.Word__And__SyncFailed.ToErr("RemoteNull");
+					local.Word.CheckOwner(Ctx.UserCtx.UserId);
+					remote.Owner = Ctx.UserCtx.UserId;
+					remote.EnsureForeignId();
 
-				var keepId = local.Id.Value <= remote.Id.Value ? local.Id : remote.Id;
-				if(local.Id != keepId){
-					await BatChangeId(
-						new DbUserCtx(Ctx.UserCtx, DbCtx),
-						ToAsyE([(local.Id, keepId)]),
-						Ct
-					);
+					var keepId = local.Id.Value <= remote.Id.Value ? local.Id : remote.Id;
+					if(local.Id != keepId){
+						moveIds.Add((local.Id, keepId));
+					}
+					remote.SetIdEtEnsureFKey(keepId);
+					remotesToApply.Add(remote);
 				}
-
-				remote.SetIdEtEnsureFKey(keepId);
-				await ApplyRemoteWordAsUpdate(DbCtx, remote, Ct);
-			}
+				if(moveIds.Count > 0){
+					await BatChangeId(new DbUserCtx(Ctx.UserCtx, DbCtx), ToAsyE(moveIds), Ct);
+				}
+				await ApplyRemoteWordsAsBatchUpdate(DbCtx, remotesToApply, Ct);
+				return NIL;
+			});
+			await batch.ConsumeAll(Dtos, Ct);
 			return NIL;
 		});
 	}
@@ -1079,26 +1063,44 @@ public partial class SvcWordV2(
 	/// Remote 更新時，把遠端根與資產合入本地。
 	Task<nil> BatSync_RemoteIsNewer(IDbUserCtx Ctx, IAsyncEnumerable<DtoJnWordSyncResult> Dtos, CT Ct){
 		return SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(DbCtx)=>{
-			await foreach(var dto in Dtos.WithCancellation(Ct)){
-				var remote = dto.Remote ?? throw ItemsErr.Word.Word__And__SyncFailed.ToErr("RemoteNull");
-				remote.Owner = Ctx.UserCtx.UserId;
-				remote.EnsureForeignId();
-				await ApplyRemoteWordAsUpdate(DbCtx, remote, Ct);
-			}
+			await using var batch = new BatchCollector<DtoJnWordSyncResult, nil>(async(dtoBatch, Ct)=>{
+				var remotes = new List<JnWord>(dtoBatch.Count);
+				foreach(var dto in dtoBatch){
+					var remote = dto.Remote ?? throw ItemsErr.Word.Word__And__SyncFailed.ToErr("RemoteNull");
+					remote.Owner = Ctx.UserCtx.UserId;
+					remote.EnsureForeignId();
+					remotes.Add(remote);
+				}
+				await ApplyRemoteWordsAsBatchUpdate(DbCtx, remotes, Ct);
+				return NIL;
+			});
+			await batch.ConsumeAll(Dtos, Ct);
 			return NIL;
 		});
 	}
 
 	/// 把遠端整詞內容合入到同 Id 的本地詞：根用 Upd，資產用 Upsert。
 	async Task<nil> ApplyRemoteWordAsUpdate(IDbFnCtx DbCtx, JnWord Remote, CT Ct){
-		await RepoWord.BatUpd(DbCtx, ToAsyE([Remote.Word]), Ct);
-		if(Remote.Props.Count > 0){
-			await RepoProp.BatUpsert(DbCtx, ToAsyE(Remote.Props), Ct);
+		await ApplyRemoteWordsAsBatchUpdate(DbCtx, [Remote], Ct);
+		return NIL;
+	}
+
+	/// 批量把遠端整詞內容合入本地：根用 Upd，資產用 Upsert，最後統一 touch BizUpdatedAt。
+	async Task<nil> ApplyRemoteWordsAsBatchUpdate(IDbFnCtx DbCtx, IList<JnWord> Remotes, CT Ct){
+		if(Remotes.Count == 0){
+			return NIL;
 		}
-		if(Remote.Learns.Count > 0){
-			await RepoLearn.BatUpsert(DbCtx, ToAsyE(Remote.Learns), Ct);
+
+		await RepoWord.BatUpd(DbCtx, ToAsyE(Remotes.Select(x=>x.Word)), Ct);
+		var props = Remotes.SelectMany(x=>x.Props).ToList();
+		if(props.Count > 0){
+			await RepoProp.BatUpsert(DbCtx, ToAsyE(props), Ct);
 		}
-		await DaoWordV2.BatAltWordAfterUpd(DbCtx, ToAsyE([Remote.Id]), Ct);
+		var learns = Remotes.SelectMany(x=>x.Learns).ToList();
+		if(learns.Count > 0){
+			await RepoLearn.BatUpsert(DbCtx, ToAsyE(learns), Ct);
+		}
+		await DaoWordV2.BatAltWordAfterUpd(DbCtx, ToAsyE(Remotes.Select(x=>x.Id).Distinct()), Ct);
 		return NIL;
 	}
 
