@@ -15,6 +15,7 @@ using Ngaq.Core.Shared.User.Models.Po.User;
 using Ngaq.Core.Shared.User.UserCtx;
 using Ngaq.Core.Shared.Word.Models.Po.Kv;
 using Ngaq.Core.Tools.Json;
+using Ngaq.Local.Domains.Sync;
 using Ngaq.Local.Domains.StudyPlan.Dao;
 using Tsinswreng.CsPage;
 using Tsinswreng.CsSql;
@@ -26,6 +27,7 @@ using System.Text.Json;
 using Ngaq.Core.Tools;
 using Ngaq.Core.Shared.Word.WeightAlgo;
 using Ngaq.Core.Shared.Word.WeightAlgo.Models;
+using Ngaq.Core.Shared.Sync;
 using Tsinswreng.CsCore;
 using Ngaq.Core.Infra.Errors;
 using Tsinswreng.CsErr;
@@ -154,7 +156,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		, IAsyncEnumerable<PoPreFilter> Pos
 		,CT Ct
 	){
-		return await WrapStudyPlanErr(ItemsErr.StudyPlan.AddFailedDataMayConflict, async()=>{
+		return await WrapStudyPlanErr(ItemsErr.Common.DataIllegalOrConflict, async()=>{
 			return await SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(ctx)=>{
 				Pos = EnsureOwner(Ctx.UserCtx.UserId, Pos);
 				await RepoPreFilter.BatAdd(ctx, Pos, Ct);
@@ -168,7 +170,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		, IAsyncEnumerable<PoStudyPlan> Pos
 		,CT Ct
 	){
-		return await WrapStudyPlanErr(ItemsErr.StudyPlan.AddFailedDataMayConflict, async()=>{
+		return await WrapStudyPlanErr(ItemsErr.Common.DataIllegalOrConflict, async()=>{
 			return await SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(ctx)=>{
 				Pos = EnsureOwner(Ctx.UserCtx.UserId, Pos);
 				await RepoStudyPlan.BatAdd(ctx, Pos, Ct);
@@ -183,7 +185,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		, IAsyncEnumerable<PoWeightArg> Pos
 		,CT Ct
 	){
-		return await WrapStudyPlanErr(ItemsErr.StudyPlan.AddFailedDataMayConflict, async()=>{
+		return await WrapStudyPlanErr(ItemsErr.Common.DataIllegalOrConflict, async()=>{
 			return await SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(ctx)=>{
 				Pos = EnsureOwner(Ctx.UserCtx.UserId, Pos);
 				await RepoWeightArg.BatAdd(ctx, Pos, Ct);
@@ -197,7 +199,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		, IAsyncEnumerable<PoWeightCalculator> Pos
 		,CT Ct
 	){
-		return await WrapStudyPlanErr(ItemsErr.StudyPlan.AddFailedDataMayConflict, async()=>{
+		return await WrapStudyPlanErr(ItemsErr.Common.DataIllegalOrConflict, async()=>{
 			return await SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(ctx)=>{
 				Pos = EnsureOwner(Ctx.UserCtx.UserId, Pos);
 				await RepoWeightCalculator.BatAdd(ctx, Pos, Ct);
@@ -619,7 +621,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		,IAsyncEnumerable<PoPreFilter> Pos
 		,CT Ct
 	){
-		return await WrapStudyPlanErr(ItemsErr.StudyPlan.UpdateFailedDataMayConflict, async()=>{
+		return await WrapStudyPlanErr(ItemsErr.Common.DataIllegalOrConflict, async()=>{
 			await BatUpdWithOwnerCheck(Ctx, RepoPreFilter, Pos, Ct);
 			return NIL;
 		});
@@ -630,7 +632,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 	public async Task<nil> BatUpdWeightCalculator(
 		IDbUserCtx Ctx, IAsyncEnumerable<PoWeightCalculator> Pos, CT Ct
 	){
-		return await WrapStudyPlanErr(ItemsErr.StudyPlan.UpdateFailedDataMayConflict, async()=>{
+		return await WrapStudyPlanErr(ItemsErr.Common.DataIllegalOrConflict, async()=>{
 			await BatUpdWithOwnerCheck(Ctx, RepoWeightCalculator, Pos, Ct);
 			return NIL;
 		});
@@ -641,7 +643,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 	public async Task<nil> BatUpdWeightArg(
 		IDbUserCtx Ctx, IAsyncEnumerable<PoWeightArg> Pos, CT Ct
 	){
-		return await WrapStudyPlanErr(ItemsErr.StudyPlan.UpdateFailedDataMayConflict, async()=>{
+		return await WrapStudyPlanErr(ItemsErr.Common.DataIllegalOrConflict, async()=>{
 			await BatUpdWithOwnerCheck(Ctx, RepoWeightArg, Pos, Ct);
 			return NIL;
 		});
@@ -678,7 +680,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 	public async Task<nil> BatUpdStudyPlan(
 		IDbUserCtx Ctx, IAsyncEnumerable<PoStudyPlan> Pos, CT Ct
 	){
-		return await WrapStudyPlanErr(ItemsErr.StudyPlan.UpdateFailedDataMayConflict, async()=>{
+		return await WrapStudyPlanErr(ItemsErr.Common.DataIllegalOrConflict, async()=>{
 			await BatUpdWithOwnerCheck(Ctx, RepoStudyPlan, Pos, Ct);
 			CurBoStudyPlanCache = null;
 			return NIL;
@@ -778,4 +780,52 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		return r;
 	}
 
+	/// 按通用同步規則同步權重參數：
+	/// 直接走通用同步框架，避免在 Svc 內重複造同步邏輯。
+	public Task<nil> SyncWeightArg(IDbUserCtx Ctx, IAsyncEnumerable<PoWeightArg> Pos, CT Ct){
+		return SyncByFramework(Ctx, Pos, RepoWeightArg, clearCache: false, Ct);
+	}
+
+	/// 按通用同步規則同步權重算法：
+	/// 直接走通用同步框架，避免在 Svc 內重複造同步邏輯。
+	public Task<nil> SyncWeightCalculator(IDbUserCtx Ctx, IAsyncEnumerable<PoWeightCalculator> Pos, CT Ct){
+		return SyncByFramework(Ctx, Pos, RepoWeightCalculator, clearCache: false, Ct);
+	}
+
+	/// 按通用同步規則同步預篩選器：
+	/// 直接走通用同步框架，避免在 Svc 內重複造同步邏輯。
+	public Task<nil> SyncPreFilter(IDbUserCtx Ctx, IAsyncEnumerable<PoPreFilter> Pos, CT Ct){
+		return SyncByFramework(Ctx, Pos, RepoPreFilter, clearCache: false, Ct);
+	}
+
+	/// 按通用同步規則同步學習方案：
+	/// 直接走通用同步框架，方案實體有變更後清空當前方案緩存。
+	public Task<nil> SyncStudyPlan(IDbUserCtx Ctx, IAsyncEnumerable<PoStudyPlan> Pos, CT Ct){
+		return SyncByFramework(Ctx, Pos, RepoStudyPlan, clearCache: true, Ct);
+	}
+
+	/// Svc 端通用入口：把同步工作委託給通用同步框架。
+	async Task<nil> SyncByFramework<TEntity, TId>(
+		IDbUserCtx Ctx,
+		IAsyncEnumerable<TEntity> Pos,
+		IRepo<TEntity, TId> Repo,
+		bool clearCache,
+		CT Ct
+	)
+		where TEntity: class, IPoBase, IBizCreateUpdateTime, I_Id<TId>, new()
+	{
+		return await WrapStudyPlanErr(ItemsErr.Common.DataIllegalOrConflict, async()=>{
+			return await SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(dbCtx)=>{
+				var syncer = new EntitySyncerDb<TEntity, TId>(Repo);
+				// 需要消費結果流，確保真正完成同步落庫。
+				await foreach(var _ in syncer.BatSyncPo(dbCtx, Pos, Ct).WithCancellation(Ct)){
+				}
+				if(clearCache){
+					CurBoStudyPlanCache = null;
+				}
+				return NIL;
+			});
+		});
+	}
 }
+

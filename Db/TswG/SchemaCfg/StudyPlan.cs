@@ -49,6 +49,7 @@ public partial class LocalTblMgrIniter{
 		{
 			var o = Tbl_WeightCalculator;
 			CfgPoBase(o);
+			CfgBizCreateUpdateTime(o);
 			o.Col(x=>x.Id).MapType(IdWeightCalculator.MkTypeMapFn());
 			o.Col(x=>x.Owner).MapType(MapIdUser());
 			o.Col(x=>x.Type).MapEnumToStr<EWeightCalculatorType>();
