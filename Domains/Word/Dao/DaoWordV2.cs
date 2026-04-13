@@ -217,11 +217,27 @@ public partial class DaoWordV2(
 			if(normalized.Count == 0){
 				return NIL;
 			}
-			var oldIds = normalized.Select(x=>x.Old).ToList();
-			var codeDicts = normalized.Select(x=>(IDictionary<str, obj?>)new Dictionary<str, obj?>{
-				[nameof(PoWord.Id)] = x.New,
-			});
-			await RepoWord.BatUpdByCodeDict(Ctx, ToolAsyE.ToAsyE(oldIds), ToolAsyE.ToAsyE(codeDicts), Ct);
+
+			// 直接更新主鍵 Id。Repo.BatUpdByCodeDict 會忽略 Id 欄位，不能用於主鍵變更。
+			var stmts = new List<str>(normalized.Count);
+			var arg = new Dictionary<str, obj?>();
+			for(var i = 0; i < normalized.Count; i++){
+				var (oldId, newId) = normalized[i];
+				var pOld = TW.Prm($"old_{i}");
+				var pNew = TW.Prm($"new_{i}");
+				stmts.Add(
+					$"UPDATE {TW.Qt(TW.DbTblName)} " +
+					$"SET {TW.QtCol(nameof(PoWord.Id))} = {pNew} " +
+					$"WHERE {TW.QtCol(nameof(PoWord.Id))} = {pOld}"
+				);
+				arg[pOld.Name] = TW.UpperToRaw(oldId, nameof(PoWord.Id));
+				arg[pNew.Name] = TW.UpperToRaw(newId, nameof(PoWord.Id));
+			}
+			var sql = str.Join(";\n", stmts);
+			var cmd = await SqlCmdMkr.Prepare(Ctx, sql, Ct);
+			Ctx.AddToDispose(cmd);
+			await cmd.RawArgs(arg).AsyE1d(Ct).FirstOrDefaultAsync(Ct);
+
 			await BatMoveAssetsToWordId(Ctx, ToolAsyE.ToAsyE(normalized), Ct);
 			await BatAltWordAfterUpd(Ctx, ToolAsyE.ToAsyE(normalized.Select(x=>x.New)), Ct);
 			return NIL;

@@ -759,9 +759,9 @@ public partial class SvcWordV2(
 	}
 
 	/// 先按 Head/Lang 需要時遷移目標詞，再更新其餘字段。
-	public Task<IAsyncEnumerable<IdWord?>> BatUpdPoWord(IDbUserCtx Ctx, IAsyncEnumerable<PoWord> PoWords, CT Ct){
+	public Task<IAsyncEnumerable<RespUpdPoWord>> BatUpdPoWord(IDbUserCtx Ctx, IAsyncEnumerable<PoWord> PoWords, CT Ct){
 		return SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(DbCtx)=>{
-			var results = new List<IdWord?>();
+			var results = new List<RespUpdPoWord>();
 			await foreach(var arg in PoWords.WithCancellation(Ct)){
 				var old = await DaoWordV2.BatGetPoWordByIdWithDel(DbCtx, ToAsyE([arg.Id]), Ct).FirstOrDefaultAsync(Ct);
 				if(old is null){
@@ -769,11 +769,14 @@ public partial class SvcWordV2(
 				}
 				old.CheckOwner(Ctx.UserCtx.UserId);
 
+				var hasUpdatedBizId = old.Head != arg.Head || old.Lang != arg.Lang;
 				IdWord finalId = arg.Id;
-				if(old.Head != arg.Head || old.Lang != arg.Lang){
+				RespUpdBizId? respUpdBizId = null;
+				if(hasUpdatedBizId){
 					var headLangR = await BatUpdHeadLangCore(DbCtx, Ctx.UserCtx.UserId, ToAsyE([arg]), Ct);
-					if(headLangR.Count > 0 && headLangR[0] is IdWord changedId){
-						finalId = changedId;
+					if(headLangR.Count > 0){
+						respUpdBizId = headLangR[0];
+						finalId = respUpdBizId.FinalId;
 					}
 				}
 
@@ -785,7 +788,11 @@ public partial class SvcWordV2(
 				};
 				await RepoWord.BatUpdByCodeDict(DbCtx, ToAsyE([finalId]), ToAsyE([upd]), Ct);
 				await DaoWordV2.BatAltWordAfterUpd(DbCtx, ToAsyE([finalId]), Ct);
-				results.Add(finalId == arg.Id ? null : finalId);
+				results.Add(new RespUpdPoWord{
+					HasUpdatedBizId = hasUpdatedBizId,
+					RespUpdBizId = respUpdBizId,
+					FinalId = finalId,
+				});
 			}
 			return ToAsyE(results);
 		});
@@ -824,7 +831,7 @@ public partial class SvcWordV2(
 	}
 
 	/// 批量更新 Head/Lang，遇到衝突時按接口注釋要求做資產合併。
-	public async IAsyncEnumerable<IdWord?> BatUpdHeadLang(
+	public async IAsyncEnumerable<RespUpdBizId> BatUpdHeadLang(
 		IDbUserCtx Ctx,
 		IAsyncEnumerable<PoWord> PoWords,
 		[EnumeratorCancellation] CT Ct
@@ -837,13 +844,13 @@ public partial class SvcWordV2(
 		}
 	}
 
-	async Task<List<IdWord?>> BatUpdHeadLangCore(
+	async Task<List<RespUpdBizId>> BatUpdHeadLangCore(
 		IDbFnCtx DbCtx,
 		IdUser UserId,
 		IAsyncEnumerable<PoWord> PoWords,
 		CT Ct
 	){
-		await using var batch = new BatchCollector<PoWord, IList<IdWord?>>(async(args, Ct)=>{
+		await using var batch = new BatchCollector<PoWord, IList<RespUpdBizId>>(async(args, Ct)=>{
 			if(args.Count == 0){
 				return [];
 			}
@@ -855,7 +862,7 @@ public partial class SvcWordV2(
 			var keys = args.Select(x=>new Head_Lang(x.Head, x.Lang)).ToList();
 			var targets = await DaoWordV2.BatGetPoWordByOwnerHeadLangWithDel(DbCtx, UserId, ToAsyE(keys), Ct).ToListAsync(Ct);
 
-			var r = new List<IdWord?>(args.Count);
+			var r = new List<RespUpdBizId>(args.Count);
 			var updHeadLangArgs = new List<(IdWord Id, str Head, str Lang)>();
 			var restoreIds = new List<IdWord>();
 			var softDelIds = new List<IdWord>();
@@ -871,14 +878,20 @@ public partial class SvcWordV2(
 				wordOfId.CheckOwner(UserId);
 
 				if(wordOfId.Head == arg.Head && wordOfId.Lang == arg.Lang){
-					r.Add(null);
+					r.Add(new RespUpdBizId{
+						Result = EUpdBizIdResult.BizIdAlreadyEqual,
+						FinalId = wordOfId.Id,
+					});
 					continue;
 				}
 
 				var target = targets[i];
 				if(target is null){
 					updHeadLangArgs.Add((wordOfId.Id, arg.Head, arg.Lang));
-					r.Add(null);
+					r.Add(new RespUpdBizId{
+						Result = EUpdBizIdResult.DataOfBizIdNotExist,
+						FinalId = wordOfId.Id,
+					});
 					continue;
 				}
 
@@ -891,7 +904,10 @@ public partial class SvcWordV2(
 				moveAssetsArgs.Add((wordOfId.Id, target.Id));
 				touchIds.Add(wordOfId.Id);
 				touchIds.Add(target.Id);
-				r.Add(target.Id == arg.Id ? null : target.Id);
+				r.Add(new RespUpdBizId{
+					Result = EUpdBizIdResult.BizIdNotEqual,
+					FinalId = target.Id,
+				});
 			}
 
 			if(updHeadLangArgs.Count > 0){
@@ -959,6 +975,7 @@ public partial class SvcWordV2(
 				}
 				dtos.Add(SvcWordInMem.SyncJnWord(local, remotes[i]));
 			}
+			await BatSyncByDto(Ctx, ToAsyE(dtos), Ct);
 			return ToAsyE(dtos);
 		});
 
