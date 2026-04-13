@@ -1,4 +1,6 @@
-namespace Ngaq.Local.Word.Dao;
+using Ngaq.Local.Word.Dao;
+
+namespace Ngaq.Local.Domains.Word.Dao;
 
 using System.Runtime.CompilerServices;
 using Ngaq.Core.Infra;

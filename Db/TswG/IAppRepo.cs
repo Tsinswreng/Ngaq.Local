@@ -4,7 +4,7 @@ using Ngaq.Core.Infra;
 using Ngaq.Core.Shared.Base.Models.Po;
 using Tsinswreng.CsCore;
 using Tsinswreng.CsSql;
-
+using Tsinswreng.CsTempus;
 
 public partial interface IAppRepo<
 	TEntity

@@ -5,6 +5,7 @@ using Ngaq.Core.Infra;
 using Tsinswreng.CsCore;
 using Ngaq.Core.Shared.Base.Models.Po;
 using Tsinswreng.Srefl;
+using Tsinswreng.CsTempus;
 
 public partial class AppRepo<
 	TEntity

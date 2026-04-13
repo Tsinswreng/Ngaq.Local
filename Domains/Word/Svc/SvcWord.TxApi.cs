@@ -15,6 +15,7 @@ using Ngaq.Core.Shared.Word.Models.Dto;
 using Ngaq.Core.Tools;
 using Tsinswreng.CsSql;
 using Ngaq.Core.Shared.Word.Models.Po.Word;
+using Tsinswreng.CsTempus;
 
 public partial class SvcWord{
 #region API

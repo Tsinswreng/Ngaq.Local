@@ -24,6 +24,7 @@ using Ngaq.Core.Shared.Word;
 using Tsinswreng.CsCore;
 using Tsinswreng.CsErr;
 using Ngaq.Core.Shared.Word.Models.Po.Word;
+using Tsinswreng.CsTempus;
 
 public partial class SvcWord{
 

@@ -4,6 +4,7 @@ using Ngaq.Core.Infra;
 using Ngaq.Core.Model.Po.Kv;
 using Ngaq.Core.Shared.StudyPlan.Models.PreFilter;
 using Ngaq.Core.Shared.Word.Models.Po.Kv;
+using Tsinswreng.CsTempus;
 
 /// <summary>
 /// 預篩選值比較工具。
