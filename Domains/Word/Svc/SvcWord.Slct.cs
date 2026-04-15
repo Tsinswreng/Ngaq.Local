@@ -300,7 +300,7 @@ public partial class SvcWord{
 			}
 
 			if(JWord.Owner != UserCtx.UserId){
-				throw ItemsErr.Word.__And__IsNotSameUserWord.ToErr();
+				throw KeysErr.Word.__And__IsNotSameUserWord.ToErr();
 			}
 			return JWord;
 		};

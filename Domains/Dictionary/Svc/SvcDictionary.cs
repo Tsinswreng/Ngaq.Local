@@ -139,12 +139,12 @@ public class SvcDictionary:ISvcDictionary{
 */
 	[Impl]
 	public async Task<IRespLlmDict> Lookup(IUserCtx User, IReqLlmDict Req, CT Ct){
-		var apiUrl = Cfg.Get(ItemsClientCfg.LlmDictionary.ApiUrl);
-		var apiKey = Cfg.Get(ItemsClientCfg.LlmDictionary.ApiKey);
-		var model = Cfg.Get(ItemsClientCfg.LlmDictionary.Model);
+		var apiUrl = Cfg.Get(KeysClientCfg.LlmDictionary.ApiUrl);
+		var apiKey = Cfg.Get(KeysClientCfg.LlmDictionary.ApiKey);
+		var model = Cfg.Get(KeysClientCfg.LlmDictionary.Model);
 
 		if(string.IsNullOrWhiteSpace(apiUrl) || string.IsNullOrWhiteSpace(apiKey)){
-			throw ItemsErr.Dictionary.LlmApiNotConfigured.ToErr();
+			throw KeysErr.Dictionary.LlmApiNotConfigured.ToErr();
 		}
 
 		var userPrompt = BuildUserPrompt(Req);
@@ -392,7 +392,7 @@ public class SvcDictionary:ISvcDictionary{
 				content,
 				rawResponse
 			);
-			throw ItemsErr.Dictionary.LlmResponseParseFailed.ToErr()
+			throw KeysErr.Dictionary.LlmResponseParseFailed.ToErr()
 				.AddDebugArgs(ex, rawResponse, content);
 		};
 	}

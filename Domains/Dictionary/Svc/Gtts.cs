@@ -39,10 +39,10 @@ public class Gtts: ISvcTts{
 	){
 		// step 1: 先做入參校驗，避免下游查庫/請求時才報錯。
 		if(str.IsNullOrWhiteSpace(Text)){
-			throw ItemsErr.Common.ArgErr.ToErr().AddDebugArgs(nameof(Text));
+			throw KeysErr.Common.ArgErr.ToErr().AddDebugArgs(nameof(Text));
 		}
 		if(Lang is null){
-			throw ItemsErr.Common.ArgErr.ToErr().AddDebugArgs(nameof(Lang));
+			throw KeysErr.Common.ArgErr.ToErr().AddDebugArgs(nameof(Lang));
 		}
 
 		return GetAudioCore(Text, Lang);
@@ -53,7 +53,7 @@ public class Gtts: ISvcTts{
 		// step 2: 直接使用接口提供的標準語言碼，避免額外查庫。
 		var gttsLangCode = NormalizeLangCodeForGtts(Lang.Code);
 		if(str.IsNullOrWhiteSpace(gttsLangCode)){
-			throw ItemsErr.Common.ArgErr.ToErr().AddDebugArgs(nameof(Lang.Code), Lang.Code);
+			throw KeysErr.Common.ArgErr.ToErr().AddDebugArgs(nameof(Lang.Code), Lang.Code);
 		}
 
 		// step 3: 以「文本+語言碼」作為鍵進行內存緩存，減少重複下載。

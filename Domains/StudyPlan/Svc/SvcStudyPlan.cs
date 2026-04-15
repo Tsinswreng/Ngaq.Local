@@ -128,7 +128,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 			Ex is AppErr appErr
 			&& (
 				ReferenceEquals(appErr.Type, ErrType)
-				|| ReferenceEquals(appErr.Type, ItemsErr.Common.PermissionDenied)
+				|| ReferenceEquals(appErr.Type, KeysErr.Common.PermissionDenied)
 			)
 		){
 			throw Ex;
@@ -156,7 +156,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		, IAsyncEnumerable<PoPreFilter> Pos
 		,CT Ct
 	){
-		return await WrapStudyPlanErr(ItemsErr.Common.DataIllegalOrConflict, async()=>{
+		return await WrapStudyPlanErr(KeysErr.Common.DataIllegalOrConflict, async()=>{
 			return await SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(ctx)=>{
 				Pos = EnsureOwner(Ctx.UserCtx.UserId, Pos);
 				await RepoPreFilter.BatAdd(ctx, Pos, Ct);
@@ -170,7 +170,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		, IAsyncEnumerable<PoStudyPlan> Pos
 		,CT Ct
 	){
-		return await WrapStudyPlanErr(ItemsErr.Common.DataIllegalOrConflict, async()=>{
+		return await WrapStudyPlanErr(KeysErr.Common.DataIllegalOrConflict, async()=>{
 			return await SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(ctx)=>{
 				Pos = EnsureOwner(Ctx.UserCtx.UserId, Pos);
 				await RepoStudyPlan.BatAdd(ctx, Pos, Ct);
@@ -185,7 +185,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		, IAsyncEnumerable<PoWeightArg> Pos
 		,CT Ct
 	){
-		return await WrapStudyPlanErr(ItemsErr.Common.DataIllegalOrConflict, async()=>{
+		return await WrapStudyPlanErr(KeysErr.Common.DataIllegalOrConflict, async()=>{
 			return await SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(ctx)=>{
 				Pos = EnsureOwner(Ctx.UserCtx.UserId, Pos);
 				await RepoWeightArg.BatAdd(ctx, Pos, Ct);
@@ -199,7 +199,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		, IAsyncEnumerable<PoWeightCalculator> Pos
 		,CT Ct
 	){
-		return await WrapStudyPlanErr(ItemsErr.Common.DataIllegalOrConflict, async()=>{
+		return await WrapStudyPlanErr(KeysErr.Common.DataIllegalOrConflict, async()=>{
 			return await SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(ctx)=>{
 				Pos = EnsureOwner(Ctx.UserCtx.UserId, Pos);
 				await RepoWeightCalculator.BatAdd(ctx, Pos, Ct);
@@ -381,7 +381,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 				try{
 					boStudyPlan.WeightArg = ToolJson.JsonStrToDict(json);
 				}catch(Exception e){
-					throw ItemsErr.Word.WeightCalcGetStudyPlanFailed.ToErr()
+					throw KeysErr.Word.WeightCalcGetStudyPlanFailed.ToErr()
 						.AddErr(e)
 						.AddDebugArgs(poWeightArg.Id, poWeightArg.UniqName, json);
 				}
@@ -402,7 +402,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		}
 		if(PoWeightCalculator.Type == EWeightCalculatorType.Js){
 			if(string.IsNullOrWhiteSpace(PoWeightCalculator.Text)){
-				throw ItemsErr.Word.WeightCalcInvalidAlgorithm.ToErr(
+				throw KeysErr.Word.WeightCalcInvalidAlgorithm.ToErr(
 					PoWeightCalculator.Id,
 					PoWeightCalculator.UniqName,
 					"JsDataEmpty"
@@ -410,7 +410,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 			}
 			var jsCode = PoWeightCalculator.Text;
 			if(string.IsNullOrWhiteSpace(jsCode)){
-				throw ItemsErr.Word.WeightCalcInvalidAlgorithm.ToErr(
+				throw KeysErr.Word.WeightCalcInvalidAlgorithm.ToErr(
 					PoWeightCalculator.Id,
 					PoWeightCalculator.UniqName,
 					"JsCodeEmpty"
@@ -418,7 +418,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 			}
 			return new JsWeightCalctr(JsonS, jsCode);
 		}
-		throw ItemsErr.Word.WeightCalcInvalidAlgorithm.ToErr(
+		throw KeysErr.Word.WeightCalcInvalidAlgorithm.ToErr(
 			PoWeightCalculator.Id,
 			PoWeightCalculator.UniqName,
 			PoWeightCalculator.Type
@@ -563,7 +563,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		var owner = DbCtx.UserCtx.UserId;
 		await foreach(var (_, got) in gotRows.Index()){
 			if(got is null || got.Owner != owner){
-				throw ItemsErr.Common.PermissionDenied.ToErr();
+				throw KeysErr.Common.PermissionDenied.ToErr();
 			}
 		}
 		return NIL;
@@ -621,7 +621,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		,IAsyncEnumerable<PoPreFilter> Pos
 		,CT Ct
 	){
-		return await WrapStudyPlanErr(ItemsErr.Common.DataIllegalOrConflict, async()=>{
+		return await WrapStudyPlanErr(KeysErr.Common.DataIllegalOrConflict, async()=>{
 			await BatUpdWithOwnerCheck(Ctx, RepoPreFilter, Pos, Ct);
 			return NIL;
 		});
@@ -632,7 +632,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 	public async Task<nil> BatUpdWeightCalculator(
 		IDbUserCtx Ctx, IAsyncEnumerable<PoWeightCalculator> Pos, CT Ct
 	){
-		return await WrapStudyPlanErr(ItemsErr.Common.DataIllegalOrConflict, async()=>{
+		return await WrapStudyPlanErr(KeysErr.Common.DataIllegalOrConflict, async()=>{
 			await BatUpdWithOwnerCheck(Ctx, RepoWeightCalculator, Pos, Ct);
 			return NIL;
 		});
@@ -643,7 +643,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 	public async Task<nil> BatUpdWeightArg(
 		IDbUserCtx Ctx, IAsyncEnumerable<PoWeightArg> Pos, CT Ct
 	){
-		return await WrapStudyPlanErr(ItemsErr.Common.DataIllegalOrConflict, async()=>{
+		return await WrapStudyPlanErr(KeysErr.Common.DataIllegalOrConflict, async()=>{
 			await BatUpdWithOwnerCheck(Ctx, RepoWeightArg, Pos, Ct);
 			return NIL;
 		});
@@ -680,7 +680,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 	public async Task<nil> BatUpdStudyPlan(
 		IDbUserCtx Ctx, IAsyncEnumerable<PoStudyPlan> Pos, CT Ct
 	){
-		return await WrapStudyPlanErr(ItemsErr.Common.DataIllegalOrConflict, async()=>{
+		return await WrapStudyPlanErr(KeysErr.Common.DataIllegalOrConflict, async()=>{
 			await BatUpdWithOwnerCheck(Ctx, RepoStudyPlan, Pos, Ct);
 			CurBoStudyPlanCache = null;
 			return NIL;
@@ -814,7 +814,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 	)
 		where TEntity: class, IPoBase, IBizCreateUpdateTime, I_Id<TId>, new()
 	{
-		return await WrapStudyPlanErr(ItemsErr.Common.DataIllegalOrConflict, async()=>{
+		return await WrapStudyPlanErr(KeysErr.Common.DataIllegalOrConflict, async()=>{
 			return await SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(dbCtx)=>{
 				var syncer = new EntitySyncerDb<TEntity, TId>(Repo);
 				// 需要消費結果流，確保真正完成同步落庫。

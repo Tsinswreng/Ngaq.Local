@@ -101,7 +101,7 @@ public class SvcNormLangToUserLang : ISvcNormLangToUserLang{
 			throw;
 		}
 		catch(Exception Ex){
-			var E = ItemsErr.Common.DataIllegalOrConflict.ToErr();
+			var E = KeysErr.Common.DataIllegalOrConflict.ToErr();
 			E.AddErr(Ex);
 			throw E;
 		}

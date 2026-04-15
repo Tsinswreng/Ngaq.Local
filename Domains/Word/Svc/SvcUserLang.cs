@@ -107,7 +107,7 @@ public class SvcUserLang : ISvcUserLang {
 		}
 		catch (Exception ex) {
 			// 其他异常统一包装为 DataIllegalOrConflict
-			var e = ItemsErr.Common.DataIllegalOrConflict.ToErr();
+			var e = KeysErr.Common.DataIllegalOrConflict.ToErr();
 			e.AddErr(ex);
 			throw e;
 		}

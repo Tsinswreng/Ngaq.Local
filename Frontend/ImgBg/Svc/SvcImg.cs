@@ -31,7 +31,7 @@ public partial class SvcImg:IImgGetter{
 			return;
 		}
 try{
-var CfgDir = ItemsClientCfg.Background.GalleryDirs.GetFrom(CfgAccessor)??[];
+var CfgDir = KeysClientCfg.Background.GalleryDirs.GetFrom(CfgAccessor)??[];
 		foreach(var _Dir in CfgDir){
 			if(_Dir is str s && !str.IsNullOrEmpty(s)){
 				var Dir = s;
@@ -49,7 +49,7 @@ var CfgDir = ItemsClientCfg.Background.GalleryDirs.GetFrom(CfgAccessor)??[];
 		Order = ToolRandom.RandomArrU64(0, (u64)FilePaths.Count-1, (u64)FilePaths.Count);
 }
 catch (System.Exception e){
-	ItemsErr.Word.BackgroundImageServiceFailedToInit.ToErr().AddDebugArgs(e);
+	KeysErr.Word.BackgroundImageServiceFailedToInit.ToErr().AddDebugArgs(e);
 }
 		Inited = true;
 	}

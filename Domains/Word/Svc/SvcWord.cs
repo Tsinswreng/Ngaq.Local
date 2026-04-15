@@ -656,7 +656,7 @@ FnUpdJnWord() 是一個 “以輸入為準的對賬式更新”：
 				return NIL;
 			}else{//JnWord非新詞(其Id己存于數據庫)
 				if(JnWord.Owner != User.UserId){
-					throw ItemsErr.Word.__And__IsNotSameUserWord.ToErr();
+					throw KeysErr.Word.__And__IsNotSameUserWord.ToErr();
 				}
 				if(JnWord.BizUpdatedAt != OldWord.BizUpdatedAt){
 					JnWord.BizUpdatedAt = OldWord.BizUpdatedAt;
@@ -740,7 +740,7 @@ FnUpdJnWord() 是一個 “以輸入為準的對賬式更新”：
 		return async(User, TextWithBlob, Ct)=>{
 			var info = JsonS.Parse<WordsPackInfo>(TextWithBlob.Text);
 			if(info is null){
-				throw ItemsErr.Common.ArgErr.ToErr();
+				throw KeysErr.Common.ArgErr.ToErr();
 			}
 			var Req = info.ToDtoCompressedWords(TextWithBlob.Blob.ToArray());
 			await AddCompressedWord(User, Req, Ct);

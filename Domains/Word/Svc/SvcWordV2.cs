@@ -399,7 +399,7 @@ public partial class SvcWordV2(
 	){
 		var ExiId = One.ExistingId!.Value;
 		if(!ExistingById.TryGetValue(ExiId, out var ExiWord)){
-			throw ItemsErr.Word.__And__IsNotSameUserWord.ToErr(ExiId, Owner);
+			throw KeysErr.Word.__And__IsNotSameUserWord.ToErr(ExiId, Owner);
 		}
 		var Known = new HashSet<PropFingerprint>();
 		foreach(var P in ExiWord.Props){
@@ -517,13 +517,13 @@ public partial class SvcWordV2(
 			}
 			var Id = Ids[i];
 			if(Po is null || Po.Owner != UserId){
-				throw ItemsErr.Word.__And__IsNotSameUserWord.ToErr(Id, UserId);
+				throw KeysErr.Word.__And__IsNotSameUserWord.ToErr(Id, UserId);
 			}
 			i++;
 		}
 
 		if(i != Ids.Count){
-			throw ItemsErr.Word.__And__IsNotSameUserWord.ToErr(UserId);
+			throw KeysErr.Word.__And__IsNotSameUserWord.ToErr(UserId);
 		}
 		return NIL;
 	}
@@ -630,7 +630,7 @@ public partial class SvcWordV2(
 			Ct
 		);
 		if(string.IsNullOrWhiteSpace(UserLang)){
-			throw ItemsErr.Word.NormLangToUserLangIsNotMapped
+			throw KeysErr.Word.NormLangToUserLangIsNotMapped
 				.ToErr(NormLangType, NormLang);
 		}
 		return UserLang;
@@ -686,7 +686,7 @@ public partial class SvcWordV2(
 			try{
 				await RepoWord.BatAddAgg<JnWord>(DbCtx, normalized, Ct);
 			}catch(Exception e){
-				throw ItemsErr.Common.DataIllegalOrConflict.ToErr(e.Message);
+				throw KeysErr.Common.DataIllegalOrConflict.ToErr(e.Message);
 			}
 			return NIL;
 		});
@@ -766,7 +766,7 @@ public partial class SvcWordV2(
 			await foreach(var arg in PoWords.WithCancellation(Ct)){
 				var old = await DaoWordV2.BatGetPoWordByIdWithDel(DbCtx, ToAsyE([arg.Id]), Ct).FirstOrDefaultAsync(Ct);
 				if(old is null){
-					throw ItemsErr.Word.WordOfId__NotFound.ToErr(arg.Id);
+					throw KeysErr.Word.WordOfId__NotFound.ToErr(arg.Id);
 				}
 				old.CheckOwner(Ctx.UserCtx.UserId);
 
@@ -812,13 +812,13 @@ public partial class SvcWordV2(
 				foreach(var (oldId, newId) in moves){
 					var old = await DaoWordV2.BatGetPoWordByIdWithDel(DbCtx, ToAsyE([oldId]), Ct).FirstOrDefaultAsync(Ct);
 					if(old is null){
-						throw ItemsErr.Word.WordOfId__NotFound.ToErr(oldId);
+						throw KeysErr.Word.WordOfId__NotFound.ToErr(oldId);
 					}
 					old.CheckOwner(Ctx.UserCtx.UserId);
 
 					var neo = await DaoWordV2.BatGetPoWordByIdWithDel(DbCtx, ToAsyE([newId]), Ct).FirstOrDefaultAsync(Ct);
 					if(neo is not null){
-						throw ItemsErr.Common.DataIllegalOrConflict.ToErr(oldId, newId);
+						throw KeysErr.Common.DataIllegalOrConflict.ToErr(oldId, newId);
 					}
 				}
 
@@ -874,7 +874,7 @@ public partial class SvcWordV2(
 				var arg = args[i];
 				var wordOfId = wordsOfId[i];
 				if(wordOfId is null){
-					throw ItemsErr.Word.WordOfId__NotFound.ToErr(arg.Id);
+					throw KeysErr.Word.WordOfId__NotFound.ToErr(arg.Id);
 				}
 				wordOfId.CheckOwner(UserId);
 
@@ -1037,7 +1037,7 @@ public partial class SvcWordV2(
 	public Task<nil> BatSync_LocalNotExist(IDbUserCtx Ctx, IAsyncEnumerable<DtoJnWordSyncResult> Dtos, CT Ct){
 		return SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(DbCtx)=>{
 			var neos = Dtos.Select(x=>{
-				var remote = x.Remote ?? throw ItemsErr.Word.Word__And__SyncFailed.ToErr("RemoteNull");
+				var remote = x.Remote ?? throw KeysErr.Word.Word__And__SyncFailed.ToErr("RemoteNull");
 				remote.Owner = Ctx.UserCtx.UserId;
 				remote.EnsureForeignId();
 				return remote;
@@ -1054,8 +1054,8 @@ public partial class SvcWordV2(
 				var moveIds = new List<(IdWord Old, IdWord New)>();
 				var remotesToApply = new List<JnWord>(dtoBatch.Count);
 				foreach(var dto in dtoBatch){
-					var local = dto.Local ?? throw ItemsErr.Word.Word__And__SyncFailed.ToErr("LocalNull");
-					var remote = dto.Remote ?? throw ItemsErr.Word.Word__And__SyncFailed.ToErr("RemoteNull");
+					var local = dto.Local ?? throw KeysErr.Word.Word__And__SyncFailed.ToErr("LocalNull");
+					var remote = dto.Remote ?? throw KeysErr.Word.Word__And__SyncFailed.ToErr("RemoteNull");
 					local.Word.CheckOwner(Ctx.UserCtx.UserId);
 					remote.Owner = Ctx.UserCtx.UserId;
 					remote.EnsureForeignId();
@@ -1084,7 +1084,7 @@ public partial class SvcWordV2(
 			await using var batch = new BatchCollector<DtoJnWordSyncResult, nil>(async(dtoBatch, Ct)=>{
 				var remotes = new List<JnWord>(dtoBatch.Count);
 				foreach(var dto in dtoBatch){
-					var remote = dto.Remote ?? throw ItemsErr.Word.Word__And__SyncFailed.ToErr("RemoteNull");
+					var remote = dto.Remote ?? throw KeysErr.Word.Word__And__SyncFailed.ToErr("RemoteNull");
 					remote.Owner = Ctx.UserCtx.UserId;
 					remote.EnsureForeignId();
 					remotes.Add(remote);
