@@ -92,8 +92,8 @@ public class AppIniter{
 			UserCtx.UserId = LocalUserId;
 			UserCtx.LocalUserId = LocalUserId;
 			kv.SetStrStr(KeysClientKv.CurLocalUserId, userCtxMgr.GetUserCtx().UserId.ToString());
-			await SvcKv.Set(
-				kv, Ct
+			await SvcKv.BatSet(
+				null, ToolAsyE.ToAsyE([kv]), Ct
 			);
 		}
 		UserCtx.ClientId = await InitClientId(Ct);

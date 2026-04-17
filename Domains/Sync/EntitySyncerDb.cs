@@ -1,8 +1,10 @@
 namespace Ngaq.Local.Domains.Sync;
 
 using Ngaq.Core.Infra;
+using Ngaq.Core.Infra.Errors;
 using Ngaq.Core.Shared.Base.Models.Po;
 using Ngaq.Core.Shared.Sync;
+using Tsinswreng.CsErr;
 using Tsinswreng.CsSql;
 using Tsinswreng.CsTools;
 
@@ -68,7 +70,7 @@ public class EntitySyncerDb<TPo, TId>:IEntitySyncerDb<TPo, TId>
 			locals.Add(local);
 		}
 		if(locals.Count != Rows.Count){
-			throw new InvalidOperationException(Todo.I18n("BatGetByIdWithDel 返回數量與入參不一致"));
+			throw KeysErr.Sync.BatchGetByIdCountMismatch.ToErr();
 		}
 
 		// step 2: 按規則拆分 Add / Upd 並構造逐條結果。
@@ -89,7 +91,7 @@ public class EntitySyncerDb<TPo, TId>:IEntitySyncerDb<TPo, TId>
 
 			// 用強類型 Id 比較是否一致；不一致視為調用錯誤。
 			if(!EqualityComparer<TId>.Default.Equals(local.Id, remote.Id)){
-				throw new InvalidOperationException(Todo.I18n("Id不同時不應該同步"));
+				throw KeysErr.Sync.SyncShouldUseSameId.ToErr();
 			}
 
 			var diff = InMemSyncer.DiffPoByTime(local, remote);
