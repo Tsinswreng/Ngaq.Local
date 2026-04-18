@@ -14,7 +14,9 @@ using Ngaq.Local.Frontend.Encryption;
 using Ngaq.Local.Frontend.User.Svc;
 using Ngaq.Local.ImplFrontend;
 using Ngaq.Local.Infra;
+using Tsinswreng.CsCore;
 
+[Doc("僅限本地(客戶端)後端使用、勿用于Server")]
 public static class DiLocalFrontend{
 	public static IServiceCollection SetupLocalFrontend(this IServiceCollection z){
 		z.AddScoped<ISvcSecretKv, SvcSecretKv>();

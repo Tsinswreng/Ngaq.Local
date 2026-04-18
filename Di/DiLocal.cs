@@ -36,19 +36,20 @@ using Ngaq.Core.Shared.Word.Models.Po.NormLangToUserLang;
 using Ngaq.Core.Shared.Dictionary.Models.Po.NormLang;
 using Ngaq.Core.Shared.Audio;
 using Ngaq.Local.Domains.Word.Dao;
+using Tsinswreng.CsCore;
 
 
 namespace Ngaq.Local.Di;
 
-
+[Doc("僅限本地(客戶端)後端使用、勿用于Server")]
 public static class DiLocal{
 
 	public static IServiceCollection SetupLocal(this IServiceCollection z){
 		z.AddSingleton<I_GetBaseDir>(BaseDirMgr.Inst);
-		z.SetupDbCfg().SetupRepos().SetupSvcs();
-//Core詞典映射
-z.AddSingleton<IPropAccessorReg>(CoreDictMapper.Inst.PropAccessorReg);
-return z;
+		z.SetupDbCfg().SetupRepos().SetupCommonBackend();
+		//Core詞典映射
+		z.AddSingleton<IPropAccessorReg>(CoreDictMapper.Inst.PropAccessorReg);
+		return z;
 	}
 
 
@@ -112,38 +113,8 @@ return z;
 
 
 //服務類
-	static IServiceCollection SetupSvcs(this IServiceCollection z){
-		SetupWord(z);
-		SetupStudyPlan(z);
-z.AddScoped<DaoKv, DaoKv>();
-z.AddScoped<ISvcDictionary, SvcDictionary>();
-z.AddScoped<ISvcKv, SvcKv>();
 
-return z;
-	}
 	
-	static IServiceCollection SetupWord(this IServiceCollection z){
-		z.AddScoped<DaoWord, DaoWord>();
-		z.AddScoped<DaoWordV2, DaoWordV2>();
-		z.AddScoped<DaoUserLang, DaoUserLang>();
-		z.AddScoped<DaoNormLang, DaoNormLang>();
-		z.AddScoped<DaoNormLangToUserLang, DaoNormLangToUserLang>();
-		z.AddScoped<ISvcParseWordList, SvcParseWordList>();
-		z.AddScoped<ISvcWord, SvcWord>();
-		z.AddScoped<ISvcWordV2, SvcWordV2>();
-		z.AddScoped<ISvcWordInMem, SvcWordInMem>();
-		z.AddScoped<ISvcUserLang, SvcUserLang>();
-		z.AddScoped<ISvcNormLang, SvcNormLang>();
-		z.AddScoped<ISvcNormLangToUserLang, SvcNormLangToUserLang>();
-		return z;
-	}
 	
-	static IServiceCollection SetupStudyPlan(this IServiceCollection z){
-		z.AddScoped<DaoStudyPlan, DaoStudyPlan>();
-		z.AddScoped<ISvcStudyPlan, SvcStudyPlan>();
-		z.AddScoped<IStudyPlanGetter>(sp=>(IStudyPlanGetter)sp.GetRequiredService<ISvcStudyPlan>());
-		z.AddScoped<PreFilterSqlMkr, PreFilterSqlMkr>();
-		return z;
-	}
 
 }
