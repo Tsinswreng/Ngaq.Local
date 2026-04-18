@@ -12,6 +12,7 @@ using Ngaq.Backend.Domains.Word.Dao;
 using Ngaq.Backend.Domains.Word.Svc;
 using Ngaq.Backend.Word.Dao;
 using Tsinswreng.CsCore;
+using Microsoft.Extensions.Logging;
 
 namespace Ngaq.Backend.Di;
 
@@ -19,6 +20,17 @@ public static class DiCommonBackend{
 	
 	[Doc(@$"註冊 本地後端與Web服務端 共同模塊 如SvcWord等")]
 	public static IServiceCollection SetupCommonBackend(this IServiceCollection z){
+		using var loggerFactory = LoggerFactory.Create(b=>{
+			b.AddConsole()
+			#if DEBUG
+			.SetMinimumLevel(LogLevel.Debug)
+			#else
+			.SetMinimumLevel(LogLevel.Information)
+			#endif
+			;
+		});
+		var Logger = loggerFactory.CreateLogger("GlobalLogger");
+		z.AddSingleton<ILogger>(Logger);
 		SetupSvcs(z);
 		return z;
 	}

@@ -78,7 +78,16 @@ AND NOT EXISTS (
 """;
 		var Cmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
 		var rawDict = Cmd.Args(ArgDict.Mk(T).AddT(POwner, Owner)).AsyE1d(Ct);
-		var gotLangs = rawDict.Select(x=>(str)x[NLang]);
+		var gotLangs = rawDict.Select(x=>{
+			if(x.TryGetValue(NLang, out var v1) && v1 is not null){
+				return (str)v1;
+			}
+			var lower = NLang.ToLowerInvariant();
+			if(x.TryGetValue(lower, out var v2) && v2 is not null){
+				return (str)v2;
+			}
+			throw new System.Collections.Generic.KeyNotFoundException($"The key '{NLang}' was not present in the dictionary.");
+		});
 		await foreach(var lang in gotLangs){
 			yield return lang;
 		}
