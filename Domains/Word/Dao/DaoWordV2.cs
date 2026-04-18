@@ -67,13 +67,12 @@ public partial class DaoWordV2(
 		,IAsyncEnumerable<Head_Lang> HeadLangs
 		,CT Ct
 	){
-		var Heads = HeadLangs.Select(x=>x.Head);
-		var Langs = HeadLangs.Select(x=>x.Lang);
+		var hl = HeadLangs;
 		var Sql = TW.SqlSplicer().Select(x=>x.Id).From().Where1()
 		.And(TW.SqlIsNonDel())
 		.AndEq(x=>x.Owner, y=>y.One(Owner))
-		.AndEq(x=>x.Head, y=>y.Many(Heads))
-		.AndEq(x=>x.Lang, y=>y.Many(Langs))
+		.AndEq(x=>x.Head, y=>y.Many(hl, z=>z.Head))
+		.AndEq(x=>x.Lang, y=>y.Many(hl, z=>z.Lang))
 		;
 		var Dicts = SqlCmdMkr.RunDupliSql(Ctx, Sql, Ct);
 		return Dicts.Select(x=>{
@@ -92,12 +91,11 @@ public partial class DaoWordV2(
 		IAsyncEnumerable<Head_Lang> HeadLangs,
 		CT Ct
 	){
-		var heads = HeadLangs.Select(x=>x.Head);
-		var langs = HeadLangs.Select(x=>x.Lang);
+		var hl = HeadLangs;
 		var sql = TW.SqlSplicer().Select("*").From().Where1()
 			.AndEq(x=>x.Owner, y=>y.One(Owner))
-			.AndEq(x=>x.Head, y=>y.Many(heads))
-			.AndEq(x=>x.Lang, y=>y.Many(langs))
+			.AndEq(x=>x.Head, y=>y.Many(hl, z=>z.Head))
+			.AndEq(x=>x.Lang, y=>y.Many(hl, z=>z.Lang))
 		;
 		return SqlCmdMkr.RunDupliSql(Ctx, TW, sql, Ct);
 	}
