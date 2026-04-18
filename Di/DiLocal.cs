@@ -4,42 +4,42 @@ using Ngaq.Core.Model.Po.Learn_;
 
 //using Microsoft.CodeAnalysis.Text;
 using Tsinswreng.CsSql;
-using Ngaq.Local.Db.TswG;
-using Ngaq.Local.Sql;
+using Ngaq.Backend.Db.TswG;
+using Ngaq.Backend.Sql;
 using Ngaq.Core.Infra;
-using Ngaq.Local.ImplFrontend;
+using Ngaq.Backend.ImplFrontend;
 using Tsinswreng.CsSql.Sqlite;
-using Ngaq.Local.Word.Dao;
+using Ngaq.Backend.Word.Dao;
 using Ngaq.Core.Shared.Word.Models.Po.Kv;
-using Ngaq.Local.Domains.Kv.Svc;
-using Ngaq.Local.Domains.Kv.Dao;
+using Ngaq.Backend.Domains.Kv.Svc;
+using Ngaq.Backend.Domains.Kv.Dao;
 using Ngaq.Core.Shared.Kv.Models;
 using Ngaq.Core.Shared.Word.Models.Po.Word;
 using Ngaq.Core.Shared.Word.Models.Po.Learn;
 using Ngaq.Core.Frontend.ImgBg;
 using Ngaq.Core.Shared.Kv.Svc;
-using Ngaq.Local.Domains.Word.Svc;
+using Ngaq.Backend.Domains.Word.Svc;
 using Ngaq.Core.Shared.Word.Svc;
 using Ngaq.Core.Infra.Url;
 using Ngaq.Core.Shared.Dictionary.Svc;
-using Ngaq.Local.Domains.Dictionary.Svc;
+using Ngaq.Backend.Domains.Dictionary.Svc;
 using Tsinswreng.Srefl;
 using Ngaq.Core.Shared.StudyPlan.Models.Po.StudyPlan;
 using Ngaq.Core.Shared.StudyPlan.Models.Po.WeightArg;
 using Ngaq.Core.Shared.StudyPlan.Models.Po.WeightCalculator;
 using Ngaq.Core.Shared.StudyPlan.Models.Po.PreFilter;
-using Ngaq.Local.Domains.StudyPlan.Dao;
-using Ngaq.Local.Domains.StudyPlan.Svc;
+using Ngaq.Backend.Domains.StudyPlan.Dao;
+using Ngaq.Backend.Domains.StudyPlan.Svc;
 using Ngaq.Core.Shared.StudyPlan.Svc;
 using Ngaq.Core.Shared.Word.Models.Po.UserLang;
 using Ngaq.Core.Shared.Word.Models.Po.NormLangToUserLang;
 using Ngaq.Core.Shared.Dictionary.Models.Po.NormLang;
 using Ngaq.Core.Shared.Audio;
-using Ngaq.Local.Domains.Word.Dao;
+using Ngaq.Backend.Domains.Word.Dao;
 using Tsinswreng.CsCore;
 
 
-namespace Ngaq.Local.Di;
+namespace Ngaq.Backend.Di;
 
 [Doc("僅限本地(客戶端)後端使用、勿用于Server")]
 public static class DiLocal{

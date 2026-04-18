@@ -6,14 +6,14 @@ using Ngaq.Core.Shared.User.Models.Po.User;
 using Ngaq.Core.Shared.Word.Models.Dto;
 using Ngaq.Core.Shared.Word.Models.Po.UserLang;
 using Ngaq.Core.Shared.Word.Svc;
-using Ngaq.Local.Db.TswG;
-using Ngaq.Local.Domains.Word.Dao;
+using Ngaq.Backend.Db.TswG;
+using Ngaq.Backend.Domains.Word.Dao;
 using Tsinswreng.CsErr;
 using Tsinswreng.CsPage;
 using Tsinswreng.CsSql;
 using Tsinswreng.CsTools;
 
-namespace Ngaq.Local.Domains.Word.Svc;
+namespace Ngaq.Backend.Domains.Word.Svc;
 
 public class SvcUserLang : ISvcUserLang {
 	private readonly DaoUserLang Dao;

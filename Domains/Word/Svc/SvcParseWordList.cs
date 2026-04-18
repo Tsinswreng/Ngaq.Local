@@ -1,4 +1,4 @@
-namespace Ngaq.Local.Domains.Word.Svc;
+namespace Ngaq.Backend.Domains.Word.Svc;
 
 using System.Text;
 using Ngaq.Core.Shared.Word.Models;

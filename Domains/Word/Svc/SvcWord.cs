@@ -8,7 +8,7 @@
 - OldWord.Upd(NeoWord) 把 OldWord 改珹 NeoWord。
 #endif
 
-namespace Ngaq.Local.Domains.Word.Svc;
+namespace Ngaq.Backend.Domains.Word.Svc;
 
 using Ngaq.Core.Infra.IF;
 using Ngaq.Core.Model.Po.Kv;
@@ -20,8 +20,8 @@ using Tsinswreng.CsSql;
 
 using Ngaq.Core.Infra;
 
-using Ngaq.Local.Word.Dao;
-using Ngaq.Local.Db.TswG;
+using Ngaq.Backend.Word.Dao;
+using Ngaq.Backend.Db.TswG;
 using Ngaq.Core.Tools.Json;
 
 using Ngaq.Core.Shared.User.UserCtx;

@@ -5,7 +5,7 @@ using Ngaq.Core.Shared.Word.Models.Po.UserLang;
 
 using Tsinswreng.CsSql;
 
-namespace Ngaq.Local.Db.TswG;
+namespace Ngaq.Backend.Db.TswG;
 public partial class LocalTblMgrIniter{
 	public static ITblMgr InitUserLang(ITblMgr Mgr){
 		var Tbl_StudyPlan = Mk<PoUserLang>("UserLang");

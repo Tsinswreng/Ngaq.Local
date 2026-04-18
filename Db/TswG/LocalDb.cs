@@ -1,4 +1,4 @@
-namespace Ngaq.Local.Db.TswG;
+namespace Ngaq.Backend.Db.TswG;
 
 using System.Data;
 using Microsoft.Data.Sqlite;

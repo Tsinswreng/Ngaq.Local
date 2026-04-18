@@ -3,7 +3,7 @@ using Ngaq.Core.Infra;
 using Tsinswreng.CsSql;
 using Tsinswreng.CsSql.Sqlite;
 
-namespace Ngaq.Local.Db.TswG.Migrations;
+namespace Ngaq.Backend.Db.TswG.Migrations;
 
 /// Local 端初始遷移。
 ///

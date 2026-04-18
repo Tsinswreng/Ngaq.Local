@@ -9,7 +9,7 @@ using Ngaq.Core.Shared.User.Models.Po.User;
 using Ngaq.Core.Tools;
 using Tsinswreng.CsSql;
 
-namespace Ngaq.Local.Db.TswG;
+namespace Ngaq.Backend.Db.TswG;
 public partial class LocalTblMgrIniter{
 	public static ITblMgr InitStudyPlan(ITblMgr Mgr){
 		var Tbl_StudyPlan = Mk<PoStudyPlan>("StudyPlan");

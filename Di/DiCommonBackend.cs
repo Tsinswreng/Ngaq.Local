@@ -3,17 +3,17 @@ using Ngaq.Core.Shared.Dictionary.Svc;
 using Ngaq.Core.Shared.Kv.Svc;
 using Ngaq.Core.Shared.StudyPlan.Svc;
 using Ngaq.Core.Shared.Word.Svc;
-using Ngaq.Local.Domains.Dictionary.Svc;
-using Ngaq.Local.Domains.Kv.Dao;
-using Ngaq.Local.Domains.Kv.Svc;
-using Ngaq.Local.Domains.StudyPlan.Dao;
-using Ngaq.Local.Domains.StudyPlan.Svc;
-using Ngaq.Local.Domains.Word.Dao;
-using Ngaq.Local.Domains.Word.Svc;
-using Ngaq.Local.Word.Dao;
+using Ngaq.Backend.Domains.Dictionary.Svc;
+using Ngaq.Backend.Domains.Kv.Dao;
+using Ngaq.Backend.Domains.Kv.Svc;
+using Ngaq.Backend.Domains.StudyPlan.Dao;
+using Ngaq.Backend.Domains.StudyPlan.Svc;
+using Ngaq.Backend.Domains.Word.Dao;
+using Ngaq.Backend.Domains.Word.Svc;
+using Ngaq.Backend.Word.Dao;
 using Tsinswreng.CsCore;
 
-namespace Ngaq.Local.Di;
+namespace Ngaq.Backend.Di;
 
 public static class DiCommonBackend{
 	

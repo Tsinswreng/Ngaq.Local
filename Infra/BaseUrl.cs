@@ -1,4 +1,4 @@
-namespace Ngaq.Local.Infra;
+namespace Ngaq.Backend.Infra;
 
 using Ngaq.Core.Infra.Cfg;
 using Ngaq.Core.Infra.Url;

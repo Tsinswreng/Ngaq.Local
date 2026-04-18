@@ -1,7 +1,7 @@
-namespace Ngaq.Local.Sql;
+namespace Ngaq.Backend.Sql;
 
 using Tsinswreng.CsSql;
-using Ngaq.Local.Db.TswG;
+using Ngaq.Backend.Db.TswG;
 using Ngaq.Core.Shared.User.Models.Po.Device;
 using Ngaq.Core.Shared.Kv.Models;
 using Ngaq.Core.Shared.Word.Models.Po.Kv;

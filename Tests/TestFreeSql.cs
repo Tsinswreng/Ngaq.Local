@@ -4,9 +4,9 @@ using Ngaq.Core.Infra;
 using Ngaq.Core.Model;
 using Ngaq.Core.Model.Po.Kv;
 using Ngaq.Core.Tools;
-using Ngaq.Local.Db;
+using Ngaq.Backend.Db;
 
-namespace Ngaq.Local.Tests;
+namespace Ngaq.Backend.Tests;
 
 public  partial class TestFreeSql{
 	public async Task TestRepo(){

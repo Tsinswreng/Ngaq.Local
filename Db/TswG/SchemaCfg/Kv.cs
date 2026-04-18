@@ -4,7 +4,7 @@ using Ngaq.Core.Shared.User.Models.Po.User;
 using Ngaq.Core.Shared.Word.Models.Po.Kv;
 using Tsinswreng.CsSql;
 
-namespace Ngaq.Local.Db.TswG;
+namespace Ngaq.Backend.Db.TswG;
 public partial class LocalTblMgrIniter{
 	public static ITblMgr InitKv(ITblMgr Mgr){
 		var Tbl_Cfg = Mk<PoKv>("Kv");

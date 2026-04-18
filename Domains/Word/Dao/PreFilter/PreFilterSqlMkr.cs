@@ -3,11 +3,11 @@ using Ngaq.Core.Infra;
 using Ngaq.Core.Shared.StudyPlan.Models.PreFilter;
 using Ngaq.Core.Shared.User.Models.Po.User;
 using Ngaq.Core.Shared.Word.Models.Po.Word;
-using Ngaq.Local.Db.TswG;
+using Ngaq.Backend.Db.TswG;
 using Tsinswreng.CsSql;
 using Tsinswreng.CsTempus;
 using StudyPreFilter = Ngaq.Core.Shared.StudyPlan.Models.PreFilter.PreFilter;
-namespace Ngaq.Local.Word.Dao;
+namespace Ngaq.Backend.Word.Dao;
 
 public sealed class PreFilterSqlMkr{
 	i32 _prmSeq = 0;

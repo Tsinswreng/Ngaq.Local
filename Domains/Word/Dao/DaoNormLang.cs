@@ -5,7 +5,7 @@ using Ngaq.Core.Shared.Word.Models.Dto;
 using Tsinswreng.CsPage;
 using Tsinswreng.CsSql;
 
-namespace Ngaq.Local.Domains.Word.Dao;
+namespace Ngaq.Backend.Domains.Word.Dao;
 
 public class DaoNormLang(
 	ITblMgr TblMgr,

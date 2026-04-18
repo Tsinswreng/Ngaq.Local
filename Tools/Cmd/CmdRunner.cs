@@ -2,7 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Text;
 using System.Threading.Tasks;
-namespace Ngaq.Local.Tools.Cmd;
+namespace Ngaq.Backend.Tools.Cmd;
 public  partial class CmdRunner {
 	protected static CmdRunner? _Inst = null;
 	public static CmdRunner Inst => _Inst??= new CmdRunner();

@@ -1,4 +1,4 @@
-namespace Ngaq.Local.Frontend.User.Svc;
+namespace Ngaq.Backend.Frontend.User.Svc;
 
 using Ngaq.Core.Frontend.Kv;
 using Ngaq.Core.Frontend.User.Svc;

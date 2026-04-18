@@ -1,4 +1,4 @@
-namespace Ngaq.Local.Word.Dao;
+namespace Ngaq.Backend.Word.Dao;
 
 using Ngaq.Core.Model.Po.Kv;
 using Ngaq.Core.Model.Po.Learn_;
@@ -7,7 +7,7 @@ using Str_Any = System.Collections.Generic.Dictionary<str, obj?>;
 using IStr_Any = System.Collections.Generic.IDictionary<str, obj?>;
 using Tsinswreng.CsPage;
 using Tsinswreng.CsTools;
-using Ngaq.Local.Db.TswG;
+using Ngaq.Backend.Db.TswG;
 using Ngaq.Core.Shared.Word.Models.Po.Kv;
 using Ngaq.Core.Shared.Word.Models.Po.Word;
 using Ngaq.Core.Shared.Word.Models.Po.Learn;

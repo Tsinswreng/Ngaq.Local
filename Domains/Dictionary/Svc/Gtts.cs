@@ -6,7 +6,7 @@ using Tsinswreng.CsCore;
 using System.Collections.Concurrent;
 using Ngaq.Core.Shared.Dictionary.Models;
 
-namespace Ngaq.Local.Domains.Dictionary.Svc;
+namespace Ngaq.Backend.Domains.Dictionary.Svc;
 
 
 /// Google TTS 服務實現。

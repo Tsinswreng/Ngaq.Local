@@ -8,7 +8,7 @@ using Tsinswreng.CsCore;
 using Tsinswreng.CsErr;
 using Tsinswreng.CsTools;
 
-namespace Ngaq.Local.ImplFrontend;
+namespace Ngaq.Backend.ImplFrontend;
 
 public partial class SvcImg:IImgGetter{
 

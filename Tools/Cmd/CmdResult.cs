@@ -1,4 +1,4 @@
-namespace Ngaq.Local.Tools.Cmd;
+namespace Ngaq.Backend.Tools.Cmd;
 
 public  partial struct CmdResult{
 	public i32 ExitCode;

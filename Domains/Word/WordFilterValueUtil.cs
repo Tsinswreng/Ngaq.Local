@@ -1,4 +1,4 @@
-namespace Ngaq.Local.Domains.Word;
+namespace Ngaq.Backend.Domains.Word;
 
 using Ngaq.Core.Infra;
 using Ngaq.Core.Model.Po.Kv;

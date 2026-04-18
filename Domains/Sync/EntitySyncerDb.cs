@@ -1,4 +1,4 @@
-namespace Ngaq.Local.Domains.Sync;
+namespace Ngaq.Backend.Domains.Sync;
 
 using Ngaq.Core.Infra;
 using Ngaq.Core.Infra.Errors;

@@ -1,4 +1,4 @@
-namespace Ngaq.Local.Domains.Word.Svc;
+namespace Ngaq.Backend.Domains.Word.Svc;
 
 using Ngaq.Core.Infra.IF;
 using Ngaq.Core.Infra.Errors;
@@ -8,7 +8,7 @@ using Ngaq.Core.Word.Models.Dto;
 using Ngaq.Core.Model.Po.Kv;
 using Ngaq.Core.Model.Po.Learn_;
 using Tsinswreng.CsTools;
-using Ngaq.Local.Db.TswG;
+using Ngaq.Backend.Db.TswG;
 using Ngaq.Core.Shared.Base.Models;
 using Ngaq.Core.Shared.User.UserCtx;
 using Ngaq.Core.Shared.Word.Models.Po.Kv;

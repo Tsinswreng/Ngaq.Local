@@ -1,4 +1,4 @@
-namespace Ngaq.Local.Domains.Word.Svc;
+namespace Ngaq.Backend.Domains.Word.Svc;
 
 using System.Runtime.CompilerServices;
 using Ngaq.Core.Frontend.Kv;
@@ -19,7 +19,7 @@ using Ngaq.Core.Shared.Word.Models.Po.Kv;
 using Ngaq.Core.Shared.Word.Models.Po.Learn;
 using Ngaq.Core.Shared.Word.Models.Po.Word;
 using Ngaq.Core.Shared.Word.Svc;
-using Ngaq.Local.Db.TswG;
+using Ngaq.Backend.Db.TswG;
 using Tsinswreng.CsErr;
 using Tsinswreng.CsCore;
 using Tsinswreng.CsSql;
@@ -28,8 +28,8 @@ using Ngaq.Core.Tools.Json;
 using Ngaq.Core.Shared.Dictionary.Models;
 using Ngaq.Core.Shared.Word.Models.Dto;
 using Ngaq.Core.Shared.Base.Models.Po;
-using Ngaq.Local.Domains.Word;
-using Ngaq.Local.Domains.Word.Dao;
+using Ngaq.Backend.Domains.Word;
+using Ngaq.Backend.Domains.Word.Dao;
 using Tsinswreng.CsTempus;
 
 public partial class SvcWordV2(

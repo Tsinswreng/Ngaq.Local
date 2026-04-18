@@ -15,8 +15,8 @@ using Ngaq.Core.Shared.User.Models.Po.User;
 using Ngaq.Core.Shared.User.UserCtx;
 using Ngaq.Core.Shared.Word.Models.Po.Kv;
 using Ngaq.Core.Tools.Json;
-using Ngaq.Local.Domains.Sync;
-using Ngaq.Local.Domains.StudyPlan.Dao;
+using Ngaq.Backend.Domains.Sync;
+using Ngaq.Backend.Domains.StudyPlan.Dao;
 using Tsinswreng.CsPage;
 using Tsinswreng.CsSql;
 using Tsinswreng.CsTools;
@@ -32,7 +32,7 @@ using Tsinswreng.CsCore;
 using Ngaq.Core.Infra.Errors;
 using Tsinswreng.CsErr;
 
-namespace Ngaq.Local.Domains.StudyPlan.Svc;
+namespace Ngaq.Backend.Domains.StudyPlan.Svc;
 
 public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 	ISvcKv SvcKv;

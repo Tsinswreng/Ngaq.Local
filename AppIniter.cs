@@ -1,10 +1,10 @@
-namespace Ngaq.Local;
+namespace Ngaq.Backend;
 
 using Ngaq.Core.Shared.Kv.Models;
 using Ngaq.Core.Shared.User.Models.Po.User;
 using Ngaq.Core.Shared.Word.Models.Po.Kv;
 using Ngaq.Core.Frontend.Kv;
-using Ngaq.Local.Sql;
+using Ngaq.Backend.Sql;
 using Ngaq.Core.Shared.Kv.Svc;
 using Ngaq.Core.Frontend.User;
 using Ngaq.Core.Shared.User.Models.Po.Device;

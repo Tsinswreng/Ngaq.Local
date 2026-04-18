@@ -11,7 +11,7 @@ using Ngaq.Core.Shared.Word.Models.Po.Word;
 using Ngaq.Core.Word.Models.Po.Word;
 using Tsinswreng.CsSql;
 
-namespace Ngaq.Local.Db.TswG;
+namespace Ngaq.Backend.Db.TswG;
 public partial class LocalTblMgrIniter{
 	public static ITblMgr InitWord(ITblMgr Mgr){
 		var Tbl_Word = Mk<PoWord>("Word");

@@ -1,7 +1,7 @@
 #if false
 using System.Linq.Expressions;
 
-namespace Ngaq.Local.Domains.Word.Dao;
+namespace Ngaq.Backend.Domains.Word.Dao;
 // 表元数据（强类型，AOT友好）
 public interface ITableMeta<T> where T : class {
 	string TableName { get; }

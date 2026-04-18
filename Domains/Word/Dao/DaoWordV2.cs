@@ -1,6 +1,6 @@
-using Ngaq.Local.Word.Dao;
+using Ngaq.Backend.Word.Dao;
 
-namespace Ngaq.Local.Domains.Word.Dao;
+namespace Ngaq.Backend.Domains.Word.Dao;
 
 using System.Runtime.CompilerServices;
 using Ngaq.Core.Infra;
@@ -17,8 +17,8 @@ using Ngaq.Core.Shared.Word.Models.Po.Kv;
 using Ngaq.Core.Shared.Word.Models.Po.Learn;
 using Ngaq.Core.Shared.Word.Models.Po.Word;
 using Ngaq.Core.Word.Models.Po.Word;
-using Ngaq.Local.Db.TswG;
-using Ngaq.Local.Domains.Word;
+using Ngaq.Backend.Db.TswG;
+using Ngaq.Backend.Domains.Word;
 using Tsinswreng.CsCore;
 using Tsinswreng.CsSql;
 using Tsinswreng.CsTools;

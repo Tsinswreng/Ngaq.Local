@@ -1,10 +1,10 @@
-namespace Ngaq.Local.Frontend.Encryption;
+namespace Ngaq.Backend.Frontend.Encryption;
 
 using Ngaq.Core.Shared.Encryption.Svc;
 using Ngaq.Core.Shared.Kv.Models;
-using Ngaq.Local.Db.TswG;
-using Ngaq.Local.Domains.Kv.Dao;
-using Ngaq.Local.Domains.Kv.Svc;
+using Ngaq.Backend.Db.TswG;
+using Ngaq.Backend.Domains.Kv.Dao;
+using Ngaq.Backend.Domains.Kv.Svc;
 using Tsinswreng.CsSql;
 
 public class SvcSecretKv : SvcKv, ISvcSecretKv {

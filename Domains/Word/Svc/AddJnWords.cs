@@ -2,7 +2,7 @@
 // using Ngaq.Core.Model.Po.Kv;
 // using Ngaq.Core.Model.Po.Word;
 
-// namespace Ngaq.Local.Service.Word;
+// namespace Ngaq.Backend.Service.Word;
 
 
 

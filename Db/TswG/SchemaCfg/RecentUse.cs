@@ -2,7 +2,7 @@ using Ngaq.Core.Infra.IF;
 using Ngaq.Core.Shared.RecentUse.Models.Po.RecentUse;
 using Tsinswreng.CsSql;
 
-namespace Ngaq.Local.Db.TswG;
+namespace Ngaq.Backend.Db.TswG;
 
 public partial class LocalTblMgrIniter{
 	public static ITblMgr InitRecentUse(ITblMgr Mgr){

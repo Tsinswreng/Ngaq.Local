@@ -6,7 +6,7 @@ using Tsinswreng.CsPage;
 using Tsinswreng.CsSql;
 using Tsinswreng.CsTools;
 
-namespace Ngaq.Local.Domains.Word.Dao;
+namespace Ngaq.Backend.Domains.Word.Dao;
 
 public class DaoNormLangToUserLang(
 	ITblMgr TblMgr,

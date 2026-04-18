@@ -1,4 +1,4 @@
-namespace Ngaq.Local.Domains.Kv.Dao;
+namespace Ngaq.Backend.Domains.Kv.Dao;
 
 using Ngaq.Core.Shared.Kv.Models;
 using Ngaq.Core.Shared.User.Models;
@@ -6,7 +6,7 @@ using Ngaq.Core.Shared.User.Models.Po.User;
 using Ngaq.Core.Shared.User.UserCtx;
 using Ngaq.Core.Shared.Word.Models.Po.Kv;
 
-using Ngaq.Local.Db.TswG;
+using Ngaq.Backend.Db.TswG;
 using Tsinswreng.CsCfg;
 using Tsinswreng.CsCore;
 using Tsinswreng.CsPage;

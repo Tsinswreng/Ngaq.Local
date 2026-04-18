@@ -1,4 +1,4 @@
-namespace Ngaq.Local.Domains.Dictionary.Svc;
+namespace Ngaq.Backend.Domains.Dictionary.Svc;
 
 public class DfltPrompt{
 	public const str Prompt =

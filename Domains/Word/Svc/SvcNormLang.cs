@@ -5,14 +5,14 @@ using Ngaq.Core.Shared.Dictionary.Models;
 using Ngaq.Core.Shared.Dictionary.Models.Po.NormLang;
 using Ngaq.Core.Shared.Word.Models.Dto;
 using Ngaq.Core.Shared.Word.Svc;
-using Ngaq.Local.Db.TswG;
-using Ngaq.Local.Domains.Word.Dao;
+using Ngaq.Backend.Db.TswG;
+using Ngaq.Backend.Domains.Word.Dao;
 using Tsinswreng.CsErr;
 using Tsinswreng.CsPage;
 using Tsinswreng.CsSql;
 using Tsinswreng.CsTools;
 
-namespace Ngaq.Local.Domains.Word.Svc;
+namespace Ngaq.Backend.Domains.Word.Svc;
 
 public class SvcNormLang : ISvcNormLang{
 	private readonly DaoNormLang Dao;

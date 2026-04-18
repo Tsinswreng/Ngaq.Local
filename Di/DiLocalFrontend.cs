@@ -1,4 +1,4 @@
-namespace Ngaq.Local.Di;
+namespace Ngaq.Backend.Di;
 
 using Microsoft.Extensions.DependencyInjection;
 using Ngaq.Core.Frontend.ImgBg;
@@ -9,11 +9,11 @@ using Ngaq.Core.Shared.Audio;
 using Ngaq.Core.Shared.Dictionary.Svc;
 using Ngaq.Core.Shared.Encryption.Svc;
 using Ngaq.Core.Shared.User.UserCtx;
-using Ngaq.Local.Domains.Dictionary.Svc;
-using Ngaq.Local.Frontend.Encryption;
-using Ngaq.Local.Frontend.User.Svc;
-using Ngaq.Local.ImplFrontend;
-using Ngaq.Local.Infra;
+using Ngaq.Backend.Domains.Dictionary.Svc;
+using Ngaq.Backend.Frontend.Encryption;
+using Ngaq.Backend.Frontend.User.Svc;
+using Ngaq.Backend.ImplFrontend;
+using Ngaq.Backend.Infra;
 using Tsinswreng.CsCore;
 
 [Doc("僅限本地(客戶端)後端使用、勿用于Server")]

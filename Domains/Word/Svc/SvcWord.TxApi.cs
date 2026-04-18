@@ -1,12 +1,12 @@
-namespace Ngaq.Local.Domains.Word.Svc;
+namespace Ngaq.Backend.Domains.Word.Svc;
 
 using Ngaq.Core.Tools.Io;
-using Ngaq.Local.Db;
+using Ngaq.Backend.Db;
 using Tsinswreng.CsCore;
 using Tsinswreng.CsPage;
 using Ngaq.Core.Infra;
 using Tsinswreng.CsTools;
-using Ngaq.Local.Db.TswG;
+using Ngaq.Backend.Db.TswG;
 using Ngaq.Core.Shared.User.UserCtx;
 using Ngaq.Core.Shared.Word.Models.Learn_;
 using Ngaq.Core.Shared.Word.Models;

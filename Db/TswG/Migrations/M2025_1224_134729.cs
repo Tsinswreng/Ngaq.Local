@@ -3,7 +3,7 @@ using Ngaq.Core.Infra;
 using Tsinswreng.CsSql;
 using Tsinswreng.CsTempus;
 
-namespace Ngaq.Local.Db.TswG.Migrations;
+namespace Ngaq.Backend.Db.TswG.Migrations;
 using Self = M2025_1224_134729;
 
 /// Local 端新增 StudyPlan 結構的增量遷移。

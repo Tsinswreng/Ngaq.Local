@@ -24,7 +24,7 @@ using Tsinswreng.CsSql;
 
 
 
-namespace Ngaq.Local.Domains.Dictionary.Svc;
+namespace Ngaq.Backend.Domains.Dictionary.Svc;
 using Kv = System.Collections.Generic.Dictionary<string, object?>;
 using IKv = System.Collections.Generic.IDictionary<string, object?>;
 
