@@ -1122,6 +1122,22 @@ public partial class SvcWordV2(
 		return NIL;
 	}
 
+	public IAsyncEnumerable<IJnWordMergeResult> GetWordMergeResult(IDbUserCtx Ctx, IAsyncEnumerable<JnWord> Words, CT Ct) {
+		throw new NotImplementedException();
+	}
+
+	public Task<object> MergeWord(IDbUserCtx Ctx, IAsyncEnumerable<IJnWordMergeResult> Words, CT Ct) {
+		throw new NotImplementedException();
+	}
+
+	public Task<object> MergeWord(IDbUserCtx Ctx, IAsyncEnumerable<JnWord> Words, CT Ct) {
+		throw new NotImplementedException();
+	}
+
+	public Task<object> MergeWord_NewDescrAsAdd(IDbUserCtx Ctx, IAsyncEnumerable<JnWord> Words, CT Ct) {
+		throw new NotImplementedException();
+	}
+
 	sealed class MergedWord(Head_Lang Key, JnWord Word){
 		public Head_Lang Key { get; } = Key;
 		public JnWord Word { get; } = Word;
