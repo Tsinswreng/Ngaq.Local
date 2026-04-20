@@ -31,6 +31,7 @@ using Ngaq.Core.Shared.Base.Models.Po;
 using Ngaq.Backend.Domains.Word;
 using Ngaq.Backend.Domains.Word.Dao;
 using Tsinswreng.CsTempus;
+using Tsinswreng.CsTextWithBlob;
 
 public partial class SvcWordV2
 {
@@ -212,5 +213,50 @@ public partial class SvcWordV2
 		}
 		await DaoWordV2.BatAltWordAfterUpd(DbCtx, ToAsyE(Remotes.Select(x=>x.Id).Distinct()), Ct);
 		return NIL;
+	}
+	public IAsyncEnumerable<DtoJnWordSyncResult> BatSyncJnWordByBizIdFromStream(
+		IDbUserCtx Ctx,
+		Stream TextWithStream,
+		CT Ct
+	){
+		// 先把流中的壓縮詞流解包成 JnWord 流，再走既有 BizId 同步主流程。
+		var words = UnpackJnWords(TextWithStream, Ct);
+		return BatSyncJnWordByBizId(Ctx, words, Ct);
+	}
+
+	public IAsyncEnumerable<JnWord> GetAllWordsWithDel(IDbUserCtx Ctx, CT Ct){
+		Ctx.DbFnCtx ??= new DbFnCtx();
+		// 先取當前用戶全部根詞（含軟刪），再按 Id 批量取聚合（含軟刪）。
+		var ids = RepoWord.GetAllWithDel(Ctx.DbFnCtx, Ct)
+			.Where(x=>x.Owner == Ctx.UserCtx.UserId)
+			.Select(x=>x.Id);
+		return RepoWord.BatGetAggByIdWithDel<JnWord>(Ctx.DbFnCtx, ids, Ct)
+			.Where(x=>x is not null)
+			.Select(x=>x!);
+	}
+
+	public Task<Stream> PackAllWordsWithDel(IDbUserCtx Ctx, CT Ct){
+		var packer = new Packer<JnWord>{
+			JsonS = JsonS,
+		};
+		var packInfo = new ObjPackInfo{
+			PayloadTypeObj = nameof(GZipLinesUtf8),
+			CreatedAt = Tempus.Now(),
+		};
+		var allWords = GetAllWordsWithDel(Ctx, Ct);
+		var packed = packer.Pack(allWords, packInfo, Ct);
+		return Task.FromResult(packed.ToStream());
+	}
+
+	public IAsyncEnumerable<JnWord> UnpackJnWords(Stream TextWithStream, CT Ct){
+		var unpacked = Tsinswreng.CsTextWithBlob.TextWithStream.Unpack(TextWithStream);
+		var packer = new Packer<JnWord>{
+			JsonS = JsonS,
+		};
+		var ans = packer.Unpack(unpacked, Ct);
+		if(!ans.Ok || ans.Data is null){
+			throw KeysErr.Word.Word__And__SyncFailed.ToErr(str.Join('\n', ans.ErrsToStrs()));
+		}
+		return ans.Data;
 	}
 }

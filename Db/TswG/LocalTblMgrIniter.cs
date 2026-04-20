@@ -2,30 +2,14 @@ namespace Ngaq.Backend.Db.TswG;
 
 using Ngaq.Core.Infra;
 using Ngaq.Core.Infra.IF;
-using Ngaq.Core.Model.Po.Kv;
-using Ngaq.Core.Model.Po.Learn_;
 using Ngaq.Core.Shared.Base.Models.Po;
-using Ngaq.Core.Shared.Kv.Models;
-using Ngaq.Core.Shared.StudyPlan.Models;
-using Ngaq.Core.Shared.StudyPlan.Models.Po.PreFilter;
-using Ngaq.Core.Shared.StudyPlan.Models.Po.StudyPlan;
-using Ngaq.Core.Shared.StudyPlan.Models.Po.WeightArg;
-using Ngaq.Core.Shared.StudyPlan.Models.Po.WeightCalculator;
 using Ngaq.Core.Shared.User.Models.Po;
 using Ngaq.Core.Shared.User.Models.Po.User;
-using Ngaq.Core.Shared.Word.Models;
-using Ngaq.Core.Shared.Word.Models.Learn_;
 using Ngaq.Core.Shared.Word.Models.Po.Kv;
-using Ngaq.Core.Shared.Word.Models.Po.Learn;
-using Ngaq.Core.Shared.Word.Models.Po.NormLangToUserLang;
 using Ngaq.Core.Shared.Word.Models.Po.Word;
-
-using Ngaq.Core.Tools;
 using Ngaq.Core.Word.Models.Po.Word;
-using Tsinswreng.CsCore;
 using Tsinswreng.CsSql;
 using Tsinswreng.CsTempus;
-using Tsinswreng.CsTools;
 
 //direct to latest
 public partial class LocalTblMgrIniter{
