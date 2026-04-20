@@ -587,4 +587,70 @@ public partial class SvcWordV2
 		var ans = await batch.ConsumeAll(PoWords, Ct);
 		return ans.SelectMany(x=>x).ToList();
 	}
+	
+	/// 批量新增屬性資產。需先校驗全部屬性所屬單詞的 Owner。
+	public Task<nil> BatAddWordProp(IDbUserCtx Ctx, IAsyncEnumerable<PoWordProp> WordProps, CT Ct){
+		return SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(DbCtx)=>{
+			await using var batch = new BatchCollector<PoWordProp, nil>(async(propBatch, Ct)=>{
+				if(propBatch.Count == 0){
+					return NIL;
+				}
+				var wordIds = DistinctWordIds(propBatch.Select(x=>x.WordId).ToList());
+				if(wordIds.Count == 0){
+					return NIL;
+				}
+				await EnsureOwner(DbCtx, Ctx.UserCtx.UserId, wordIds, Ct);
+				await RepoProp.BatAdd(DbCtx, ToAsyE(propBatch), Ct);
+				await DaoWordV2.BatAltWordAfterUpd(DbCtx, ToAsyE(wordIds), Ct);
+				return NIL;
+			});
+			await batch.ConsumeAll(WordProps, Ct);
+			return NIL;
+		});
+	}
+
+	/// 批量新增學習資產。需先校驗全部學習記錄所屬單詞的 Owner。
+	public Task<nil> BatAddWordLearn(IDbUserCtx Ctx, IAsyncEnumerable<PoWordLearn> WordLearns, CT Ct){
+		return SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(DbCtx)=>{
+			await using var batch = new BatchCollector<PoWordLearn, nil>(async(learnBatch, Ct)=>{
+				if(learnBatch.Count == 0){
+					return NIL;
+				}
+				var wordIds = DistinctWordIds(learnBatch.Select(x=>x.WordId).ToList());
+				if(wordIds.Count == 0){
+					return NIL;
+				}
+				await EnsureOwner(DbCtx, Ctx.UserCtx.UserId, wordIds, Ct);
+				await RepoLearn.BatAdd(DbCtx, ToAsyE(learnBatch), Ct);
+				await DaoWordV2.BatAltWordAfterUpd(DbCtx, ToAsyE(wordIds), Ct);
+				return NIL;
+			});
+			await batch.ConsumeAll(WordLearns, Ct);
+			return NIL;
+		});
+	}
+
+	/// 批量更新學習資產。需先校驗全部學習記錄所屬單詞的 Owner。
+	public Task<nil> BatUpdWordLearn(IDbUserCtx Ctx, IAsyncEnumerable<PoWordLearn> WordLearns, CT Ct){
+		return SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(DbCtx)=>{
+			await using var batch = new BatchCollector<PoWordLearn, nil>(async(learnBatch, Ct)=>{
+				if(learnBatch.Count == 0){
+					return NIL;
+				}
+				var wordIds = DistinctWordIds(learnBatch.Select(x=>x.WordId).ToList());
+				if(wordIds.Count == 0){
+					return NIL;
+				}
+				await EnsureOwner(DbCtx, Ctx.UserCtx.UserId, wordIds, Ct);
+				await RepoLearn.BatUpd(DbCtx, ToAsyE(learnBatch), Ct);
+				await DaoWordV2.BatAltWordAfterUpd(DbCtx, ToAsyE(wordIds), Ct);
+				return NIL;
+			});
+			await batch.ConsumeAll(WordLearns, Ct);
+			return NIL;
+		});
+	}
+
+	
+	
 }

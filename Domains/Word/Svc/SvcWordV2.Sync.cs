@@ -34,7 +34,7 @@ using Tsinswreng.CsTempus;
 
 public partial class SvcWordV2
 {
-	public async IAsyncEnumerable<DtoJnWordSyncResult> BizSyncJnWordByBizId(
+	public async IAsyncEnumerable<DtoJnWordSyncResult> BatSyncJnWordByBizId(
 		IDbUserCtx Ctx,
 		IAsyncEnumerable<JnWord> JnWords,
 		[EnumeratorCancellation] CT Ct

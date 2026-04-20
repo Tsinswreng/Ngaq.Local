@@ -369,7 +369,7 @@ public partial class SvcWordV2(
 		}
 		return UserLang;
 	}
-
+	
 	sealed class MergedWord(Head_Lang Key, JnWord Word){
 		public Head_Lang Key { get; } = Key;
 		public JnWord Word { get; } = Word;
