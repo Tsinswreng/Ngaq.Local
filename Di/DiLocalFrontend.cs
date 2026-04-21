@@ -15,6 +15,7 @@ using Ngaq.Backend.Frontend.User.Svc;
 using Ngaq.Backend.ImplFrontend;
 using Ngaq.Backend.Infra;
 using Tsinswreng.CsCore;
+using System.IO.Abstractions;
 
 [Doc("僅限本地(客戶端)後端使用、勿用于Server")]
 public static class DiLocalFrontend{
@@ -28,6 +29,7 @@ public static class DiLocalFrontend{
 		z.AddSingleton<OnlineAudio>();
 		z.AddScoped<ISvcTts, Gtts>();
 		z.AddScoped<IImgGetter, SvcImg>();
+		z.AddSingleton<IFileSystem, FileSystem>();
 
 		return z;
 	}
