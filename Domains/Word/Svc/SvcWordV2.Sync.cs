@@ -249,14 +249,24 @@ public partial class SvcWordV2
 	}
 
 	public IAsyncEnumerable<JnWord> UnpackJnWords(Stream TextWithStream, CT Ct){
-		var unpacked = Tsinswreng.CsTextWithBlob.TextWithStream.Unpack(TextWithStream);
-		var packer = new Packer<JnWord>{
-			JsonS = JsonS,
-		};
-		var ans = packer.Unpack(unpacked, Ct);
-		if(!ans.Ok || ans.Data is null){
-			throw KeysErr.Word.Word__And__SyncFailed.ToErr(str.Join('\n', ans.ErrsToStrs()));
+		return UnpackCore(TextWithStream, Ct);
+
+		async IAsyncEnumerable<JnWord> UnpackCore(
+			Stream textWithStream,
+			[EnumeratorCancellation] CT ct
+		){
+			var unpacked = await Tsinswreng.CsTextWithBlob.TextWithStream.UnpackAsy(textWithStream, ct);
+			var packer = new Packer<JnWord>{
+				JsonS = JsonS,
+			};
+			var ans = packer.Unpack(unpacked, ct);
+			if(!ans.Ok || ans.Data is null){
+				throw KeysErr.Word.Word__And__SyncFailed.ToErr(str.Join('\n', ans.ErrsToStrs()));
+			}
+
+			await foreach(var word in ans.Data.WithCancellation(ct)){
+				yield return word;
+			}
 		}
-		return ans.Data;
 	}
 }
