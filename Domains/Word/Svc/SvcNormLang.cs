@@ -96,6 +96,23 @@ public class SvcNormLang : ISvcNormLang{
 		return BuildPageResult(Req.PageQry, Matched);
 	}
 
+	/// 取 UI 語言候選。僅返回少量常用語言，供設置頁下拉選擇。
+	public IAsyncEnumerable<INormLangDetail> BatGetUiLangs(CT CT){
+		_ = CT;
+		var Rows = new INormLangDetail[]{
+			MkUiLang("en", "English", "English", 100),
+			MkUiLang("zh-CN", "简体中文", "Chinese (Simplified)", 99),
+			MkUiLang("zh-TW", "繁體中文", "Chinese (Traditional)", 98),
+			MkUiLang("ja", "日本語", "Japanese", 97),
+			MkUiLang("ko", "한국어", "Korean", 96),
+			MkUiLang("es", "Español", "Spanish", 95),
+			MkUiLang("fr", "Français", "French", 94),
+			MkUiLang("de", "Deutsch", "German", 93),
+			MkUiLang("ru", "Русский", "Russian", 92),
+		};
+		return ToolAsyE.ToAsyE(Rows);
+	}
+
 	public async Task<nil> BatAddNormLang(
 		IDbUserCtx Ctx,
 		IAsyncEnumerable<PoNormLang> Pos,
@@ -348,5 +365,20 @@ public class SvcNormLang : ISvcNormLang{
 			return Seg.All(char.IsDigit);
 		}
 		return false;
+	}
+
+	private static INormLangDetail MkUiLang(
+		str Code,
+		str NativeName,
+		str EnglishName,
+		f64 Weight
+	){
+		return new NormLangDetail{
+			Type = ELangIdentType.Bcp47,
+			Code = Code,
+			NativeName = NativeName,
+			EnglishName = EnglishName,
+			Weight = Weight,
+		};
 	}
 }
