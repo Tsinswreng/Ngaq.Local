@@ -37,11 +37,16 @@ public class DaoNormLang(
 		var Sql = T.SqlSplicer().Select("*").From().WhereNonDel()
 			.AndEq(x=>x.Owner, x=>x.One(Owner))
 		;
-		if(!string.IsNullOrEmpty(Req.Code)){
+		var SearchText = (Req.SearchText ?? "").Trim();
+		if(!string.IsNullOrEmpty(SearchText)){
+			var Like = "%"+SearchText+"%";
 			Sql.And();
-			Sql.Bool(x=>x.Code, "LIKE", x=>x.One(Req.Code+"%"));
+			Sql.Bool(x=>x.Code, "LIKE", x=>x.One(Like))
+				.Or()
+				.Bool(x=>x.NativeName, "LIKE", x=>x.One(Like));
 		}
 		Sql.OrderBy([
+			T.QtCol(x=>x.Weight)+" Desc",
 			T.QtCol(x=>x.Code)+" ",
 		])
 		.LimOfst(Req.PageQry)

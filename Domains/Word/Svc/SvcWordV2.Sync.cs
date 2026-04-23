@@ -255,7 +255,7 @@ public partial class SvcWordV2
 			Stream textWithStream,
 			[EnumeratorCancellation] CT ct
 		){
-			var unpacked = await Tsinswreng.CsTextWithBlob.TextWithStream.UnpackAsy(textWithStream, ct);
+			var unpacked = await Tsinswreng.CsTextWithBlob.TextWithStream.Unpack(textWithStream, ct);
 			var packer = new Packer<JnWord>{
 				JsonS = JsonS,
 			};
