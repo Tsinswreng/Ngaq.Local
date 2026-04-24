@@ -313,16 +313,18 @@ public class SvcDictionary:ISvcDictionary{
 		request.Content = content;
 
 		// 使用 ResponseHeadersRead 以支持流式读取
-		var response = await HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, Ct);
+		using var response = await HttpClient
+			.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, Ct)
+			.ConfigureAwait(false);
 		response.EnsureSuccessStatusCode();
 
 		var fullContent = new StringBuilder();
 		try{
-			using var stream = await response.Content.ReadAsStreamAsync(Ct);
+			using var stream = await response.Content.ReadAsStreamAsync(Ct).ConfigureAwait(false);
 			using var reader = new StreamReader(stream);
 
 			// 逐行解析 SSE
-			while(await reader.ReadLineAsync() is { } line){
+			while(await reader.ReadLineAsync().ConfigureAwait(false) is { } line){
 				if(string.IsNullOrEmpty(line)) continue;
 				if(!line.StartsWith("data: ")) continue;
 
