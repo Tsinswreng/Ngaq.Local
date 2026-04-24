@@ -170,19 +170,19 @@ public sealed class PreFilterSqlMkr{
 			case nameof(PoWord.StoredAt):
 			case nameof(PoWord.BizCreatedAt):
 			case nameof(PoWord.BizUpdatedAt):
-				if(raw is Tempus t){
+				if(raw is UnixMs t){
 					return t;
 				}
 				if(raw is DateTime dt){
-					return Tempus.FromDateTime(dt);
+					return UnixMs.FromDateTime(dt);
 				}
 				if(i64.TryParse(raw.ToString(), out var ms)){
-					return new Tempus(ms);
+					return new UnixMs(ms);
 				}
-				if(Tempus.TryFromIso(raw.ToString()??"", out var parsed)){
+				if(UnixMs.TryFromIso(raw.ToString()??"", out var parsed)){
 					return parsed;
 				}
-				return Tempus.Zero;
+				return UnixMs.Zero;
 			default:
 				return raw;
 		}

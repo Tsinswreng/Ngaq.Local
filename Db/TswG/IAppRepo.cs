@@ -25,7 +25,7 @@ public partial interface IAppRepo<
 	大於 {nameof(ChangedTime)} 都算有變更。
 	")]
 	public IAsyncEnumerable<TEntity> BatGetChangedEntityAfterTimeWithDel(
-		IDbUserCtx Ctx, Tempus ChangedTime, CT Ct
+		IDbUserCtx Ctx, UnixMs ChangedTime, CT Ct
 	);
 
 	/// 實體ˇ改後 手動調此方法

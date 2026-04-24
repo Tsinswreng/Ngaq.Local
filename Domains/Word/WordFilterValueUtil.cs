@@ -104,7 +104,7 @@ public static class WordFilterValueUtil{
 			case decimal v:
 				Number = (double)v;
 				return true;
-			case Tempus v:
+			case UnixMs v:
 				Number = v.Value;
 				return true;
 			default:

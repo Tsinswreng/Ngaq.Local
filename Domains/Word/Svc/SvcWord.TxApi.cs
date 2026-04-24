@@ -161,7 +161,7 @@ public partial class SvcWord{
 	public async Task<IPage<IJnWord>> PageChangedWordsWithDelWordsAfterTime(
 		IUserCtx User
 		,IPageQry PageQry
-		,Tempus Tempus
+		,UnixMs Tempus
 		,CT Ct
 	){
 		return await TxnWrapper.Wrap(FnPageChangedWordsWithDelWordsAfterTime, User, PageQry, Tempus, Ct);

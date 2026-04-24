@@ -241,7 +241,7 @@ public partial class SvcWordV2
 		};
 		var packInfo = new ObjPackInfo{
 			PayloadTypeObj = nameof(GZipLinesUtf8),
-			CreatedAt = Tempus.Now(),
+			CreatedAt = UnixMs.Now(),
 		};
 		var allWords = GetAllWordsWithDel(Ctx, Ct);
 		var packed = packer.Pack(allWords, packInfo, Ct);

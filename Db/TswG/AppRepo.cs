@@ -31,7 +31,7 @@ public partial class AppRepo<
 		var NUpdatedAt = nameof(IBizCreateUpdateTime.BizUpdatedAt);
 		var Upd_DbUpdatedAtById = await FnUpdOneColById(Ctx, NUpdatedAt, Ct);
 		return async(Id, Ct)=>{
-			var Now = Tempus.Now();
+			var Now = UnixMs.Now();
 			var Raw = T.UpperToRaw(Now, NUpdatedAt);
 			await Upd_DbUpdatedAtById(Id, Raw, Ct);
 			return NIL;
@@ -42,7 +42,7 @@ public partial class AppRepo<
 	public async Task<nil> BatBizTouch(
 		IDbFnCtx Ctx, IAsyncEnumerable<TId> Ids, CT Ct
 	){
-		var Now = Tempus.Now();
+		var Now = UnixMs.Now();
 		var CodeDicts = Ids.Select(x=>new Dictionary<str, obj?>(){
 			[nameof(IBizCreateUpdateTime.BizUpdatedAt)] = Now
 		});
@@ -50,7 +50,7 @@ public partial class AppRepo<
 		return NIL;
 	}
 
-	public IAsyncEnumerable<TEntity> BatGetChangedEntityAfterTimeWithDel(IDbUserCtx Ctx, Tempus ChangedTime, CT Ct) {
+	public IAsyncEnumerable<TEntity> BatGetChangedEntityAfterTimeWithDel(IDbUserCtx Ctx, UnixMs ChangedTime, CT Ct) {
 		throw new NotImplementedException();
 	}
 }

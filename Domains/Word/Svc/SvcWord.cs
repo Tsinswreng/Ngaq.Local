@@ -108,7 +108,7 @@ public partial class SvcWord(
 
 			foreach(var OneNonExisting_ in DtoAddWords.NeoWords){
 				var OneNonExisting = OneNonExisting_.AsOrToJnWord();
-				OneNonExisting.StoredAt = Tempus.Now();
+				OneNonExisting.StoredAt = UnixMs.Now();
 				//var NeoPoLearns = MkPoLearns(OneNonExisting.Props, OneNonExisting.Id);
 				await NeoWords.Add(OneNonExisting, Ct);
 				//await NeoLearns.AddMany(NeoPoLearns, null, Ct);
@@ -185,7 +185,7 @@ public partial class SvcWord(
 			//添ʃ缺
 			foreach(var (i,OneNonExisting_) in DtoAddWords.NeoWords.Index()){
 				var OneNonExisting = OneNonExisting_.AsOrToJnWord();
-				OneNonExisting.StoredAt = Tempus.Now();
+				OneNonExisting.StoredAt = UnixMs.Now();
 				//var NeoPoLearns = MkPoLearns(OneNonExisting.Props, OneNonExisting.Id);
 				await NeoWords.Add(OneNonExisting, Ct);
 				//await NeoLearns.AddMany(NeoPoLearns, null, Ct);
@@ -680,13 +680,13 @@ FnUpdJnWord() 是一個 “以輸入為準的對賬式更新”：
 				foreach(var Prop in JnWord.Props){
 					if(Prop.Id.IsNullOrDefault()){//新增條目 則設ID潙0
 						Prop.Id = new IdWordProp();
-						Prop.BizCreatedAt = new Tempus();
+						Prop.BizCreatedAt = new UnixMs();
 					}
 				}
 				foreach(var Learn in JnWord.Learns){
 					if(Learn.Id.Value.IsNullOrDefault()){
 						Learn.Id = new IdWordLearn();
-						Learn.BizCreatedAt = new Tempus();
+						Learn.BizCreatedAt = new UnixMs();
 					}
 				}
 				JnWord.EnsureForeignId();

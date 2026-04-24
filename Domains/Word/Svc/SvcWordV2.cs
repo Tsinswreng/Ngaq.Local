@@ -258,7 +258,7 @@ public partial class SvcWordV2(
 		};
 	}
 
-	static PoWordLearn MkAddLearn(IdWord WordId, Tempus BizCreatedAt){
+	static PoWordLearn MkAddLearn(IdWord WordId, UnixMs BizCreatedAt){
 		return new PoWordLearn{
 			WordId = WordId,
 			LearnResult = ELearn.Add,
@@ -317,7 +317,7 @@ public partial class SvcWordV2(
 		);
 	}
 
-	static PoWordProp MkStrProp(str Key, str Value, Tempus BizTime){
+	static PoWordProp MkStrProp(str Key, str Value, UnixMs BizTime){
 		var R = new PoWordProp{
 			BizCreatedAt = BizTime,
 			BizUpdatedAt = BizTime,
@@ -326,7 +326,7 @@ public partial class SvcWordV2(
 		return R;
 	}
 
-	void AppendDescrProps(IList<PoWordProp> Out, IList<str> Descrs, Tempus BizTime){
+	void AppendDescrProps(IList<PoWordProp> Out, IList<str> Descrs, UnixMs BizTime){
 		foreach(var Descr in Descrs){
 			var Text = (Descr ?? "").Trim();
 			if(Text == ""){
@@ -339,7 +339,7 @@ public partial class SvcWordV2(
 	void AppendPronunciationProps(
 		IList<PoWordProp> Out,
 		IList<TextedPronunciation> Pronunciations,
-		Tempus BizTime
+		UnixMs BizTime
 	){
 		foreach(var Pron in Pronunciations){
 			var TextType = (Pron.TextType ?? "").Trim();

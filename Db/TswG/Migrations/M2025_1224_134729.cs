@@ -12,7 +12,7 @@ using Self = M2025_1224_134729;
 /// 不重新聲明初始版本的其它表。
 public class M2025_1224_134729:SqlMigrationInfo{
 	/// 本次 StudyPlan 遷移的版本號。
-	public override i64 CreatedMs{get;set;} = Tempus.FromIso("2025-12-24T13:47:29.376+08:00");
+	public override i64 CreatedMs{get;set;} = UnixMs.FromIso("2025-12-24T13:47:29.376+08:00");
 
 	IServiceProvider Sp;
 	IMkrTblMgr MkrTblMgr;

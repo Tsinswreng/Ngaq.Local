@@ -111,7 +111,7 @@ public partial class SvcWordV2
 		var NormLangType = SrcLang.Type == ELangIdentType.Unknown ? ELangIdentType.Bcp47 : SrcLang.Type;
 		var NormLangCode = string.IsNullOrWhiteSpace(SrcLang.Code) ? "en" : SrcLang.Code.Trim();
 		var Lang = await ResolveUserLangByNormLang(Ctx, NormLangType, NormLangCode, Ct);
-		var Now = Tempus.Now();
+		var Now = UnixMs.Now();
 
 		var R = new JnWord{
 			Word = new PoWord{
@@ -141,7 +141,7 @@ public partial class SvcWordV2
 		var learn = new PoWordLearn{
 			WordId = Jnword.Word.Id,
 			LearnResult = ELearn.Add,
-			BizCreatedAt = Tempus.Now(),
+			BizCreatedAt = UnixMs.Now(),
 		};
 		Jnword.Learns.Add(learn);
 		return Jnword;

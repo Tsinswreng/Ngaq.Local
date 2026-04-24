@@ -411,7 +411,7 @@ public partial class SvcWord{
 	public async Task<Func<
 		IUserCtx
 		,IPageQry
-		,Tempus
+		,UnixMs
 		,CT
 		,Task<IPage<IJnWord>>
 	>> FnPageChangedWordsWithDelWordsAfterTime(IDbFnCtx Ctx, CT Ct){

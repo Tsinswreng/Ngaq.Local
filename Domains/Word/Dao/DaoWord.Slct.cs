@@ -322,7 +322,7 @@ var Sql = T.SqlSplicer().Select("*").From()
 	public async Task<Func<
 		IUserCtx
 		,IPageQry
-		,Tempus
+		,UnixMs
 		,CT
 		,Task<IPageAsyE<IdWord>>
 	>> FnPageChangedWordIdsWithDelWordsAfterTime(IDbFnCtx Ctx, CT Ct){
@@ -543,8 +543,8 @@ var Cmd = await SqlCmdMkr.Prepare(Ctx, Sql, Ct);
 			var RawDicts = Cmd.AttachCtxTxn(Ctx).Args(Arg).AsyE1d(Ct);
 			var Intervals = RawDicts.Select(x=>{
 				return new TimeIntervalCnt{
-					TimeStart = new Tempus(Convert.ToInt64(x[NStartTime])),
-					TimeEnd = new Tempus(Convert.ToInt64(x[NEndTime])),
+					TimeStart = new UnixMs(Convert.ToInt64(x[NStartTime])),
+					TimeEnd = new UnixMs(Convert.ToInt64(x[NEndTime])),
 					Cnt = Convert.ToInt64(x[NNewWords])
 				};
 			});
