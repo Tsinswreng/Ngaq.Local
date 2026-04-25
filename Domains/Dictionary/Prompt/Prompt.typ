@@ -1,15 +1,20 @@
 #import "@preview/tsinswreng-auto-heading:0.1.0": auto-heading
 
 #let H = auto-heading;
+
+#let BeginDescr = [the \`\`\`\`yaml is the sign of the beginning of the output. do not include the line with four backquotes in your output.]
+
+#let EndDescr = [the \`\`\`\` is the sign of the end of the output. do not include the line with four backquotes in your output.]
+
 #let RMd(path)={
-	[====start of output====(do not include this line in the output)]
+	BeginDescr
   raw(
     read(path)
     ,block:true
     ,lang: "md"
   )
 	
-	[====end of output====(do not include this line in the output)]
+	EndDescr
 }
 
 #H[Role Definition][

@@ -23,14 +23,14 @@ See examples below.
 
 When querying the English word “acquiesce” with target language Traditional Chinese (zh-TW-Hant), the output should be:
 
-====start of output====(do not include this line in the output)
+the \`\`\`\`yaml is the sign of the beginning of the output. do not include the line with four backquotes in your output.
 
 ````md
 ```yaml
-Head: acquiesce
+Head: "acquiesce"
 Pronunciations:
-  - TextType: Ipa
-    Text: ˌækwiˈes
+  - TextType: "Ipa"
+    Text: "ˌækwiˈes"
 Descrs:
   - *__descr1
 ```
@@ -42,20 +42,20 @@ v.	默認；默許；默然接受；順從
 ```
 ````
 
-====end of output====(do not include this line in the output)
+the \`\`\`\` is the sign of the end of the output. do not include the line with four backquotes in your output.
 
 ## Output Example 2
 
 When querying the English word “hello” with target language Japanese (ja), the output should be:
 
-====start of output====(do not include this line in the output)
+the \`\`\`\`yaml is the sign of the beginning of the output. do not include the line with four backquotes in your output.
 
 ````md
 ```yaml
-Head: hello
+Head: "hello"
 Pronunciations:
-  - TextType: Ipa
-    Text: həˈləʊ
+  - TextType: "Ipa"
+    Text: "həˈləʊ"
 Descrs:
   - *__descr1
 ```
@@ -67,20 +67,20 @@ Descrs:
 ```
 ````
 
-====end of output====(do not include this line in the output)
+the \`\`\`\` is the sign of the end of the output. do not include the line with four backquotes in your output.
 
 ## Output Example 3
 
 When querying the Japanese word “ありがとう” with target language English (en), the output should be:
 
-====start of output====(do not include this line in the output)
+the \`\`\`\`yaml is the sign of the beginning of the output. do not include the line with four backquotes in your output.
 
 ````md
 ```yaml
-Head: ありがとう
+Head: "ありがとう"
 Pronunciations:
-  - TextType: romazi
-    Text: arigatou
+  - TextType: "romazi"
+    Text: "arigatou"
 Descrs:
   - *__descr1
 ```
@@ -91,20 +91,20 @@ Descrs:
 【Interjection】Thank you; Thanks
 ````
 
-====end of output====(do not include this line in the output)
+the \`\`\`\` is the sign of the end of the output. do not include the line with four backquotes in your output.
 
 ## Output Example 4
 
 When querying the French word “bonjour” with target language Simplified Chinese (zh-CN), the output should be:
 
-====start of output====(do not include this line in the output)
+the \`\`\`\`yaml is the sign of the beginning of the output. do not include the line with four backquotes in your output.
 
 ````md
 ```yaml
-Head: bonjour
+Head: "bonjour"
 Pronunciations:
-  - TextType: Ipa
-    Text: bɔ̃ʒuʁ
+  - TextType: "Ipa"
+    Text: "bɔ̃ʒuʁ"
 Descrs:
   - *__descr1
 ```
@@ -114,7 +114,7 @@ Descrs:
 【感叹词/名词】你好；早上好
 ````
 
-====end of output====(do not include this line in the output)
+the \`\`\`\` is the sign of the end of the output. do not include the line with four backquotes in your output.
 
 ## Processing Rules
 
