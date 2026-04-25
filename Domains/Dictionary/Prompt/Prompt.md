@@ -137,6 +137,7 @@ If the user did not specify a pronunciation text type, use the most common pronu
 - Examples must be natural and authentic, demonstrating real usage of the word
 - Multi-line text must be placed in code blocks with correct indentation and formatting
 - Strictly follow the YamlMd format to ensure it can be correctly parsed as YAML
+- `Head` must be the normalized/corrected canonical headword. For misspelled user input (e.g. `dictioary`), return corrected `Head` (e.g. `dictionary`). for common nouns the first letter should be in lowercase; for proper nouns the first letter should be capitalized.
 
 ## Note
 
