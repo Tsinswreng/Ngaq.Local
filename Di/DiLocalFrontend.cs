@@ -10,7 +10,6 @@ using Ngaq.Core.Shared.Dictionary.Svc;
 using Ngaq.Core.Shared.Encryption.Svc;
 using Ngaq.Core.Shared.User.UserCtx;
 using Ngaq.Backend.Domains.Dictionary.Svc;
-using Ngaq.Backend.Frontend.Encryption;
 using Ngaq.Backend.Frontend.User.Svc;
 using Ngaq.Backend.ImplFrontend;
 using Ngaq.Backend.Infra;
@@ -20,7 +19,7 @@ using System.IO.Abstractions;
 [Doc("僅限本地(客戶端)後端使用、勿用于Server")]
 public static class DiLocalFrontend{
 	public static IServiceCollection SetupLocalFrontend(this IServiceCollection z){
-		z.AddScoped<ISvcSecretKv, SvcSecretKv>();
+		//z.AddScoped<ISvcSecretKv, SvcSecretKv>();
 		z.AddScoped<ISvcTokenStorage, SvcTokenStorage>();
 		z.AddSingleton<IFrontendUserCtxMgr>(FrontendUserCtxMgr.Inst);
 		z.AddSingleton<IUserCtx>(FrontendUserCtxMgr.Inst.GetUserCtx());

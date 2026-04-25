@@ -35,10 +35,11 @@ public class SvcTokenStorage:ISvcTokenStorage{
 	[Impl]
 	public async Task<nil> SetRefreshToken(str Token, CT Ct){
 		//TODO 先直接存明文 後汶改加密
-		await SvcKv.Set(
-			new PoKv{
+		await SvcKv.BatSet(
+			null,
+			ToolAsyE.ToAsyE([new PoKv{
 				Owner = IdUser.Zero,
-			}.SetStrStr(KeysClientKv.RefreshToken, Token)
+			}.SetStrStr(KeysClientKv.RefreshToken, Token)])
 			,Ct
 		);
 		return NIL;
@@ -46,17 +47,21 @@ public class SvcTokenStorage:ISvcTokenStorage{
 
 	[Impl]
 	public async Task<nil> SetRefreshToken(ReqSetRefreshToken Req, CT Ct){
-		await SvcKv.SetMany(
-			[
-				new PoKv{
-					Owner = IdUser.Zero,
-				}.SetStrStr(KeysClientKv.RefreshToken, Req.RefreshToken)
-				,new PoKv{
-					Owner = IdUser.Zero,
-				}.SetStrI64(KeysClientKv.RefreshTokenExpireAt, Req.RefreshTokenExpireAt)
-				,new PoKv{Owner = IdUser.Zero}
-				.SetStrStr(KeysClientKv.CurLoginUserId, Req.LoginUserId+"")
-			],Ct
+		await SvcKv.BatSet(
+			null,
+			ToolAsyE.ToAsyE(
+				[
+					new PoKv{
+						Owner = IdUser.Zero,
+					}.SetStrStr(KeysClientKv.RefreshToken, Req.RefreshToken)
+					,new PoKv{
+						Owner = IdUser.Zero,
+					}.SetStrI64(KeysClientKv.RefreshTokenExpireAt, Req.RefreshTokenExpireAt)
+					,new PoKv{Owner = IdUser.Zero}
+					.SetStrStr(KeysClientKv.CurLoginUserId, Req.LoginUserId+"")
+				]
+			)
+			,Ct
 		);
 		return NIL;
 	}

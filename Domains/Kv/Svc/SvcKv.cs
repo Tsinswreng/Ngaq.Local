@@ -12,7 +12,6 @@ using Tsinswreng.CsSql;
 using Z = SvcKv;
 public partial class SvcKv(
 	DaoKv DaoKv
-	,TxnWrapper TxnWrapper
 	,IRepo<PoKv, IdKv> RepoKv
 	,ISqlCmdMkr SqlCmdMkr
 )
@@ -20,7 +19,6 @@ public partial class SvcKv(
 {
 	DaoKv DaoKv = DaoKv;
 	IRepo<PoKv, IdKv> RepoKv = RepoKv;
-	TxnWrapper TxnWrapper = TxnWrapper;
 
 	public IAsyncEnumerable<PoKv?> BatGetByOwnerEtKStr(
 		IDbFnCtx? Ctx, IAsyncEnumerable<(IdUser, str)> Owner_Key, CT Ct

@@ -400,7 +400,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		if(PoWeightCalculator.Type == EWeightCalculatorType.Builtin){
 			return new DfltWeightCalculator();
 		}
-		if(PoWeightCalculator.Type == EWeightCalculatorType.Js){
+		if(PoWeightCalculator.Type == EWeightCalculatorType.JsV1){
 			if(string.IsNullOrWhiteSpace(PoWeightCalculator.Text)){
 				throw KeysErr.Word.WeightCalcInvalidAlgorithm.ToErr(
 					PoWeightCalculator.Id,
