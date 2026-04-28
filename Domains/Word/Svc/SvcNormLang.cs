@@ -17,6 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Tsinswreng.CsCfg;
+using Tsinswreng.CsCore;
 
 namespace Ngaq.Backend.Domains.Word.Svc;
 
@@ -63,6 +64,7 @@ public class SvcNormLang : ISvcNormLang{
 		}
 	}
 
+	[Doc("數量不大 允許全部加載入內存中篩選")]
 	public async Task<IPageAsyE<PoNormLang>> PageNormLang(
 		IDbUserCtx Ctx,
 		ReqPageNormLang Req,
