@@ -18,7 +18,7 @@ public static class LocalMigrations{
 				// 初始遷移：建立 Local 端最早期已有的表結構。
 				new MInit(Sp)
 				// 後續增量遷移：例如新增 StudyPlan 相關表。
-				,new M2025_1224_134729(Sp)
+				,new M2026_0428_225820(Sp)
 			]);
 			return z;
 		}
