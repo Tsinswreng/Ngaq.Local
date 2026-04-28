@@ -109,6 +109,10 @@ public class SvcNormLang : ISvcNormLang{
 			MkUiLang("fr", "Français", "French", 94),
 			MkUiLang("de", "Deutsch", "German", 93),
 			MkUiLang("ru", "Русский", "Russian", 92),
+			MkUiLang("pt", "Português", "Portuguese", 85),
+			MkUiLang("it", "Italiano", "Italian", 80),
+			MkUiLang("vi", "Tiếng Việt", "Vietnamese", 50),
+			MkUiLang("th", "ภาษาไทย", "Thai", 50),
 		};
 		return ToolAsyE.ToAsyE(Rows);
 	}
