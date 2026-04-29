@@ -64,7 +64,13 @@ public class SvcNormLang : ISvcNormLang{
 		}
 	}
 
-	[Doc("數量不大 允許全部加載入內存中篩選")]
+	[Doc(@$"按 以下優先級 模糊查詢:
+	- {nameof(PoNormLang.Code)}
+	- {nameof(PoNormLang.NativeName)}
+	- TranslatedName
+
+	按 {nameof(PoNormLang.Weight)} 降序。
+	數量不大，允許全部加載入內存中篩選。")]
 	public async Task<IPageAsyE<PoNormLang>> PageNormLang(
 		IDbUserCtx Ctx,
 		ReqPageNormLang Req,
@@ -94,7 +100,7 @@ public class SvcNormLang : ISvcNormLang{
 			ToolAsyE.ToAsyE(AllRows.Select(ToNormLang)),
 			Ct
 		);
-		var Matched = await FilterBySearchText(AllRows, TranslatedNames, SearchText, Ct);
+		var Matched = await FilterBySearchTextByPriority(AllRows, TranslatedNames, SearchText, Ct);
 		return BuildPageResult(Req.PageQry, Matched);
 	}
 
@@ -265,25 +271,42 @@ public class SvcNormLang : ISvcNormLang{
 		return Ans;
 	}
 
-	/// 按 Code/NativeName/TranslatedName 做模糊匹配。
-	private static async Task<List<PoNormLang>> FilterBySearchText(
+	/// 按 Code/NativeName/TranslatedName 的優先級分組匹配；組內保持原有 Weight 降序。
+	private static async Task<List<PoNormLang>> FilterBySearchTextByPriority(
 		IList<PoNormLang> Rows,
 		IAsyncEnumerable<str?> TranslatedNames,
 		str SearchText,
 		CT Ct
 	){
-		List<PoNormLang> Ans = [];
+		List<PoNormLang> CodeMatched = [];
+		List<PoNormLang> NativeNameMatched = [];
+		List<PoNormLang> TranslatedNameMatched = [];
 		var Idx = 0;
 		await foreach(var TranslatedName in TranslatedNames.WithCancellation(Ct)){
 			if(Idx >= Rows.Count){
 				break;
 			}
 			var Po = Rows[Idx];
-			if(IsMatch(Po, TranslatedName, SearchText)){
-				Ans.Add(Po);
+			switch(GetMatchPriority(Po, TranslatedName, SearchText)){
+				case EMatchPriority.Code:
+					CodeMatched.Add(Po);
+					break;
+				case EMatchPriority.NativeName:
+					NativeNameMatched.Add(Po);
+					break;
+				case EMatchPriority.TranslatedName:
+					TranslatedNameMatched.Add(Po);
+					break;
+				default:
+					break;
 			}
 			Idx++;
 		}
+		List<PoNormLang> Ans = [
+			..CodeMatched,
+			..NativeNameMatched,
+			..TranslatedNameMatched,
+		];
 		return Ans;
 	}
 
@@ -312,17 +335,18 @@ public class SvcNormLang : ISvcNormLang{
 		);
 	}
 
-	private static bool IsMatch(PoNormLang Po, str? TranslatedName, str SearchText){
+	/// 返回首個命中的字段優先級，確保同一條記錄只落入一個優先級桶。
+	private static EMatchPriority GetMatchPriority(PoNormLang Po, str? TranslatedName, str SearchText){
 		if(ContainsIgnoreCase(Po.Code, SearchText)){
-			return true;
+			return EMatchPriority.Code;
 		}
 		if(ContainsIgnoreCase(Po.NativeName, SearchText)){
-			return true;
+			return EMatchPriority.NativeName;
 		}
 		if(ContainsIgnoreCase(TranslatedName, SearchText)){
-			return true;
+			return EMatchPriority.TranslatedName;
 		}
-		return false;
+		return EMatchPriority.None;
 	}
 
 	private static bool ContainsIgnoreCase(str? Text, str SearchText){
@@ -341,6 +365,14 @@ public class SvcNormLang : ISvcNormLang{
 			Type = Po.Type,
 			Code = Po.Code,
 		};
+	}
+
+	/// 搜索命中優先級。數值順序即業務要求的返回優先級。
+	private enum EMatchPriority{
+		None = 0,
+		Code = 1,
+		NativeName = 2,
+		TranslatedName = 3,
 	}
 
 	private sealed class Bcp47Parts{

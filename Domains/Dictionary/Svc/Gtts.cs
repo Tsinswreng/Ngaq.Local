@@ -4,6 +4,8 @@ using Ngaq.Core.Shared.Dictionary.Svc;
 using Tsinswreng.CsErr;
 using Tsinswreng.CsCore;
 using System.Collections.Concurrent;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using Ngaq.Core.Shared.Dictionary.Models;
 
 namespace Ngaq.Backend.Domains.Dictionary.Svc;
@@ -79,7 +81,8 @@ public class Gtts: ISvcTts{
 	/// 組裝 gTTS URL 並下載音頻。
 	private Task<Audio> LoadAudio(str Text, str GttsLangCode){
 		var url = BuildGttsUrl(Text, GttsLangCode);
-		return OnlineAudio.Get(url);
+		var req = BuildGttsRequest(url, GttsLangCode);
+		return OnlineAudio.Get(req);
 	}
 
 	/// 生成 Google TTS 調用地址。
@@ -98,5 +101,21 @@ public class Gtts: ISvcTts{
 	/// 構造緩存鍵。
 	private static str BuildCacheKey(str Text, str GttsLangCode){
 		return $"{GttsLangCode}\n{Text}";
+	}
+
+	/// <summary>
+	/// gTTS 對「不像瀏覽器的匿名程序請求」容易直接回 429。
+	/// 因此這裡顯式補上常見瀏覽器請求頭，讓 Android / 桌面端行爲更接近手動瀏覽器訪問。
+	/// </summary>
+	private static HttpRequestMessage BuildGttsRequest(str Url, str GttsLangCode){
+		var req = new HttpRequestMessage(HttpMethod.Get, Url);
+		req.Headers.UserAgent.ParseAdd(
+			"Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36"
+		);
+		req.Headers.Referrer = new Uri("https://translate.google.com/");
+		req.Headers.Accept.ParseAdd("audio/mpeg,audio/*;q=0.9,*/*;q=0.8");
+		req.Headers.AcceptLanguage.ParseAdd($"{GttsLangCode},en;q=0.9");
+		req.Headers.TryAddWithoutValidation("Origin", "https://translate.google.com");
+		return req;
 	}
 }
