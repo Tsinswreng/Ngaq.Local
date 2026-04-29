@@ -165,12 +165,14 @@ public class SvcNormLang : ISvcNormLang{
 					yield break;
 				}
 				if(Po is null){
-					var Seed = SeedList[i];
+					var o = SeedList[i];
 					yield return new PoNormLang{
 						Owner = Owner,
-						Type = Seed.Type,
-						Code = Seed.Code,
-						NativeName = Seed.NativeName,
+						Type = o.Type,
+						Code = o.Code,
+						NativeName = o.NativeName,
+						EnglishName = o.EnglishName,
+						Weight = o.Weight,
 					};
 				}
 				i++;
