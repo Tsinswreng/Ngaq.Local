@@ -124,6 +124,29 @@ public class SvcDictionary:ISvcDictionary{
 		return normalized;
 	}
 
+	/// 讀取詞典系統提示語。
+	/// 若配置中尚未設置，則把默認提示語寫回配置後返回，保證設置頁能看到可編輯的初始值。
+	public async Task<str> GetLlmDictSysPromptOrDflt(IDbUserCtx Ctx, CT Ct){
+		_ = Ctx;
+		var Prompt = Cfg.Get(KeysClientCfg.LlmDictionary.Prompt);
+		if(!str.IsNullOrWhiteSpace(Prompt)){
+			return Prompt!;
+		}
+		var Dflt = DfltPrompt.Prompt;
+		Cfg.Set(KeysClientCfg.LlmDictionary.Prompt, Dflt);
+		await Cfg.Save(Ct);
+		return Dflt;
+	}
+
+	/// 保存詞典系統提示語，並返回保存後的值。
+	public async Task<str> SetLlmDictSysPrompt(IDbUserCtx Ctx, str Prompt, CT Ct){
+		_ = Ctx;
+		var Normalized = string.IsNullOrWhiteSpace(Prompt) ? DfltPrompt.Prompt : Prompt;
+		Cfg.Set(KeysClientCfg.LlmDictionary.Prompt, Normalized);
+		await Cfg.Save(Ct);
+		return Normalized;
+	}
+
 	public Task<IList<NormLang>> GetRecentUsedNormLangs(IDbUserCtx Ctx, CT Ct){
 		IList<NormLang> r = [];
 		return Task.FromResult(r);
@@ -139,6 +162,7 @@ public class SvcDictionary:ISvcDictionary{
 */
 	[Impl]
 	public async Task<IRespLlmDict> Lookup(IUserCtx User, IReqLlmDict Req, CT Ct){
+		_ = User;
 		var apiUrl = Cfg.Get(KeysClientCfg.LlmDictionary.ApiUrl);
 		var apiKey = Cfg.Get(KeysClientCfg.LlmDictionary.ApiKey);
 		var model = Cfg.Get(KeysClientCfg.LlmDictionary.Model);
@@ -173,8 +197,23 @@ public class SvcDictionary:ISvcDictionary{
 		return result;
 	}
 
+	/// 構造發給大模型的用戶提示詞。
+	/// 此處只負責傳遞本次查詞的請求信息；格式與約束由 system prompt 負責。
 	private string BuildUserPrompt(IReqLlmDict Req){
-		return JsonS.Stringify(Req);
+		var R =
+$"""
+Query:
+- Term: {ToPromptValue(Req.Query.Term)}
+- ContextSentence: {ToPromptValue(Req.Query.ContextSentence)}
+
+Languages:
+- Source: {FormatLang(Req.OptLang.SrcLang)}
+- Targets: {FormatLangList(Req.OptLang.TgtLangs)}
+
+Preferences:
+- {FormatPreferences(Req.Preferences)}
+""";
+		return R;
 	}
 
 	/// 直接解析 LLM 原始輸出文本，不觸發外部 API 調用。
@@ -275,6 +314,50 @@ public class SvcDictionary:ISvcDictionary{
 		};
 	}
 
+	/// 轉換單個語言描述，盡量把 code / native name / english name 都寫進 prompt。
+	static str FormatLang(INormLangDetail Lang){
+		var Segs = new List<str>{
+			$"code={ToPromptValue(Lang.Code)}",
+			$"type={Lang.Type}",
+		};
+		if(!str.IsNullOrWhiteSpace(Lang.NativeName)){
+			Segs.Add($"NativeName={ToPromptValue(Lang.NativeName)}");
+		}
+		if(!str.IsNullOrWhiteSpace(Lang.EnglishName)){
+			Segs.Add($"EnglishName={ToPromptValue(Lang.EnglishName)}");
+		}
+		return string.Join(", ", Segs);
+	}
+
+	/// 轉換多個目標語言描述。
+	static str FormatLangList(IEnumerable<INormLangDetail> Langs){
+		var Items = Langs.Select(FormatLang).Where(x=>!str.IsNullOrWhiteSpace(x));
+		var Joined = string.Join("; ", Items);
+		return Joined == "" ? "(none)" : Joined;
+	}
+
+	/// 將偏好配置轉為可讀文字；空值時顯式標識未指定，避免模型自行腦補。
+	static str FormatPreferences(Preferences? Preferences){
+		if(Preferences is null){
+			return "";
+		}
+		return string.Join(", ", [
+			$"TryIncludeExamples={Preferences.TryIncludeExamples}",
+			$"TryIncludeSynonyms={Preferences.TryIncludeSynonyms}",
+			$"TryIncludeAntonyms={Preferences.TryIncludeAntonyms}",
+			$"TryIncludeEtymology={Preferences.TryIncludeEtymology}",
+			$"MaxExamples={Preferences.MaxExamples}",
+		]);
+	}
+
+	/// 將 prompt 值規整成單行文本；空白值統一標記為 null。
+	static str ToPromptValue(str? Value){
+		if(str.IsNullOrWhiteSpace(Value)){
+			return "null";
+		}
+		return Value.Trim().Replace("\r", " ").Replace("\n", " ");
+	}
+
 	private PoNormLang? ParsePoNormLang(str? Json){
 		if(str.IsNullOrWhiteSpace(Json)){
 			return null;
@@ -292,12 +375,16 @@ public class SvcDictionary:ISvcDictionary{
 		DtoLlmCallParam param,
 		CT Ct
 	){
+		var SysPrompt = Cfg.Get(KeysClientCfg.LlmDictionary.Prompt);
+		if(string.IsNullOrWhiteSpace(SysPrompt)){
+			SysPrompt = DfltPrompt.Prompt;
+		}
 		var json = ToolJson.DictToJson(new Kv{
 			["model"] = param.Model,
 			["messages"] = new List<IKv>{
 				new Kv{
 					["role"] = "system",
-					["content"] = DfltPrompt.Prompt
+					["content"] = SysPrompt
 				},
 				new Kv{
 					["role"] = "user",
