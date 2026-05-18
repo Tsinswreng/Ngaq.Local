@@ -2,9 +2,11 @@
 
 #let H = auto-heading;
 
-#let BeginDescr = [the \`\`\`\`yaml is the sign of the beginning of the output. do not include the line with four backquotes in your output.]
+#let BeginDescr = []
+//[the \`\`\`\`md is the sign of the beginning of the output. do not include the line with four backquotes in your output.]
 
-#let EndDescr = [the \`\`\`\` is the sign of the end of the output. do not include the line with four backquotes in your output.]
+#let EndDescr = []
+//[the \`\`\`\` is the sign of the end of the output. do not include the line with four backquotes in your output.]
 
 #let RMd(path)={
 	BeginDescr

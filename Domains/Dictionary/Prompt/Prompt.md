@@ -23,7 +23,7 @@ See examples below.
 
 When querying the English word “acquiesce” with target language Traditional Chinese (zh-TW-Hant), the output should be:
 
-the \`\`\`\`yaml is the sign of the beginning of the output. do not include the line with four backquotes in your output.
+the \`\`\`\`md is the sign of the beginning of the output. do not include the line with four backquotes in your output.
 
 ````md
 ```yaml
@@ -48,7 +48,7 @@ the \`\`\`\` is the sign of the end of the output. do not include the line with 
 
 When querying the English word “hello” with target language Japanese (ja), the output should be:
 
-the \`\`\`\`yaml is the sign of the beginning of the output. do not include the line with four backquotes in your output.
+the \`\`\`\`md is the sign of the beginning of the output. do not include the line with four backquotes in your output.
 
 ````md
 ```yaml
@@ -73,7 +73,7 @@ the \`\`\`\` is the sign of the end of the output. do not include the line with 
 
 When querying the Japanese word “ありがとう” with target language English (en), the output should be:
 
-the \`\`\`\`yaml is the sign of the beginning of the output. do not include the line with four backquotes in your output.
+the \`\`\`\`md is the sign of the beginning of the output. do not include the line with four backquotes in your output.
 
 ````md
 ```yaml
@@ -97,7 +97,7 @@ the \`\`\`\` is the sign of the end of the output. do not include the line with 
 
 When querying the French word “bonjour” with target language Simplified Chinese (zh-CN), the output should be:
 
-the \`\`\`\`yaml is the sign of the beginning of the output. do not include the line with four backquotes in your output.
+the \`\`\`\`md is the sign of the beginning of the output. do not include the line with four backquotes in your output.
 
 ````md
 ```yaml
