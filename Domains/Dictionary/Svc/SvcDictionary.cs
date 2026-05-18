@@ -202,13 +202,17 @@ public class SvcDictionary:ISvcDictionary{
 	private string BuildUserPrompt(IReqLlmDict Req){
 		var R =
 $"""
-Query:
-- Term: {ToPromptValue(Req.Query.Term)}
-- ContextSentence: {ToPromptValue(Req.Query.ContextSentence)}
+the word that user wants to search:
+{Req.Query.Term}
 
-Languages:
-- Source: {FormatLang(Req.OptLang.SrcLang)}
-- Targets: {FormatLangList(Req.OptLang.TgtLangs)}
+ContextSentence:
+{Req.Query.ContextSentence}
+
+- SourceLanguage(the language of the input text):
+{FormatLang(Req.OptLang.SrcLang)}
+
+- TargetLanguages(the language(s) that user wants to get the definition in):
+{FormatLangList(Req.OptLang.TgtLangs)}
 
 Preferences:
 - {FormatPreferences(Req.Preferences)}
