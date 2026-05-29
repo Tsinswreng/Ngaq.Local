@@ -42,6 +42,44 @@ public partial class DaoWordV2(
 		return RepoWord.AsAppRepo().BatBizTouch(Ctx, Ids, Ct);
 	}
 
+	/// 硬刪當前用戶已軟刪除數據；僅刪 DelAt!=0 的行，不做聚合補全，可能留下孤兒資產。
+	public async Task<nil> HardDelSoftDeletedByOwner(
+		IDbFnCtx Ctx,
+		IdUser Owner,
+		CT Ct
+	){
+		var pOwner = TW.Prm("Owner");
+		var ownerRaw = TW.UpperToRaw(Owner, nameof(PoWord.Owner));
+		var sql =
+$"""
+DELETE FROM {TP.Qt(TP.DbTblName)}
+WHERE {TP.QtCol(nameof(IPoBase.DelAt))} <> 0
+AND {TP.QtCol(nameof(PoWordProp.WordId))} IN (
+	SELECT {TW.QtCol(nameof(PoWord.Id))}
+	FROM {TW.Qt(TW.DbTblName)}
+	WHERE {TW.QtCol(nameof(PoWord.Owner))} = {pOwner}
+);
+
+DELETE FROM {TL.Qt(TL.DbTblName)}
+WHERE {TL.QtCol(nameof(IPoBase.DelAt))} <> 0
+AND {TL.QtCol(nameof(PoWordLearn.WordId))} IN (
+	SELECT {TW.QtCol(nameof(PoWord.Id))}
+	FROM {TW.Qt(TW.DbTblName)}
+	WHERE {TW.QtCol(nameof(PoWord.Owner))} = {pOwner}
+);
+
+DELETE FROM {TW.Qt(TW.DbTblName)}
+WHERE {TW.QtCol(nameof(IPoBase.DelAt))} <> 0
+AND {TW.QtCol(nameof(PoWord.Owner))} = {pOwner};
+""";
+		var cmd = await SqlCmdMkr.Prepare(Ctx, sql, Ct);
+		Ctx.AddToDispose(cmd);
+		await cmd.RawArgs(new Dictionary<str, obj?>{
+			[pOwner.Name] = ownerRaw,
+		}).AsyE1d(Ct).FirstOrDefaultAsync(Ct);
+		return NIL;
+	}
+
 	public IAsyncEnumerable<PoWord?> BatGetPoWordByIdWithDel(
 		IDbFnCtx Ctx
 		,IAsyncEnumerable<IdWord> Ids

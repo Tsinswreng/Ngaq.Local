@@ -71,6 +71,37 @@ public partial class SvcWordV2
 		});
 	}
 
+	/// 只軟刪聚合根，不動資產刪除狀態。
+	public async Task<nil> SoftDelPoWordInId(
+		IDbUserCtx Ctx,
+		IAsyncEnumerable<IdWord> Ids, CT Ct
+	){
+		return await SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(DbCtx)=>{
+			await using var Batch = new BatchCollector<IdWord, nil>(async(IdBatch, Ct)=>{
+				var DistinctIds = DistinctWordIds(IdBatch);
+				if(DistinctIds.Count == 0){
+					return NIL;
+				}
+				await EnsureOwner(DbCtx, Ctx.UserCtx.UserId, DistinctIds, Ct);
+				await RepoWord.BatSoftDelById(DbCtx, ToAsyE(DistinctIds), Ct);
+				return NIL;
+			});
+
+			await foreach(var One in Ids){
+				await Batch.Add(One, Ct);
+			}
+			await Batch.End(Ct);
+			return NIL;
+		});
+	}
+
+	/// 清理當前用戶詞庫中全部已軟刪除數據（根詞與資產）。
+	public async Task<nil> HardDelSoftDeleted(IDbUserCtx Ctx, CT Ct){
+		return await SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(DbCtx)=>{
+			return await DaoWordV2.HardDelSoftDeletedByOwner(DbCtx, Ctx.UserCtx.UserId, Ct);
+		});
+	}
+
 	async Task<nil> EnsureOwner(
 		IDbFnCtx Ctx
 		,IdUser UserId
