@@ -47,6 +47,8 @@ public class DtoLlmCallParam{
 	public string? ApiUrl{get;set;}
 	public string? ApiKey{get;set;}
 	public string? Model{get;set;}
+	/// 額外透傳到請求體頂層的 provider-specific JSON 對象。
+	public string? ExtraBodyJson{get;set;}
 
 	/// 用戶提示詞
 
@@ -190,6 +192,7 @@ public class SvcDictionary:ISvcDictionary{
 			ApiUrl = apiUrl,
 			ApiKey = apiKey,
 			Model = model,
+			ExtraBodyJson = Cfg.Get(KeysClientCfg.LlmDictionary.ExtraBodyJson),
 			UserPrompt = userPrompt
 		};
 
@@ -383,7 +386,7 @@ Preferences:
 		if(string.IsNullOrWhiteSpace(SysPrompt)){
 			SysPrompt = DfltPrompt.Prompt;
 		}
-		var json = ToolJson.DictToJson(new Kv{
+		var reqBody = new Kv{
 			["model"] = param.Model,
 			["messages"] = new List<IKv>{
 				new Kv{
@@ -396,7 +399,11 @@ Preferences:
 				}
 			},
 			["stream"] = true // 启用流式输出
-		});
+		};
+		// 先構造通用 OpenAI-compatible 主體，再允許配置覆蓋/追加頂層字段，
+		// 以便適配 DeepSeek 等 provider 的私有參數。
+		MergeExtraBodyJson(reqBody, param.ExtraBodyJson);
+		var json = ToolJson.DictToJson(reqBody);
 		var content = new StringContent(json, Encoding.UTF8, "application/json");
 
 		var request = new HttpRequestMessage(HttpMethod.Post, param.ApiUrl);
@@ -457,6 +464,31 @@ Preferences:
 				fullContent.ToString()
 			);
 			throw;
+		}
+	}
+
+	/// 把配置中的頂層 JSON 對象 merge 到請求體。
+	/// 當存在同名鍵時，採用配置值覆蓋默認值，方便顯式關閉 provider 默認行為。
+	private static void MergeExtraBodyJson(Kv ReqBody, str? ExtraBodyJson){
+		if(str.IsNullOrWhiteSpace(ExtraBodyJson)){
+			return;
+		}
+
+		try{
+			var extraDict = ToolJson.JsonStrToDict(ExtraBodyJson);
+			if(extraDict is null){
+				throw KeysErr.Common.ArgErr.ToErr()
+					.AddDebugArgs(nameof(KeysClientCfg.LlmDictionary.ExtraBodyJson), ExtraBodyJson);
+			}
+			foreach(var kv in extraDict){
+				ReqBody[kv.Key] = kv.Value;
+			}
+		}catch(AppErr){
+			throw;
+		}catch(Exception ex){
+			throw KeysErr.Common.ArgErr.ToErr()
+				.AddErr(ex)
+				.AddDebugArgs(nameof(KeysClientCfg.LlmDictionary.ExtraBodyJson), ExtraBodyJson);
 		}
 	}
 
