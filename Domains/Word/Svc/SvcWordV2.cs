@@ -81,7 +81,7 @@ public partial class SvcWordV2(
 			return null;
 		}
 
-		var poStudyPlan = await RepoStudyPlan.BatGetByIdWithDel(Ctx.DbFnCtx!, ToAsyE([spId]), Ct)
+		var poStudyPlan = await RepoStudyPlan.OrdGetByIdWithDel(Ctx.DbFnCtx!, ToAsyE([spId]), Ct)
 			.FirstOrDefaultAsync(Ct);
 		if(poStudyPlan is null || poStudyPlan.Owner != Ctx.UserCtx.UserId){
 			return null;
@@ -90,7 +90,7 @@ public partial class SvcWordV2(
 			return null;
 		}
 
-		var poPreFilter = await RepoPreFilter.BatGetByIdWithDel(Ctx.DbFnCtx!, ToAsyE([poStudyPlan.PreFilterId]), Ct)
+		var poPreFilter = await RepoPreFilter.OrdGetByIdWithDel(Ctx.DbFnCtx!, ToAsyE([poStudyPlan.PreFilterId]), Ct)
 			.FirstOrDefaultAsync(Ct);
 		if(poPreFilter is null || poPreFilter.Owner != Ctx.UserCtx.UserId){
 			return null;

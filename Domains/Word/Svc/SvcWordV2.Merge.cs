@@ -126,16 +126,16 @@ public partial class SvcWordV2
 				}
 
 				if(neoAggs.Count > 0){
-					await RepoWord.BatAddAgg<JnWord>(DbCtx, ToAsyE(neoAggs), Ct);
+					await RepoWord.OrdAddAgg<JnWord>(DbCtx, ToAsyE(neoAggs), Ct);
 				}
 				if(updRoots.Count > 0){
-					await RepoWord.BatUpd(DbCtx, ToAsyE(updRoots), Ct);
+					await RepoWord.OrdUpd(DbCtx, ToAsyE(updRoots), Ct);
 				}
 				if(neoProps.Count > 0){
-					await RepoProp.BatAdd(DbCtx, ToAsyE(neoProps), Ct);
+					await RepoProp.OrdAdd(DbCtx, ToAsyE(neoProps), Ct);
 				}
 				if(neoLearns.Count > 0){
-					await RepoLearn.BatAdd(DbCtx, ToAsyE(neoLearns), Ct);
+					await RepoLearn.OrdAdd(DbCtx, ToAsyE(neoLearns), Ct);
 				}
 				if(touchIds.Count > 0){
 					await DaoWordV2.BatAltWordAfterUpd(DbCtx, ToAsyE(touchIds.Distinct()), Ct);
@@ -173,7 +173,7 @@ public partial class SvcWordV2
 
 			await MergeWord(localCtx, ToAsyE(mergeResults), Ct);
 			if(addLearns.Count > 0){
-				await RepoLearn.BatAdd(DbCtx, ToAsyE(addLearns), Ct);
+				await RepoLearn.OrdAdd(DbCtx, ToAsyE(addLearns), Ct);
 				await DaoWordV2.BatAltWordAfterUpd(
 					DbCtx,
 					ToAsyE(addLearns.Select(x=>x.WordId).Distinct()),

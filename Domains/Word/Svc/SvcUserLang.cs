@@ -55,13 +55,13 @@ public class SvcUserLang : ISvcUserLang {
 	// 写操作统一通过 ExecuteWriteOperation 执行
 	public async Task<nil> BatUpdUserLang(IDbUserCtx Ctx, IAsyncEnumerable<PoUserLang> Pos, CT Ct) =>
 		await DoWrite(Ctx, Pos, needTouch: false, async (dbCtx, repo, pos, ct) => {
-			await repo.BatUpd(dbCtx, pos, ct);
+			await repo.OrdUpd(dbCtx, pos, ct);
 			await repo.AsAppRepo().BatBizTouch(dbCtx, pos.Select(x => x.Id), ct);
 		}, Ct);
 
 	public async Task<nil> BatAddUserLang(IDbUserCtx Ctx, IAsyncEnumerable<PoUserLang> Pos, CT Ct) =>
 		await DoWrite(Ctx, Pos, needTouch: true, async (dbCtx, repo, pos, ct) => {
-			await repo.BatAdd(dbCtx, pos, ct);
+			await repo.OrdAdd(dbCtx, pos, ct);
 		}, Ct);
 
 	public async Task<nil> AddAllUnregisteredUserLangs(IDbUserCtx Ctx, CT Ct) {
@@ -75,7 +75,7 @@ public class SvcUserLang : ISvcUserLang {
 			Descr = "",
 		});
 		await DoWrite(Ctx, pos, needTouch: true, async (dbCtx, repo, pos, ct) => {
-			await repo.BatAdd(dbCtx, pos, ct);
+			await repo.OrdAdd(dbCtx, pos, ct);
 		}, Ct);
 		return NIL;
 	}

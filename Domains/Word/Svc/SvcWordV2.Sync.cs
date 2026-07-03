@@ -139,7 +139,7 @@ public partial class SvcWordV2
 				remote.EnsureForeignId();
 				return remote;
 			});
-			await RepoWord.BatAddAgg<JnWord>(DbCtx, neos, Ct);
+			await RepoWord.OrdAddAgg<JnWord>(DbCtx, neos, Ct);
 			return NIL;
 		});
 	}
@@ -202,14 +202,14 @@ public partial class SvcWordV2
 			return NIL;
 		}
 
-		await RepoWord.BatUpd(DbCtx, ToAsyE(Remotes.Select(x=>x.Word)), Ct);
+		await RepoWord.OrdUpd(DbCtx, ToAsyE(Remotes.Select(x=>x.Word)), Ct);
 		var props = Remotes.SelectMany(x=>x.Props).ToList();
 		if(props.Count > 0){
-			await RepoProp.BatUpsert(DbCtx, ToAsyE(props), Ct);
+			await RepoProp.OrdUpsert(DbCtx, ToAsyE(props), Ct);
 		}
 		var learns = Remotes.SelectMany(x=>x.Learns).ToList();
 		if(learns.Count > 0){
-			await RepoLearn.BatUpsert(DbCtx, ToAsyE(learns), Ct);
+			await RepoLearn.OrdUpsert(DbCtx, ToAsyE(learns), Ct);
 		}
 		await DaoWordV2.BatAltWordAfterUpd(DbCtx, ToAsyE(Remotes.Select(x=>x.Id).Distinct()), Ct);
 		return NIL;
@@ -230,7 +230,7 @@ public partial class SvcWordV2
 		var ids = RepoWord.GetAllWithDel(Ctx.DbFnCtx, Ct)
 			.Where(x=>x.Owner == Ctx.UserCtx.UserId)
 			.Select(x=>x.Id);
-		return RepoWord.BatGetAggByIdWithDel<JnWord>(Ctx.DbFnCtx, ids, Ct)
+		return RepoWord.OrdGetAggByIdWithDel<JnWord>(Ctx.DbFnCtx, ids, Ct)
 			.Where(x=>x is not null)
 			.Select(x=>x!);
 	}

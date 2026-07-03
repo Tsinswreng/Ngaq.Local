@@ -97,13 +97,13 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 				var kv = new PoKv{
 					Owner = owner,
 				}.SetStrStr(key, StudyPlanId+"");
-				await RepoKv.BatAdd(ctx, ToolAsyE.ToAsyE([kv]), Ct);
+				await RepoKv.OrdAdd(ctx, ToolAsyE.ToAsyE([kv]), Ct);
 				return NIL;
 			}
 
 			oldKv.Owner = owner;
 			oldKv.SetStrStr(key, StudyPlanId+"");
-			await RepoKv.BatUpd(ctx, ToolAsyE.ToAsyE([oldKv]), Ct);
+			await RepoKv.OrdUpd(ctx, ToolAsyE.ToAsyE([oldKv]), Ct);
 			return NIL;
 		});
 	}
@@ -159,7 +159,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		return await WrapStudyPlanErr(KeysErr.Common.DataIllegalOrConflict, async()=>{
 			return await SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(ctx)=>{
 				Pos = EnsureOwner(Ctx.UserCtx.UserId, Pos);
-				await RepoPreFilter.BatAdd(ctx, Pos, Ct);
+				await RepoPreFilter.OrdAdd(ctx, Pos, Ct);
 				return NIL;
 			});
 		});
@@ -173,7 +173,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		return await WrapStudyPlanErr(KeysErr.Common.DataIllegalOrConflict, async()=>{
 			return await SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(ctx)=>{
 				Pos = EnsureOwner(Ctx.UserCtx.UserId, Pos);
-				await RepoStudyPlan.BatAdd(ctx, Pos, Ct);
+				await RepoStudyPlan.OrdAdd(ctx, Pos, Ct);
 				CurBoStudyPlanCache = null;
 				return NIL;
 			});
@@ -188,7 +188,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		return await WrapStudyPlanErr(KeysErr.Common.DataIllegalOrConflict, async()=>{
 			return await SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(ctx)=>{
 				Pos = EnsureOwner(Ctx.UserCtx.UserId, Pos);
-				await RepoWeightArg.BatAdd(ctx, Pos, Ct);
+				await RepoWeightArg.OrdAdd(ctx, Pos, Ct);
 				return NIL;
 			});
 		});
@@ -202,7 +202,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		return await WrapStudyPlanErr(KeysErr.Common.DataIllegalOrConflict, async()=>{
 			return await SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(ctx)=>{
 				Pos = EnsureOwner(Ctx.UserCtx.UserId, Pos);
-				await RepoWeightCalculator.BatAdd(ctx, Pos, Ct);
+				await RepoWeightCalculator.OrdAdd(ctx, Pos, Ct);
 				return NIL;
 			});
 		});
@@ -286,21 +286,21 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		}
 
 		if(jnStudyPlan.PreFilter is null && !jnStudyPlan.StudyPlan.PreFilterId.IsNullOrDefault()){
-			jnStudyPlan.PreFilter = await RepoPreFilter.BatGetByIdWithDel(
+			jnStudyPlan.PreFilter = await RepoPreFilter.OrdGetByIdWithDel(
 				Ctx.DbFnCtx
 				,ToolAsyE.ToAsyE([jnStudyPlan.StudyPlan.PreFilterId])
 				,Ct
 			).FirstOrDefaultAsync(Ct);
 		}
 		if(jnStudyPlan.WeightCalculator is null && !jnStudyPlan.StudyPlan.WeightCalculatorId.IsNullOrDefault()){
-			jnStudyPlan.WeightCalculator = await RepoWeightCalculator.BatGetByIdWithDel(
+			jnStudyPlan.WeightCalculator = await RepoWeightCalculator.OrdGetByIdWithDel(
 				Ctx.DbFnCtx
 				,ToolAsyE.ToAsyE([jnStudyPlan.StudyPlan.WeightCalculatorId])
 				,Ct
 			).FirstOrDefaultAsync(Ct);
 		}
 		if(jnStudyPlan.WeightArg is null && !jnStudyPlan.StudyPlan.WeightArgId.IsNullOrDefault()){
-			jnStudyPlan.WeightArg = await RepoWeightArg.BatGetByIdWithDel(
+			jnStudyPlan.WeightArg = await RepoWeightArg.OrdGetByIdWithDel(
 				Ctx.DbFnCtx
 				,ToolAsyE.ToAsyE([jnStudyPlan.StudyPlan.WeightArgId])
 				,Ct
@@ -332,7 +332,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 			CurBoStudyPlanCache?.PoStudyPlan is { } cachedPoStudyPlan
 			&& cachedPoStudyPlan.Id == studyPlanId
 		){
-			var latestPoStudyPlan = await RepoStudyPlan.BatGetByIdWithDel(
+			var latestPoStudyPlan = await RepoStudyPlan.OrdGetByIdWithDel(
 				Ctx.DbFnCtx
 				,ToolAsyE.ToAsyE([studyPlanId])
 				,Ct
@@ -494,7 +494,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 			// 1) 先驗證當前 CurStudyPlanId 是否有效且屬於當前用戶。
 			var curStudyPlanId = await GetCurStudyPlanId(dbUserCtx, Ct);
 			if(curStudyPlanId is IdStudyPlan curId && !curId.IsNullOrDefault()){
-				var curPoStudyPlan = await RepoStudyPlan.BatGetByIdWithDel(
+				var curPoStudyPlan = await RepoStudyPlan.OrdGetByIdWithDel(
 					dbCtx,
 					ToolAsyE.ToAsyE([curId]),
 					Ct
@@ -522,18 +522,18 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 			// 3) 用戶完全沒有方案時，創建並落庫內置默認方案。
 			var builtinStudyPlan = await GetDfltStudyPlan(dbUserCtx, Ct);
 			if(builtinStudyPlan.PoWeightCalculator is { } poWeightCalculator){
-				await RepoWeightCalculator.BatAdd(dbCtx, ToolAsyE.ToAsyE([poWeightCalculator]), Ct);
+				await RepoWeightCalculator.OrdAdd(dbCtx, ToolAsyE.ToAsyE([poWeightCalculator]), Ct);
 			}
 			if(builtinStudyPlan.PoWeightArg is { } poWeightArg){
-				await RepoWeightArg.BatAdd(dbCtx, ToolAsyE.ToAsyE([poWeightArg]), Ct);
+				await RepoWeightArg.OrdAdd(dbCtx, ToolAsyE.ToAsyE([poWeightArg]), Ct);
 			}
 			if(builtinStudyPlan.PoPreFilter is { } poPreFilter){
-				await RepoPreFilter.BatAdd(dbCtx, ToolAsyE.ToAsyE([poPreFilter]), Ct);
+				await RepoPreFilter.OrdAdd(dbCtx, ToolAsyE.ToAsyE([poPreFilter]), Ct);
 			}
 			if(builtinStudyPlan.PoStudyPlan is not { } poStudyPlan){
 				return false;
 			}
-			await RepoStudyPlan.BatAdd(dbCtx, ToolAsyE.ToAsyE([poStudyPlan]), Ct);
+			await RepoStudyPlan.OrdAdd(dbCtx, ToolAsyE.ToAsyE([poStudyPlan]), Ct);
 			await SetCurStudyPlanId(dbUserCtx, poStudyPlan.Id, Ct);
 
 			// 新創建的默認方案可直接作為快取，減少後續重查。
@@ -559,7 +559,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		where TEntity: class, I_Owner, I_Id<TId>, new()
 	{
 		var ids = Rows.Select(x=>x.Id);
-		var gotRows = Repo.BatGetByIdWithDel(DbCtx.DbFnCtx!, ToolAsyE.ToAsyE(ids), Ct);
+		var gotRows = Repo.OrdGetByIdWithDel(DbCtx.DbFnCtx!, ToolAsyE.ToAsyE(ids), Ct);
 		var owner = DbCtx.UserCtx.UserId;
 		await foreach(var (_, got) in gotRows.Index()){
 			if(got is null || got.Owner != owner){
@@ -585,7 +585,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 				foreach(var row in rows){
 					row.Owner = owner;
 				}
-				await Repo.BatUpd(ctx, ToolAsyE.ToAsyE(rows), ct);
+				await Repo.OrdUpd(ctx, ToolAsyE.ToAsyE(rows), ct);
 				return NIL;
 			});
 			await batch.ConsumeAll(Pos, Ct);
@@ -607,7 +607,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 			await using var batch = new BatchCollector<TEntity, nil>(async(rows, ct)=>{
 				await ThrowIfAnyNotOwned(dbUserCtx, Repo, rows, ct);
 				var ids = rows.Select(x=>x.Id);
-				await Repo.BatSoftDelById(ctx, ToolAsyE.ToAsyE(ids), ct);
+				await Repo.OrdSoftDelById(ctx, ToolAsyE.ToAsyE(ids), ct);
 				return NIL;
 			});
 			await batch.ConsumeAll(Pos, Ct);
@@ -716,24 +716,24 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 				var ids = DaoStudyPlan.BatSlctWeightCalculatorIdByOwnerUniqNameWithDel(
 					dbCtx, owner, ToolAsyE.ToAsyE([poWeightCalculator.UniqName]), Ct
 				).Where(x=>x is not null).Select(x=>x!.Value);
-				await RepoWeightCalculator.BatSoftDelById(dbCtx, ids, Ct);
+				await RepoWeightCalculator.OrdSoftDelById(dbCtx, ids, Ct);
 			}
 			if(!string.IsNullOrEmpty(poWeightArg.UniqName)){
 				var ids = DaoStudyPlan.BatSlctWeightArgIdByOwnerUniqNameWithDel(
 					dbCtx, owner, ToolAsyE.ToAsyE([poWeightArg.UniqName]), Ct
 				).Where(x=>x is not null).Select(x=>x!.Value);
-				await RepoWeightArg.BatSoftDelById(dbCtx, ids, Ct);
+				await RepoWeightArg.OrdSoftDelById(dbCtx, ids, Ct);
 			}
 			if(!string.IsNullOrEmpty(poStudyPlan.UniqName)){
 				var ids = DaoStudyPlan.BatSlctStudyPlanIdByOwnerUniqNameWithDel(
 					dbCtx, owner, ToolAsyE.ToAsyE([poStudyPlan.UniqName]), Ct
 				).Where(x=>x is not null).Select(x=>x!.Value);
-				await RepoStudyPlan.BatSoftDelById(dbCtx, ids, Ct);
+				await RepoStudyPlan.OrdSoftDelById(dbCtx, ids, Ct);
 			}
 
-			await RepoWeightCalculator.BatAdd(dbCtx, ToolAsyE.ToAsyE([poWeightCalculator]), Ct);
-			await RepoWeightArg.BatAdd(dbCtx, ToolAsyE.ToAsyE([poWeightArg]), Ct);
-			await RepoStudyPlan.BatAdd(dbCtx, ToolAsyE.ToAsyE([poStudyPlan]), Ct);
+			await RepoWeightCalculator.OrdAdd(dbCtx, ToolAsyE.ToAsyE([poWeightCalculator]), Ct);
+			await RepoWeightArg.OrdAdd(dbCtx, ToolAsyE.ToAsyE([poWeightArg]), Ct);
+			await RepoStudyPlan.OrdAdd(dbCtx, ToolAsyE.ToAsyE([poStudyPlan]), Ct);
 			await SetCurStudyPlanId(dbUserCtx, poStudyPlan.Id, Ct);
 
 			CurBoStudyPlanCache = builtinStudyPlan;
@@ -757,7 +757,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		IDbUserCtx Ctx, IAsyncEnumerable<IdWeightCalculator> Ids, CT Ct
 	){
 		Ctx.DbFnCtx??=new DbFnCtx();
-		var pos = RepoWeightCalculator.BatGetById(Ctx.DbFnCtx, Ids, Ct);
+		var pos = RepoWeightCalculator.OrdGetById(Ctx.DbFnCtx, Ids, Ct);
 		var r = pos.Select(x=>EnsureOwner(x, Ctx.UserCtx.UserId));
 		return r;
 	}
@@ -766,7 +766,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		IDbUserCtx Ctx, IAsyncEnumerable<IdPreFilter> Ids, CT Ct
 	){
 		Ctx.DbFnCtx??=new DbFnCtx();
-		var pos = RepoPreFilter.BatGetById(Ctx.DbFnCtx, Ids, Ct);
+		var pos = RepoPreFilter.OrdGetById(Ctx.DbFnCtx, Ids, Ct);
 		var r = pos.Select(x=>EnsureOwner(x, Ctx.UserCtx.UserId));
 		return r;
 	}
@@ -775,7 +775,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		IDbUserCtx Ctx, IAsyncEnumerable<IdWeightArg> Ids, CT Ct
 	){
 		Ctx.DbFnCtx??=new DbFnCtx();
-		var pos = RepoWeightArg.BatGetById(Ctx.DbFnCtx, Ids, Ct);
+		var pos = RepoWeightArg.OrdGetById(Ctx.DbFnCtx, Ids, Ct);
 		var r = pos.Select(x=>EnsureOwner(x, Ctx.UserCtx.UserId));
 		return r;
 	}

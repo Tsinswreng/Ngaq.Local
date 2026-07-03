@@ -66,7 +66,7 @@ public class EntitySyncerDb<TPo, TId>:IEntitySyncerDb<TPo, TId>
 		// step 1: 直接使用強類型 Id 查庫。
 		var ids = Rows.Select(x=>x.Id);
 		var locals = new List<TPo?>();
-		await foreach(var local in Repo.BatGetByIdWithDel(Ctx, ToolAsyE.ToAsyE(ids), Ct).WithCancellation(Ct)){
+		await foreach(var local in Repo.OrdGetByIdWithDel(Ctx, ToolAsyE.ToAsyE(ids), Ct).WithCancellation(Ct)){
 			locals.Add(local);
 		}
 		if(locals.Count != Rows.Count){
@@ -106,10 +106,10 @@ public class EntitySyncerDb<TPo, TId>:IEntitySyncerDb<TPo, TId>
 
 		// step 3: 分別批量落庫。
 		if(toAdd.Count > 0){
-			await Repo.BatAdd(Ctx, ToolAsyE.ToAsyE(toAdd), Ct);
+			await Repo.OrdAdd(Ctx, ToolAsyE.ToAsyE(toAdd), Ct);
 		}
 		if(toUpd.Count > 0){
-			await Repo.BatUpd(Ctx, ToolAsyE.ToAsyE(toUpd), Ct);
+			await Repo.OrdUpd(Ctx, ToolAsyE.ToAsyE(toUpd), Ct);
 		}
 		return ans;
 	}

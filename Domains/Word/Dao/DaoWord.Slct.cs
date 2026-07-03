@@ -34,7 +34,7 @@ public partial class DaoWord{
 		,IAsyncEnumerable<IdWord> Ids
 		,CT Ct
 	){
-		return RepoWord.BatGetAggByIdWithDel<JnWord>(Ctx, Ids, Ct);
+		return RepoWord.OrdGetAggByIdWithDel<JnWord>(Ctx, Ids, Ct);
 	}
 
 	static str SqlFilterDel(

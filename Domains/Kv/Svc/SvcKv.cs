@@ -40,7 +40,7 @@ public partial class SvcKv(
 		,IAsyncEnumerable<PoKv> Kvs, CT Ct
 	){
 		return await SqlCmdMkr.EnsureTxn(Ctx, Ct, (Ctx)=>{
-			return RepoKv.BatUpsert(Ctx, Kvs, Ct);
+			return RepoKv.OrdUpsert(Ctx, Kvs, Ct);
 		});
 	}
 }

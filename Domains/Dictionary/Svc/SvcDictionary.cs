@@ -301,12 +301,12 @@ Preferences:
 				var kv = new PoKv{
 					Owner = owner,
 				}.SetStrStr(Key, json);
-				await RepoKv.BatAdd(DbCtx, ToolAsyE.ToAsyE([kv]), Ct);
+				await RepoKv.OrdAdd(DbCtx, ToolAsyE.ToAsyE([kv]), Ct);
 				return NIL;
 			}
 			oldKv.Owner = owner;
 			oldKv.SetStrStr(Key, json);
-			await RepoKv.BatUpd(DbCtx, ToolAsyE.ToAsyE([oldKv]), Ct);
+			await RepoKv.OrdUpd(DbCtx, ToolAsyE.ToAsyE([oldKv]), Ct);
 			return NIL;
 		});
 	}
@@ -501,9 +501,21 @@ Preferences:
 			if(parseResult == ELenientParseResult.Failed){
 				Err(null);
 			}
+			Logger.LogWarning(
+				"Dictionary parse diag: {Stage}",
+				DescribeTextTail("YamlMdYaml", yaml)
+			);
 			var dict = ToolYaml.YamlStrToDict(yaml);
+			Logger.LogWarning(
+				"Dictionary parse diag: {Stage}",
+				DescribeDescrsFromDict(dict)
+			);
 			var json = ToolJson.DictToJson(dict);
 			var R = JsonS.Parse<RespLlmDict>(json);
+			Logger.LogWarning(
+				"Dictionary parse diag: {Stage}",
+				DescribeDescrsFromResp(R)
+			);
 			return R!;
 		}catch(System.Exception ex){
 			Err(ex);
@@ -520,5 +532,38 @@ Preferences:
 			throw KeysErr.Dictionary.LlmResponseParseFailed.ToErr()
 				.AddDebugArgs(ex, rawResponse, content);
 		};
+	}
+
+	/// 只記錄尾部信息，避免把完整大模型輸出刷進日誌。
+	private static str DescribeTextTail(str Name, str? Text){
+		var Safe = Text ?? "";
+		var TailLen = Math.Min(120, Safe.Length);
+		var Tail = Safe[^TailLen..]
+			.Replace("\r", "\\r")
+			.Replace("\n", "\\n");
+		return $"{Name}.Length={Safe.Length}; {Name}.Tail={Tail}";
+	}
+
+	/// 記錄 YAML 字典階段的 Descrs 末項，用於判斷 fence 是在哪一層混進來的。
+	private static str DescribeDescrsFromDict(IDictionary<string, object?> Dict){
+		if(!Dict.TryGetValue(nameof(RespLlmDict.Descrs), out var descrsObj) || descrsObj is null){
+			return "DictDescrs.Missing";
+		}
+		if(descrsObj is not IList<object?> descrs || descrs.Count == 0){
+			return $"DictDescrs.Type={descrsObj.GetType().FullName}";
+		}
+		var last = descrs[^1]?.ToString() ?? "";
+		return DescribeTextTail("DictDescrs.Last", last);
+	}
+
+	/// 記錄最終 DTO 階段的 Descrs 末項，用於確認是映射前還是映射後出問題。
+	private static str DescribeDescrsFromResp(IRespLlmDict? Resp){
+		if(Resp is null){
+			return "RespDescrs.NullResp";
+		}
+		if(Resp.Descrs is null || Resp.Descrs.Count == 0){
+			return "RespDescrs.Empty";
+		}
+		return DescribeTextTail("RespDescrs.Last", Resp.Descrs[^1]);
 	}
 }

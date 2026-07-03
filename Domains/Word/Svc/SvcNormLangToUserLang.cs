@@ -59,7 +59,7 @@ public class SvcNormLangToUserLang : ISvcNormLangToUserLang{
 		IAsyncEnumerable<PoNormLangToUserLang> Pos,
 		CT Ct
 	) => await DoWrite(Ctx, Pos, needTouch: true, async (DbCtx, Repo, Ents, Ct2)=>{
-		await Repo.BatAdd(DbCtx, Ents, Ct2);
+		await Repo.OrdAdd(DbCtx, Ents, Ct2);
 	}, Ct);
 
 	public async Task<nil> BatUpdNormLangToUserLang(
@@ -67,7 +67,7 @@ public class SvcNormLangToUserLang : ISvcNormLangToUserLang{
 		IAsyncEnumerable<PoNormLangToUserLang> Pos,
 		CT Ct
 	) => await DoWrite(Ctx, Pos, needTouch: false, async (DbCtx, Repo, Ents, Ct2)=>{
-		await Repo.BatUpd(DbCtx, Ents, Ct2);
+		await Repo.OrdUpd(DbCtx, Ents, Ct2);
 		await Repo.AsAppRepo().BatBizTouch(DbCtx, Ents.Select(x=>x.Id), Ct2);
 	}, Ct);
 
@@ -76,7 +76,7 @@ public class SvcNormLangToUserLang : ISvcNormLangToUserLang{
 		IAsyncEnumerable<PoNormLangToUserLang> Pos,
 		CT Ct
 	) => await DoWrite(Ctx, Pos, needTouch: false, async (DbCtx, Repo, Ents, Ct2)=>{
-		await Repo.BatSoftDelById(DbCtx, Ents.Select(x=>x.Id), Ct2);
+		await Repo.OrdSoftDelById(DbCtx, Ents.Select(x=>x.Id), Ct2);
 	}, Ct);
 
 	private async Task<nil> DoWrite(

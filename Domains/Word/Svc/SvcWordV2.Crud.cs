@@ -35,7 +35,7 @@ public partial class SvcWordV2
 					return NIL;
 				}
 				await EnsureOwner(DbCtx, Ctx.UserCtx.UserId, DistinctIds, Ct);
-				await RepoLearn.BatAdd(DbCtx, ToAsyE(Learns), Ct);
+				await RepoLearn.OrdAdd(DbCtx, ToAsyE(Learns), Ct);
 				await DaoWordV2.BatAltWordAfterUpd(DbCtx, ToAsyE(DistinctIds), Ct);
 				return NIL;
 			});
@@ -83,7 +83,7 @@ public partial class SvcWordV2
 					return NIL;
 				}
 				await EnsureOwner(DbCtx, Ctx.UserCtx.UserId, DistinctIds, Ct);
-				await RepoWord.BatSoftDelById(DbCtx, ToAsyE(DistinctIds), Ct);
+				await RepoWord.OrdSoftDelById(DbCtx, ToAsyE(DistinctIds), Ct);
 				return NIL;
 			});
 
@@ -178,7 +178,7 @@ public partial class SvcWordV2
 				return w;
 			});
 			try{
-				await RepoWord.BatAddAgg<JnWord>(DbCtx, normalized, Ct);
+				await RepoWord.OrdAddAgg<JnWord>(DbCtx, normalized, Ct);
 			}catch(Exception e){
 				throw KeysErr.Common.DataIllegalOrConflict.ToErr(e.Message);
 			}
@@ -198,7 +198,7 @@ public partial class SvcWordV2
 					return NIL;
 				}
 				await EnsureOwner(DbCtx, Ctx.UserCtx.UserId, wordIds, Ct);
-				await RepoProp.BatUpd(DbCtx, ToAsyE(propBatch), Ct);
+				await RepoProp.OrdUpd(DbCtx, ToAsyE(propBatch), Ct);
 				await DaoWordV2.BatAltWordAfterUpd(DbCtx, ToAsyE(wordIds), Ct);
 				return NIL;
 			});
@@ -214,7 +214,7 @@ public partial class SvcWordV2
 				if(idBatch.Count == 0){
 					return NIL;
 				}
-				var props = await RepoProp.BatGetByIdWithDel(DbCtx, ToAsyE(idBatch), Ct).ToListAsync(Ct);
+				var props = await RepoProp.OrdGetByIdWithDel(DbCtx, ToAsyE(idBatch), Ct).ToListAsync(Ct);
 				var wordIds = DistinctWordIds(props.Where(x=>x is not null).Select(x=>x!.WordId).ToList());
 				if(wordIds.Count > 0){
 					await EnsureOwner(DbCtx, Ctx.UserCtx.UserId, wordIds, Ct);
@@ -237,7 +237,7 @@ public partial class SvcWordV2
 				if(idBatch.Count == 0){
 					return NIL;
 				}
-				var learns = await RepoLearn.BatGetByIdWithDel(DbCtx, ToAsyE(idBatch), Ct).ToListAsync(Ct);
+				var learns = await RepoLearn.OrdGetByIdWithDel(DbCtx, ToAsyE(idBatch), Ct).ToListAsync(Ct);
 				var wordIds = DistinctWordIds(learns.Where(x=>x is not null).Select(x=>x!.WordId).ToList());
 				if(wordIds.Count > 0){
 					await EnsureOwner(DbCtx, Ctx.UserCtx.UserId, wordIds, Ct);
@@ -281,7 +281,7 @@ public partial class SvcWordV2
 					[nameof(PoWord.BizCreatedAt)] = arg.BizCreatedAt,
 					[nameof(PoWord.BizUpdatedAt)] = arg.BizUpdatedAt,
 				};
-				await RepoWord.BatUpdByCodeDict(DbCtx, ToAsyE([finalId]), ToAsyE([upd]), Ct);
+				await RepoWord.OrdUpdByCodeDict(DbCtx, ToAsyE([finalId]), ToAsyE([upd]), Ct);
 				await DaoWordV2.BatAltWordAfterUpd(DbCtx, ToAsyE([finalId]), Ct);
 				results.Add(new RespUpdPoWord{
 					HasUpdatedBizId = hasUpdatedBizId,
@@ -412,7 +412,7 @@ public partial class SvcWordV2
 				await DaoWordV2.BatRestoreInId(DbCtx, ToAsyE(restoreIds.Distinct()), Ct);
 			}
 			if(softDelIds.Count > 0){
-				await RepoWord.BatSoftDelById(DbCtx, ToAsyE(softDelIds.Distinct()), Ct);
+				await RepoWord.OrdSoftDelById(DbCtx, ToAsyE(softDelIds.Distinct()), Ct);
 			}
 			if(moveAssetsArgs.Count > 0){
 				await DaoWordV2.BatMoveAssetsToWordId(DbCtx, ToAsyE(moveAssetsArgs), Ct);
@@ -439,7 +439,7 @@ public partial class SvcWordV2
 					return NIL;
 				}
 				await EnsureOwner(DbCtx, Ctx.UserCtx.UserId, wordIds, Ct);
-				await RepoProp.BatAdd(DbCtx, ToAsyE(propBatch), Ct);
+				await RepoProp.OrdAdd(DbCtx, ToAsyE(propBatch), Ct);
 				await DaoWordV2.BatAltWordAfterUpd(DbCtx, ToAsyE(wordIds), Ct);
 				return NIL;
 			});
@@ -460,7 +460,7 @@ public partial class SvcWordV2
 					return NIL;
 				}
 				await EnsureOwner(DbCtx, Ctx.UserCtx.UserId, wordIds, Ct);
-				await RepoLearn.BatAdd(DbCtx, ToAsyE(learnBatch), Ct);
+				await RepoLearn.OrdAdd(DbCtx, ToAsyE(learnBatch), Ct);
 				await DaoWordV2.BatAltWordAfterUpd(DbCtx, ToAsyE(wordIds), Ct);
 				return NIL;
 			});
@@ -481,7 +481,7 @@ public partial class SvcWordV2
 					return NIL;
 				}
 				await EnsureOwner(DbCtx, Ctx.UserCtx.UserId, wordIds, Ct);
-				await RepoLearn.BatUpd(DbCtx, ToAsyE(learnBatch), Ct);
+				await RepoLearn.OrdUpd(DbCtx, ToAsyE(learnBatch), Ct);
 				await DaoWordV2.BatAltWordAfterUpd(DbCtx, ToAsyE(wordIds), Ct);
 				return NIL;
 			});

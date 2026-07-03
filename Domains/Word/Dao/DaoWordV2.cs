@@ -85,7 +85,7 @@ AND {TW.QtCol(nameof(PoWord.Owner))} = {pOwner};
 		,IAsyncEnumerable<IdWord> Ids
 		,CT Ct
 	){
-		return RepoWord.BatGetByIdWithDel(Ctx, Ids, Ct);
+		return RepoWord.OrdGetByIdWithDel(Ctx, Ids, Ct);
 	}
 
 	public IAsyncEnumerable<JnWord?> BatGetJnWordByIdWithDel(
@@ -93,7 +93,7 @@ AND {TW.QtCol(nameof(PoWord.Owner))} = {pOwner};
 		,IAsyncEnumerable<IdWord> Ids
 		,CT Ct
 	){
-		return RepoWord.BatGetAggByIdWithDel<JnWord>(Ctx, Ids, Ct);
+		return RepoWord.OrdGetAggByIdWithDel<JnWord>(Ctx, Ids, Ct);
 	}
 	
 
@@ -155,7 +155,7 @@ AND {TW.QtCol(nameof(PoWord.Owner))} = {pOwner};
 					[nameof(PoWord.Lang)] = row.Lang,
 				});
 			}
-			await RepoWord.BatUpdByCodeDict(Ctx, ToolAsyE.ToAsyE(ids), ToolAsyE.ToAsyE(dicts), Ct);
+			await RepoWord.OrdUpdByCodeDict(Ctx, ToolAsyE.ToAsyE(ids), ToolAsyE.ToAsyE(dicts), Ct);
 			await BatAltWordAfterUpd(Ctx, ToolAsyE.ToAsyE(ids), Ct);
 			return NIL;
 		});
@@ -176,7 +176,7 @@ AND {TW.QtCol(nameof(PoWord.Owner))} = {pOwner};
 			var codeDicts = idBatch.Select(_=>new Dictionary<str, obj?>{
 				[nameof(IPoBase.DelAt)] = default(IdDel),
 			});
-			await RepoWord.BatUpdByCodeDict(Ctx, ToolAsyE.ToAsyE(idBatch), ToolAsyE.ToAsyE(codeDicts), Ct);
+			await RepoWord.OrdUpdByCodeDict(Ctx, ToolAsyE.ToAsyE(idBatch), ToolAsyE.ToAsyE(codeDicts), Ct);
 			await BatAltWordAfterUpd(Ctx, ToolAsyE.ToAsyE(idBatch), Ct);
 			return NIL;
 		});
@@ -231,10 +231,10 @@ AND {TW.QtCol(nameof(PoWord.Owner))} = {pOwner};
 				}
 			}
 			if(updProps.Count > 0){
-				await RepoProp.BatUpd(Ctx, ToolAsyE.ToAsyE(updProps), Ct);
+				await RepoProp.OrdUpd(Ctx, ToolAsyE.ToAsyE(updProps), Ct);
 			}
 			if(updLearns.Count > 0){
-				await RepoLearn.BatUpd(Ctx, ToolAsyE.ToAsyE(updLearns), Ct);
+				await RepoLearn.OrdUpd(Ctx, ToolAsyE.ToAsyE(updLearns), Ct);
 			}
 			return NIL;
 		});
@@ -322,7 +322,7 @@ AND {TW.QtCol(nameof(PoWord.Owner))} = {pOwner};
 			yield break;
 		}
 
-		var words = RepoWord.BatGetAggById<JnWord>(Ctx, ToolAsyE.ToAsyE(matchedIds), Ct);
+		var words = RepoWord.OrdGetAggById<JnWord>(Ctx, ToolAsyE.ToAsyE(matchedIds), Ct);
 		await foreach(var word in words.WithCancellation(Ct)){
 			if(word is null){
 				continue;

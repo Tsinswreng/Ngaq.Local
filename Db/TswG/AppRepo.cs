@@ -46,7 +46,7 @@ public partial class AppRepo<
 		var CodeDicts = Ids.Select(x=>new Dictionary<str, obj?>(){
 			[nameof(IBizCreateUpdateTime.BizUpdatedAt)] = Now
 		});
-		await BatUpdByCodeDict(Ctx, Ids, CodeDicts, Ct);
+		await OrdUpdByCodeDict(Ctx, Ids, CodeDicts, Ct);
 		return NIL;
 	}
 
