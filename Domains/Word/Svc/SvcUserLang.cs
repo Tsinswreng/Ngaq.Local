@@ -38,7 +38,7 @@ public class SvcUserLang : ISvcUserLang {
 	/// <param name="UniqNames">待查語言唯一名序列。</param>
 	/// <param name="Ct">取消令牌。</param>
 	/// <returns>與輸入對齊的 <see cref="PoUserLang"/> 可空序列。</returns>
-	public IAsyncEnumerable<PoUserLang?> BatGetUserLang(
+	public IAsyncEnumerable<PoUserLang?> OrdGetUserLang(
 		IDbUserCtx Ctx,
 		IAsyncEnumerable<str> UniqNames,
 		CT Ct
@@ -53,13 +53,13 @@ public class SvcUserLang : ISvcUserLang {
 	}
 
 	// 写操作统一通过 ExecuteWriteOperation 执行
-	public async Task<nil> BatUpdUserLang(IDbUserCtx Ctx, IAsyncEnumerable<PoUserLang> Pos, CT Ct) =>
+	public async Task<nil> OrdUpdUserLang(IDbUserCtx Ctx, IAsyncEnumerable<PoUserLang> Pos, CT Ct) =>
 		await DoWrite(Ctx, Pos, needTouch: false, async (dbCtx, repo, pos, ct) => {
 			await repo.OrdUpd(dbCtx, pos, ct);
 			await repo.AsAppRepo().BatBizTouch(dbCtx, pos.Select(x => x.Id), ct);
 		}, Ct);
 
-	public async Task<nil> BatAddUserLang(IDbUserCtx Ctx, IAsyncEnumerable<PoUserLang> Pos, CT Ct) =>
+	public async Task<nil> OrdAddUserLang(IDbUserCtx Ctx, IAsyncEnumerable<PoUserLang> Pos, CT Ct) =>
 		await DoWrite(Ctx, Pos, needTouch: true, async (dbCtx, repo, pos, ct) => {
 			await repo.OrdAdd(dbCtx, pos, ct);
 		}, Ct);

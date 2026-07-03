@@ -35,7 +35,7 @@ using Tsinswreng.CsTextWithBlob;
 
 public partial class SvcWordV2
 {
-	public async IAsyncEnumerable<DtoJnWordSyncResult> BatSyncJnWordByBizId(
+	public async IAsyncEnumerable<DtoJnWordSyncResult> OrdSyncJnWordByBizId(
 		IDbUserCtx Ctx,
 		IAsyncEnumerable<JnWord> JnWords,
 		[EnumeratorCancellation] CT Ct
@@ -77,7 +77,7 @@ public partial class SvcWordV2
 				}
 				dtos.Add(SvcWordInMem.SyncJnWord(local, remotes[i]));
 			}
-			await BatSyncByDto(Ctx, ToAsyE(dtos), Ct);
+			await OrdSyncByDto(Ctx, ToAsyE(dtos), Ct);
 			return ToAsyE(dtos);
 		});
 
@@ -87,7 +87,7 @@ public partial class SvcWordV2
 		}
 	}
 
-	public Task<nil> BatSyncByDto(IDbUserCtx Ctx, IAsyncEnumerable<DtoJnWordSyncResult> Dtos, CT Ct){
+	public Task<nil> OrdSyncByDto(IDbUserCtx Ctx, IAsyncEnumerable<DtoJnWordSyncResult> Dtos, CT Ct){
 		return SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(DbCtx)=>{
 			var localCtx = new DbUserCtx(Ctx.UserCtx, DbCtx);
 			var noChange = new List<DtoJnWordSyncResult>();
@@ -110,28 +110,28 @@ public partial class SvcWordV2
 				}
 			}
 
-			await BatSync_NoChange(localCtx, ToAsyE(noChange), Ct);
-			await BatSync_RemoteIsOlder(localCtx, ToAsyE(remoteOlder), Ct);
-			await BatSync_LocalNotExist(localCtx, ToAsyE(localNotExist), Ct);
-			await BatSync_IdNotEqual(localCtx, ToAsyE(idNotEqual), Ct);
+			await OrdSync_NoChange(localCtx, ToAsyE(noChange), Ct);
+			await OrdSync_RemoteIsOlder(localCtx, ToAsyE(remoteOlder), Ct);
+			await OrdSync_LocalNotExist(localCtx, ToAsyE(localNotExist), Ct);
+			await OrdSync_IdNotEqual(localCtx, ToAsyE(idNotEqual), Ct);
 			await BatSync_RemoteIsNewer(localCtx, ToAsyE(remoteIsNewer), Ct);
 			return NIL;
 		});
 	}
 
-	public async Task<nil> BatSync_NoChange(IDbUserCtx Ctx, IAsyncEnumerable<DtoJnWordSyncResult> Dtos, CT Ct){
+	public async Task<nil> OrdSync_NoChange(IDbUserCtx Ctx, IAsyncEnumerable<DtoJnWordSyncResult> Dtos, CT Ct){
 		await foreach(var _ in Dtos.WithCancellation(Ct)){
 		}
 		return NIL;
 	}
 
-	public async Task<nil> BatSync_RemoteIsOlder(IDbUserCtx Ctx, IAsyncEnumerable<DtoJnWordSyncResult> Dtos, CT Ct){
+	public async Task<nil> OrdSync_RemoteIsOlder(IDbUserCtx Ctx, IAsyncEnumerable<DtoJnWordSyncResult> Dtos, CT Ct){
 		await foreach(var _ in Dtos.WithCancellation(Ct)){
 		}
 		return NIL;
 	}
 
-	public Task<nil> BatSync_LocalNotExist(IDbUserCtx Ctx, IAsyncEnumerable<DtoJnWordSyncResult> Dtos, CT Ct){
+	public Task<nil> OrdSync_LocalNotExist(IDbUserCtx Ctx, IAsyncEnumerable<DtoJnWordSyncResult> Dtos, CT Ct){
 		return SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(DbCtx)=>{
 			var neos = Dtos.Select(x=>{
 				var remote = x.Remote ?? throw KeysErr.Word.Word__And__SyncFailed.ToErr("RemoteNull");
@@ -144,7 +144,7 @@ public partial class SvcWordV2
 		});
 	}
 
-	public Task<nil> BatSync_IdNotEqual(IDbUserCtx Ctx, IAsyncEnumerable<DtoJnWordSyncResult> Dtos, CT Ct){
+	public Task<nil> OrdSync_IdNotEqual(IDbUserCtx Ctx, IAsyncEnumerable<DtoJnWordSyncResult> Dtos, CT Ct){
 		return SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(DbCtx)=>{
 			await using var batch = new BatchCollector<DtoJnWordSyncResult, nil>(async(dtoBatch, Ct)=>{
 				var moveIds = new List<(IdWord Old, IdWord New)>();
@@ -164,7 +164,7 @@ public partial class SvcWordV2
 					remotesToApply.Add(remote);
 				}
 				if(moveIds.Count > 0){
-					await BatChangeId(new DbUserCtx(Ctx.UserCtx, DbCtx), ToAsyE(moveIds), Ct);
+					await OrdChangeId(new DbUserCtx(Ctx.UserCtx, DbCtx), ToAsyE(moveIds), Ct);
 				}
 				await ApplyRemoteWordsAsBatchUpdate(DbCtx, remotesToApply, Ct);
 				return NIL;
@@ -214,17 +214,17 @@ public partial class SvcWordV2
 		await DaoWordV2.BatAltWordAfterUpd(DbCtx, ToAsyE(Remotes.Select(x=>x.Id).Distinct()), Ct);
 		return NIL;
 	}
-	public IAsyncEnumerable<DtoJnWordSyncResult> BatSyncJnWordByBizIdFromStream(
+	public IAsyncEnumerable<DtoJnWordSyncResult> OrdSyncJnWordByBizIdFromStream(
 		IDbUserCtx Ctx,
 		Stream TextWithStream,
 		CT Ct
 	){
 		// 先把流中的壓縮詞流解包成 JnWord 流，再走既有 BizId 同步主流程。
 		var words = UnpackJnWords(TextWithStream, Ct);
-		return BatSyncJnWordByBizId(Ctx, words, Ct);
+		return OrdSyncJnWordByBizId(Ctx, words, Ct);
 	}
 
-	public IAsyncEnumerable<JnWord> GetAllWordsWithDel(IDbUserCtx Ctx, CT Ct){
+	public IAsyncEnumerable<JnWord> GetAllWordWithDel(IDbUserCtx Ctx, CT Ct){
 		Ctx.DbFnCtx ??= new DbFnCtx();
 		// 先取當前用戶全部根詞（含軟刪），再按 Id 批量取聚合（含軟刪）。
 		var ids = RepoWord.GetAllWithDel(Ctx.DbFnCtx, Ct)
@@ -235,7 +235,7 @@ public partial class SvcWordV2
 			.Select(x=>x!);
 	}
 
-	public Task<Stream> PackAllWordsWithDel(IDbUserCtx Ctx, CT Ct){
+	public Task<Stream> PackAllWordWithDel(IDbUserCtx Ctx, CT Ct){
 		var packer = new Packer<JnWord>{
 			JsonS = JsonS,
 		};
@@ -243,7 +243,7 @@ public partial class SvcWordV2
 			PayloadTypeObj = nameof(GZipLinesUtf8),
 			CreatedAt = UnixMs.Now(),
 		};
-		var allWords = GetAllWordsWithDel(Ctx, Ct);
+		var allWords = GetAllWordWithDel(Ctx, Ct);
 		var packed = packer.Pack(allWords, packInfo, Ct);
 		return Task.FromResult(packed.ToStream());
 	}

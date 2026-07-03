@@ -87,7 +87,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		return await SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(ctx)=>{
 			var key = KeysClientKv.CurStudyPlanId+"";
 			var owner = Ctx.UserCtx.UserId;
-			var oldKv = await SvcKv.BatGetByOwnerEtKStr(
+			var oldKv = await SvcKv.OrdGetByOwnerEtKStr(
 				ctx
 				,ToolAsyE.ToAsyE([(owner, key)])
 				,Ct
@@ -151,7 +151,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		}
 	}
 	
-	public async Task<nil> BatAddPreFilter(
+	public async Task<nil> OrdAddPreFilter(
 		IDbUserCtx Ctx
 		, IAsyncEnumerable<PoPreFilter> Pos
 		,CT Ct
@@ -165,7 +165,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		});
 	}
 	
-	public async Task<nil> BatAddStudyPlan(
+	public async Task<nil> OrdAddStudyPlan(
 		IDbUserCtx Ctx
 		, IAsyncEnumerable<PoStudyPlan> Pos
 		,CT Ct
@@ -180,7 +180,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		});
 	}
 	
-	public async Task<nil> BatAddWeightArg(
+	public async Task<nil> OrdAddWeightArg(
 		IDbUserCtx Ctx
 		, IAsyncEnumerable<PoWeightArg> Pos
 		,CT Ct
@@ -194,7 +194,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		});
 	}
 	
-	public async Task<nil> BatAddWeightCalculator(
+	public async Task<nil> OrdAddWeightCalculator(
 		IDbUserCtx Ctx
 		, IAsyncEnumerable<PoWeightCalculator> Pos
 		,CT Ct
@@ -246,7 +246,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 	
 	public async Task<IdStudyPlan?> GetCurStudyPlanId(IDbUserCtx Ctx, CT Ct){
 		Ctx.DbFnCtx ??= new DbFnCtx();
-		var kv = await SvcKv.BatGetByOwnerEtKStr(
+		var kv = await SvcKv.OrdGetByOwnerEtKStr(
 			Ctx.DbFnCtx
 			,ToolAsyE.ToAsyE([(Ctx.UserCtx.UserId, KeysClientKv.CurStudyPlanId+"")])
 			,Ct
@@ -616,7 +616,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		return NIL;
 	}
 	
-	public async Task<nil> BatUpdPreFilter(
+	public async Task<nil> OrdUpdPreFilter(
 		IDbUserCtx Ctx
 		,IAsyncEnumerable<PoPreFilter> Pos
 		,CT Ct
@@ -629,7 +629,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 
 	/// 批量更新權重算法。
 	/// 參照 BatUpdPreFilter 的寫法：先校驗 Owner，再在事務內批量更新。
-	public async Task<nil> BatUpdWeightCalculator(
+	public async Task<nil> OrdUpdWeightCalculator(
 		IDbUserCtx Ctx, IAsyncEnumerable<PoWeightCalculator> Pos, CT Ct
 	){
 		return await WrapStudyPlanErr(KeysErr.Common.DataIllegalOrConflict, async()=>{
@@ -640,7 +640,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 
 	/// 批量更新權重參數。
 	/// 參照 BatUpdPreFilter 的寫法：先校驗 Owner，再在事務內批量更新。
-	public async Task<nil> BatUpdWeightArg(
+	public async Task<nil> OrdUpdWeightArg(
 		IDbUserCtx Ctx, IAsyncEnumerable<PoWeightArg> Pos, CT Ct
 	){
 		return await WrapStudyPlanErr(KeysErr.Common.DataIllegalOrConflict, async()=>{
@@ -651,7 +651,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 
 	/// 批量軟刪除前置篩選器（僅刪除根實體，不處理關聯）。
 	/// 參照 BatUpdPreFilter 的寫法：先校驗 Owner，再在事務內批量軟刪除。
-	public async Task<nil> BatSoftDelPreFilter(
+	public async Task<nil> OrdSoftDelPreFilter(
 		IDbUserCtx Ctx, IAsyncEnumerable<PoPreFilter> Pos, CT Ct
 	){
 		await BatSoftDelWithOwnerCheck(Ctx, RepoPreFilter, Pos, Ct);
@@ -660,7 +660,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 
 	/// 批量軟刪除權重算法（僅刪除根實體，不處理關聯）。
 	/// 參照 BatUpdPreFilter 的寫法：先校驗 Owner，再在事務內批量軟刪除。
-	public async Task<nil> BatSoftDelWeightCalculator(
+	public async Task<nil> OrdSoftDelWeightCalculator(
 		IDbUserCtx Ctx, IAsyncEnumerable<PoWeightCalculator> Pos, CT Ct
 	){
 		await BatSoftDelWithOwnerCheck(Ctx, RepoWeightCalculator, Pos, Ct);
@@ -669,7 +669,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 
 	/// 批量軟刪除權重參數（僅刪除根實體，不處理關聯）。
 	/// 參照 BatUpdPreFilter 的寫法：先校驗 Owner，再在事務內批量軟刪除。
-	public async Task<nil> BatSoftDelWeightArg(
+	public async Task<nil> OrdSoftDelWeightArg(
 		IDbUserCtx Ctx, IAsyncEnumerable<PoWeightArg> Pos, CT Ct
 	){
 		await BatSoftDelWithOwnerCheck(Ctx, RepoWeightArg, Pos, Ct);
@@ -677,7 +677,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 	}
 
 	/// 批量更新學習方案。
-	public async Task<nil> BatUpdStudyPlan(
+	public async Task<nil> OrdUpdStudyPlan(
 		IDbUserCtx Ctx, IAsyncEnumerable<PoStudyPlan> Pos, CT Ct
 	){
 		return await WrapStudyPlanErr(KeysErr.Common.DataIllegalOrConflict, async()=>{
@@ -688,7 +688,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 	}
 
 	/// 批量軟刪除學習方案。僅標記 PoStudyPlan 本體，不處理關聯資產。
-	public async Task<nil> BatSoftDelStudyPlan(
+	public async Task<nil> OrdSoftDelStudyPlan(
 		IDbUserCtx Ctx, IAsyncEnumerable<PoStudyPlan> Pos, CT Ct
 	){
 		await BatSoftDelWithOwnerCheck(Ctx, RepoStudyPlan, Pos, Ct);
@@ -753,7 +753,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		return Entity;
 	}
 	
-	public IAsyncEnumerable<PoWeightCalculator?> BatGetWeightCalculatorById(
+	public IAsyncEnumerable<PoWeightCalculator?> OrdGetWeightCalculatorById(
 		IDbUserCtx Ctx, IAsyncEnumerable<IdWeightCalculator> Ids, CT Ct
 	){
 		Ctx.DbFnCtx??=new DbFnCtx();
@@ -762,7 +762,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		return r;
 	}
 	
-	public IAsyncEnumerable<PoPreFilter?> BatGetPreFilterById(
+	public IAsyncEnumerable<PoPreFilter?> OrdGetPreFilterById(
 		IDbUserCtx Ctx, IAsyncEnumerable<IdPreFilter> Ids, CT Ct
 	){
 		Ctx.DbFnCtx??=new DbFnCtx();
@@ -771,7 +771,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 		return r;
 	}
 	
-	public IAsyncEnumerable<PoWeightArg?> BatGetWeightArgById(
+	public IAsyncEnumerable<PoWeightArg?> OrdGetWeightArgById(
 		IDbUserCtx Ctx, IAsyncEnumerable<IdWeightArg> Ids, CT Ct
 	){
 		Ctx.DbFnCtx??=new DbFnCtx();
@@ -818,7 +818,7 @@ public partial class SvcStudyPlan:ISvcStudyPlan, IStudyPlanGetter{
 			return await SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(dbCtx)=>{
 				var syncer = new EntitySyncerDb<TEntity, TId>(Repo);
 				// 需要消費結果流，確保真正完成同步落庫。
-				await foreach(var _ in syncer.BatSyncPo(dbCtx, Pos, Ct).WithCancellation(Ct)){
+				await foreach(var _ in syncer.OrdSyncPo(dbCtx, Pos, Ct).WithCancellation(Ct)){
 				}
 				if(clearCache){
 					CurBoStudyPlanCache = null;

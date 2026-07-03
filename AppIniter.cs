@@ -51,7 +51,7 @@ public class AppIniter{
 			var kv = new PoKv{
 				Owner = IdUser.Zero
 			}.SetStrStr(Key, Id+"");
-			await SvcKv.BatSet(null, ToolAsyE.ToAsyE([kv]), Ct);
+			await SvcKv.OrdSet(null, ToolAsyE.ToAsyE([kv]), Ct);
 			return Id;
 		}
 		return IdClient.FromLow64Base(
@@ -92,7 +92,7 @@ public class AppIniter{
 			UserCtx.UserId = LocalUserId;
 			UserCtx.LocalUserId = LocalUserId;
 			kv.SetStrStr(KeysClientKv.CurLocalUserId, userCtxMgr.GetUserCtx().UserId.ToString());
-			await SvcKv.BatSet(
+			await SvcKv.OrdSet(
 				null, ToolAsyE.ToAsyE([kv]), Ct
 			);
 		}

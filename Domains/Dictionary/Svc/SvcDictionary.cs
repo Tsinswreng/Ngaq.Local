@@ -241,7 +241,7 @@ Preferences:
 	){
 		Ctx.DbFnCtx ??= new DbFnCtx();
 		var owner = Ctx.UserCtx.UserId;
-		var kv = await SvcKv.BatGetByOwnerEtKStr(
+		var kv = await SvcKv.OrdGetByOwnerEtKStr(
 			Ctx.DbFnCtx,
 			ToolAsyE.ToAsyE([(owner, Key)]),
 			Ct
@@ -264,7 +264,7 @@ Preferences:
 		str DfltNativeName,
 		CT Ct
 	){
-		var po = await SvcNormLang.BatGetNormLangByTypeCode(
+		var po = await SvcNormLang.OrdGetNormLangByTypeCode(
 			Ctx,
 			ToolAsyE.ToAsyE([(ELangIdentType.Bcp47, Code)]),
 			Ct
@@ -292,7 +292,7 @@ Preferences:
 		var json = JsonS.Stringify(Po);
 
 		return await SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async DbCtx=>{
-			var oldKv = await SvcKv.BatGetByOwnerEtKStr(
+			var oldKv = await SvcKv.OrdGetByOwnerEtKStr(
 				DbCtx,
 				ToolAsyE.ToAsyE([(owner, Key)]),
 				Ct

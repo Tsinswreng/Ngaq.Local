@@ -32,7 +32,7 @@ public class EntitySyncerDb<TPo, TId>:IEntitySyncerDb<TPo, TId>
 	}
 
 	/// 批量同步並落庫，返回逐條差異結果。
-	public async IAsyncEnumerable<DtoEntityDiffEtSync<TPo>> BatSyncPo(
+	public async IAsyncEnumerable<DtoEntityDiffEtSync<TPo>> OrdSyncPo(
 		IDbFnCtx Ctx,
 		IAsyncEnumerable<TPo> Pos,
 		[System.Runtime.CompilerServices.EnumeratorCancellation]

@@ -25,7 +25,7 @@ public class SvcTokenStorage:ISvcTokenStorage{
 	/// <param name="Key">客戶端鍵名。</param>
 	/// <param name="Kv">準備寫回的資料列。</param>
 	/// <param name="Ct">取消令牌。</param>
-	/// <returns>可直接交給 <see cref="ISvcKv.BatSet"/> 的資料列。</returns>
+	/// <returns>可直接交給 <see cref="ISvcKv.OrdSet"/> 的資料列。</returns>
 	async Task<PoKv> MkUpsertKv(
 		IDbFnCtx Ctx
 		,str Key
@@ -34,7 +34,7 @@ public class SvcTokenStorage:ISvcTokenStorage{
 	){
 		// 查舊值與後續 BatSet 必須共用同一個 Ctx；
 		// 否則在 sqlite 單例連接上容易出現 pending local transaction 狀態污染。
-		var OldKv = await SvcKv.BatGetByOwnerEtKStr(
+		var OldKv = await SvcKv.OrdGetByOwnerEtKStr(
 			Ctx,
 			ToolAsyE.ToAsyE([(IdUser.Zero, Key)]),
 			Ct
@@ -58,7 +58,7 @@ public class SvcTokenStorage:ISvcTokenStorage{
 	[Impl]
 	public async Task<str?> GetRefreshToken(CT Ct){
 		//TODO 先直接存明文 後汶改加密
-		var kv = SvcKv.BatGetByOwnerEtKStr(
+		var kv = SvcKv.OrdGetByOwnerEtKStr(
 			null, ToolAsyE.ToAsyE([(IdUser.Zero, KeysClientKv.RefreshToken+"")]), Ct
 		);
 		var first = await kv.FirstOrDefaultAsync(Ct);
@@ -93,7 +93,7 @@ public class SvcTokenStorage:ISvcTokenStorage{
 					.SetStrStr(KeysClientKv.CurLoginUserId, Req.LoginUserId+""),
 				Ct
 			);
-			await SvcKv.BatSet(
+			await SvcKv.OrdSet(
 				Ctx,
 				ToolAsyE.ToAsyE(
 					[

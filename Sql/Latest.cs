@@ -130,12 +130,12 @@ public partial class DbIniter{
 		var PoKv = new PoKv();
 		var Path = KeysClientKv.ClientId;
 		PoKv.SetStrStr(Path, ClientId+"");
-		var olds = SvcKv.BatGetByOwnerEtKStr(null, ToolAsyE.ToAsyE([(IdUser.Zero, Path+"")]), Ct);
+		var olds = SvcKv.OrdGetByOwnerEtKStr(null, ToolAsyE.ToAsyE([(IdUser.Zero, Path+"")]), Ct);
 		var old = await olds.FirstOrDefaultAsync(Ct);
 		if(old is not null){
 			return NIL;
 		}
-		await SvcKv.BatSet(null, ToolAsyE.ToAsyE([PoKv]), Ct);
+		await SvcKv.OrdSet(null, ToolAsyE.ToAsyE([PoKv]), Ct);
 		return NIL;
 	}
 }

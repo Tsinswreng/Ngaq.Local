@@ -24,7 +24,7 @@ using Tsinswreng.CsTools;
 
 public partial class SvcWordV2
 {
-	public async Task<nil> BatAddNewLearnRecord(
+	public async Task<nil> OrdAddNewLearnRecord(
 		IDbUserCtx Ctx
 		,IAsyncEnumerable<PoWordLearn> PoWordLearnAsyE, CT Ct
 	){
@@ -169,7 +169,7 @@ public partial class SvcWordV2
 	}
 
 	/// 批量新增整詞聚合。先統一 Owner，再確保資產外鍵指向聚合根。
-	public Task<nil> BatAddJnWord(IDbUserCtx Ctx, IAsyncEnumerable<JnWord> Words, CT Ct){
+	public Task<nil> OrdAddJnWord(IDbUserCtx Ctx, IAsyncEnumerable<JnWord> Words, CT Ct){
 		return SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(DbCtx)=>{
 			var owner = Ctx.UserCtx.UserId;
 			var normalized = Words.Select(w=>{
@@ -187,7 +187,7 @@ public partial class SvcWordV2
 	}
 
 	/// 批量更新屬性資產。需先校驗全部屬性所屬單詞的 Owner。
-	public Task<nil> BatUpdWordProp(IDbUserCtx Ctx, IAsyncEnumerable<PoWordProp> WordProps, CT Ct){
+	public Task<nil> OrdUpdWordProp(IDbUserCtx Ctx, IAsyncEnumerable<PoWordProp> WordProps, CT Ct){
 		return SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(DbCtx)=>{
 			await using var batch = new BatchCollector<PoWordProp, nil>(async(propBatch, Ct)=>{
 				if(propBatch.Count == 0){
@@ -294,7 +294,7 @@ public partial class SvcWordV2
 	}
 
 	/// 批量改主鍵，並同步遷移資產外鍵。
-	public Task<nil> BatChangeId(IDbUserCtx Ctx, IAsyncEnumerable<(IdWord Old, IdWord New)> Ids, CT Ct){
+	public Task<nil> OrdChangeId(IDbUserCtx Ctx, IAsyncEnumerable<(IdWord Old, IdWord New)> Ids, CT Ct){
 		return SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(DbCtx)=>{
 			await using var batch = new BatchCollector<(IdWord Old, IdWord New), nil>(async(idBatch, Ct)=>{
 				var moves = idBatch.Where(x=>x.Old != x.New).ToList();
@@ -326,7 +326,7 @@ public partial class SvcWordV2
 	}
 
 	/// 批量更新 Head/Lang，遇到衝突時按接口注釋要求做資產合併。
-	public async IAsyncEnumerable<RespUpdBizId> BatUpdHeadLang(
+	public async IAsyncEnumerable<RespUpdBizId> OrdUpdHeadLang(
 		IDbUserCtx Ctx,
 		IAsyncEnumerable<PoWord> PoWords,
 		[EnumeratorCancellation] CT Ct
@@ -428,7 +428,7 @@ public partial class SvcWordV2
 	}
 	
 	/// 批量新增屬性資產。需先校驗全部屬性所屬單詞的 Owner。
-	public Task<nil> BatAddWordProp(IDbUserCtx Ctx, IAsyncEnumerable<PoWordProp> WordProps, CT Ct){
+	public Task<nil> OrdAddWordProp(IDbUserCtx Ctx, IAsyncEnumerable<PoWordProp> WordProps, CT Ct){
 		return SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(DbCtx)=>{
 			await using var batch = new BatchCollector<PoWordProp, nil>(async(propBatch, Ct)=>{
 				if(propBatch.Count == 0){
@@ -449,7 +449,7 @@ public partial class SvcWordV2
 	}
 
 	/// 批量新增學習資產。需先校驗全部學習記錄所屬單詞的 Owner。
-	public Task<nil> BatAddWordLearn(IDbUserCtx Ctx, IAsyncEnumerable<PoWordLearn> WordLearns, CT Ct){
+	public Task<nil> OrdAddWordLearn(IDbUserCtx Ctx, IAsyncEnumerable<PoWordLearn> WordLearns, CT Ct){
 		return SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(DbCtx)=>{
 			await using var batch = new BatchCollector<PoWordLearn, nil>(async(learnBatch, Ct)=>{
 				if(learnBatch.Count == 0){
@@ -470,7 +470,7 @@ public partial class SvcWordV2
 	}
 
 	/// 批量更新學習資產。需先校驗全部學習記錄所屬單詞的 Owner。
-	public Task<nil> BatUpdWordLearn(IDbUserCtx Ctx, IAsyncEnumerable<PoWordLearn> WordLearns, CT Ct){
+	public Task<nil> OrdUpdWordLearn(IDbUserCtx Ctx, IAsyncEnumerable<PoWordLearn> WordLearns, CT Ct){
 		return SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(DbCtx)=>{
 			await using var batch = new BatchCollector<PoWordLearn, nil>(async(learnBatch, Ct)=>{
 				if(learnBatch.Count == 0){

@@ -42,7 +42,7 @@ public class SvcNormLang : ISvcNormLang{
 		this.I18n = I18n;
 	}
 
-	public IAsyncEnumerable<PoNormLang?> BatGetNormLangByTypeCode(
+	public IAsyncEnumerable<PoNormLang?> OrdGetNormLangByTypeCode(
 		IDbUserCtx Ctx,
 		IAsyncEnumerable<(ELangIdentType, str)> Type_Code,
 		CT Ct
@@ -52,7 +52,7 @@ public class SvcNormLang : ISvcNormLang{
 	}
 
 	/// 批量獲取翻譯名稱。返回順序與入參語言順序一一對應。
-	public async IAsyncEnumerable<str?> BatGetTranslatedName(
+	public async IAsyncEnumerable<str?> OrdGetTranslatedName(
 		IDbUserCtx Ctx,
 		INormLang TargetLang,
 		IAsyncEnumerable<INormLang> NormLangs,
@@ -94,7 +94,7 @@ public class SvcNormLang : ISvcNormLang{
 		}
 
 		var TargetLang = MkTargetLang();
-		var TranslatedNames = BatGetTranslatedName(
+		var TranslatedNames = OrdGetTranslatedName(
 			Ctx,
 			TargetLang,
 			ToolAsyE.ToAsyE(AllRows.Select(ToNormLang)),
@@ -105,7 +105,7 @@ public class SvcNormLang : ISvcNormLang{
 	}
 
 	/// 取 UI 語言候選。僅返回少量常用語言，供設置頁下拉選擇。
-	public IAsyncEnumerable<INormLangDetail> BatGetUiLangs(CT CT){
+	public IAsyncEnumerable<INormLangDetail> OrdGetUiLangs(CT CT){
 		_ = CT;
 		var Rows = new INormLangDetail[]{
 			MkUiLang("en", "English", "English", 100),
@@ -125,7 +125,7 @@ public class SvcNormLang : ISvcNormLang{
 		return ToolAsyE.ToAsyE(Rows);
 	}
 
-	public async Task<nil> BatAddNormLang(
+	public async Task<nil> OrdAddNormLang(
 		IDbUserCtx Ctx,
 		IAsyncEnumerable<PoNormLang> Pos,
 		CT Ct
@@ -133,7 +133,7 @@ public class SvcNormLang : ISvcNormLang{
 		await Repo.OrdAdd(DbCtx, Ents, Ct2);
 	}, Ct);
 
-	public async Task<nil> BatUpdNormLang(
+	public async Task<nil> OrdUpdNormLang(
 		IDbUserCtx Ctx,
 		IAsyncEnumerable<PoNormLang> Pos,
 		CT Ct
@@ -142,7 +142,7 @@ public class SvcNormLang : ISvcNormLang{
 		await Repo.AsAppRepo().BatBizTouch(DbCtx, Ents.Select(x=>x.Id), Ct2);
 	}, Ct);
 
-	public async Task<nil> BatSoftDelNormLang(
+	public async Task<nil> OrdSoftDelNormLang(
 		IDbUserCtx Ctx,
 		IAsyncEnumerable<PoNormLang> Pos,
 		CT Ct
@@ -157,7 +157,7 @@ public class SvcNormLang : ISvcNormLang{
 			return NIL;
 		}
 
-		var Exists = BatGetNormLangByTypeCode(
+		var Exists = OrdGetNormLangByTypeCode(
 			Ctx,
 			ToolAsyE.ToAsyE(SeedList.Select(x=>(x.Type, x.Code))),
 			Ct
@@ -185,7 +185,7 @@ public class SvcNormLang : ISvcNormLang{
 			}
 		}
 
-		await BatAddNormLang(Ctx, FilterNonExists(), Ct);
+		await OrdAddNormLang(Ctx, FilterNonExists(), Ct);
 		return NIL;
 	}
 
