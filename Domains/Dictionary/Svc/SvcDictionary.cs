@@ -421,8 +421,10 @@ Preferences:
 			using var stream = await response.Content.ReadAsStreamAsync(Ct).ConfigureAwait(false);
 			using var reader = new StreamReader(stream);
 
-			// 逐行解析 SSE
-			while(await reader.ReadLineAsync().ConfigureAwait(false) is { } line){
+			// 逐行解析 SSE。
+			// 這裡必須把取消令牌傳進 ReadLineAsync，否則模型已開始流式輸出後，
+			// 若下一行尚未到達，前端二次點擊取消時會卡在等待下一行，表面上看起來像「取消無效」。
+			while(await reader.ReadLineAsync(Ct).ConfigureAwait(false) is { } line){
 				if(string.IsNullOrEmpty(line)) continue;
 				if(!line.StartsWith("data: ")) continue;
 
@@ -457,6 +459,13 @@ Preferences:
 			// 構建最終響應：RawResponse / Content 都記錄完整拼接文本，便於錯誤排查。
 			var merged = fullContent.ToString();
 			return ParseRawOutput(merged);
+		}catch(OperationCanceledException ex) when(Ct.IsCancellationRequested){
+			Logger.LogInformation(
+				ex,
+				"LLM dictionary stream canceled by caller. Partial LLM response: {LlmResponse}",
+				fullContent.ToString()
+			);
+			throw;
 		}catch(Exception ex){
 			Logger.LogError(
 				ex,
