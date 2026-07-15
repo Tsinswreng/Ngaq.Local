@@ -18,6 +18,7 @@ using Ngaq.Core.Shared.Word.Models.Po.Learn;
 using Ngaq.Core.Shared.Word.Models.Po.Word;
 using Ngaq.Core.Word.Models.Po.Word;
 using Tsinswreng.CsCore;
+using Tsinswreng.CsPage;
 using Tsinswreng.CsSql;
 using Tsinswreng.CsTools;
 using IStr_Obj = System.Collections.Generic.IDictionary<str, obj?>;
@@ -299,6 +300,77 @@ AND {TW.QtCol(nameof(PoWord.Owner))} = {pOwner};
 		return CollectJnWordsByBatch(Ctx, PoWords, Ct);
 	}
 
+	/// 按詞頭搜索單詞；匹配規則由 IsExact 控制。
+	/// 搜索、排序、分頁都在數據庫層完成，避免把整個詞庫拉到服務層後再裁切。
+	public async Task<IPageAsyE<JnWord>> PageWordsByOwnerAndHead(
+		IDbFnCtx Ctx,
+		IdUser Owner,
+		IPageQry PageQry,
+		str Head,
+		bool IsExact,
+		CT Ct
+	){
+		var normalized = (Head ?? "").Trim();
+		if(normalized == ""){
+			return PageQry.ToPageAsyE(
+				ToolAsyE.ToAsyE(Array.Empty<JnWord>()),
+				HasTotCnt: true,
+				TotCnt: 0
+			);
+		}
+
+		var pOwner = TW.Prm("Owner");
+		var pHead = TW.Prm("Head");
+		var whereHead = IsExact
+			? $"{TW.QtCol(nameof(PoWord.Head))} = {pHead}"
+			: $"{TW.QtCol(nameof(PoWord.Head))} LIKE {pHead} || '%'";
+		var countAlias = "TotCnt";
+		var countSql =
+$"""
+SELECT COUNT(1) AS {TW.Qt(countAlias)}
+FROM {TW.Qt(TW.DbTblName)}
+WHERE 1=1
+AND {TW.SqlIsNonDel()}
+AND {TW.QtCol(nameof(PoWord.Owner))} = {pOwner}
+AND {whereHead}
+""";
+		var pageSql =
+$"""
+SELECT *
+FROM {TW.Qt(TW.DbTblName)}
+WHERE 1=1
+AND {TW.SqlIsNonDel()}
+AND {TW.QtCol(nameof(PoWord.Owner))} = {pOwner}
+AND {whereHead}
+ORDER BY {TW.QtCol(nameof(PoWord.Head))} ASC, {TW.QtCol(nameof(PoWord.Id))} ASC
+{TW.SqlMkr.ParamLimOfst(out var pLim, out var pOfst)}
+""";
+		var arg = ArgDict.Mk(TW)
+			.AddT(pOwner, Owner)
+			.AddRaw(pHead, normalized)
+			.AddPageQry(PageQry, pLim, pOfst);
+
+		var countCmd = await SqlCmdMkr.Prepare(Ctx, countSql, Ct);
+		Ctx.AddToDispose(countCmd);
+		var totalCount = await GetCount(countCmd, arg, countAlias, Ct);
+		if(totalCount == 0){
+			return PageQry.ToPageAsyE(
+				ToolAsyE.ToAsyE(Array.Empty<JnWord>()),
+				HasTotCnt: true,
+				TotCnt: 0
+			);
+		}
+
+		var pageCmd = await SqlCmdMkr.Prepare(Ctx, pageSql, Ct);
+		Ctx.AddToDispose(pageCmd);
+		var poWords = Ctx.RunCmd(pageCmd, arg).AsyE1d(Ct)
+			.Select(x=>TW.DbDictToEntity<PoWord>(x))
+			.Where(x=>x is not null)
+			.Select(x=>x!);
+		var words = CollectJnWordsByBatch(Ctx, poWords, Ct);
+		return PageQry.ToPageAsyE(words, HasTotCnt: true, TotCnt: totalCount);
+	}
+
 	public async IAsyncEnumerable<JnWord> GetWordsByOwnerByPreFilterSql(
 		IDbFnCtx Ctx,
 		IdUser Owner,
@@ -493,5 +565,25 @@ ORDER BY {TW.QtCol(nameof(PoWord.BizCreatedAt))} DESC
 		});
 		var S2D = Batch.AddToEnd(PoWords, Ct);
 		return S2D.Flat();
+	}
+
+	async Task<u64> GetCount(
+		ISqlCmd Cmd,
+		IArgDict Arg,
+		str CountAlias,
+		CT Ct
+	){
+		var row = await Cmd.Args(Arg).AsyE1d(Ct).FirstOrDefaultAsync(Ct);
+		if(row is null){
+			return 0;
+		}
+		if(row.TryGetValue(CountAlias, out var value) && value is not null){
+			return Convert.ToUInt64(value);
+		}
+		var lower = CountAlias.ToLowerInvariant();
+		if(row.TryGetValue(lower, out value) && value is not null){
+			return Convert.ToUInt64(value);
+		}
+		return 0;
 	}
 }
