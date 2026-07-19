@@ -31,6 +31,7 @@ using Ngaq.Core.Shared.Base.Models.Po;
 using Ngaq.Backend.Domains.Word;
 using Ngaq.Backend.Domains.Word.Dao;
 using Tsinswreng.CsTempus;
+using Tsinswreng.CsCtx;
 
 public partial class SvcWordV2(
 	ISqlCmdMkr SqlCmdMkr
@@ -66,6 +67,16 @@ public partial class SvcWordV2(
 			yield return word;
 		}
 	}
+	
+	// public async IAsyncEnumerable<JnWord> GetWordsToLearn(
+	// 	IFnCtx Ctx, [EnumeratorCancellation] CT Ct
+	// ){
+	// 	Ctx.DbFnCtx ??= new DbFnCtx();
+	// 	var preFilter = await GetCurStudyPlanPreFilter(Ctx, Ct);
+	// 	await foreach(var word in GetWordsToLearn(Ctx, preFilter, Ct).WithCancellation(Ct)){
+	// 		yield return word;
+	// 	}
+	// }
 
 	public IAsyncEnumerable<JnWord> GetWordsToLearn(
 		IDbUserCtx Ctx, PreFilter? Prefilter, CT Ct

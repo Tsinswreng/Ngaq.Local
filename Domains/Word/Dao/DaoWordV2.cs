@@ -371,6 +371,18 @@ ORDER BY {TW.QtCol(nameof(PoWord.Head))} ASC, {TW.QtCol(nameof(PoWord.Id))} ASC
 		return PageQry.ToPageAsyE(words, HasTotCnt: true, TotCnt: totalCount);
 	}
 
+	/// 按詞頭搜尋，並保留供新搜尋流程使用的優先排序 API。
+	/// 既有 PageWordsByOwnerAndHead 的名稱、參數與行為不受影響。
+	public async Task<IPageAsyE<JnWord>> PageWordsByOwnerAndHeadPriority(
+		IDbFnCtx Ctx,
+		IdUser Owner,
+		IPageQry PageQry,
+		str Head,
+		CT Ct
+	){
+		return await PageWordsByOwnerAndHead(Ctx, Owner, PageQry, Head, false, Ct);
+	}
+
 	public async IAsyncEnumerable<JnWord> GetWordsByOwnerByPreFilterSql(
 		IDbFnCtx Ctx,
 		IdUser Owner,
@@ -471,7 +483,7 @@ ORDER BY {TW.QtCol(nameof(PoWord.BizCreatedAt))} DESC
 	}
 
 	bool TryGetWordId(IStr_Obj Raw, out IdWord Id){
-		var dbCol = TW.DbCol(nameof(PoWord.Id));
+		var dbCol = TW.DbCol(x=>x.Id);
 		if(!Raw.TryGetValue(dbCol, out var rawV) && !Raw.TryGetValue(nameof(PoWord.Id), out rawV)){
 			Id = default;
 			return false;

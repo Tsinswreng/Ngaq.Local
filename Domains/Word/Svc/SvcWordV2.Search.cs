@@ -29,27 +29,14 @@ public partial class SvcWordV2{
 		}
 
 		var RawStr = NormalizeRawStr(Req.RawStr);
-		var ExactHeadPage = await DaoWordV2.PageWordsByOwnerAndHead(
+		var HeadPage = await DaoWordV2.PageWordsByOwnerAndHeadPriority(
 			Ctx.DbFnCtx,
 			Ctx.UserCtx.UserId,
 			PageQry,
 			RawStr,
-			IsExact: true,
 			Ct
 		);
-		if(ExactHeadPage.TotCnt > 0){
-			return await ToWordHitPage(PageQry, ExactHeadPage, Ct);
-		}
-
-		var FuzzyHeadPage = await DaoWordV2.PageWordsByOwnerAndHead(
-			Ctx.DbFnCtx,
-			Ctx.UserCtx.UserId,
-			PageQry,
-			RawStr,
-			IsExact: false,
-			Ct
-		);
-		return await ToWordHitPage(PageQry, FuzzyHeadPage, Ct);
+		return await ToWordHitPage(PageQry, HeadPage, Ct);
 	}
 
 	async Task<List<DtoWordSearchHit>> GetExactSearchHits(
