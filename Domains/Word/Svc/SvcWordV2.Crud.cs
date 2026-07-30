@@ -254,7 +254,7 @@ public partial class SvcWordV2
 	}
 
 	/// 先按 Head/Lang 需要時遷移目標詞，再更新其餘字段。
-	public Task<IAsyncEnumerable<RespUpdPoWord>> BatUpdPoWord(IDbUserCtx Ctx, IAsyncEnumerable<PoWord> PoWords, CT Ct){
+	public Task<IAsyncEnumerable<RespUpdPoWord>> OrdUpdPoWord(IDbUserCtx Ctx, IAsyncEnumerable<PoWord> PoWords, CT Ct){
 		return SqlCmdMkr.EnsureTxn(Ctx.DbFnCtx, Ct, async(DbCtx)=>{
 			var results = new List<RespUpdPoWord>();
 			await foreach(var arg in PoWords.WithCancellation(Ct)){

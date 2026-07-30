@@ -201,24 +201,21 @@ public class SvcDictionary:ISvcDictionary{
 	}
 
 	/// 構造發給大模型的用戶提示詞。
-	/// 此處只負責傳遞本次查詞的請求信息；格式與約束由 system prompt 負責。
+	/// 此處只傳遞統一的來源文本；查詞或翻譯的任務選擇與格式約束由 system prompt 負責。
 	private string BuildUserPrompt(IReqLlmDict Req){
 		var R =
 $"""
-the word that user wants to search:
-{Req.Query.Term}
-
-ContextSentence:
+<dictionary-request>
+  <source-language>{FormatLang(Req.OptLang.SrcLang)}</source-language>
+  <target-languages>{FormatLangList(Req.OptLang.TgtLangs)}</target-languages>
+  <input-text>
+{Req.Query.InputText}
+  </input-text>
+  <context-sentence>
 {Req.Query.ContextSentence}
-
-- SourceLanguage(the language of the input text):
-{FormatLang(Req.OptLang.SrcLang)}
-
-- TargetLanguages(the language(s) that user wants to get the definition in):
-{FormatLangList(Req.OptLang.TgtLangs)}
-
-Preferences:
-- {FormatPreferences(Req.Preferences)}
+  </context-sentence>
+  <preferences>{FormatPreferences(Req.Preferences)}</preferences>
+</dictionary-request>
 """;
 		return R;
 	}
